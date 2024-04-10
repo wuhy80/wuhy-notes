@@ -1,5 +1,5 @@
 
-## 无法将 string 转换为 int 的问题
+# 无法将 string 转换为 int 的问题
 https://codesahara.com/blog/golang-cannot-unmarshal-string-into-go-value-of-type-int/
 ts 本来应该转换的 json 为 int 格式，但是转换成字符串了，这个时候出现了 Go 无法解析的问题。如下图，两个端口，21 的时候就是数字格式，但是到了 2100 就变成字符串了
 ![image.png](https://wuhy-1258420163.cos.ap-shanghai.myqcloud.com/obsidian/images/2024/group_1/202404101142968.png)
