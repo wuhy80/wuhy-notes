@@ -1,4 +1,5 @@
 # Log 实例封装
+
 ```go
 package comm
 
@@ -112,5 +113,204 @@ func (hook *ModuleHook) Levels() []logrus.Level {
 ```go
 comm.Log.WithField("module", "transfer_ftp").Errorf("sendConn.Write failed, err:%v", err)
 comm.Log.WithField("module", "transfer_ftp").Infof("停止接收UDP数据 PolicyName:%s Port:%+v", s.PolicyName, s.Port)
+```
+
+# 如何将 Logrus 记录到 Influx 数据库
+
+## 写入 Influx
+记录到 Influx 之后查询就很方便了
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+	"runtime"
+	"time"
+
+	"github.com/influxdata/influxdb-client-go/v2"
+	"github.com/influxdata/influxdb-client-go/v2/api"
+	"github.com/sirupsen/logrus"
+)
+
+type InfluxDBHook struct {
+	client   influxdb.Client
+	writeAPI api.WriteAPI
+	module   string
+}
+
+func NewInfluxDBHook(url, token, org, bucket, module string) (*InfluxDBHook, error) {
+	client := influxdb.NewClient(url, token)
+	writeAPI := client.WriteAPI(org, bucket)
+
+	return &InfluxDBHook{
+		client:   client,
+		writeAPI: writeAPI,
+		module:   module,
+	}, nil
+}
+
+func (hook *InfluxDBHook) Fire(entry *logrus.Entry) error {
+	funcName, funcFile, funcLine := getCallerInfo()
+	point := influxdb2.NewPoint("logs",
+		map[string]string{
+			"level":   entry.Level.String(),
+			"module":  hook.module,
+			"func":    funcName,
+			"file":    funcFile,
+			"line":    fmt.Sprintf("%d", funcLine),
+			"message": entry.Message,
+		},
+		map[string]interface{}{},
+		time.Now())
+	hook.writeAPI.WritePoint(point)
+
+	return nil
+}
+
+func (hook *InfluxDBHook) Levels() []logrus.Level {
+	return logrus.AllLevels
+}
+
+func getCallerInfo() (string, string, int) {
+	pc, file, line, ok := runtime.Caller(3) // Skip 3 levels to get caller info
+	if !ok {
+		return "unknown", "unknown", 0
+	}
+	fn := runtime.FuncForPC(pc)
+	if fn == nil {
+		return "unknown", file, line
+	}
+	return fn.Name(), file, line
+}
+
+func main() {
+	hook, err := NewInfluxDBHook("http://localhost:8086", "your-token", "your-org", "your-bucket", "your-module")
+	if err != nil {
+		fmt.Printf("Failed to create InfluxDB hook: %s\n", err)
+		return
+	}
+	defer hook.client.Close()
+
+	logger := logrus.New()
+	logger.SetOutput(os.Stdout)
+	logger.SetLevel(logrus.DebugLevel)
+	logger.AddHook(hook)
+
+	logger.Info("This is an info message")
+	logger.Warn("This is a warning message")
+}
+```
+
+## 查询以及显示
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"strings"
+
+	"github.com/gin-gonic/gin"
+	"github.com/influxdata/influxdb-client-go/v2"
+	"github.com/influxdata/influxdb-client-go/v2/api"
+)
+
+func main() {
+	r := gin.Default()
+	r.GET("/logs", getLogs)
+	r.Run(":8080")
+}
+
+func getLogs(c *gin.Context) {
+	url := "http://localhost:8086"
+	token := "your-token"
+	org := "your-org"
+	bucket := "your-bucket"
+
+	client := influxdb.NewClient(url, token)
+	queryAPI := client.QueryAPI(org)
+
+	query := fmt.Sprintf(`from(bucket:"%s")
+	|> range(start: -1h)
+	|> filter(fn: (r) => r["_measurement"] == "logs")
+	|> filter(fn: (r) => r["module"] == "%s" or r["func"] == "%s" or r["level"] == "%s" or strings.contains(value: r["message"], search: "%s"))`,
+		bucket, c.Query("module"), c.Query("func"), c.Query("level"), c.Query("message"))
+
+	result, err := queryAPI.Query(query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var logs []map[string]interface{}
+	for result.Next() {
+		record := result.Record()
+		log := make(map[string]interface{})
+		for k, v := range record.Values() {
+			log[k] = v
+		}
+		logs = append(logs, log)
+	}
+
+	c.JSON(http.StatusOK, logs)
+}
+```
+
+```vue
+<template>
+  <div>
+    <el-input v-model="module" placeholder="Module"></el-input>
+    <el-input v-model="func" placeholder="Function"></el-input>
+    <el-input v-model="level" placeholder="Level"></el-input>
+    <el-input v-model="message" placeholder="Message"></el-input>
+    <el-button @click="searchLogs">Search</el-button>
+    <el-table :data="logs" style="width: 100%">
+      <el-table-column prop="time" label="Time"></el-table-column>
+      <el-table-column prop="module" label="Module"></el-table-column>
+      <el-table-column prop="func" label="Function"></el-table-column>
+      <el-table-column prop="level" label="Level"></el-table-column>
+      <el-table-column prop="message" label="Message"></el-table-column>
+    </el-table>
+  </div>
+</template>
+
+<script>
+import { ref } from 'vue'
+import axios from 'axios'
+
+export default {
+  setup() {
+    const module = ref('')
+    const func = ref('')
+    const level = ref('')
+    const message = ref('')
+    const logs = ref([])
+
+    const searchLogs = async () => {
+      try {
+        const response = await axios.get('/logs', {
+          params: {
+            module: module.value,
+            func: func.value,
+            level: level.value,
+            message: message.value
+          }
+        })
+        logs.value = response.data
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
+    return { module, func, level, message, logs, searchLogs }
+  }
+}
+</script>
+
+<style>
+/* Add your custom styles here */
+</style>
 ```
 
