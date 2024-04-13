@@ -6,6 +6,10 @@ https://blog.csdn.net/qq_63880817/article/details/133584436
 https://blog.csdn.net/weixin_48255917/article/details/110622736
 这个讲述了如何用 Vue 和后端的 Token 做交互
 
+JWT 的一个问题是即使用户选择退出登录，之前生成的 Token 也是有效的，如果有人提前保存了 Token 那么还是可以使用。
+这个时候一个有效的做法是维护一个过期时间等于 JWT 过期时间的列表，如果发送过来的 Token 和在维护的列表里面，就认为 Token 失效。
+在退出登录的时候，将这个 Token 添加到列表中，这样就可以解决退出登录就失效的需求
+
 下面是具体实现
 ## GIN 部分
 ### 如何生成 token
