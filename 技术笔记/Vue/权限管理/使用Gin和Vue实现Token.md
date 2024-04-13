@@ -1,48 +1,6 @@
 - 登录：当用户填写完账号和密码后向服务端验证是否正确，验证通过之后，服务端会返回一个**token**，拿到token之后（我会将这个token存贮到localStorage中，保证刷新页面后能记住用户登录状态），前端会根据token再去拉取一个 **userInfo** 的接口来获取用户的详细信息（如用户权限，用户名等等信息）。
 - 权限验证：通过token获取用户对应的菜单权限列表和按钮去权限列表，动态算出其对应的权限路由，通过 `router.addRoute`动态挂载这些路由。
 
-```ts
-import { defineStore } from 'pinia'
-import { getUserInfo, logout } from '@/api'
-import type { UserState } from './model/userModel'
-import type { UserInfo } from '@/api/user/types'
-import { useAuthStore } from './auth'
-import { RESEETSTORE } from '@/utils/reset'
-export const useUserStore = defineStore({
-  id: 'app-user',
-  state: (): UserState => ({
-    token: '',
-    userInfo: null,
-  }),
-  actions: {
-    // setToken
-    setToken(token: string) {
-      this.token = token
-    },
-    // setUserInfo
-    setUserInfo(userInfo: UserInfo) {
-      this.userInfo = userInfo
-    },
-    async GetInfoAction() {
-      const { data } = await getUserInfo()
-      const { avatar, buttons, name, roles, routes } = data
-      const authStore = useAuthStore()
-      // 存储用户信息
-      this.setUserInfo({ avatar, name })
-      // 存储用户权限信息
-      authStore.setAuth({ buttons, roles, routes })
-    },
-    async Logout() {
-      await logout()
-      RESEETSTORE()
-    },
-  },
-  // 设置为true，缓存state
-  persist: true,
-})
-```
-
-
 https://blog.csdn.net/qq_63880817/article/details/133584436
 讲述了如何在 Gin 中生成 token 并使用通过 Headers 传递过来的 Token
 https://blog.csdn.net/weixin_48255917/article/details/110622736
@@ -68,7 +26,7 @@ type JWT struct {
 // NewJWT 初始化jwt对象,固定返回一个为123456的密钥，（基于你的项目实际需要
 func NewJWT() *JWT {
 	return &JWT{
-		[]byte("zhanwanzhanchigoc"),
+		[]byte("project_name"),
 	}
 }
 
@@ -144,7 +102,7 @@ func login(c *gin.Context) {
 			NotBefore: int64(time.Now().Unix() - 1000), // 签名生效时间
 			ExpiresAt: int64(time.Now().Unix() + 3600), // 签名过期时间
 			IssuedAt:  int64(time.Now().Unix()),
-			Issuer:    "展湾科技", // 签名颁发者
+			Issuer:    "签名颁发者",
 		},
 	}
 
@@ -319,7 +277,8 @@ import axios from 'axios'
 import { useUserStore } from '@/store/user'
 
 const request = axios.create({
-    baseURL: 'http://192.0.2.201:8011/api',  // 注意！！ 这里是全局统一加上了 '/api' 前缀，也就是说所有接口都会加上'/api'前缀在，页面里面写接口的时候就不要加 '/api'了，否则会出现2个'/api'，类似 '/api/user'这样的报错，切记！！！
+	// 这里是全局统一加上了 '/api' 前缀，也就是说所有接口都会加上'/api'前缀在，页面里面写接口的时候就不要加 '/api'了
+    baseURL: 'http://xxx.xx.xx.xxx:8080/api',  
     timeout: 5000
 })
 
