@@ -1,3 +1,5 @@
+# Docker 常见疑难杂症解决方案已撸完，快要裂开了。。。
+https://juejin.cn/post/6944205835052515341
 
 ## Kubernetes 常见问题排查与解决方案
 
@@ -27,3 +29,4 @@ https://cloud.tencent.com/developer/article/2070537
 https://bobcares.com/blog/remove-kubernetes-namespace-stuck-in-terminating/
 
 如果有资源还在被占用的情况下，删除命名空间会出现异常
+
