@@ -1,3 +1,8 @@
+
+![image.png](https://wuhy-1258420163.cos.ap-shanghai.myqcloud.com/obsidian/images/2024/04/202404211346975.png)
+
+![image.png](https://wuhy-1258420163.cos.ap-shanghai.myqcloud.com/obsidian/images/2024/04/202404211346109.png)
+
 # Docker 常见疑难杂症解决方案已撸完，快要裂开了。。。
 https://juejin.cn/post/6944205835052515341
 
