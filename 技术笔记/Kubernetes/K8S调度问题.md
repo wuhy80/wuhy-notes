@@ -12,3 +12,8 @@ K8S 中调整副本数量没有反应，不论是从 0 改成 1 还是改成其�
 
 遇到这种情况就重置证书，直接查看证书发现没有过期，但是证书更新之后要重启静态 POD 才行的。这种情况下，需要先将 manifest 迁移出去然后再迁移回来
 ![image.png](https://wuhy-1258420163.cos.ap-shanghai.myqcloud.com/obsidian/images/2024/group_1/202404161605293.png)
+
+# 网络组件
+## 设置 ExternalTrafficPolicy 为 Local
+https://blog.cptsai.com/2020/11/15/k8s-external-traffic-policy
+如上面的文章，设置为 Local 之后，访问对应的 NodePort 只能够使用运行的机器的 IP 和对应端口，而不是集群内任意一台机器的 IP 和端口均可访问
