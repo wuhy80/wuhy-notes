@@ -314,3 +314,84 @@ export default {
 </style>
 ```
 
+# 如何做日志轮转
+![image.png](https://wuhy-1258420163.cos.ap-shanghai.myqcloud.com/obsidian/images/2024/group_1/202404231041885.png)
+写成上面的样子会导致总是报错，提示日志已经存在，那是由于在每次记录日志的时候都去创建日志，当然会有问题。正确的是下面的写法，只做一次初始化，后面获取初始化的内容
+
+```go
+package comm
+
+import (
+    "path/filepath"
+    "sync"
+    "time"
+
+    rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+    "github.com/sirupsen/logrus"
+)
+
+// ModuleHook 根据模块将日志记录到不同的文件中
+type ModuleHook struct {
+    LogFilePath  string
+    Loggers      map[string]*logrus.Logger
+    lock         sync.Mutex
+    ModuleLevels []logrus.Level
+}
+
+// NewModuleHook 创建一个ModuleHook实例
+func NewModuleHook(logFilePath string) *ModuleHook {
+    return &ModuleHook{
+        LogFilePath:  logFilePath,
+        Loggers:      make(map[string]*logrus.Logger),
+        ModuleLevels: []logrus.Level{logrus.InfoLevel, logrus.ErrorLevel},
+    }
+}
+
+// GetLogger 如果存在则返回对应的logger，否则创建一个新的
+func (hook *ModuleHook) GetLogger(module string) (*logrus.Logger, error) {
+    hook.lock.Lock()
+    defer hook.lock.Unlock()
+    if logger, ok := hook.Loggers[module]; ok {
+        return logger, nil
+    }
+
+    filename := filepath.Join(hook.LogFilePath, module, module+".log")
+    writer, err := rotatelogs.New(
+        filename+".%Y%m%d%H%M%S",
+        rotatelogs.WithLinkName(filename),
+        rotatelogs.WithMaxAge(time.Duration(86400)*time.Second),
+        rotatelogs.WithRotationTime(time.Duration(604800)*time.Second),
+    )
+    if err != nil {
+        return nil, err
+    }
+
+    logger := logrus.New()
+    logger.SetFormatter(&logrus.JSONFormatter{})
+    logger.SetOutput(writer)
+    hook.Loggers[module] = logger // 在字典中存储新的logger，以便稍后使用
+    return logger, nil
+}
+
+// Fire 实现Hook接口的Fire方法，用于实际记录日志
+func (hook *ModuleHook) Fire(entry *logrus.Entry) error {
+    module, ok := entry.Data["module"].(string)
+    if !ok {
+        module = "default"
+    }
+
+    logger, err := hook.GetLogger(module)
+    if err != nil {
+        return err // 如果有错误（例如，无法创建日志轮询），则返回
+    }
+
+    logger.SetLevel(entry.Level)
+    logger.WithField("module", module).Log(entry.Level, entry.Message)
+    return nil
+}
+
+// Levels 实现Hook接口的Levels方法，返回支持的日志级别
+func (hook *ModuleHook) Levels() []logrus.Level {
+    return hook.ModuleLevels
+}
+```
