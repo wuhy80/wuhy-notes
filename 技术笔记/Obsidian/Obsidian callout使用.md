@@ -28,7 +28,7 @@
 - example
 - quote, cite
 
-> [!todo]- cess
+> [!todo|50%]- cess
 > Ddd
 
 
