@@ -28,6 +28,32 @@ cellStyleRules: []
 ```
 
 
-```dataview
-list from "我的日记/2024/2024-04" 
+# 本周日志
+```dataviewjs
+// 获取当前文件的创建日期
+const currentFileCreateTime = new Date();
+const currentFileDate = new Date(currentFileCreateTime);
+
+// 计算本周的第一天（星期一）和最后一天（星期日）
+const startOfWeek = new Date(currentFileCreateTime);
+startOfWeek.setDate(currentFileDate.getDate() - currentFileDate.getDay() + 1);
+const endOfWeek = new Date(currentFileCreateTime);
+endOfWeek.setDate(currentFileDate.getDate() - currentFileDate.getDay() + 7);
+
+// 构建我的日记文件夹路径
+const diaryFolder = "我的日记";
+
+// 查找本周内的所有日记文件
+const weeklyDiaries = dv.pages()
+  .filter(page => page.file.path.startsWith(diaryFolder))
+  .filter(page => {
+    const pageDate = new Date(page.file.ctime);
+    return pageDate >= startOfWeek && pageDate <= endOfWeek;
+  })
+  .sort(page => page.ctime);
+
+// 输出本周的日记列表
+for (const diary of weeklyDiaries) {
+  dv.el("li", `[${diary.file.name}](${diary.file.path})`);
+}
 ```
