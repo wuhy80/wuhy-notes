@@ -72,3 +72,22 @@ func main() {
     client.Close()
 }
 ```
+
+
+# 如何将 Influx 部署为 Windows 服务
+https://www.123pan.com/s/gAEZVv-aXKeh.html
+下载 nssm2.24 版本，用于将 Influxd 做成服务
+
+执行 nssm install E:\influxdb\influxdb2-2.4.0\influxdb2_windows_amd64\influxd.exe
+用上面的命令可以将指定位置的程序添加为系统服务
+![image.png](https://wuhy-1258420163.cos.ap-shanghai.myqcloud.com/obsidian/images/2024/group_1/202404281157644.png)
+
+
+将 Influx 作为服务安装完成后，访问http://127.0.0.1:8086/开始配置数据库
+
+![image.png](https://wuhy-1258420163.cos.ap-shanghai.myqcloud.com/obsidian/images/2024/group_1/202404281156292.png)
+
+
+![image.png](https://wuhy-1258420163.cos.ap-shanghai.myqcloud.com/obsidian/images/2024/group_1/202404281156863.png)
+
+
