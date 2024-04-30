@@ -53,7 +53,7 @@ const diaryFolder = "我的日记";
 const weeklyDiaries = dv.pages()
   .filter(page => page.file.path.startsWith(diaryFolder))
   .filter(page => {
-    const pageDate = new Date(page.file.ctime);
+    const pageDate = new Date(page.file.frontmatter["🌻日期🌻"]);
     return pageDate >= startOfWeek && pageDate <= endOfWeek;
   })
   .sort(page => page.ctime);
