@@ -56,7 +56,7 @@ const weeklyDiaries = dv.pages()
     const pageDate = new Date(page.file.frontmatter["🌻日期🌻"]);
     return pageDate >= startOfWeek && pageDate <= endOfWeek;
   })
-  .sort(page => page.ctime);
+  .sort(page => page.file.frontmatter["🌻日期🌻"]);
 
 // 输出本周的日记列表
 for (const diary of weeklyDiaries) {
