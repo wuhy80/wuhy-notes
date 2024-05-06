@@ -37,8 +37,9 @@ cellStyleRules: []
 # 本周日志
 ```dataviewjs
 // 获取当前文件的创建日期
-const currentFileCreateTime = new Date();
+const currentFileCreateTime = Date.now();
 const currentFileDate = new Date(currentFileCreateTime);
+console.log(`current date`, currentFileDate)
 
 // 计算本周的第一天（星期一）和最后一天（星期日）
 const startOfWeek = new Date(currentFileCreateTime);
