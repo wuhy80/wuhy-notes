@@ -2,7 +2,8 @@
 🌻日期🌻: 2024-05-07
 🌙星期🌙: 星期二
 ⌚️时间⌚️: 13:39:05
-tags: 
+tags:
+  - docker
 ---
 /etc/docker/daemon.json
 
