@@ -34,8 +34,8 @@ Chrome 插件列表，尤其是无忧行
 ![[wetab-ai新标签页.crx]]
 
 
-
-
+### AD-Block
+![[ad_block.crx]]
 
 
 
