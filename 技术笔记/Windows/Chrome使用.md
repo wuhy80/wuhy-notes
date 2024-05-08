@@ -24,11 +24,14 @@ Chrome 插件列表，尤其是无忧行
 
 
 
+## 插件离线包
+### 无忧行
+![[JegoCloudV1.3.9.crx]]
 
 
+### WeTab
 
-
-
+![[wetab-ai新标签页.crx]]
 
 
 
