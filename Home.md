@@ -68,35 +68,62 @@ cellStyleRules: []
 
 ```
 
-
-# 本周日志
 ```dataviewjs
-// 获取当前文件的创建日期
-const currentFileCreateTime = Date.now();
-const currentFileDate = new Date(currentFileCreateTime);
-console.log(`current date`, currentFileDate)
+let la = Array()
+let da = Array()
+for(let i of dv.pages().groupBy(p=>p.file.folder.split("/")[0]))
+{
+	la.push(i.key);
+	let n = dv.pages(`"${i.key}"`).length;
+	da.push(n);
+}
 
-// 计算本周的第一天（星期一）和最后一天（星期日）
-const startOfWeek = new Date(currentFileCreateTime);
-startOfWeek.setDate(currentFileDate.getDate() - currentFileDate.getDay() + 1);
-const endOfWeek = new Date(currentFileCreateTime);
-endOfWeek.setDate(currentFileDate.getDate() - currentFileDate.getDay() + 7);
+dv.paragraph(`\`\`\`chart
+type: pie
+labels: [${la}]
+series:
+- title: none
+  data: [${da}]
+width: 50%
+legendPosition: left
+labelColors: true
+\`\`\``);
+```
+```chart
+type: pie
+labels: [000-HomePage,010-Mine,100-Index,200-笔记,210-课程,400-汇总,500-附件,600-日常,700-收集文章]
+series:
+- title: none
+  data: [47,34,8,170,81,40,1,58,145]
+width: 50%
+legendPosition: left
+labelColors: true
+```
 
-// 构建我的日记文件夹路径
-const diaryFolder = "我的日记";
+```dataviewjs
+var y = "2024"
+var m = Array(12).fill(0).map(function(v,i){return i});
+var d = [31,29,31,30,31,30,31,31,30,31,30,31]
 
-// 查找本周内的所有日记文件
-const weeklyDiaries = dv.pages()
-  .filter(page => page.file.path.startsWith(diaryFolder))
-  .filter(page => {
-    const pageDate = new Date(page.file.frontmatter["🌻日期🌻"]);
-    return pageDate >= startOfWeek && pageDate <= endOfWeek;
-  })
-  .sort(page => page.file.frontmatter["🌻日期🌻"]);
+for(let i of m)
+{
+    var n = Array(d[i]).fill(0).map(function(v,i){return i+1});
+    var data = Array(d[i]).fill(0);
 
-// 输出本周的日记列表
-for (const diary of weeklyDiaries) {
-  dv.el("li", `[${diary.file.name}](${diary.file.path})`);
+    for(let j of dv.pages(`"我的日记"`).filter(p=>String(p.file.cday).split("-")[0]==y && String(p.file.cday).split("-")[1]==i+1).groupBy(p=>String(p.file.cday).split("-")[2].slice(0,2)))
+         data[j.key-1] = dv.pages(`"我的日记"`).filter(p=>String(p.file.cday).split("-")[2].slice(0,2)==j.key).length;
+
+    if(data.every(p=>p==0))
+        continue
+    dv.header(4, i+1+"月");
+    dv.paragraph(`\`\`\`chart
+type: line
+labels: [${n}]
+series:
+- title: 我的日记
+  data: [${data}]
+labelColors: true
+\`\`\``)
 }
 ```
-     
+
