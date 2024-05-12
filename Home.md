@@ -73,6 +73,9 @@ let la = Array()
 let da = Array()
 for(let i of dv.pages().groupBy(p=>p.file.folder.split("/")[0]))
 {
+	if(i.key === "") {
+	    continue;
+	}
 	la.push(i.key);
 	let n = dv.pages(`"${i.key}"`).length;
 	da.push(n);
@@ -89,16 +92,7 @@ legendPosition: left
 labelColors: true
 \`\`\``);
 ```
-```chart
-type: pie
-labels: [000-HomePage,010-Mine,100-Index,200-笔记,210-课程,400-汇总,500-附件,600-日常,700-收集文章]
-series:
-- title: none
-  data: [47,34,8,170,81,40,1,58,145]
-width: 50%
-legendPosition: left
-labelColors: true
-```
+
 
 ```dataviewjs
 var y = "2024"
