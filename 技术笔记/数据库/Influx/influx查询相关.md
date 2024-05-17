@@ -1,3 +1,9 @@
+---
+🌻日期🌻: 2024-05-17
+🌙星期🌙: 星期五
+⌚️时间⌚️: 09:35:35
+tags: influx
+---
 ## 指定范围查询
 下面的查询是指定了开始时间和结束时间的查询，查询结果按时间倒排，且限制最多 500 条
 startAt 和 endAt 是 Unix 时间戳
@@ -43,3 +49,12 @@ func GetLogs(startAt, endAt int64, func_name, level, message string) []map[strin
 
 ```
 
+## 如何删除数据
+InfluxDB 2.0 默认情况下并不鼓励直接删除数据，因为这可能会影响数据的完整性和查询的一致性。在某些情况下，你可能需要使用 `delete` 函数，但这通常需要特定的权限和谨慎的操作。
+
+如果就是要删除历史数据，可以执行下面的命令，将历史记录保留修改为 3 天，超过 3 天的都自动进行删除
+```flux
+option retentionPolicy = (bucket) =>
+bucket
+|> to(bucket: bucket, org: "my-org", retentionPolicy: "3d")
+```
