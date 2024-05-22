@@ -2,8 +2,10 @@
 🌻日期🌻: 2024-05-20
 🌙星期🌙: 星期一
 ⌚️时间⌚️: 09:02:04
-tags: 
+tags:
+  - english
 ---
+[[00 首页]]
 
 Joe Biden imposed another round of tariffs on Chinese exports to America, most notably increasing the duties on to 100%. America imports relatively few Chinese EVs but Mr Biden suggested his steps were pre-emptive. Chinese carmakers are expanding in Europe, but “We’re not going to let China flood our market,” said the president, with one eye on votes in Michigan, the centre of America’s car industry and a crucial state in November’s election. Tariffs are also going up on semiconductors, solar cells and critical minerals. A furious China described the decision as “political manipulation” and vowed to retaliate.
 
