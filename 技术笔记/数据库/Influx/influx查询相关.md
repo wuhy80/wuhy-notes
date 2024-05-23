@@ -4,6 +4,56 @@
 ⌚️时间⌚️: 09:35:35
 tags: influx
 ---
+要查看 InfluxDB 数据库中的内容，你可以使用以下命令：
+
+### 1. 查看所有数据库
+```sh
+SHOW DATABASES
+```
+
+### 2. 切换到特定数据库
+```sh
+USE <database_name>
+```
+
+### 3. 查看所有保留策略
+```sh
+SHOW RETENTION POLICIES ON <database_name>
+```
+
+### 4. 查看所有测量（Measurements）
+```sh
+SHOW MEASUREMENTS
+```
+
+### 5. 查看特定测量中的所有 series
+```sh
+SHOW SERIES FROM "<measurement>"
+```
+
+### 6. 查看特定测量中的所有字段（Fields）
+```sh
+SHOW FIELD KEYS FROM "<measurement>"
+```
+
+### 7. 查看特定测量中的所有标签（Tags）
+```sh
+SHOW TAG KEYS FROM "<measurement>"
+```
+
+### 示例
+假设数据库名为 `mydb`，测量名为 `cpu`：
+
+```sh
+USE mydb
+SHOW MEASUREMENTS
+SHOW SERIES FROM "cpu"
+SHOW FIELD KEYS FROM "cpu"
+SHOW TAG KEYS FROM "cpu"
+```
+
+这些命令将帮助你全面了解数据库中的内容。
+
 ## 指定范围查询
 下面的查询是指定了开始时间和结束时间的查询，查询结果按时间倒排，且限制最多 500 条
 startAt 和 endAt 是 Unix 时间戳
