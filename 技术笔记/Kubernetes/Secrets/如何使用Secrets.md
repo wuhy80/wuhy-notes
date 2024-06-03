@@ -4,6 +4,8 @@
 ⌚️时间⌚️: 09:45:53
 tags: 
 ---
+https://kubernetes.feisky.xyz/concepts/objects/secret
+
 ## 如何创建 Secret
 用下面的方式将要保存的信息通过 base64 编码
 ```shell
@@ -50,4 +52,13 @@ spec:
     - name: cp
       containerPort: 5432
       hostPort: 5432
+```
+挂载后查看内容的方式
+```shell
+# ls /etc/secrets
+password  username
+# cat  /etc/secrets/username
+admin
+# cat  /etc/secrets/password
+1f2d1e2e67df
 ```
