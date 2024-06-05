@@ -40,7 +40,7 @@ spec:
   volumes:
   - name: secrets
     secret:
-      secretName: mysecret
+      secretName: zhanwan-secret
   containers:
   - image: gcr.io/my_project_id/pg:v1
     name: db
