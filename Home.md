@@ -9,10 +9,6 @@
 | 打开调试窗口 | Ctrl + Shift + i | Obsidian 是基于 Electron 开发的，所以可以打开调试窗口，类似于 Chrome 的调试窗口<br>也可以通过 View > Toggle Developer Tools 进行打开<br> |
 |        |                  |                                                                                                       |
 
-```tagcloud
-shape: pentagon
-```
-
 # 仓库概要
 ```dataviewjs
 var i = [dv.pages().length,dv.pages(`"我的日记"`).length,dv.pages(`"技术笔记"`).length,
@@ -121,3 +117,6 @@ labelColors: true
 }
 ```
 
+```tagcloud
+shape: pentagon
+```
