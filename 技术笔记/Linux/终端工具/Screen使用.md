@@ -2,7 +2,8 @@
 🌻日期🌻: 2024-05-27
 🌙星期🌙: 星期一
 ⌚️时间⌚️: 09:31:00
-tags: 
+tags:
+  - screen
 ---
 `screen` 是一个强大的终端复用器，允许你在一个单个终端会话中运行多个命令行会话。以下是如何在 Ubuntu 上安装和使用 `screen` 的基本步骤。
 
@@ -147,3 +148,47 @@ hardstatus string '%{= kG}[%H] %l %{= kW}%?%-Lw%?%{= kw}[%n*%f %t]%{= kW}%?%+Lw%
 这些配置选项将使 `screen` 在底部显示一个状态栏，包含主机名、窗口列表和时间等信息。
 
 通过这些步骤和技巧，你可以在 Ubuntu 上有效地使用 `screen` 来管理多个终端会话，增强你的命令行工作流程。
+
+## 一个配置文件的例子
+重新加载 .screenrc 配置
+如果你已经在 screen 会话中，并且希望重新加载 .screenrc 配置，可以使用以下命令：
+
+	按 Ctrl-a 然后 :
+	输入 source ~/.screenrc 然后按回车
+
+```screenrc
+# Disable startup message
+startup_message off
+
+# Set a larger scrollback buffer
+defscrollback 10000
+
+# Enable status bar and customize it to display window list
+hardstatus alwayslastline
+hardstatus string '%{= kG}[%H] %{= kW}%?%-Lw%?%{= kw}[%n*%t]%{= kW}%?%+Lw%? %= %{= kG}[%Y-%m-%d %c]%{= kG}'
+
+# Customize visual bell
+vbell on
+vbell_msg " ** ding ** "
+
+# Key bindings for switching windows using Ctrl+F1 to Ctrl+F10
+bindkey ^[[11^ select 1  # Ctrl+F1
+bindkey ^[[12^ select 2  # Ctrl+F2
+bindkey ^[[13^ select 3  # Ctrl+F3
+bindkey ^[[14^ select 4  # Ctrl+F4
+bindkey ^[[15^ select 5  # Ctrl+F5
+bindkey ^[[17^ select 6  # Ctrl+F6
+bindkey ^[[18^ select 7  # Ctrl+F7
+bindkey ^[[19^ select 8  # Ctrl+F8
+bindkey ^[[20^ select 9  # Ctrl+F9
+bindkey ^[[21^ select 0  # Ctrl+F10
+
+# Define color for the status bar
+caption always "%{= kw}%-w%{= kG}%{+b}[%n %t]%{-b}%{= kw}%+w %=%d %M %0c %{g}%H%{-}"
+
+# Termcap info for rxvt
+termcapinfo rxvt 'hs:ts=\E]2;:fs=\007:ds=\E]2;screen\007'
+
+# Set the title of the window
+shelltitle "$ |bash"
+```
