@@ -171,17 +171,17 @@ hardstatus string '%{= kG}[%H] %{= kW}%?%-Lw%?%{= kw}[%n*%t]%{= kW}%?%+Lw%? %= %
 vbell on
 vbell_msg " ** ding ** "
 
-# Key bindings for switching windows using Ctrl+F1 to Ctrl+F10
-bindkey ^[[11^ select 1  # Ctrl+F1
-bindkey ^[[12^ select 2  # Ctrl+F2
-bindkey ^[[13^ select 3  # Ctrl+F3
-bindkey ^[[14^ select 4  # Ctrl+F4
-bindkey ^[[15^ select 5  # Ctrl+F5
-bindkey ^[[17^ select 6  # Ctrl+F6
-bindkey ^[[18^ select 7  # Ctrl+F7
-bindkey ^[[19^ select 8  # Ctrl+F8
-bindkey ^[[20^ select 9  # Ctrl+F9
-bindkey ^[[21^ select 0  # Ctrl+F10
+# Key bindings for switching windows using F1 to F10
+bindkey -k k1 select 1
+bindkey -k k2 select 2
+bindkey -k k3 select 3
+bindkey -k k4 select 4
+bindkey -k k5 select 5
+bindkey -k k6 select 6
+bindkey -k k7 select 7
+bindkey -k k8 select 8
+bindkey -k k9 select 9
+bindkey -k k0 select 0
 
 # Define color for the status bar
 caption always "%{= kw}%-w%{= kG}%{+b}[%n %t]%{-b}%{= kw}%+w %=%d %M %0c %{g}%H%{-}"
