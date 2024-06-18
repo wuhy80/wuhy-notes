@@ -2,7 +2,8 @@
 🌻日期🌻: 2024-06-07
 🌙星期🌙: 星期五
 ⌚️时间⌚️: 17:06:04
-tags: 
+tags:
+  - mysql
 ---
 # 如何做 Mysql 的主备处理
 ## 修改 Master 的 MySQL 配置
@@ -19,6 +20,11 @@ server_id=1
 修改 Mysql 的 Deploy，将本地的 /data/zhanwan_backup/default_mysql 挂载到 POD 内的 /data/backup，这样执行导出到 /data/backup 目录下面的就是导出到主机上，可以防止由于数据库太大导致的 POD 内空间不足的问题。修改完成后 POD 就会重启，这样就可以同时解决修改 configmap 重启和修改本地路径挂载重启
 
 ## 创建复制用户
+```sql
+CREATE USER 'repl'@'%' IDENTIFIED BY 'repl_password';
+GRANT REPLICATION SLAVE ON *.* TO 'repl'@'%';
+FLUSH PRIVILEGES;
+```
 ![image.png](https://wuhy-1258420163.cos.ap-shanghai.myqcloud.com/obsidian/images/2024/group_2/202406180903241.png)
 ## 备份 MasterDB 的数据
 执行下面的雨具进行备份，其中用户名密码需要根据实际进行修改
