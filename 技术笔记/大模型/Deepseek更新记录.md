@@ -4,6 +4,17 @@
 ⌚️时间⌚️: 17:34:18
 tags: 
 ---
+> [!note] 服务器状态
+> https://status.deepseek.com/   
+
+> [!note] 更新日志
+> https://platform.deepseek.com/api-docs/zh-cn/updates 
+
+> [!note] 价格信息
+> https://platform.deepseek.com/api-docs/zh-cn/pricing/  
+
+> [!note] 用量信息
+> https://platform.deepseek.com/usage  
 
 ## 版本：2024-06-28[​](https://platform.deepseek.com/api-docs/zh-cn/updates#版本2024-06-28 "版本：2024-06-28的直接链接")
 
