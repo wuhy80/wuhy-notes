@@ -90,32 +90,6 @@ labelColors: true
 ```
 
 
-```dataviewjs
-var y = "2024"
-var m = Array(12).fill(0).map(function(v,i){return i});
-var d = [31,29,31,30,31,30,31,31,30,31,30,31]
-
-for(let i of m)
-{
-    var n = Array(d[i]).fill(0).map(function(v,i){return i+1});
-    var data = Array(d[i]).fill(0);
-
-    for(let j of dv.pages(`"我的日记"`).filter(p=>String(p.file.cday).split("-")[0]==y && String(p.file.cday).split("-")[1]==i+1).groupBy(p=>String(p.file.cday).split("-")[2].slice(0,2)))
-         data[j.key-1] = dv.pages(`"我的日记"`).filter(p=>String(p.file.cday).split("-")[2].slice(0,2)==j.key).length;
-
-    if(data.every(p=>p==0))
-        continue
-    dv.header(4, i+1+"月");
-    dv.paragraph(`\`\`\`chart
-type: line
-labels: [${n}]
-series:
-- title: 我的日记
-  data: [${data}]
-labelColors: true
-\`\`\``)
-}
-```
 
 ```tagcloud
 shape: pentagon
