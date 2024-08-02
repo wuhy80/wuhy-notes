@@ -16,6 +16,26 @@ tags:
 > [!note] 用量信息
 > https://platform.deepseek.com/usage  
 
+## 版本：2024-07-25[​](https://platform.deepseek.com/api-docs/zh-cn/updates#版本2024-07-25 "版本：2024-07-25的直接链接")
+
+### API 接口更新[​](https://platform.deepseek.com/api-docs/zh-cn/updates#api-接口更新 "API 接口更新的直接链接")
+
+- **更新接口 `/chat/completions`**
+    - JSON 输出
+    - Function 调用
+    - 对话前缀续写（Beta）
+    - 8K 最长输出（Beta）
+- **新增接口 `/completions`**
+    - FIM 补全（Beta）
+
+更新详情请跳转文档 [API 升级新功能 2024/07/25](https://platform.deepseek.com/api-docs/zh-cn/news/news0725)
+
+## 版本：2024-07-24[​](https://platform.deepseek.com/api-docs/zh-cn/updates#版本2024-07-24 "版本：2024-07-24的直接链接")
+
+### deepseek-coder[​](https://platform.deepseek.com/api-docs/zh-cn/updates#deepseek-coder "deepseek-coder的直接链接")
+
+deepseek-coder 模型升级为 DeepSeek-Coder-V2-0724。
+
 ## 版本：2024-06-28[​](https://platform.deepseek.com/api-docs/zh-cn/updates#版本2024-06-28 "版本：2024-06-28的直接链接")
 
 ### deepseek-chat[​](https://platform.deepseek.com/api-docs/zh-cn/updates#deepseek-chat "deepseek-chat的直接链接")
