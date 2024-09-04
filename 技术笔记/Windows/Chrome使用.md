@@ -39,8 +39,9 @@ Chrome 插件列表，尤其是无忧行
 
 ### 沉浸式翻译
 沉浸式翻译	
-自定义 API 接口地址: https://api.deepseek.com/v1/chat/completions
-自定义大模型: deepseek-chat
+自定义 API 接口地址: https://api.chatanywhere.tech
+自定义大模型: gpt-4o-mini
 APIKEY: ***REMOVED***
+
 
 
