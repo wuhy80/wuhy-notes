@@ -16,6 +16,35 @@ tags:
 > [!note] 用量信息
 > https://platform.deepseek.com/usage  
 
+## 版本：2024-09-05[​](https://platform.deepseek.com/api-docs/zh-cn/updates#版本2024-09-05 "版本：2024-09-05的直接链接")
+
+### `deepseek-coder` & `deepseek-chat` 升级为 DeepSeek V2.5 模型[​](https://platform.deepseek.com/api-docs/zh-cn/updates#deepseek-coder--deepseek-chat-升级为-deepseek-v25-模型 "deepseek-coder--deepseek-chat-升级为-deepseek-v25-模型的直接链接")
+
+DeepSeek V2 Chat 和 DeepSeek Coder V2 两个模型已经合并升级，升级后的新模型为 DeepSeek V2.5。
+
+为向前兼容，API 用户通过 `deepseek-coder` 或 `deepseek-chat` 均可以访问新的模型。
+
+新模型在通用能力、代码能力上，都显著超过了旧版本的两个模型。
+
+**新模型更好的对齐了人类的偏好，在写作任务、指令跟随等多方面进行了优化：**
+
+- ArenaHard winrate从 68.3% 提升至 76.3%
+- AlpacaEval 2.0 LC winrate从 46.61% 提升至 50.52%
+- MT-Bench 分数从 8.84 提升至 9.02
+- AlignBench 分数从 7.88 提升至 8.04
+
+**新模型在原Coder模型的基础上进一步提升了代码生成能力，对常见编程应用场景进行了优化，并在标准测试集上取得了以下成绩：**
+
+- HumanEval: 89%
+- LiveCodeBench (1-9月): 41%
+
+## 版本：2024-08-02[​](https://platform.deepseek.com/api-docs/zh-cn/updates#版本2024-08-02 "版本：2024-08-02的直接链接")
+
+### API 上线硬盘缓存技术[​](https://platform.deepseek.com/api-docs/zh-cn/updates#api-上线硬盘缓存技术 "API 上线硬盘缓存技术的直接链接")
+
+DeepSeek API 创新采用硬盘缓存，价格再降一个数量级
+
+更新详情请跳转文档 [API 上线硬盘缓存 2024/08/02](https://platform.deepseek.com/api-docs/zh-cn/news/news0802)
 ## 版本：2024-07-25[​](https://platform.deepseek.com/api-docs/zh-cn/updates#版本2024-07-25 "版本：2024-07-25的直接链接")
 
 ### API 接口更新[​](https://platform.deepseek.com/api-docs/zh-cn/updates#api-接口更新 "API 接口更新的直接链接")
