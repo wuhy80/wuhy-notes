@@ -22,10 +22,10 @@ dv.paragraph(`==标签== **${i[3]}**个`)
 
 # 最近创建
 ```dataview
-table WITHOUT ID file.link AS "最近创建",file.ctime as "时间", file.path as "路径"
+table WITHOUT ID file.path as "路径", file.ctime as "时间",file.link AS "最近创建"
 from !"template" and !"Excalidraw"
 sort file.ctime desc
-limit 10
+limit 20
 ```
 
 # 仓库内容
