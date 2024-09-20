@@ -168,23 +168,3 @@ decided to **break up** its business to fend off a revised takeover bid from, va
 Joe Biden imposed another round of **tariffs**[^1] on Chinese exports to America, most notably increasing the duties on to 100%. America imports relatively few Chinese **EVs**[^2] but Mr Biden suggested his steps were **pre-emptive**[^3]. Chinese carmakers are **expanding**[^4] in Europe, but “We’re not going to let China flood our market,” said the president, with one eye on votes in Michigan, the centre of America’s car industry and a crucial state in November’s election. **Tariffs**[^1] are also going up on **semiconductors**[^5], solar cells and **critical**[^6] minerals. A **furious**[^7] China described the decision as “political **manipulation**[^8]” and vowed to **retaliate**[^9].
 
 decided to **break up**[^10] its business to fend off a revised takeover bid from, valued at £34bn ($43bn). Anglo will **divest**[^11] its coking coal assets and **spin off**[^12] its platinum and De Beers diamonds divisions. It is also considering the options for its nickel business in order to focus on copper, iron ore and crop **nutrients**[^13]. The mining giant’s **headquarters**[^14] are in London but it employs 45,000 people in South Africa, where it was founded in 1917; the government there will want a say in any **demerger**[^15] or sale process.
-
-[^1]: 关税
-[^2]: 电动车 (Electric Vehicles)
-[^3]: 先发制人的
-[^4]: 扩展
-[^5]: 半导体
-[^6]: 关键的
-[^7]: 愤怒的
-[^8]: 操纵
-[^9]: 报复
-[^10]: 拆分
-[^11]: 剥离
-[^12]: 分拆
-[^13]: 营养物
-[^14]: 总部
-[^15]: 分离
-
-
-
-
