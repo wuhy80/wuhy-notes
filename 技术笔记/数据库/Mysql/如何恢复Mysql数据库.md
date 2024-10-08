@@ -2,7 +2,8 @@
 🌻日期🌻: 2024-09-30
 🌙星期🌙: 星期一
 ⌚️时间⌚️: 16:48:25
-tags: 
+tags:
+  - mysql
 ---
 如果数据库已经无法启动，只剩下了.ibd 和.frm 文件，还是可以尝试进行恢复，步骤如下
 ![image.png](https://wuhy-1258420163.cos.ap-shanghai.myqcloud.com/obsidian/images/2024/group_2/202409301649559.png)
