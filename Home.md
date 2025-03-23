@@ -25,8 +25,9 @@ dv.paragraph(`==标签== **${i[3]}**个`)
 table WITHOUT ID 
   file.path as "路径", 
   file.ctime as "创建时间",
-  file.link AS "文件链接"
+  file.link as "文件链接"
 from !"template" and !"Excalidraw"
+sort file.ctime desc
 limit 20
 ```
 
