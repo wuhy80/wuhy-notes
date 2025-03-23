@@ -13,7 +13,8 @@ tags:
 > [!tip]  AutoGen：将人类反馈融入智能体循环 (Human-in-the-Loop)
 > https://zhuanlan.zhihu.com/p/25131316178
 
-
+> [!tip] AutoGen ：打造专属智能体 (Custom Agents)
+> https://zhuanlan.zhihu.com/p/26206622846
 
 > [!tip] 一个用 FastApi 封装的 AutoGen 的例子
 > https://github.com/microsoft/autogen/tree/main/python/samples/agentchat_fastapi
