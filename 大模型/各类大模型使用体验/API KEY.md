@@ -17,4 +17,5 @@ KEY： AIzaSyD-7PE4SBskZ_usGBPeB3DhtygVIFjxGZA
 地址：https://gateway.ai.cloudflare.com/v1/1ff939df6fe444fa1fe21ed7d1b8caac/gemni/google-ai-studio
 通过 AI 网关的方式使用 google 的免费 API
 
+https://microsoft.github.io/autogen/stable/user-guide/agentchat-user-guide/tutorial/human-in-the-loop.html
 
