@@ -49,9 +49,9 @@ foreach ($r in $repos) {
     foreach ($remote in @(git remote 2>$null)) {
       $ok = $false; $err = ''
       for ($i = 1; $i -le 2; $i++) {
-        $out = git push $remote 2>&1
+        $out = (git push $remote 2>&1 | Out-String)
         if ($LASTEXITCODE -eq 0) { $ok = $true; break }
-        $err = ($out | Where-Object { $_ } | Select-Object -Last 1)
+        $err = (($out -split "`r?`n") | Where-Object { $_.Trim() } | Select-Object -Last 1).Trim()
         Start-Sleep -Seconds 3
       }
       Write-Log "$($r.Name): push $remote -> $(if ($ok) { '成功' } else { "失败: $err" })"
