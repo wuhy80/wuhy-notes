@@ -9,7 +9,7 @@ updated: 2026-08-09
 
 > [!hero] 今日工作台
 > 先处理任务和收件箱，再进入项目与知识沉淀。
-> [[我的任务]] · [[任务管理/TaskInbox|任务收件箱]] · [[Inbox/待整理|待整理]] · [[我的日记|日记总览]] · [[Home-分析面板|分析面板]]
+> [[我的任务]] · 任务收件箱 / 待整理 / 日记总览（已迁至私密库 wuhy80_private） · [[Home-分析面板|分析面板]]
 
 ## 今日聚焦
 
@@ -32,13 +32,13 @@ updated: 2026-08-09
 ## 快速入口
 
 > [!tip] 日常管理
-> [[我的任务]] · [[任务管理/TaskInbox|任务收件箱]] · [[Inbox/待整理|待整理]] · [[我的日记|日记总览]]
+> [[我的任务]] · 任务收件箱 / 待整理 / 日记总览（已迁至私密库 wuhy80_private）
 
 > [!info] 知识沉淀
 > [[技术笔记/技术笔记|技术]] · [[技术笔记/算法/算法学习导航|算法]] · [[编程语言/README|语言]] · [[Golang编程/README|Go]] · [[Rust编程/README|Rust]] · [[大模型/00-大模型学习导航|大模型]] · [[Ontology/README|Ontology]] · [[读书笔记/读书列表|读书]] · [[网址收藏/_index|网址]]
 
 > [!note] 环境与工具
-> [[技术笔记/虚拟机/Hyper-V Ubuntu开发环境|Ubuntu 虚拟机]] · [[技术笔记/虚拟机/Gitea私有Git服务|Gitea 私有 Git]] · [[个人信息/网站账号|网站账号]]
+> [[技术笔记/虚拟机/Hyper-V Ubuntu开发环境|Ubuntu 虚拟机]] · [[技术笔记/虚拟机/Gitea私有Git服务|Gitea 私有 Git]] · 网站账号（已迁至私密库）
 
 > [!tip]- 常用快捷键
 > | 功能 | 快捷键 | 说明 |
@@ -65,12 +65,12 @@ updated: 2026-08-09
 > LIMIT 8
 > ```
 
-> [!journal] 最近日记
+> [!journal] 最近日记（已迁至私密库）
 > ```dataview
 > TABLE WITHOUT ID
 >   file.link as "日记",
 >   dateformat(file.mtime, "MM-dd HH:mm") as "更新"
-> FROM "我的日记"
+> FROM "我的日记·已迁出"
 > WHERE regexmatch("^\\d{4}-\\d{2}-\\d{2}$", file.name)
 > SORT file.name DESC
 > LIMIT 4

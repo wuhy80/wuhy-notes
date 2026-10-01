@@ -8,7 +8,7 @@ created: 2026-06-07
 updated: 2026-06-07
 status: seed
 source:
-  - "[[我的日记/2025/2025-03/2025-03-28]]"
+  - "私密库：我的日记/2025/2025-03/2025-03-28"
   - "[[大模型/02-应用开发/AutoGen/Agent调度/AutoGen自动进行Agent调用判断]]"
   - "[[大模型/02-应用开发/AutoGen/Agent调度/SelectorGroupChat进行动态调度]]"
 aliases:
