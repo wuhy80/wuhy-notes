@@ -2,9 +2,25 @@
 🌻日期🌻: 2024-06-01
 🌙星期🌙: 星期六
 ⌚️时间⌚️: 15:09:58
-tags: 
+tags:
+  - 编辑器/Obsidian
+  - 可视化/绘图
 ---
-Obsidian 支持多种不同的语言和格式来创建和嵌入图表、绘图和其他内容。除了 Mermaid，以下是一些 Obsidian 支持的其他语言和格式：
+# Obsidian 有哪些绘图功能
+
+> [!note] 使用建议
+> 原生优先使用 Mermaid、Canvas 和数学公式；更复杂的 UML、手绘图或交互式图表再考虑插件扩展。
+
+Obsidian 支持多种不同的语言和格式来创建和嵌入图表、绘图和其他内容。包括 Mermaid 在内，下面整理几种常见能力和扩展方式：
+
+### Mermaid
+Obsidian 原生支持 Mermaid，适合流程图、时序图、甘特图、状态图等文本化图表。
+
+```mermaid
+flowchart LR
+    A[想法] --> B[结构化]
+    B --> C[可视化]
+```
 
 ### 1. LaTeX
 Obsidian支持LaTeX数学公式，可以用来书写复杂的数学表达式。使用双美元符号（`$$`）来包围 LaTeX 代码。例如：
@@ -38,7 +54,7 @@ digraph G {
 ```
 
 ### 4. Markdown Diagrams (Sequence Diagrams, Flowcharts)
-Obsidian支持通过插件如 `Obsidian Draw.io` 来嵌入并创建 Draw.io 图表。也可以通过 `markdown-diagrams` 插件支持简单的序列图和流程图：
+Obsidian 可以通过插件如 `Obsidian Draw.io` 来嵌入并创建 Draw.io 图表。也可以通过 `markdown-diagrams` 一类插件支持简单的序列图和流程图：
 
 #### 序列图：
 ```sequence
@@ -106,4 +122,4 @@ where status = "in-progress"
 ```
 
 ### 结论
-通过上述多种语言和格式，Obsidian 可以支持用户创建和嵌入多种类型的图表和可视化内容，极大地增强了笔记的表达能力和灵活性。根据需要安装相应的插件可以扩展 Obsidian 的功能，实现更复杂的内容展示。
+通过上述多种语言和格式，Obsidian 可以支持用户创建和嵌入多种类型的图表和可视化内容，极大地增强了笔记的表达能力和灵活性。根据需要安装相应的插件，可以进一步扩展能力，实现更复杂的内容展示。

@@ -1,4 +1,10 @@
 
+提交 SVN 的时候使用 git 的记录做补充
+```
+svn commit -m "$(git log -1 --pretty=%B)"
+svn commit -m "bug#13712: $(git log -1 --pretty=%B)"
+```
+
 ## linux上用svn，如何忽略 src/node_modules 目录内容，这个目录已经有一些内容被提交了，只需要改成后面不提交即可
 
 要忽略已经提交的 `src/node_modules` 目录内容，可以使用 SVN 的 `svn propset` 命令设置 `svn:ignore` 属性。首先，确保您已经安装了 SVN 客户端。然后，进入 `src/node_modules` 目录，并执行以下命令：

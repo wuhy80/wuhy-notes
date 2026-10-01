@@ -8,9 +8,6 @@ tags:
  我来帮您在现有的 HTML 代码中添加 artifact 可视化功能。我们需要添加一个新的容器来展示 artifact，并修改消息处理逻辑以支持不同类型的可视化内容。
 
 ```html
-
-
-```html
 <!-- 在 <head> 标签中添加必要的依赖 -->
 <head>
     <!-- 原有的引入 -->
@@ -166,6 +163,9 @@ tags:
     }
 </script>
 ```
+
+> [!warning] 安全与运行时限制
+> 这里的 React 示例把模型返回的字符串当作 JavaScript/JSX 执行，不能直接用于不可信输入；生产环境应使用 `iframe sandbox` 或白名单组件渲染，并在服务端校验 `artifact.type` 和内容大小。`type="text/babel"` 还需要额外加载 Babel Standalone 才会编译 JSX，否则浏览器不会执行这段脚本。
 
 这段代码主要做了以下修改：
 

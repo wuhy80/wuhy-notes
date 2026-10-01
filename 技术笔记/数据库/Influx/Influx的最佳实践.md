@@ -31,18 +31,21 @@ tags:
 3. **更新和维护**：保持 InfluxDB 更新，及时应用安全补丁和性能优化。
 
 ### 示例代码
-#### 批量写入示例
+#### 写入示例
 ```go
 package main
 
 import (
     "github.com/influxdata/influxdb-client-go/v2"
     "context"
+    "fmt"
+    "os"
     "time"
 )
 
 func main() {
-    client := influxdb2.NewClient("http://localhost:8086", "my-token")
+    client := influxdb2.NewClient(os.Getenv("INFLUX_URL"), os.Getenv("INFLUX_TOKEN"))
+    defer client.Close()
     writeAPI := client.WriteAPIBlocking("my-org", "my-bucket")
 
     // 创建数据点
@@ -51,13 +54,12 @@ func main() {
         AddField("value", 23.5).
         SetTime(time.Now())
 
-    // 批量写入数据
+    // 这里写入单个数据点；批量场景应复用 WriteAPI 或循环写入后统一检查错误
     err := writeAPI.WritePoint(context.Background(), p)
     if err != nil {
         fmt.Printf("Error writing data: %v\n", err)
     }
 
-    client.Close()
 }
 ```
 
@@ -69,10 +71,12 @@ import (
     "github.com/influxdata/influxdb-client-go/v2"
     "context"
     "fmt"
+    "os"
 )
 
 func main() {
-    client := influxdb2.NewClient("http://localhost:8086", "my-token")
+    client := influxdb2.NewClient(os.Getenv("INFLUX_URL"), os.Getenv("INFLUX_TOKEN"))
+    defer client.Close()
     queryAPI := client.QueryAPI("my-org")
 
     // 使用标签和时间范围进行过滤
@@ -82,7 +86,7 @@ func main() {
 
     result, err := queryAPI.Query(context.Background(), query)
     if err != nil {
-        fmt.Printf("Error querying data: %v\n", err)
+        panic(err)
     }
     defer result.Close()
 
@@ -95,7 +99,6 @@ func main() {
         fmt.Printf("Query error: %v\n", result.Err().Error())
     }
 
-    client.Close()
 }
 ```
 

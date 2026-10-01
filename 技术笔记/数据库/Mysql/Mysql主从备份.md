@@ -11,9 +11,11 @@ tags:
 编辑配置文件，添加下面两行配置
 ```ini
 log_bin=mysql-bin
-expire_logs_days = 7
+# MySQL 8.0. expire_logs_days 已弃用；保留 7 天可写成 604800 秒
+binlog_expire_logs_seconds = 604800
 server_id=1
 ```
+MySQL 5.7 使用 `expire_logs_days = 7`；两者不要同时配置为不同值。
 ![image.png](https://wuhy-1258420163.cos.ap-shanghai.myqcloud.com/obsidian/images/2024/group_2/202406180904762.png)
 
 ## 重启 Mysql POD
@@ -21,17 +23,17 @@ server_id=1
 
 ## 创建复制用户
 ```sql
-CREATE USER 'repl'@'%' IDENTIFIED BY 'repl_password';
-GRANT REPLICATION SLAVE ON *.* TO 'repl'@'%';
-FLUSH PRIVILEGES;
+CREATE USER 'repl'@'10.%' IDENTIFIED BY 'repl_password';
+GRANT REPLICATION REPLICA ON *.* TO 'repl'@'10.%';
+-- MySQL 5.7 或较早版本使用 REPLICATION SLAVE；不要把复制用户暴露给任意来源
 ```
 ![image.png](https://wuhy-1258420163.cos.ap-shanghai.myqcloud.com/obsidian/images/2024/group_2/202406180903241.png)
 ## 备份 MasterDB 的数据
-执行下面的雨具进行备份，其中用户名密码需要根据实际进行修改
-`mysqldump -u zeusroot -pzhanwanzhanchi --all-databases --single-transaction --master-data=2 > /data/backup/master_dump.sql`
+执行下面的命令进行备份，其中用户名和密码需要根据实际环境修改。不要把密码直接写在命令行中，以免进入 shell 历史记录。
+`mysqldump -u zeusroot -p --all-databases --single-transaction --source-data=2 > /data/backup/master_dump.sql`
 
 > [!note] master-data
-> master-data 如果不配置或者配置为 1，会自动添加 -- CHANGE MASTER TO MASTER_LOG_FILE='mysql-bin.000001', MASTER_LOG_POS=154; 的语句，但是我们实际上希望可以手动配置例如主服务器访问地址信息，所以推荐使用 master-data=2
+> `source-data=2` 会把日志坐标以注释写入备份，不会在导入时自动执行；旧版本对应参数为 `master-data=2`。这样可以先补充主库地址和 TLS 等参数，再初始化复制。
 
 进入 mysql 的 POD 内部
 ![image.png](https://wuhy-1258420163.cos.ap-shanghai.myqcloud.com/obsidian/images/2024/group_2/202406180914660.png)
@@ -43,7 +45,7 @@ FLUSH PRIVILEGES;
 执行 `mysql -u zeusroot -p < /data/backup/master_dump.sql` 可以把导出的文件恢复到新数据库中，恢复完成后可以使用 `show databases` 查看恢复的数据库情况
 ![image.png](https://wuhy-1258420163.cos.ap-shanghai.myqcloud.com/obsidian/images/2024/group_2/202406180942940.png)
 ## 查看恢复的位置
-`head -n 30 /data/backup/master_dump.sql | grep "CHANGE MASTER TO"`
+`head -n 30 /data/backup/master_dump.sql | grep -E "CHANGE (MASTER TO|REPLICATION SOURCE TO)"`
 ![image.png](https://wuhy-1258420163.cos.ap-shanghai.myqcloud.com/obsidian/images/2024/group_2/202406180944552.png)
 ## 配置实时备份功能
 备份数据库 configmap 里面的 my.cnf 要配置 server_id 为唯一值，这一点已经在对应的 yaml 配置完成，所以不需要再执行
@@ -52,22 +54,24 @@ FLUSH PRIVILEGES;
 server_id=2
 ```
 
-根据上面查询的 MASTER_LOG_FILE 和 MASTER_LOG_POS 修改下面的配置，然后在备份 Mysql 中执行
-注意其中的 MASTER_HOST，要配置对应的 service 带上 namespace，如果不是备份默认的数据库要跟着修改
+根据上面查询的日志文件和位置修改下面的配置，然后在备份 MySQL 中执行。MySQL 8.0.23+ 使用 `CHANGE REPLICATION SOURCE TO` / `START REPLICA`；旧版本才使用下方兼容语法。
+注意其中的 `SOURCE_HOST` 要配置对应的 Service（包含 namespace）；如果不是默认数据库服务，需要按实际名称修改。
 ```mysql
-CHANGE MASTER TO
-    MASTER_HOST='mysql-service.default',  -- Master 的服务地址
-    MASTER_USER='repl',
-    MASTER_PASSWORD='repl_password',
-    MASTER_LOG_FILE='mysql-bin.000001',  -- 从导出的 SQL 文件中获取
-    MASTER_LOG_POS=2426352;                -- 从导出的 SQL 文件中获取
+-- MySQL 8.0.23+
+CHANGE REPLICATION SOURCE TO
+    SOURCE_HOST='mysql-service.default',  -- Master 的服务地址
+    SOURCE_USER='repl',
+    SOURCE_PASSWORD='repl_password',
+    SOURCE_LOG_FILE='mysql-bin.000001',  -- 从导出的 SQL 文件中获取
+    SOURCE_LOG_POS=2426352;              -- 从导出的 SQL 文件中获取
 
-START SLAVE;
+START REPLICA;
 ```
+
+MySQL 5.7/8.0.22 及更早版本将上述语句中的 `CHANGE REPLICATION SOURCE TO`、`SOURCE_*` 和 `START REPLICA` 分别替换为 `CHANGE MASTER TO`、`MASTER_*` 和 `START SLAVE`。
 
 ![image.png](https://wuhy-1258420163.cos.ap-shanghai.myqcloud.com/obsidian/images/2024/group_2/202406180947239.png)
 
 ## 检查备份状态
-`SHOW SLAVE STATUS\G`
-确认 Slave_IO_Running 和 Slave_SQL_Running 都是 Yes，并检查是否有任何错误。
+MySQL 8.0.23+ 使用 `SHOW REPLICA STATUS\G`（旧版本为 `SHOW SLAVE STATUS\G`，命令末尾不要再加分号）。确认 `Replica_IO_Running` 和 `Replica_SQL_Running` 都是 `Yes`，并检查 `Last_IO_Error`、`Last_SQL_Error`。
 ![image.png](https://wuhy-1258420163.cos.ap-shanghai.myqcloud.com/obsidian/images/2024/group_2/202406180950427.png)

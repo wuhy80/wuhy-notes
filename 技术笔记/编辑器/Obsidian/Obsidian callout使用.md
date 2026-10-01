@@ -1,3 +1,23 @@
+---
+🌻日期🌻: 2024-04-09
+🌙星期🌙: 星期二
+⌚️时间⌚️: 09:17:00
+tags:
+  - obsidian
+  - callout
+  - 样式
+---
+
+# Obsidian Callout 使用指南
+
+Callout 是 Obsidian 中用于突出显示重要内容的块级元素，支持多种样式和自定义配置。
+
+## 相关笔记
+
+- [[一些小技巧|Obsidian 使用技巧]]
+
+---
+
 ## 实现callout
 
 > [!Note|aside-l] 这是标题

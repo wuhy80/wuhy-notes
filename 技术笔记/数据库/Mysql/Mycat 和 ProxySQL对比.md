@@ -65,7 +65,7 @@ tags:
 
 # 如何使用 ProxySQL 实现负载均衡
 
-要实现 **主库既支持读也支持写，而从库只支持读** 的配置，你需要调整 **ProxySQL** 的配置，使得主库既能处理写请求（`INSERT`、`UPDATE` 等），也能处理读取请求（`SELECT`），而从库只能处理读取请求（`SELECT`）。
+要实现 **主库既支持读也支持写，而从库只支持读** 的配置，需要把写请求固定到主库，并把读请求路由到一个同时包含主库和从库的读主机组。示例中的密码和服务地址均为占位符，生产环境应使用最小权限账号和 Secret。
 
 ### 关键点：
 - **主库**：处理读写请求。
@@ -100,26 +100,23 @@ data:
     mysql_servers = (
       # 主库配置，支持读写操作
       { address = "mysql-master-service:3306", port = 3306, hostgroup = 0, max_connections = 100 },
-      # 从库配置，只支持读操作
+      # 主库同时加入读主机组，使 SELECT 也可以落到主库
+      { address = "mysql-master-service:3306", port = 3306, hostgroup = 1, max_connections = 100 },
+      # 从库只加入读主机组
       { address = "mysql-slave-service:3306", port = 3306, hostgroup = 1, max_connections = 100 }
     )
 
     # 配置用户，设置默认的主库和从库
     mysql_users = (
-      { username = "root", password = "root_password", default_hostgroup = 0, active = 1 }
+      { username = "app_user", password = "<从 Secret 注入的密码>", default_hostgroup = 0, active = 1 }
     )
 
     # SQL 路由规则：
-    # 1. 所有写操作（INSERT、UPDATE、DELETE）都路由到主库（hostgroup = 0）
-    # 2. 只读操作（SELECT）路由到主库和从库（hostgroup = 0 和 hostgroup = 1）
-    mysql_query_rules = (
-      # 路由所有的 SELECT 查询到主库和从库
-      { rule_id = 1, active = 1, match_pattern = "^SELECT", destination_hostgroup = 0, flagIN = 0 },
-      { rule_id = 2, active = 1, match_pattern = "^SELECT", destination_hostgroup = 1, flagIN = 0 },
-      
-      # 路由所有的写操作（INSERT、UPDATE、DELETE）到主库
-      { rule_id = 3, active = 1, match_pattern = "^(INSERT|UPDATE|DELETE)", destination_hostgroup = 0, flagIN = 0 }
-    )
+      # SELECT 路由到读主机组（hostgroup = 1），其中包含主库和从库
+      mysql_query_rules = (
+      { rule_id = 1, active = 1, match_pattern = "^\\s*SELECT", destination_hostgroup = 1, apply = 1 },
+      { rule_id = 2, active = 1, match_pattern = "^\\s*(INSERT|UPDATE|DELETE|REPLACE|BEGIN|COMMIT|ROLLBACK)", destination_hostgroup = 0, apply = 1 }
+      )
 ```
 
 #### 3. **解析配置内容**
@@ -128,11 +125,11 @@ data:
   - `mysql-master-service`：主库服务，配置为 `hostgroup = 0`，支持读写。
   - `mysql-slave-service`：从库服务，配置为 `hostgroup = 1`，只支持读取。
   
-- **`mysql_users`**：定义了一个用户 `root`，它的默认 `hostgroup` 是 `0`，即主库。这个用户可以通过 ProxySQL 连接到数据库，读取或写入。
+- **`mysql_users`**：示例使用应用账号，默认主机组为 `0`。不要在 ConfigMap 中保存 root 密码或生产明文凭据；ProxySQL 支持使用 MySQL 认证哈希，具体格式以目标版本文档为准。
 
 - **`mysql_query_rules`**：
-  - `rule_id = 1` 和 `rule_id = 2`：`SELECT` 查询被路由到主库和从库。这样主库可以处理读请求，而从库也可以处理读请求。
-  - `rule_id = 3`：所有的写操作（如 `INSERT`、`UPDATE`、`DELETE`）都被路由到主库（`hostgroup = 0`）。
+  - `rule_id = 1`：`SELECT` 查询进入读主机组（`hostgroup = 1`），由该组中的主库和从库按 ProxySQL 的调度策略分担。
+  - `rule_id = 2`：写操作和事务控制语句进入主库（`hostgroup = 0`）。复杂 SQL、事务内读写一致性还需要额外的会话规则。
 
 #### 4. **更新 ProxySQL 配置**
 
@@ -149,22 +146,25 @@ data:
    然后执行以下 SQL 来更新配置：
 
    ```sql
-   -- 更新 mysql_servers 配置
-   INSERT INTO mysql_servers (hostgroup_id, hostname, port) VALUES (0, 'mysql-master-service', 3306);
-   INSERT INTO mysql_servers (hostgroup_id, hostname, port) VALUES (1, 'mysql-slave-service', 3306);
+    -- 更新 mysql_servers 配置
+    INSERT INTO mysql_servers (hostgroup_id, hostname, port) VALUES (0, 'mysql-master-service', 3306);
+    INSERT INTO mysql_servers (hostgroup_id, hostname, port) VALUES (1, 'mysql-master-service', 3306);
+    INSERT INTO mysql_servers (hostgroup_id, hostname, port) VALUES (1, 'mysql-slave-service', 3306);
 
    -- 更新 mysql_users 配置
-   INSERT INTO mysql_users (username, password, default_hostgroup) VALUES ('root', 'root_password', 0);
+    INSERT INTO mysql_users (username, password, default_hostgroup) VALUES ('app_user', '<password-or-hash>', 0);
 
    -- 更新 mysql_query_rules 配置
-   INSERT INTO mysql_query_rules (active, match_pattern, destination_hostgroup) VALUES (1, '^SELECT', 0);
-   INSERT INTO mysql_query_rules (active, match_pattern, destination_hostgroup) VALUES (1, '^SELECT', 1);
-   INSERT INTO mysql_query_rules (active, match_pattern, destination_hostgroup) VALUES (1, '^(INSERT|UPDATE|DELETE)', 0);
+    INSERT INTO mysql_query_rules (rule_id, active, match_pattern, destination_hostgroup, apply) VALUES (1, 1, '^\\s*SELECT', 1, 1);
+    INSERT INTO mysql_query_rules (rule_id, active, match_pattern, destination_hostgroup, apply) VALUES (2, 1, '^\\s*(INSERT|UPDATE|DELETE|REPLACE|BEGIN|COMMIT|ROLLBACK)', 0, 1);
 
    -- 让配置生效
    LOAD MYSQL SERVERS TO RUNTIME;
    LOAD MYSQL USERS TO RUNTIME;
-   LOAD MYSQL QUERY RULES TO RUNTIME;
+    LOAD MYSQL QUERY RULES TO RUNTIME;
+    SAVE MYSQL SERVERS TO DISK;
+    SAVE MYSQL USERS TO DISK;
+    SAVE MYSQL QUERY RULES TO DISK;
    ```
 
 #### 5. **部署 ProxySQL**
@@ -188,12 +188,13 @@ spec:
     spec:
       containers:
       - name: proxysql
-        image: proxysql/proxysql
+        image: proxysql/proxysql:2.6.0
         ports:
           - containerPort: 6033 # MySQL 端口
           - containerPort: 6032 # Admin 端口
         volumeMounts:
-          - mountPath: /etc/proxysql
+          - mountPath: /etc/proxysql.cnf
+            subPath: proxysql.cnf
             name: proxysql-config
       volumes:
         - name: proxysql-config
@@ -249,6 +250,6 @@ mysql -h proxysql-service -P 3306 -u root -p
 
 ### 总结
 
-- 通过更新 ProxySQL 配置文件，你可以将 **主库配置为支持读写操作**，并将 **从库配置为只读**。
-- 配置 **`mysql_query_rules`** 来控制读写请求的路由，使得 **写请求只路由到主库**，**读请求路由到主库和从库**。
+- 通过更新 ProxySQL 配置文件，可以将 **写请求固定到主库**，并让读主机组中的主库和从库共同承担读请求。
+- 配置 **`mysql_query_rules`** 时要设置唯一的匹配顺序和 `apply=1`；事务内读写一致性、复制延迟和故障切换不能仅靠两条正则规则解决。
 - 使用 Kubernetes `ConfigMap` 来管理 ProxySQL 配置，确保配置与容器的生命周期一致。

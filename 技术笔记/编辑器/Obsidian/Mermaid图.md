@@ -1,7 +1,28 @@
+---
+🌻日期🌻: 2024-04-28
+🌙星期🌙: 星期日
+⌚️时间⌚️: 22:00:00
+tags:
+  - obsidian
+  - mermaid
+  - 绘图
+---
 
-https://coffeetea.top/zh/markdown/mermaid.html
-Mermaid 画流程图
+# Mermaid 图表绘制
 
+Mermaid 是 Obsidian 内置支持的图表绘制语言，可以用代码方式创建流程图、序列图、甘特图等多种图表。
+
+## 参考资源
+
+- [Mermaid 画流程图教程](https://coffeetea.top/zh/markdown/mermaid.html)
+
+## 相关笔记
+
+- [[绘图相关/00 Obsidian有哪些绘图功能|Obsidian 绘图功能概览]]
+
+---
+
+## 基础示例
 
 ```mermaid
 sequenceDiagram

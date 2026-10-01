@@ -4,6 +4,85 @@
 ⌚️时间⌚️: 18:20:32
 tags: 
 ---
+# 如何在 MAC 环境安装 zsh
+
+```
+# 使用 Gitee 镜像安装
+sh -c "$(curl -fsSL https://gitee.com/mirrors/oh-my-zsh/raw/master/tools/install.sh)"
+
+## 更换主题（改变视觉外观）
+# 添加 Homebrew 国内镜像（如果还没配置）
+export HOMEBREW_BREW_GIT_REMOTE="https://mirrors.ustc.edu.cn/brew.git"
+export HOMEBREW_CORE_GIT_REMOTE="https://mirrors.ustc.edu.cn/homebrew-core.git"
+
+# 使用 brew 安装 starship
+brew install starship
+
+# 然后初始化
+echo 'eval "$(starship init zsh)"' >> ~/.zshrc
+source ~/.zshrc
+
+## 安装必备插件（增强功能）
+# 安装 zsh-autosuggestions（命令建议）
+git clone https://gitee.com/mirrors/zsh-autosuggestions.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+
+# 安装 zsh-syntax-highlighting（语法高亮）
+git clone https://gitee.com/mirrors/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+
+code ~/.zshrc # 用 VS Code 打开，或者用 nano ~/.zshrc
+plugins=(
+    git
+    zsh-autosuggestions
+    zsh-syntax-highlighting
+)
+source ~/.zshrc
+```
+
+# 如何在 Ubuntu 上面安装 zsh
+```bash
+# 更换 Ubuntu 软件源为国内镜像（如阿里云）
+sudo sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list
+sudo sed -i 's/security.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list
+
+# 安装必要依赖
+sudo apt update && sudo apt install -y curl git zsh
+
+# 使用 Gitee 镜像安装 oh-my-zsh
+sh -c "$(curl -fsSL https://gitee.com/mirrors/oh-my-zsh/raw/master/tools/install.sh)" --unattended
+
+# 将 zsh 设为默认 shell
+chsh -s $(which zsh)
+
+# 使用国内镜像安装 Starship（通过脚本）
+# 如果以下方式不可用，可以尝试手动下载二进制文件
+curl -o /tmp/starship.tar.gz -L "https://cdn.jsdelivr.net/gh/starship/starship@latest/x86_64-unknown-linux-gnu/starship-x86_64-unknown-linux-gnu.tar.gz"
+tar -xzf /tmp/starship.tar.gz -C /tmp
+sudo install -m 755 /tmp/starship /usr/local/bin/starship
+rm /tmp/starship.tar.gz /tmp/starship
+
+# 或者使用备用下载地址（清华源）
+# curl -o /tmp/starship.tar.gz -L "https://mirrors.tuna.tsinghua.edu.cn/github-release/starship/starship/LatestRelease/starship-x86_64-unknown-linux-gnu.tar.gz"
+
+# 初始化 Starship
+echo 'eval "$(starship init zsh)"' >> ~/.zshrc
+
+# 安装必备插件
+# 1. zsh-autosuggestions（命令建议）
+git clone https://gitee.com/mirrors/zsh-autosuggestions.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+
+# 2. zsh-syntax-highlighting（语法高亮）
+git clone https://gitee.com/mirrors/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+
+# 配置插件
+# 使用 sed 命令自动修改配置文件
+sed -i 's/^plugins=(.*)$/plugins=(git zsh-autosuggestions zsh-syntax-highlighting)/' ~/.zshrc
+
+# 应用配置
+source ~/.zshrc
+
+echo "安装完成！请重新启动终端或执行 'exec zsh' 使配置生效"
+```
+
 # 离线安装 OhMyZsh
 从你的截图中可以看到，运行 `install.sh` 脚本时尝试克隆 Oh My Zsh 仓库失败。这是因为离线环境无法访问互联网。
 

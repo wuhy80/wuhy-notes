@@ -1,99 +1,107 @@
+---
+cssclasses:
+  - home-dashboard
+aliases:
+  - 首页
+  - 工作台
+updated: 2026-08-09
+---
 
-[[开发计划]]
-[[客户档案]]
+> [!hero] 今日工作台
+> 先处理任务和收件箱，再进入项目与知识沉淀。
+> [[我的任务]] · [[任务管理/TaskInbox|任务收件箱]] · [[Inbox/待整理|待整理]] · [[我的日记|日记总览]] · [[Home-分析面板|分析面板]]
 
-| 快捷键功能  | 快捷键              | 功能说明                                                                                                  |
-| ------ | ---------------- | ----------------------------------------------------------------------------------------------------- |
-| 定位当前文件 | Alt-Shift-Q      | 文件列表: 在文件列表中显示当前文件                                                                                    |
-| 提交所有记录 | Alt-Q            | commit all changes                                                                                    |
-| 打开调试窗口 | Ctrl + Shift + i | Obsidian 是基于 Electron 开发的，所以可以打开调试窗口，类似于 Chrome 的调试窗口<br>也可以通过 View > Toggle Developer Tools 进行打开<br> |
-|        |                  |                                                                                                       |
+## 今日聚焦
 
-# 仓库概要
-```dataviewjs
-var i = [dv.pages().length,dv.pages(`"我的日记"`).length,dv.pages(`"技术笔记"`).length,
-         dv.pages().file.etags.distinct().length]
-dv.paragraph(`总共有 **${i[0]}** 个文件`)
-dv.paragraph(`其中==日记== **${i[1]}** 篇，==技术笔记== **${i[2]}** 篇`)
-dv.paragraph(`==标签== **${i[3]}**个`)
+> [!focus] 我的任务
+> ```dataview
+> TASK
+> FROM ""
+> WHERE file.path = "我的任务.md" AND !completed
+> LIMIT 6
+> ```
 
+> [!inbox] 收件箱
+> ```dataview
+> TASK
+> FROM ""
+> WHERE (file.path = "任务管理/TaskInbox.md" OR file.path = "Inbox/待整理.md") AND !completed
+> LIMIT 6
+> ```
 
-```
+## 快速入口
 
-# 最近创建
-```dataview
-table WITHOUT ID 
-  file.path as "路径", 
-  file.ctime as "创建时间",
-  file.link as "文件链接"
-from !"template" and !"Excalidraw"
-sort file.ctime desc
-limit 20
-```
+> [!tip] 日常管理
+> [[我的任务]] · [[任务管理/TaskInbox|任务收件箱]] · [[Inbox/待整理|待整理]] · [[我的日记|日记总览]]
 
-# 仓库内容
-```dataviewjs
-// 基于文件夹聚类所有的标签。
-for (let group of dv.pages("").filter(p => p.file.folder != "").groupBy(p => p.file.folder.split("/")[0])){
-  let datas=dv.pages(`"${group.key}"`).file.tags.distinct().map(t => {return `[${t}](${t})`}).array()
-  let lens=datas.length
-dv.paragraph(`#### ${group.key} (${lens})`);
+> [!info] 知识沉淀
+> [[技术笔记/技术笔记|技术]] · [[技术笔记/算法/算法学习导航|算法]] · [[编程语言/README|语言]] · [[Golang编程/README|Go]] · [[Rust编程/README|Rust]] · [[大模型/00-大模型学习导航|大模型]] · [[Ontology/README|Ontology]] · [[读书笔记/读书列表|读书]] · [[网址收藏/_index|网址]]
 
-  dv.paragraph(
-    datas.sort().join(" | "));
-}
-```
+> [!note] 环境与工具
+> [[技术笔记/虚拟机/Hyper-V Ubuntu开发环境|Ubuntu 虚拟机]] · [[技术笔记/虚拟机/Gitea私有Git服务|Gitea 私有 Git]] · [[个人信息/网站账号|网站账号]]
 
+> [!tip]- 常用快捷键
+> | 功能 | 快捷键 | 说明 |
+> |:---|:---:|:---|
+> | 定位当前文件 | `Alt+Shift+Q` | 在文件列表中显示当前文件 |
+> | 提交所有记录 | `Alt+Q` | Git 提交并推送所有更改 |
+> | 快速捕获 | `Ctrl+I` | 快速记录想法到收件箱 |
+> | 打开日记 | `Ctrl+D` | 打开今日日记 |
+> | 调试窗口 | `Ctrl+Shift+I` | 打开开发者工具 |
 
+---
 
-```contributionGraph
-title: Contributions
-graphType: default
-dateRangeValue: 360
-dateRangeType: LATEST_DAYS
-startOfWeek: 1
-showCellRuleIndicators: true
-titleStyle:
-  textAlign: left
-  fontSize: 18px
-  fontWeight: normal
-dataSource:
-  type: PAGE
-  value: ""
-  dateField: {}
-fillTheScreen: false
-enableMainContainerShadow: false
-cellStyleRules: []
+## 最近动态
 
-```
+> [!stream] 最近编辑
+> ```dataview
+> TABLE WITHOUT ID
+>   file.link as "文件",
+>   file.folder as "位置",
+>   dateformat(file.mtime, "MM-dd HH:mm") as "最近更新"
+> FROM !"template" AND !"Excalidraw" AND !"附件"
+> WHERE file.name != "Home" AND file.name != "Home-分析面板" AND file.name != "CLAUDE" AND file.name != "AGENTS"
+> SORT file.mtime DESC
+> LIMIT 8
+> ```
 
-```dataviewjs
-let la = Array()
-let da = Array()
-for(let i of dv.pages().groupBy(p=>p.file.folder.split("/")[0]))
-{
-	if(i.key === "") {
-	    continue;
-	}
-	la.push(i.key);
-	let n = dv.pages(`"${i.key}"`).length;
-	da.push(n);
-}
+> [!journal] 最近日记
+> ```dataview
+> TABLE WITHOUT ID
+>   file.link as "日记",
+>   dateformat(file.mtime, "MM-dd HH:mm") as "更新"
+> FROM "我的日记"
+> WHERE regexmatch("^\\d{4}-\\d{2}-\\d{2}$", file.name)
+> SORT file.name DESC
+> LIMIT 4
+> ```
 
-dv.paragraph(`\`\`\`chart
-type: pie
-labels: [${la}]
-series:
-- title: none
-  data: [${da}]
-width: 50%
-legendPosition: left
-labelColors: true
-\`\`\``);
-```
+---
 
+## 当前推进
 
+> [!project] 项目文档
+> ```dataview
+> TABLE WITHOUT ID
+>   file.link as "项目文档",
+>   dateformat(file.mtime, "MM-dd HH:mm") as "更新"
+> FROM "专项项目"
+> SORT file.mtime DESC
+> LIMIT 6
+> ```
 
-```tagcloud
-shape: pentagon
-```
+> [!research] 技术与大模型
+> ```dataview
+> TABLE WITHOUT ID
+>   file.link as "笔记",
+>   file.folder as "位置",
+>   dateformat(file.mtime, "MM-dd HH:mm") as "更新"
+> FROM "技术笔记" OR "大模型" OR "Ontology"
+> SORT file.mtime DESC
+> LIMIT 6
+> ```
+
+---
+
+> [!abstract] 深入入口
+> [[Home-分析面板|分析面板]] · [[技术笔记/技术笔记|技术知识]] · [[大模型/00-大模型学习导航|大模型学习]] · [[Ontology/README|Ontology]]

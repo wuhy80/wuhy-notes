@@ -2,7 +2,9 @@
 🌻日期🌻: 2024-04-28
 🌙星期🌙: 星期日
 ⌚️时间⌚️: 22:29:34
-tags: 
+tags:
+  - 编辑器/Obsidian
+  - 插件/Dataview
 ---
 # Dataview 中的 Metadata 元数据
 对于 Dataview 来说，它无法直接查询文档中的内容，只能查询有索引的内容。文件中只有元数据和隐式字段是具有索引的，简单的介绍一下元数据与隐式字段：
@@ -12,7 +14,7 @@ tags:
 文件的隐式字段：文件中还有一些已经自动有索引的内容，比如文件的名字，文件的创建时间、修改时间等，我们称之为文件的隐式字段。他们也是能够被 Dataview 检索到的。
 
 ## 代码
-```
+```dataview
 TABLE this
 WHERE file = this.file
 ```
@@ -55,8 +57,8 @@ LIMIT 1
 ![image.png](https://wuhy-1258420163.cos.ap-shanghai.myqcloud.com/obsidian/images/2024/04/202405021024790.png)
 
 # Dataview 中的 Metadata 的数据类型
-Field Name 属性名
-我们为文件添加元数据后，不一定会采用我们给定的格式，它会在内部（不会显示）自动对 Field Name 值进行一定修改，以保证格式统一。
+## Field Name 属性名
+我们为文件添加元数据后，不一定会完全按输入格式保存。Dataview 会在内部（不会直接显示）对 Field Name 值做一定规范化，以保证格式统一。
 
 > [!tip] Field Name 值自动修改规则
 > 如果有粗体、斜体等格式，格式会被擦除，变成普通文本；
@@ -70,6 +72,6 @@ Field Name 属性名
 | **basic**        | basic                              | 去掉粗体              |
 | Basic            | `Basic` 或 `basic` （不能是 `BaSic` 之类） | 增加了小写             |
 | basic field      | basic-field                        | 用 - 替换空格          |
-| **Bold Field**   | bold-key                           | 去掉粗体，并替换空格，同时全部小写 |
+| **Bold Field**   | bold-field                         | 去掉粗体，并替换空格，同时全部小写 |
 
 

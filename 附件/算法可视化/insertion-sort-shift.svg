@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="320" viewBox="0 0 960 320" role="img" aria-label="插入排序移动元素动画">
+  <defs>
+    <style>
+      .bg { fill: #f7f4ea; }
+      .title { font: 700 24px 'Segoe UI', 'Microsoft YaHei', sans-serif; fill: #22333b; }
+      .note { font: 500 14px 'Segoe UI', 'Microsoft YaHei', sans-serif; fill: #5c677d; }
+      .label { font: 600 16px 'Segoe UI', 'Microsoft YaHei', sans-serif; fill: #355070; }
+      .box { fill: #fffdf7; stroke: #355070; stroke-width: 2; rx: 12; ry: 12; }
+      .num { font: 700 20px 'Consolas', 'JetBrains Mono', monospace; fill: #1d3557; text-anchor: middle; dominant-baseline: middle; }
+      .sorted { fill: #caffbf; }
+      .key { fill: #ffd6a5; }
+      .moved { fill: #bde0fe; }
+      .frame { opacity: 0; }
+    </style>
+  </defs>
+  <rect class="bg" x="0" y="0" width="960" height="320"/>
+  <text class="title" x="32" y="40">插入排序：把当前元素插进左边已经有序的区域</text>
+
+  <g class="frame">
+    <set attributeName="opacity" to="1" begin="0s" dur="2.2s" fill="freeze"/>
+    <set attributeName="opacity" to="0" begin="2.2s" fill="freeze"/>
+    <text class="note" x="32" y="78">Step 1: 当前处理 key = 1，左边 [2,4,5,6] 已经有序。</text>
+    <g transform="translate(164,144)">
+      <rect class="box sorted" x="0" y="0" width="84" height="56"/><text class="num" x="42" y="28">2</text>
+      <rect class="box sorted" x="92" y="0" width="84" height="56"/><text class="num" x="134" y="28">4</text>
+      <rect class="box sorted" x="184" y="0" width="84" height="56"/><text class="num" x="226" y="28">5</text>
+      <rect class="box sorted" x="276" y="0" width="84" height="56"/><text class="num" x="318" y="28">6</text>
+      <rect class="box key" x="368" y="0" width="84" height="56"/><text class="num" x="410" y="28">1</text>
+      <rect class="box" x="460" y="0" width="84" height="56"/><text class="num" x="502" y="28">3</text>
+    </g>
+  </g>
+
+  <g class="frame">
+    <set attributeName="opacity" to="1" begin="2.2s" dur="2.2s" fill="freeze"/>
+    <set attributeName="opacity" to="0" begin="4.4s" fill="freeze"/>
+    <text class="note" x="32" y="78">Step 2: 从右往左比较，所有比 key 大的元素统一右移一格。</text>
+    <g transform="translate(164,144)">
+      <rect class="box sorted" x="0" y="0" width="84" height="56"/><text class="num" x="42" y="28">2</text>
+      <rect class="box moved" x="92" y="0" width="84" height="56"/><text class="num" x="134" y="28">4</text>
+      <rect class="box moved" x="184" y="0" width="84" height="56"/><text class="num" x="226" y="28">5</text>
+      <rect class="box moved" x="276" y="0" width="84" height="56"/><text class="num" x="318" y="28">6</text>
+      <rect class="box key" x="368" y="-74" width="84" height="56"/><text class="num" x="410" y="-46">1</text>
+      <rect class="box" x="460" y="0" width="84" height="56"/><text class="num" x="502" y="28">3</text>
+      <text class="label" x="220" y="96">右移</text>
+      <text class="label" x="314" y="96">右移</text>
+      <text class="label" x="406" y="96">右移</text>
+    </g>
+  </g>
+
+  <g class="frame">
+    <set attributeName="opacity" to="1" begin="4.4s" dur="2.2s" fill="freeze"/>
+    <set attributeName="opacity" to="0" begin="6.6s" fill="freeze"/>
+    <text class="note" x="32" y="78">Step 3: 找到空位后，把 key 放进去，左边有序区扩大一格。</text>
+    <g transform="translate(164,144)">
+      <rect class="box key" x="0" y="0" width="84" height="56"/><text class="num" x="42" y="28">1</text>
+      <rect class="box sorted" x="92" y="0" width="84" height="56"/><text class="num" x="134" y="28">2</text>
+      <rect class="box sorted" x="184" y="0" width="84" height="56"/><text class="num" x="226" y="28">4</text>
+      <rect class="box sorted" x="276" y="0" width="84" height="56"/><text class="num" x="318" y="28">5</text>
+      <rect class="box sorted" x="368" y="0" width="84" height="56"/><text class="num" x="410" y="28">6</text>
+      <rect class="box" x="460" y="0" width="84" height="56"/><text class="num" x="502" y="28">3</text>
+    </g>
+  </g>
+
+  <g class="frame">
+    <set attributeName="opacity" to="1" begin="6.6s" dur="2.8s" fill="freeze"/>
+    <set attributeName="opacity" to="0" begin="9.4s" fill="freeze"/>
+    <text class="note" x="32" y="78">Step 4: 每一轮只做一件事，把一个新元素插入到左边已排序区的正确位置。</text>
+    <g transform="translate(164,144)">
+      <rect class="box sorted" x="0" y="0" width="84" height="56"/><text class="num" x="42" y="28">1</text>
+      <rect class="box sorted" x="92" y="0" width="84" height="56"/><text class="num" x="134" y="28">2</text>
+      <rect class="box sorted" x="184" y="0" width="84" height="56"/><text class="num" x="226" y="28">4</text>
+      <rect class="box sorted" x="276" y="0" width="84" height="56"/><text class="num" x="318" y="28">5</text>
+      <rect class="box sorted" x="368" y="0" width="84" height="56"/><text class="num" x="410" y="28">6</text>
+      <rect class="box key" x="460" y="0" width="84" height="56"/><text class="num" x="502" y="28">3</text>
+    </g>
+    <text class="label" x="166" y="236">已排序区域</text>
+    <text class="label" x="624" y="236">下一轮待插入元素</text>
+  </g>
+</svg>

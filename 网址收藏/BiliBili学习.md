@@ -4,9 +4,14 @@
 ⌚️时间⌚️: 17:38:23
 tags: 
 ---
-# 计算机
-## 算法
-> [!tip] https://www.bilibili.com/video/BV1Rh4y1R79E?p=1&vd_source=844054d6293010e5e0095549e25192be
+
+# BiliBili 学习
+
+## 计算机
+
+### 算法
+
+> [!note] [数据结构教程（24 集）](https://www.bilibili.com/video/BV1Rh4y1R79E?p=1&vd_source=844054d6293010e5e0095549e25192be)
 > 国外油管上高质量《数据结构》教程，Google顶尖程序员亲授，完全深度详细讲解，一共 24 集
 
 

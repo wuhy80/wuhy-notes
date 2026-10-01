@@ -1,6 +1,15 @@
 
+# Windows 安装与 Go 客户端示例
+
 [InfluxData Downloads](https://www.influxdata.com/downloads/)
 下载 Influx 数据库，Windows 下载链接  https://dl.influxdata.com/influxdb/releases/influxdb2-2.7.5-windows.zip 。下载完成后解压缩即可通过命令行打开
+
+首次启动后在 `http://127.0.0.1:8086/` 完成初始化，示例中的 URL、组织、Bucket 和 Token 都是占位符。生产环境应启用 HTTPS，并通过环境变量或密钥管理系统提供 Token，不要将真实 Token 写入笔记或代码仓库。
+
+```powershell
+$env:INFLUX_URL = "https://influx.example.com"
+$env:INFLUX_TOKEN = "<token-from-secret-store>"
+```
 
 https://docs.influxdata.com/influxdb/v2/get-started/
 InfluxDB 的官方站点
@@ -14,14 +23,16 @@ package main
 import (
     "context"
     "fmt"
+    "os"
     "time"
 
     "github.com/influxdata/influxdb-client-go/v2"
 )
 
 func main() {
-    // Create a new client using an InfluxDB server base URL and an authentication token
-    client := influxdb2.NewClient("http://localhost:8086", "my-token")
+    // 示例凭据仅作占位；生产环境请从环境变量或密钥管理系统读取，并优先使用 HTTPS。
+    client := influxdb2.NewClient(os.Getenv("INFLUX_URL"), os.Getenv("INFLUX_TOKEN"))
+    defer client.Close()
     // Use blocking write client for writes to desired bucket
     writeAPI := client.WriteAPIBlocking("my-org", "my-bucket")
     // Create point using full params constructor
@@ -30,7 +41,9 @@ func main() {
         map[string]interface{}{"avg": 24.5, "max": 45.0},
         time.Now())
     // write point immediately
-    writeAPI.WritePoint(context.Background(), p)
+    if err := writeAPI.WritePoint(context.Background(), p); err != nil {
+        panic(err)
+    }
     // Create point using fluent style
     p = influxdb2.NewPointWithMeasurement("stat").
         AddTag("unit", "temperature").
@@ -89,5 +102,3 @@ https://www.123pan.com/s/gAEZVv-aXKeh.html
 
 
 ![image.png](https://wuhy-1258420163.cos.ap-shanghai.myqcloud.com/obsidian/images/2024/group_1/202404281156863.png)
-
-

@@ -26,17 +26,17 @@ Description=kubelet: The Kubernetes Node Agent
 Documentation=https://kubernetes.io/docs/home/
 Wants=network-online.target
 After=network-online.target
+StartLimitIntervalSec=0
 
 [Service]
 ExecStart=/usr/bin/kubelet
 Restart=always
-StartLimitInterval=0
 RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
 ```
-Drop In 配置 `/etc/systemd/system/kubelet.service.d` 
+Drop In 配置 `/etc/systemd/system/kubelet.service.d/10-kubeadm.conf`
 ```ini
 # Note: This dropin only works with kubeadm and kubelet v1.11+
 [Service]
@@ -51,6 +51,5 @@ ExecStart=
 ExecStart=/usr/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_CONFIG_ARGS $KUBELET_KUBEADM_ARGS $KUBELET_EXTRA_ARGS
 ```
 
-上面的配置会导致 ps aux 看到的 kubelet 是这样的 `/usr/bin/kubelet --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --config=/var/lib/kubelet/config.yaml --container-runtime=remote --container-runtime-endpoint=unix:///var/run/containerd/containerd.sock --pod-infra-container-image=zhanwan.com:5000/pause:3.7`
-
+应用 Drop-in 后先执行 `sudo systemctl daemon-reload && sudo systemctl restart kubelet`。在 Kubernetes 1.27 及更高版本中，`--container-runtime=remote` 和 `--pod-infra-container-image` 已移除，运行时通过 CRI 的 `containerRuntimeEndpoint` 和 kubeadm 生成的配置管理；只有 1.26 及更早版本才可能在进程参数中看到这两个参数。可用 `systemctl cat kubelet`、`ps -ef | grep '[k]ubelet'` 验证最终配置。
 

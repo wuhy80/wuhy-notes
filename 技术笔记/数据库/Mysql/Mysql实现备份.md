@@ -4,7 +4,7 @@
 ⌚️时间⌚️: 18:17:08
 tags: 
 ---
-为了实现 MySQL 主备复制（实时同步），可以使用 `mysqldump` 或 `mysqlpump` 进行全量备份，然后启用 binlog 做实时同步。这种方法确保备库从主库获取最新的更改，实现高可用性和数据一致性。以下是详细步骤：
+为了实现 MySQL 主备复制（实时同步），可以使用 `mysqldump`（或 MySQL Shell）进行带日志坐标的全量备份，然后启用 binlog 做实时同步。`mysqlpump` 不提供与 `mysqldump --master-data` 等价的通用日志坐标选项，不能直接套用下面的复制初始化步骤。
 
 ### 1. 配置主库（Master）
 
@@ -30,26 +30,25 @@ sudo systemctl restart mysql
 在主库上创建一个用于复制的用户，并赋予 REPLICATION SLAVE 权限：
 
 ```sql
-CREATE USER 'repl'@'%' IDENTIFIED BY 'your_password';
-GRANT REPLICATION SLAVE ON *.* TO 'repl'@'%';
-FLUSH PRIVILEGES;
+CREATE USER 'repl'@'10.%' IDENTIFIED BY 'your_password';
+GRANT REPLICATION REPLICA ON *.* TO 'repl'@'10.%';
+-- MySQL 5.7 或更早版本使用 REPLICATION SLAVE；按备库网段收紧来源地址
 ```
 
 ### 3. 进行全量备份
 
-使用 `mysqldump` 或 `mysqlpump` 进行全量备份，并包含 master 数据库的位置。
+使用 `mysqldump` 进行全量备份，并包含 source 的 binlog 位置。
 
 #### 使用 `mysqldump`
 
 ```bash
-mysqldump -u root -p --all-databases --single-transaction --master-data=2 > all_databases_backup.sql
+mysqldump -u root -p --all-databases --single-transaction --source-data=2 > all_databases_backup.sql
 ```
 
-#### 使用 `mysqlpump`
+MySQL 5.7/8.0.22 及更早版本使用同义的 `--master-data=2`。
 
-```bash
-mysqlpump -u root -p --all-databases --single-transaction --include-master-logs > all_databases_backup.sql
-```
+> [!warning] 备份一致性
+> 只有在备份包含准确的 binlog 文件和位置（或 GTID 集合）时，备库才能从正确位置开始复制；导入后应先确认坐标，再执行复制初始化。
 
 ### 4. 配置备库（Slave）
 
@@ -82,18 +81,18 @@ mysql -u root -p < all_databases_backup.sql
 在备库上执行以下命令，配置主从复制。使用全量备份文件中的 binlog 文件名和位置：
 
 ```sql
-CHANGE MASTER TO 
-MASTER_HOST='master_host_ip',
-MASTER_USER='repl',
-MASTER_PASSWORD='your_password',
-MASTER_LOG_FILE='mysql-bin.000001',  # 替换为备份文件中的文件名
-MASTER_LOG_POS=107;                 # 替换为备份文件中的位置
+CHANGE REPLICATION SOURCE TO
+SOURCE_HOST='master_host_ip',
+SOURCE_USER='repl',
+SOURCE_PASSWORD='your_password',
+SOURCE_LOG_FILE='mysql-bin.000001',  -- 替换为备份文件中的文件名
+SOURCE_LOG_POS=107;                 -- 替换为备份文件中的位置
 ```
 
 启动复制：
 
 ```sql
-START SLAVE;
+START REPLICA;
 ```
 
 ### 7. 验证复制状态
@@ -101,14 +100,14 @@ START SLAVE;
 检查复制状态，确保配置正确且复制正在进行：
 
 ```sql
-SHOW SLAVE STATUS\G;
+SHOW REPLICA STATUS\G
 ```
 
 确保以下两行显示为 `Yes`：
 
 ```
-Slave_IO_Running: Yes
-Slave_SQL_Running: Yes
+Replica_IO_Running: Yes
+Replica_SQL_Running: Yes
 ```
 
 ### 8. 日常管理和维护
@@ -117,7 +116,7 @@ Slave_SQL_Running: Yes
 
 ### 总结
 
-通过以上步骤，你可以实现 MySQL 主备复制，确保数据实时同步。这种配置不仅提高了数据的高可用性，还可以作为灾难恢复的一部分。使用 `mysqldump` 或 `mysqlpump` 进行全量备份，然后启用 binlog 做实时同步，可以确保备库与主库保持一致。
+通过以上步骤，你可以实现 MySQL 主备复制，确保数据实时同步。这种配置不仅提高了数据的高可用性，还可以作为灾难恢复的一部分。MySQL 5.7/8.0.22 及更早版本需将 `CHANGE REPLICATION SOURCE TO`、`SOURCE_*` 和 `START REPLICA` 替换为旧版 `CHANGE MASTER TO`、`MASTER_*` 和 `START SLAVE`。
 
 # 用 Go 实现备份
 用 Go 实现 MySQL 主从复制的自动化操作，包括修改配置文件、执行 SQL 语句、以及在主从服务器之间传输数据，可以提高部署和管理的效率。以下是如何用 Go 编写一个自动化脚本，实现上述功能的步骤：
@@ -132,7 +131,7 @@ go get -u github.com/go-sql-driver/mysql
 
 ### 2. 编写自动化脚本
 
-下面是一个完整的 Go 脚本示例，用于配置 MySQL 主从复制。
+下面是一个教学用的 Go 脚本骨架，用于说明调用顺序；生产使用前还应改用安全的进程调用、从密钥管理系统读取密码，并处理 GTID、TLS、超时和幂等性。示例按 MySQL 8.0.23+ 使用 `REPLICA` 命令，旧版本需替换为兼容命令。
 
 #### 主函数和配置结构体
 
@@ -146,7 +145,7 @@ import (
     "log"
     "os"
     "os/exec"
-    "strings"
+    "regexp"
     "time"
 
     _ "github.com/go-sql-driver/mysql"
@@ -205,14 +204,8 @@ func setupMaster(config *Config) error {
     }
     defer db.Close()
 
-    _, err = db.Exec("SET GLOBAL log_bin = 'mysql-bin';")
-    if err != nil {
-        return err
-    }
-    _, err = db.Exec("SET GLOBAL server_id = 1;")
-    if err != nil {
-        return err
-    }
+    // log_bin 和 server_id 是启动时配置，不能通过 SET GLOBAL 动态开启；
+    // 应先修改 my.cnf 并重启实例，再连接执行后续复制步骤。
 
     return nil
 }
@@ -222,7 +215,7 @@ func setupMaster(config *Config) error {
 
 ```go
 func backupDatabase(config *Config) error {
-    backupCmd := fmt.Sprintf("mysqldump -u %s -p%s --single-transaction --all-databases --master-data=2 > %s",
+    backupCmd := fmt.Sprintf("mysqldump -u %s -p%s --single-transaction --all-databases --source-data=2 > %s",
         config.MasterUser, config.MasterPassword, config.BackupFile)
     cmd := exec.Command("bash", "-c", backupCmd)
     cmd.Stdout = os.Stdout
@@ -277,41 +270,50 @@ func setupSlave(config *Config) error {
     binlogFile, binlogPos := parseBinlogInfo(string(backupContent))
 
     // 设置从库
-    changeMasterCmd := fmt.Sprintf("CHANGE MASTER TO MASTER_HOST='%s', MASTER_USER='%s', MASTER_PASSWORD='%s', MASTER_LOG_FILE='%s', MASTER_LOG_POS=%d;",
+    changeMasterCmd := fmt.Sprintf("CHANGE REPLICATION SOURCE TO SOURCE_HOST='%s', SOURCE_USER='%s', SOURCE_PASSWORD='%s', SOURCE_LOG_FILE='%s', SOURCE_LOG_POS=%d;",
         config.MasterHost, config.MasterUser, config.MasterPassword, binlogFile, binlogPos)
     _, err = db.Exec(changeMasterCmd)
     if err != nil {
         return err
     }
-    _, err = db.Exec("START SLAVE;")
+    _, err = db.Exec("START REPLICA;")
     if err != nil {
         return err
     }
 
     // 检查复制状态
     time.Sleep(2 * time.Second)
-    rows, err := db.Query("SHOW SLAVE STATUS;")
+    rows, err := db.Query("SHOW REPLICA STATUS;")
     if err != nil {
         return err
     }
     defer rows.Close()
 
-    var (
-        SlaveIORunning  string
-        SlaveSQLRunning string
-    )
-    for rows.Next() {
-        err := rows.Scan(&SlaveIORunning, &SlaveSQLRunning)
-        if err != nil {
-            return err
-        }
+    columns, err := rows.Columns()
+    if err != nil {
+        return err
     }
+    values := make([]any, len(columns))
+    dest := make([]any, len(columns))
+    for i := range values { dest[i] = &values[i] }
+    if !rows.Next() { return fmt.Errorf("replica status is empty") }
+    if err := rows.Scan(dest...); err != nil { return err }
+    status := make(map[string]string, len(columns))
+    for i, name := range columns { status[name] = sqlValueString(values[i]) }
+    ioRunning := status["Replica_IO_Running"]
+    sqlRunning := status["Replica_SQL_Running"]
 
-    if SlaveIORunning != "Yes" || SlaveSQLRunning != "Yes" {
-        return fmt.Errorf("Replication not running properly: IO running: %s, SQL running: %s", SlaveIORunning, SlaveSQLRunning)
+    if ioRunning != "Yes" || sqlRunning != "Yes" {
+        return fmt.Errorf("replication not running properly: IO running: %s, SQL running: %s", ioRunning, sqlRunning)
     }
 
     return nil
+}
+
+func sqlValueString(value any) string {
+    if bytes, ok := value.([]byte); ok { return string(bytes) }
+    if value == nil { return "" }
+    return fmt.Sprint(value)
 }
 ```
 
@@ -322,13 +324,11 @@ func parseBinlogInfo(backupContent string) (string, int) {
     var binlogFile string
     var binlogPos int
 
-    lines := strings.Split(backupContent, "\n")
-    for _, line := range lines {
-        if strings.Contains(line, "CHANGE MASTER TO MASTER_LOG_FILE") {
-            fmt.Sscanf(line, "-- CHANGE MASTER TO MASTER_LOG_FILE='%s', MASTER_LOG_POS=%d;", &binlogFile, &binlogPos)
-            binlogFile = strings.Trim(binlogFile, "'")
-            break
-        }
+    re := regexp.MustCompile(`(?i)CHANGE (?:MASTER TO|REPLICATION SOURCE TO).*?(?:MASTER|SOURCE)_LOG_FILE='([^']+)'.*?(?:MASTER|SOURCE)_LOG_POS=([0-9]+)`)
+    match := re.FindStringSubmatch(backupContent)
+    if len(match) == 3 {
+        binlogFile = match[1]
+        fmt.Sscanf(match[2], "%d", &binlogPos)
     }
 
     return binlogFile, binlogPos

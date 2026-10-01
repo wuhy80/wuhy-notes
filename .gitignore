@@ -9,3 +9,18 @@
 
 # Ignore Smart Connections folder
 .smart-connections
+
+# Local AI/plugin state and generated caches
+.smart-env/
+.smtcmp_json_db/
+.smtcmp_vector_db.tar.gz
+.trash/
+.claude/
+/temp_api_data.json
+/openrouter_state_of_ai.html
+
+# Private records are intentionally excluded from cloud source control
+/个人信息/
+/投资管理/
+/网址收藏/账号信息.md
+/专项项目/客户档案信息/

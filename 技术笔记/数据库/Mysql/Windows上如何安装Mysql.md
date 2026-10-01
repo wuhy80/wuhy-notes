@@ -1,6 +1,6 @@
 https://dev.mysql.com/downloads/mysql/
 
-# 如何按照 Mysql
+# 如何安装 MySQL
 ## 官网下载mysql安装包
 
 下载地址：[https://dev.mysql.com/downloads/mysql/](https://dev.mysql.com/downloads/mysql/)
@@ -18,7 +18,10 @@ https://dev.mysql.com/downloads/mysql/
 红框部分为初始化密码。
 
 ## 安装服务
-mysqld -install
+```bat
+mysqld --install MySQL
+net start MySQL
+```
 ![](https://img2022.cnblogs.com/blog/1031555/202207/1031555-20220707230122461-80521187.png)
 
 ![](https://img2022.cnblogs.com/blog/1031555/202207/1031555-20220707230242898-2128858070.png)
@@ -30,9 +33,9 @@ mysqld -install
 
 ![](https://img2022.cnblogs.com/blog/1031555/202207/1031555-20220707230534193-969090296.png)
 
-2）修改默认密码
-`alter user` `'root'``@``'localhost'` `identified by` `'abc123'``;`
+2）修改默认密码（请替换为符合密码策略的强密码，不要使用示例值）
+```sql
+ALTER USER 'root'@'localhost' IDENTIFIED BY '<StrongPassword>';
+```
 
 ![](https://img2022.cnblogs.com/blog/1031555/202207/1031555-20220707231004744-176286785.png)
-
-
