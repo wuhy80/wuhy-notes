@@ -54,6 +54,7 @@ foreach ($r in $repos) {
         $lines = @(($out -split "`r?`n") | Where-Object { $_.Trim() })
         $key = $lines | Where-Object { $_ -match 'Permission denied|Authentication failed|fatal:|error:|rejected|non-fast-forward' } | Select-Object -First 1
         $err = if ($key) { $key.Trim() } else { ($lines | Select-Object -First 1).Trim() }
+        $err = $err -replace '^(git|git\.exe)\s*:\s*', ''
         Start-Sleep -Seconds 3
       }
       Write-Log "$($r.Name): push $remote -> $(if ($ok) { '成功' } else { "失败: $err" })"
