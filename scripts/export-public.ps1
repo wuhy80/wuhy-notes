@@ -13,7 +13,7 @@ $Reports  = Join-Path $SiteRoot '_reports'
 # ── 白名单：只有这些目录会被公开 ──
 $PublicDirs = @('技术笔记', '读书笔记', '编程语言', 'Golang编程', 'Rust编程')
 $AttachExt  = @('.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.pdf', '.mp4', '.mp3', '.crx', '.zip', '.xlsx', '.drawio')
-\ = @('技术笔记\\虚拟机', '技术笔记\\安全')
+$ExcludeDirs = @('技术笔记\虚拟机', '技术笔记\安全')
 
 # ── 脱敏规则 ──
 $privIpRe   = '\b(?:10|172\.(?:1[6-9]|2[0-9]|3[01])|192\.168)\.\d{1,3}\.\d{1,3}\b'
@@ -146,13 +146,14 @@ Write-Host "  死链 $($dead.Count) 处" -ForegroundColor Green
 Write-Host "=== 6. 脱敏校验（以下应全部为 0）===" -ForegroundColor Cyan
 $verify = [ordered]@{
   '残留私网IP'   = $privIpRe
-  '残留凭据值'   = $credRe
+    '残留凭据值'   = '(?i)\b(password|passwd|secret|token|api[_-]?key|apikey|access[_-]?key)\b(\s*[:=]\s*)(?!\*\*\*)([^\s`"'',;]+)'
   '残留本人邮箱' = $ownMailRe
 }
+$verifyFiles = @(Get-ChildItem -LiteralPath $Content -Recurse -File -Filter *.md -Force)
 $verifyResult = @{}
 foreach ($k in $verify.Keys) {
   $c = 0
-  foreach ($f in $expFiles) { $c += ([regex]::Matches((Get-Content -LiteralPath $f.FullName -Raw -Encoding UTF8), $verify[$k])).Count }
+  foreach ($f in $verifyFiles) { foreach ($ln in (Get-Content -LiteralPath $f.FullName -Encoding UTF8)) { $c += ([regex]::Matches($ln, $verify[$k])).Count } }
   $verifyResult[$k] = $c
   $color = if ($c -eq 0) { 'Green' } else { 'Red' }
   Write-Host ("  {0,-12} {1}" -f $k, $c) -ForegroundColor $color
