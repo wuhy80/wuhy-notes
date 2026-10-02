@@ -177,6 +177,39 @@ foreach ($f in $expFiles) {
   }
 }
 Write-Host "  附件嵌入改文字 $embedFiles 篇" -ForegroundColor Green
+# cardlink → callout：Quartz 不认识 ```cardlink，会裸露成代码块（url:/title: 全显出来）
+# 只在导出副本里转换，源笔记保持 cardlink，Obsidian 里的 auto-card-link 卡片不受影响
+$cardFiles = 0
+foreach ($f in $expFiles) {
+  $lines = @(Get-Content -LiteralPath $f.FullName -Encoding UTF8)
+  if (-not ($lines -match '^```cardlink')) { continue }
+  $newLines = New-Object System.Collections.ArrayList
+  $i = 0
+  while ($i -lt $lines.Count) {
+    if ($lines[$i].Trim() -eq '```cardlink') {
+      $body = @()
+      $i++
+      while ($i -lt $lines.Count -and $lines[$i].Trim() -ne '```') { $body += $lines[$i]; $i++ }
+      $i++
+      $url = ''; $title = ''; $desc = ''
+      foreach ($b in $body) {
+        if ($b -match '^url:\s*(.+)$') { $url = $Matches[1].Trim().Trim('"') }
+        elseif ($b -match '^title:\s*(.+)$') { $title = $Matches[1].Trim().Trim('"') }
+        elseif ($b -match '^description:\s*(.+)$') { $desc = $Matches[1].Trim().Trim('"') }
+      }
+      if (-not $title) { $title = $url }
+      $title = $title -replace '\]', '\]'
+      [void]$newLines.Add("> [!note] [$title]($url)")
+      if ($desc) { [void]$newLines.Add("> $desc") }
+      continue
+    }
+    [void]$newLines.Add($lines[$i])
+    $i++
+  }
+  Write-Utf8 $f.FullName (($newLines -join "`n") + "`n")
+  $cardFiles++
+}
+Write-Host "  cardlink 转为 callout $cardFiles 篇" -ForegroundColor Green
 Write-Host "=== 4.5 frontmatter 规范化（YAML 不合法会让 Quartz 整体构建失败）===" -ForegroundColor Cyan
 $fmKeyRe = '^(?!(?:https?|ftp|file)$)([A-Za-z_][A-Za-z0-9_\-]*):(\S.*)$'
 $fmLog = New-Object System.Collections.ArrayList
