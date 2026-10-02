@@ -127,6 +127,28 @@ foreach ($f in $expFiles) {
 }
 Write-Host "  共脱敏 $($maskLog.Count) 处，涉及文件 $(($maskLog | ForEach-Object { ($_ -split '\|')[1] } | Sort-Object -Unique).Count) 篇" -ForegroundColor Green
 
+Write-Host "=== 4.5 frontmatter 规范化（YAML 不合法会让 Quartz 整体构建失败）===" -ForegroundColor Cyan
+$fmKeyRe = '^(?!(?:https?|ftp|file)$)([A-Za-z_][A-Za-z0-9_\-]*):(\S.*)$'
+$fmLog = New-Object System.Collections.ArrayList
+$fmBad = New-Object System.Collections.ArrayList
+foreach ($f in $expFiles) {
+  $lines = @(Get-Content -LiteralPath $f.FullName -Encoding UTF8)
+  if ($lines.Count -lt 3 -or $lines[0].Trim() -ne '---') { continue }
+  $end = -1
+  for ($i = 1; $i -lt $lines.Count; $i++) { if ($lines[$i].Trim() -eq '---') { $end = $i; break } }
+  $rel = $f.FullName.Substring($Content.Length + 1)
+  if ($end -lt 0) { [void]$fmBad.Add("$rel   frontmatter 未闭合"); continue }
+  $changed = $false
+  for ($i = 1; $i -lt $end; $i++) {
+    if ($lines[$i] -match $fmKeyRe) {
+      [void]$fmLog.Add("$rel`:$($i+1)  原: $($lines[$i].Trim())")
+      $lines[$i] = $lines[$i] -replace $fmKeyRe, '$1: $2'
+      $changed = $true
+    }
+  }
+  if ($changed) { Write-Utf8 $f.FullName (($lines -join "`n") + "`n") }
+}
+Write-Host "  规范化 $($fmLog.Count) 处；未闭合 $($fmBad.Count) 篇" -ForegroundColor Green
 Write-Host "=== 5. 死链扫描 ===" -ForegroundColor Cyan
 $linkRe = '(?<!!)\[\[([^\]]+)\]\]'
 $dead = New-Object System.Collections.ArrayList
