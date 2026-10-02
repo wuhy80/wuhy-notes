@@ -1,4 +1,4 @@
-# Starts Codex in this Obsidian vault with fewer approval prompts.
+﻿# Starts Codex in this Obsidian vault with fewer approval prompts.
 $ErrorActionPreference = "Stop"
 
 $VaultPath = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path

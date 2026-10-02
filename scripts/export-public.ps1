@@ -12,7 +12,7 @@ $Reports  = Join-Path $SiteRoot '_reports'
 
 # ── 白名单：只有这些目录会被公开 ──
 $PublicDirs = @('技术笔记', '读书笔记', '编程语言', 'Golang编程', 'Rust编程')
-$AttachExt  = @('.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.pdf', '.mp4', '.mp3', '.crx', '.zip', '.xlsx', '.drawio')
+$AttachExt  = @('.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.pdf', '.mp4', '.mp3', '.zip', '.xlsx', '.drawio')   # .crx 已排除：安装包不该公开，且单文件 3MB
 $ExcludeDirs = @('技术笔记\虚拟机', '技术笔记\安全')
 
 # ── 脱敏规则 ──
@@ -149,6 +149,36 @@ foreach ($f in $expFiles) {
   if ($changed) { Write-Utf8 $f.FullName (($lines -join "`n") + "`n") }
 }
 Write-Host "  规范化 $($fmLog.Count) 处；未闭合 $($fmBad.Count) 篇" -ForegroundColor Green
+Write-Host "=== 4.6 生成首页 index.md ===" -ForegroundColor Cyan
+$homePageContent = @(
+  '---',
+  'title: 技术笔记',
+  '---',
+  '',
+  '# 技术笔记',
+  '',
+  '这里是我的技术学习笔记：后端开发、云原生、数据库、算法与编程语言。',
+  '',
+  '## 分区导航',
+  '',
+  '| 分区 | 内容 |',
+  '|---|---|',
+  '| [技术笔记](/技术笔记/) | Kubernetes、Docker、Linux、数据库、网络、编辑器等 |',
+  '| [Golang 编程](/golang编程/) | Go 语言、Gin、GORM、并发与性能 |',
+  '| [读书笔记](/读书笔记/) | 技术书与科普书的阅读记录 |',
+  '| [编程语言](/编程语言/) | 语言特性与对比 |',
+  '| [Rust 编程](/rust编程/) | Rust 学习笔记 |',
+  '',
+  '## 怎么用这个站',
+  '',
+  '- 左上角 **搜索**（Ctrl+K）可全文检索',
+  '- 右上角 **Graph** 看笔记之间的链接关系',
+  '- 每篇笔记右侧有目录与反向链接',
+  '- 暗色/亮色可切换',
+  ''
+) -join "`n"
+Write-Utf8 (Join-Path $Content 'index.md') $homePageContent
+Write-Host "  已生成 content/index.md"
 Write-Host "=== 5. 死链扫描 ===" -ForegroundColor Cyan
 $linkRe = '(?<!!)\[\[([^\]]+)\]\]'
 $dead = New-Object System.Collections.ArrayList
