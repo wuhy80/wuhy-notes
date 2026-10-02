@@ -45,6 +45,10 @@ foreach ($d in $PublicDirs) {
   $files = @(Get-ChildItem -LiteralPath $src -Recurse -File -Filter *.md -Force -ErrorAction SilentlyContinue)
   foreach ($f in $files) {
     $rel = $f.FullName.Substring($src.Length).TrimStart('\')
+    $vaultRel = "$d\$rel"
+    $skip = $false
+    foreach ($x in $ExcludeDirs) { if ($vaultRel -like "$x*") { $skip = $true } }
+    if ($skip) { continue }
     $target = Join-Path $dst $rel
     $tdir = Split-Path $target -Parent
     if (-not (Test-Path -LiteralPath $tdir)) { New-Item -ItemType Directory -Path $tdir -Force | Out-Null }
