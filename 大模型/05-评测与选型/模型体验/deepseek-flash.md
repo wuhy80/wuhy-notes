@@ -35,6 +35,66 @@ params_display: 552B / 16B
 context_display: 1M / 输出 384K
 key_benchmark: DeepSWE 74.2 · Terminal-Bench 2.1 90.6 · HLE 36.8
 verdict: 速度第二快、缓存最便宜；高难推理与长程任务偏弱
+# 评测指标明细；键名对应横评表的「指标」行，未收录的键直接省略
+bench:
+  # ==== Artificial Analysis 同 harness（Intelligence Index v4.3.2，四家可直接横比）====
+  aa_briefcase: 1421
+  aa_gdpval_v21: 1600
+  aa_automationbench: 69
+  aa_terminal_bench_40: 27
+  aa_scicode: 52
+  aa_hle: 39
+  aa_gdp_pdf: 13
+  aa_critpt: 14
+  aa_omniscience: -5
+  aa_lcr: 84
+  aa_input_price_usd: 0.30
+  aa_output_price_usd: 1.20
+  aa_cache_hit_usd: 0.006
+  aa_price_blended: 0.1842
+  aa_cost_index_total: 477
+  aa_output_tokens_per_task: 89
+  aa_reasoning_tokens_per_task: 63
+  aa_index_output_tokens: 253
+  aa_ttft: 0.99
+  aa_time_first_answer: 10.56
+  aa_e2e: 12.96
+  aa_time_per_task: 304.75
+  # ==== 厂商自报 / 其他第三方口径（口径见卡片正文）====
+  eci: 155
+  vals_index: 57.86
+  vals_index_v21: 51.32
+  hle_tools: 63.90
+  gpqa_diamond: 90.90
+  simplebench: 66.70
+  creative_writing: 1540.10
+  mysterymechanism: 21.17
+  terminal_bench_21: 90.60
+  terminal_bench_30: 30
+  deepswe: 74.20
+  nl2repo: 65.40
+  program_bench: 20.30
+  vals_vibe_code_bench: 84.74
+  codeforces: 3471
+  matharena_apex: 65.60
+  proofbench: 54
+  ioi_vals_v2: 40.28
+  agents_last_exam: 31.80
+  automationbench: 54.80
+  finance_agent_v2: 53.48
+  emb_excel: 57.21
+  legal_research: 41.35
+  hlab: 6.67
+  vals_tax_agent: 62.46
+  vals_code_migration: 45.62
+  vals_terminal_bench_science: 15.70
+  cybergym: 88.10
+  sec_bench_pro: 62.80
+  exploitgym: 15.30
+  mmmu_pro: 77
+  babyvision: 89.60
+  chartography: 78.90
+  zerobench_main: 49
 status: draft
 created: 2026-10-02
 updated: 2026-10-02

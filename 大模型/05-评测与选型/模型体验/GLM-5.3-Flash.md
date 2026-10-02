@@ -37,6 +37,65 @@ params_display: 320B / 18B
 context_display: 1M / 输出 128K
 key_benchmark: Terminal-Bench 2.1 84.3 · DeepSWE 63.4 · Toolathlon 78.4
 verdict: 工程交付最完整、每任务成本最低，但输出仅 47 tok/s
+# 评测指标明细；键名对应横评表的「指标」行，未收录的键直接省略
+bench:
+  # ==== Artificial Analysis 同 harness（Intelligence Index v4.3.2，四家可直接横比）====
+  aa_briefcase: 1454
+  aa_gdpval_v21: 1645
+  aa_automationbench: 60
+  aa_terminal_bench_40: 33
+  aa_scicode: 52
+  aa_hle: 40
+  aa_gdp_pdf: 15
+  aa_critpt: 15
+  aa_omniscience: 7
+  aa_lcr: 80
+  aa_input_price_usd: 0.15
+  aa_output_price_usd: 0.50
+  aa_cache_hit_usd: 0.026
+  aa_price_blended: 0.0982
+  aa_cost_index_total: 280
+  aa_output_tokens_per_task: 69
+  aa_reasoning_tokens_per_task: 47
+  aa_index_output_tokens: 181
+  aa_ttft: 3.29
+  aa_time_first_answer: 45.62
+  aa_e2e: 56.20
+  aa_time_per_task: 1064.14
+  # ==== 厂商自报 / 其他第三方口径（口径见卡片正文）====
+  eci: 151.90
+  vals_index: 47.22
+  gdpval_aa_v2: 1773
+  hle_tools: 55.30
+  gpqa_diamond: 90.15
+  simplebench: 55.10
+  arc_agi_1: 91
+  arc_agi_2: 65.83
+  terminal_bench_21: 84.30
+  deepswe: 63.39
+  nl2repo: 56.30
+  toolathlon: 78.40
+  agents_last_exam: 26.30
+  automationbench: 48.80
+  tau3_banking: 47.20
+  finance_agent_v2: 57.85
+  vals_tax_agent: 61.96
+  vals_code_migration: 20.52
+  vals_vibe_code_bench: 30.76
+  vals_terminal_bench_science: 2.86
+  emb_excel: 55.93
+  legal_research: 45.19
+  hlab: 6.67
+  officeqa_pro: 62.40
+  context_arena: 79.45
+  charxiv_rq: 89.40
+  babyvision: 53.40
+  mvvbench: 77.80
+  mmvu: 80.50
+  medscribe: 88.94
+  chartography: 78
+  frontier_math_v2: 55.79
+  proofbench: 21
 status: draft
 created: 2026-10-02
 updated: 2026-10-02

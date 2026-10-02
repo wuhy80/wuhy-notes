@@ -37,6 +37,54 @@ params_display: 180B / 6B
 context_display: 1M / 输出 128K
 key_benchmark: NL2Repo 48.1 · Toolathlon 73.5 · CharXiv 90.6
 verdict: 个人办公体验最好、单机可跑；Agent 落地问题突出
+# 评测指标明细；键名对应横评表的「指标」行，未收录的键直接省略
+bench:
+  # ==== Artificial Analysis 同 harness（Intelligence Index v4.3.2，四家可直接横比）====
+  aa_briefcase: 1588
+  aa_gdpval_v21: 1612
+  aa_automationbench: 56
+  aa_terminal_bench_40: 25
+  aa_scicode: 51
+  aa_hle: 38
+  aa_gdp_pdf: 16
+  aa_critpt: 11
+  aa_omniscience: -10
+  aa_lcr: 80
+  aa_input_price_usd: 0.15
+  aa_output_price_usd: 0.47
+  aa_cache_hit_usd: 0.016
+  aa_price_blended: 0.0882
+  aa_cost_index_total: 363
+  aa_output_tokens_per_task: 108
+  aa_reasoning_tokens_per_task: 72
+  aa_index_output_tokens: 245
+  aa_ttft: 2.46
+  aa_time_first_answer: 39.08
+  aa_e2e: 48.23
+  aa_time_per_task: 1546.44
+  # ==== 厂商自报 / 其他第三方口径（口径见卡片正文）====
+  gpqa_diamond: 91.70
+  swe_bench_pro: 62.50
+  swe_bench_multilingual: 81
+  deepswe: 58.70
+  nl2repo: 48.10
+  livecodebench: 91.90
+  toolathlon: 73.50
+  agents_last_exam: 24.30
+  osworld_2: 52.30
+  tau3_banking: 45.40
+  ifbench: 81.30
+  coworkbench: 73.90
+  jobbench: 55.70
+  androidworld: 84.50
+  mmmu_pro: 79.80
+  charxiv_rq: 90.60
+  mathvision: 90.60
+  mathvision_tools: 95.70
+  realworldqa: 88.50
+  erqa: 72.30
+  vision2web: 64
+  lvbench: 76.60
 status: draft
 created: 2026-10-02
 updated: 2026-10-02
