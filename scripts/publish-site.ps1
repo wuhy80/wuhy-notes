@@ -50,6 +50,26 @@ if (Test-Path -LiteralPath $src) {
   Write-Host "  未找到 site-custom.scss，保留 Quartz 现有样式" -ForegroundColor Yellow
 }
 
+Write-Step "2.2/4 应用站点主题"
+$ThemeName = 'claude-paper'    # 站点主题（@quartz-themes/core 的 theme 选项）
+$CfgPath = Join-Path $Quartz 'quartz.config.yaml'
+$cfgLines = @([System.IO.File]::ReadAllLines($CfgPath, [System.Text.Encoding]::UTF8))
+$cfgOut = New-Object System.Collections.ArrayList
+$inThemeBlock = $false
+$themeFound = $false
+foreach ($cl in $cfgLines) {
+  if ($cl -match 'source:\s*"@quartz-themes/core"') { $inThemeBlock = $true; [void]$cfgOut.Add($cl); continue }
+  if ($inThemeBlock -and $cl -match '^\s+-\s+source:') { $inThemeBlock = $false }
+  if ($inThemeBlock) {
+    if ($cl -match '^\s+enabled:') { [void]$cfgOut.Add('    enabled: true'); continue }
+    if ($cl -match '^\s+theme:') { [void]$cfgOut.Add("      theme: $ThemeName"); $themeFound = $true; continue }
+    if ($cl -match '^\s+themeFonts:') { [void]$cfgOut.Add('      themeFonts: true'); continue }
+  }
+  [void]$cfgOut.Add($cl)
+}
+[System.IO.File]::WriteAllLines($CfgPath, $cfgOut, (New-Object System.Text.UTF8Encoding($false)))
+Write-Host "  主题 = $ThemeName（配置中找到 theme 行: $themeFound）"
+
 Write-Step "2.5/4 校验 frontmatter（YAML 不合法会让构建整体失败）"
 $checker = Join-Path $Vault 'scripts\check-yaml.cjs'
 if (Test-Path -LiteralPath $checker) {
