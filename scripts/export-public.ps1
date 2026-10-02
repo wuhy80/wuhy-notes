@@ -31,7 +31,7 @@ $PublicRootFiles = @()
 # 附件白名单：只发布图片类（自己画的图）。
 # 不发布 PDF / 压缩包 / 安装包 / 音视频：多为第三方版权资料、体积大
 # （实测曾有 8 个行业报告 PDF 共 101 MB，其中 36 MB 那个超过 Cloudflare 单文件 25 MiB 上限）
-$AttachExt   = @('.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp')
+$AttachExt   = @()   # 附件一律不发布（2026-10-02 决定）；笔记里的嵌入会被改写成文字提示
 $AttachMaxMB = 10   # 单个附件体积上限，超过则跳过并记入报告
 $ExcludeDirs = @(
   '技术笔记\虚拟机', '技术笔记\安全',                          # 2026-10-01/02 迁至私密库
@@ -164,6 +164,19 @@ foreach ($f in $expFiles) {
   if ($txt -ne $orig) { Write-Utf8 $f.FullName $txt; $phraseFiles++ }
 }
 Write-Host "  清理内部用语 $phraseFiles 篇" -ForegroundColor Green
+# 附件不发布：把附件嵌入改写成文字提示，避免页面上出现断图/坏链
+$embedFileRe = '!\[\[([^\]]+\.(?:png|jpg|jpeg|gif|svg|webp|pdf|mp4|mp3|zip|crx|xlsx|drawio|csv|docx|pptx))(?:\|[^\]]*)?\]\]'
+$embedFiles = 0
+$embedTextEval = [System.Text.RegularExpressions.MatchEvaluator]{ param($m) '（附件 ' + (($m.Groups[1].Value -split '/')[-1]) + ' 未随站点发布）' }
+foreach ($f in $expFiles) {
+  $txt = [System.IO.File]::ReadAllText($f.FullName, [System.Text.Encoding]::UTF8)
+  if ($txt -match $embedFileRe) {
+    $txt = [regex]::Replace($txt, $embedFileRe, $embedTextEval)
+    Write-Utf8 $f.FullName $txt
+    $embedFiles++
+  }
+}
+Write-Host "  附件嵌入改文字 $embedFiles 篇" -ForegroundColor Green
 Write-Host "=== 4.5 frontmatter 规范化（YAML 不合法会让 Quartz 整体构建失败）===" -ForegroundColor Cyan
 $fmKeyRe = '^(?!(?:https?|ftp|file)$)([A-Za-z_][A-Za-z0-9_\-]*):(\S.*)$'
 $fmLog = New-Object System.Collections.ArrayList
