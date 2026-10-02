@@ -4,35 +4,58 @@
 // 站点自定义样式
 // 源文件：wuhy80_new/scripts/site-custom.scss（纳入 Git 备份）
 // 由 scripts/publish-site.ps1 复制到 quartz/quartz/styles/custom.scss
-// → 不要直接改 quartz 目录里的副本，会被覆盖
+// → 不要直接改 quartz 目录里的副本，重装或发布会被覆盖
 // ============================================================================
 
 // ---------------------------------------------------------------------------
-// 全屏宽度布局
-// Quartz 默认 .page { max-width: 1500px; margin: 0 auto } 会在高分屏上
-// 左右各留出大片空白。这里去掉上限，让整页铺满视口宽度。
+// 全屏宽度（硬要求：无论换哪个主题，都必须铺满视口）
+//
+// 两道阻力：
+//   1. Quartz 基础样式：.page { max-width: calc(1200px + 300px); margin: 0 auto }
+//   2. 主题（@quartz-themes/core 系列）会再设一遍，特异性更高且加载更晚，例如：
+//        div#quartz-root.page div#quartz-body {
+//          max-width: min(100%, calc(1200px + 300px));
+//        }
+// 因此这里用 !important + 高特异性。主题规则均未加 !important，
+// 所以本文件的 !important 规则必定生效（!important 优先于特异性与顺序）。
+// 换主题后若发现又被限宽，先检查新主题是否给宽度加了 !important。
 // ---------------------------------------------------------------------------
-.page {
-  max-width: none;
+
+html body div#quartz-root.page {
+  max-width: none !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 
+html body div#quartz-root.page div#quartz-body {
+  max-width: none !important;
+  width: 100% !important;
+  min-width: 100% !important;
+}
+
+// 桌面宽度：左右侧边栏固定宽度，中间正文列吃掉全部剩余空间
 @media all and (min-width: 1200px) {
-  .page > #quartz-body {
-    // 左右侧边栏固定宽度，中间正文列吃掉全部剩余空间
-    grid-template-columns: 360px minmax(0, 1fr) 360px;
+  html body div#quartz-root.page div#quartz-body {
+    grid-template-columns: 360px minmax(0, 1fr) 360px !important;
   }
 }
 
-// 正文区域用满剩余宽度（覆盖默认的居中限宽）
-.page > #quartz-body .center,
-.page > #quartz-body .center > article {
-  max-width: 100%;
-  min-width: 100%;
+// 正文区域用满剩余宽度（基础样式与主题都可能给它限宽）
+html body div#quartz-root.page div#quartz-body .center,
+html body div#quartz-root.page div#quartz-body .center > article,
+html body div#quartz-root.page .markdown-preview-view,
+html body div#quartz-root.page article {
+  max-width: none !important;
+}
+
+html body div#quartz-root.page div#quartz-body .center {
+  min-width: 100% !important;
 }
 
 // ---------------------------------------------------------------------------
-// 超宽屏的可读性补偿
-// 行宽太大会让视线回扫困难，用略大的行高与段间距缓解
+// 超宽屏可读性补偿：行宽很大时加大行高与段间距，缓解视线回扫
 // ---------------------------------------------------------------------------
 @media all and (min-width: 1800px) {
   article p,
