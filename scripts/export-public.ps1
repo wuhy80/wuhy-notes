@@ -155,7 +155,7 @@ foreach ($f in $expFiles) {
 Write-Host "  共脱敏 $($maskLog.Count) 处，涉及文件 $(($maskLog | ForEach-Object { ($_ -split '\|')[1] } | Sort-Object -Unique).Count) 篇" -ForegroundColor Green
 
 # 清理内部用语：链接修复留下的「私密库：」前缀会暴露库结构
-$internalMap = @{ '私密库：' = ''; '私密库（' = '（'; '私密库' = '内部库'; 'zhanwan_tool' = 'internal_tool'; 'zhanwan_backup' = 'db_backup' }
+$internalMap = @{ '私密库：' = ''; '私密库（' = '（'; '私密库' = '内部库'; 'wuhy80_private' = '内部库'; 'zhanwan' = 'internal'; '知识库双仓库拆分与多机同步' = '知识库运维' }
 $phraseFiles = 0
 foreach ($f in $expFiles) {
   $txt = [System.IO.File]::ReadAllText($f.FullName, [System.Text.Encoding]::UTF8)
