@@ -59,10 +59,16 @@ foreach ($r in $repos) {
     } else {
       $pullOut = (git pull --ff-only $r.Sync $r.Branch 2>&1 | Out-String)
       if ($LASTEXITCODE -ne 0) {
-        Write-Log "$($r.Name): 无法快进（可能与其他机器分叉），本次跳过推送，需人工处理 -> $(First-KeyLine $pullOut 'fatal|error|diverg|reject')"
-        continue
+        $pulled = First-KeyLine $pullOut 'fatal|error|diverg|reject|unable to access'
+        if ($pulled -match 'unable to access|Failed to connect|Could not resolve|timed out|too slow|Connection') {
+          Write-Log "$($r.Name): 拉取失败（网络问题），仍尝试推送 -> $pulled"
+        } else {
+          Write-Log "$($r.Name): 无法快进（与其他机器分叉），本次跳过推送，需人工处理 -> $pulled"
+          continue
+        }
+      } else {
+        Write-Log "$($r.Name): 已从 $($r.Sync)/$($r.Branch) 同步"
       }
-      Write-Log "$($r.Name): 已从 $($r.Sync)/$($r.Branch) 同步"
     }
 
     # 3) 推送到所有远程（不做 force）
