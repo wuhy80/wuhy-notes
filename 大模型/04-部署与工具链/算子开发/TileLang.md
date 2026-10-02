@@ -320,7 +320,7 @@ git config --global url."https://ghproxy.net/https://github.com/".insteadOf "htt
 更稳的方案：
 
 1. **代理 + git 走代理**：`git config --global http.proxy http://127.0.0.1:7890`；注意 `git@github.com:...`（SSH 22 端口）**不吃 http.proxy**，要么给 SSH 配 `ProxyCommand`，要么改用 `ssh.github.com:443`。其他 CLI 用 `HTTPS_PROXY` / `ALL_PROXY`。
-2. **自建 Gitea 做 pull mirror**：让服务器去拉 GitHub，本地只跟 Gitea 说话（见 [[技术笔记/虚拟机/Gitea私有Git服务|Gitea 私有 Git 服务]]），本地完全不需要代理，多设备与 CI 都友好；缺点是不能反向推。
+2. **自建 Gitea 做 pull mirror**：让服务器去拉 GitHub，本地只跟 Gitea 说话（见 私密库：Gitea 私有 Git 服务），本地完全不需要代理，多设备与 CI 都友好；缺点是不能反向推。
 3. **依赖层各自换源**：pip → 清华源；npm → npmmirror；HuggingFace → `hf-mirror.com`（见 [[大模型/04-部署与工具链/HuggingFace/如何在国内使用huggingface|如何在国内使用 HuggingFace]]）。
 
 > [!danger] 已失效的老办法
