@@ -1,4 +1,4 @@
-# check-links.ps1 — 批量检测 URL 存活
+﻿# check-links.ps1 — 批量检测 URL 存活
 # 用法：powershell -NoProfile -ExecutionPolicy Bypass -File scripts\check-links.ps1 -UrlFile <文件> -OutFile <csv>
 # 说明：先用 HEAD(k- L 跟随跳转)，非 2xx/3xx 再用 GET 取前 2KB 复测，
 #       避免把「不支持 HEAD」误判为失效。
