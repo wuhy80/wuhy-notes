@@ -27,6 +27,15 @@ function Write-Step([string]$t) {
   Write-Host "=== $t ===" -ForegroundColor Cyan
 }
 
+Write-Step "0/4 前置检查：确认没有并发的 Quartz 构建/预览进程"
+$serving = @(Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
+  Where-Object { $_.CommandLine -match 'bootstrap-cli\.mjs' })
+if ($serving.Count -gt 0) {
+  $pids = ($serving | ForEach-Object { $_.ProcessId }) -join ', '
+  throw "检测到 Quartz 构建/预览进程仍在运行（PID $pids）。两者会并发写入 public/ 导致产物损坏，请先停止本地预览服务器再发布。"
+}
+Write-Host "  无并发进程，可以安全构建"
+
 Write-Step "1/4 导出公开子集（脱敏 + 审查报告）"
 & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Vault 'scripts\export-public.ps1')
 if ($LASTEXITCODE -ne 0) { throw "导出失败，中止发布" }
@@ -52,6 +61,17 @@ try {
   & $Node 'quartz/bootstrap-cli.mjs' build -d $Content
   if ($LASTEXITCODE -ne 0) { throw "构建失败，中止发布" }
 } finally { Pop-Location }
+
+# 产物完整性校验：绝不允许把残缺构建部署上线
+$PublicDir = Join-Path $Quartz 'public'
+if (-not (Test-Path -LiteralPath (Join-Path $PublicDir 'index.html'))) {
+  throw "构建产物缺少 index.html，中止发布（检查是否有其它进程并发写入 public）"
+}
+$built = @(Get-ChildItem -LiteralPath $PublicDir -Recurse -File -Force)
+if ($built.Count -lt 1000) {
+  throw "构建产物仅 $($built.Count) 个文件，明显不完整，中止发布"
+}
+Write-Host "  产物校验通过：$($built.Count) 个文件 / $([math]::Round((($built | Measure-Object Length -Sum).Sum)/1MB,2)) MB"
 
 Write-Step "4/4 部署到 Cloudflare Pages"
 if ($SkipDeploy) {

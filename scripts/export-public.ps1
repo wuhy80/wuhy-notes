@@ -1,4 +1,4 @@
-﻿# export-public.ps1 — 导出公开子集 + 自动脱敏 + 生成审查报告
+# export-public.ps1 — 导出公开子集 + 自动脱敏 + 生成审查报告
 # 产物：E:\Obsidian\public-site\content\    （只含 .md 与被引用附件，且已脱敏）
 # 报告：E:\Obsidian\public-site\_reports\   （SUMMARY / dead-links / sensitive / masked）
 # 用法：powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-public.ps1
@@ -10,8 +10,24 @@ $SiteRoot = 'E:\Obsidian\public-site'
 $Content  = Join-Path $SiteRoot 'content'
 $Reports  = Join-Path $SiteRoot '_reports'
 
-# ── 白名单：只有这些目录会被公开 ──
-$PublicDirs = @('技术笔记', '读书笔记', '编程语言', 'Golang编程', 'Rust编程')
+# ── 发布范围 ──
+# 原则：只发布技术学习类内容。以下类别不发布（判断记录见运维笔记「展示层」一节）：
+#   · 家庭与个人资料（孩子的学业规划：姓名、学校、录取情况、成绩、家校沟通）
+#   · 公司工作内容（专项项目、网关开发、我的任务）
+#   · 付费课程笔记与第三方文章剪藏（版权）
+#   · 非技术个人兴趣清单
+#   · AI 协作指令文件（CLAUDE.md / AGENTS.md，含内部路径与架构）
+#   · Dataview 仪表盘（Home*.md，静态站不执行 Dataview，会显示成代码）
+$PublicDirs = @(
+  '技术笔记', '大模型', 'Ontology',
+  'Golang编程', 'Rust编程', '编程语言',
+  '读书笔记', '英语学习', '数学学习',
+  '网址收藏', '专项学习'
+)
+# 文件名级排除（任何层级）
+$ExcludeFileNames = @('CLAUDE.md', 'AGENTS.md')
+# 根目录散装笔记一律不发布
+$PublicRootFiles = @()
 $AttachExt  = @('.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.pdf', '.mp4', '.mp3', '.zip', '.xlsx', '.drawio')   # .crx 已排除：安装包不该公开，且单文件 3MB
 $ExcludeDirs = @('技术笔记\虚拟机', '技术笔记\安全')
 
