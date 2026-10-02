@@ -35,7 +35,7 @@
 
 ## Git 与工作区约束
 
-- 当前仓库通常由 Obsidian Git 自动备份，提交信息多为中文时间戳格式。
+- 当前仓库由计划任务 `ObsidianVaultBackup` 配合 `scripts/backup-vaults.ps1` 自动同步到 GitHub 私有仓库（每 30 分钟 + 登录时）；提交信息多为中文时间戳格式。原自托管 Gitea 与 obsidian-git 插件均已停用。
 - 不要回滚、删除或覆盖用户已有改动，尤其是大量 `.smart-env/`、日记、附件和个人信息变更。
 - 执行修改前先确认目标文件内容，避免误改自动生成文件。
 - 当前 `.gitignore` 已排除整个 `.obsidian/`、recent-files 相关路径和 `.smart-connections`；`.smart-env`、`.smtcmp_json_db` 等状态目录未必被排除，且历史上可能已有文件被跟踪，处理前必须以 `git check-ignore` / `git status` 和实际文件为准。

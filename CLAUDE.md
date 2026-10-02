@@ -14,7 +14,11 @@
 
 这是一个**中英双语的 Obsidian 个人知识管理库**，专注于技术文档、项目管理和日常记录。知识库通过 Templater、Dataview 和 QuickAdd 插件实现了复杂的自动化，并通过 Smart Composer 和本地 LLM (Ollama) 集成了 AI 功能。
 
-**自托管 Git 同步**: `http://47.100.85.94:3000/wuhy80/obsidian.git` (Gitea 实例)
+> [!important] 本库已于 2026-10-01 拆分为两个 Git 仓库，2026-10-02 退用原自托管 Gitea
+> - **本目录（主库）** → `https://github.com/wuhy80/obsidian-vault.git`（私有）
+> - **私密库** `E:\Obsidian\wuhy80_private` → `https://github.com/wuhy80/obsidian-private.git`（私有）
+> - 私密库内含：`我的日记/`、`个人信息/`、`投资管理/`、`专项项目/客户档案信息/`、`任务管理/`、`Inbox/`、`网址收藏/账号信息.md`
+> - 完整背景、多机同步与故障处理见 [[技术笔记/版本管理/知识库双仓库拆分与多机同步]]
 
 ## 目录结构与组织
 
@@ -22,12 +26,10 @@
 
 ### 主要文件夹
 
-- **我的日记/** - 按年/月组织的日常日志，包含自动生成的周报/月报/年报
 - **技术笔记/** - 按技术分类的笔记：C++、Golang、Kubernetes、Linux、Python、Vue、数据库、网络等
 - **专项项目/** - 工作项目：AI工作台、KaiwuDB、OAMMP、光闸、协议开发、网关任务等
 - **大模型/** - LLM 研究：AutoGen、Text2SQL、本地部署、模型训练、论文学习
-- **个人信息/** - 个人信息：银行、证书、设备购买记录
-- **任务管理/** - 任务管理，使用 TaskInbox 工作流
+- **（已迁出本库）我的日记/、个人信息/、投资管理/、任务管理/、Inbox/** - 全部位于私密库 `E:\Obsidian\wuhy80_private`，本目录不再包含
 - **template/** - Templater 模板库（见模板系统部分）
 - **Clippings/** - 网页剪藏和保存的文章
 - **Excalidraw/** - 可视化图表和草图
@@ -41,34 +43,37 @@
 
 ## Git 工作流
 
-### 自动备份
+### 自动同步（已不再使用 obsidian-git）
 
-知识库使用 obsidian-git 插件进行自动提交：
-- **快捷键**: `Ctrl+Q`（Home.md 文档中配置为 `Alt+Q`）提交并推送所有更改
-- 自动提交定期运行，带时间戳："自动备份: YYYY-MM-DD HH:mm:ss"
-- 家庭电脑的提交带有"家-"前缀
+> [!warning] obsidian-git 插件已卸载
+> 旧的 obsidian-git 自动备份自 2025-04 起就已失效（插件被卸载），现改用**独立脚本 + Windows 计划任务**。
+
+- **脚本**：`scripts/backup-vaults.ps1`（一次运行同时处理主库与私密库）
+- **计划任务**：`ObsidianVaultBackup`，每 30 分钟 + 每次登录触发
+- **流程**：提交本地改动 → `git fetch` → `git pull --ff-only`（只接受快进）→ 推送到远程
+- **日志**：`E:\Obsidian\_backup\backup.log`（超 1 MB 自动轮转）
+- **手动执行**：`powershell -NoProfile -ExecutionPolicy Bypass -File scripts\backup-vaults.ps1`
+- 提交信息格式沿用历史：主库 `自动备份: YYYY-MM-DD HH:mm:ss`，私密库 `私密备份: ...`
 
 ### Git 配置
 
-**.gitignore 排除**:
-- `.obsidian/workspace.json` - 用户特定的工作区状态
-- `.obsidian/plugins/recent-files-obsidian/` - 最近文件缓存
-- `.smart-connections/` - 向量数据库（因大小原因不版本控制）
-- `/conflict-files-obsidian-git.md` - Git 冲突解决文件
+- **提交邮箱统一为** `384918+wuhy80@users.noreply.github.com`
+  原因：GitHub 账号开启了「阻止命令行推送暴露隐私邮箱」，用真实邮箱推送会被 `GH007` **确定性**拒绝
+- **分支映射**：本地 `master` → 远端 `main`（由 `remote.github.push` 的 refspec 配置）+ `push.default=upstream`
+- **禁止 force push**（仅首次建立仓库时例外）
+- **改写历史前必须先禁用计划任务**：`Disable-ScheduledTask -TaskName ObsidianVaultBackup`，否则并发提交会打断 `filter-repo`
 
-**被跟踪的内容**:
-- 所有 markdown 内容
-- `.obsidian/` 配置（插件、主题、快捷键、设置）
-- 模板文件
-- `.smart-env/` 配置（AI 设置）
+**.gitignore 排除**:
+- `.obsidian/`（整个目录，避免插件内的密钥进入仓库）
+- `.smart-connections/`、`.smart-env/`、`.smtcmp_json_db/`、`.smtcmp_vector_db.tar.gz`
+- `.trash/`、`.claude/`
+- 原有的私密路径规则仍保留作保险（目录已迁出）
 
 ### 提交实践
 
-提交更改时：
 1. 内容更改使用描述性的中文提交信息
-2. 自动备份格式："自动备份: YYYY-MM-DD HH:mm:ss"
-3. 家庭电脑格式："家-自动备份: YYYY-MM-DD HH:mm:ss"
-4. 使用标准 git 命令或 obsidian-git 插件
+2. 自动备份格式：`自动备份: YYYY-MM-DD HH:mm:ss`
+3. 使用 `scripts/backup-vaults.ps1` 或标准 git 命令；**不要**再依赖 obsidian-git
 
 ## 模板系统 (Templater)
 
@@ -184,7 +189,7 @@ dv.pages().file.etags.distinct().length // 唯一标签计数
 
 ## 快捷键
 
-- `Ctrl+Q` / `Alt+Q` - Git 提交并推送（obsidian-git）
+- （已移除）`Ctrl+Q` / `Alt+Q` — 原 obsidian-git 提交快捷键，插件已卸载
 - `Alt+Shift+Q` - 在文件资源管理器中显示活动文件
 - `Ctrl+I` - QuickAdd capture_inbox
 - `Ctrl+D` - 打开每日笔记
@@ -310,10 +315,11 @@ dv.pages().file.etags.distinct().length // 唯一标签计数
 - 状态标签：`#todo`、`#doing`、`#done`
 
 ### Git 卫生
-- 让自动备份处理常规提交
-- 重大更改手动提交
-- 提交大文件前检查 `.gitignore`
+- 常规提交交给计划任务 `ObsidianVaultBackup`（每 30 分钟），无需手动
+- 重大更改可手动提交，提交信息用描述性中文
+- 提交大文件前检查 `.gitignore`；单文件不得超过 100 MB（GitHub 硬限制）
 - 向量数据库（`.smart-connections/`、`.smtcmp_vector_db.tar.gz`）按设计排除
+- **绝不** `git push --force`（首次建立仓库除外）；分叉时按 `pull --rebase` 处理
 
 ## 故障排除
 
@@ -322,9 +328,10 @@ dv.pages().file.etags.distinct().length // 唯一标签计数
 - 验证模板文件存在于 `template/` 文件夹中
 - 检查超时设置（默认：5 秒）
 
-### Git 冲突
-- 检查 `conflict-files-obsidian-git.md` 进行冲突解决
-- 手动解决或使用 obsidian-git 冲突解决
+### Git 分叉 / 冲突
+- 自动脚本只接受快进（`pull --ff-only`）；一旦与其他机器分叉，它会在日志中写明「需人工处理」并**跳过推送**（不会自动合并）
+- 手动处理：`git pull --rebase github main`，再 `git push`
+- 详见 [[技术笔记/版本管理/知识库双仓库拆分与多机同步]]
 
 ### Dataview 查询不工作
 - 验证 Dataview 插件已启用
@@ -345,10 +352,10 @@ dv.pages().file.etags.distinct().length // 唯一标签计数
 ## 架构说明
 
 ### 多设备同步策略
-- 工作电脑的自动 git 提交："自动备份: [timestamp]"
-- 家庭电脑的自动 git 提交："家-自动备份: [timestamp]"
-- 自托管 Gitea 实例以实现完全控制
-- 工作区状态（`.obsidian/workspace.json`）被排除以防止冲突
+- 统一使用 GitHub 私有仓库（原自托管 Gitea 已于 2026-10-02 退用）
+- 每台机器各自运行同一份 `scripts/backup-vaults.ps1` + `ObsidianVaultBackup` 计划任务
+- 换机器前先让当前机器同步一次；新机器先 `git clone`，并把 `user.email` 设为 noreply 地址
+- 工作区状态（整个 `.obsidian/`）被排除以防止冲突
 
 ### AI 上下文管理
 - 向量数据库存储嵌入以进行语义搜索
