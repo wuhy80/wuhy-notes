@@ -120,6 +120,7 @@
 ## QuickAdd 宏系统
 
 **主要捕获命令**: `Ctrl+I` 触发 `capture_inbox` → 捕获到 `Inbox/待整理.md`
+（⚠️ `Inbox/` 已迁至私密库 `E:\Obsidian\wuhy80_private`。在主库触发会把内容写进已被 `.gitignore` 排除的目录，**不会进入备份**，请改用私密库）
 
 ### 可用的 Callout 宏（40+ 种类型）
 
@@ -163,7 +164,7 @@ dv.pages().file.etags.distinct().length // 唯一标签计数
 3. **QuickAdd** - 快速捕获系统
 4. **Calendar** - 日历导航
 5. **Periodic Notes** - 日记/周报/月报自动化
-6. **Obsidian-git** - 自动 git 同步
+6. ~~Obsidian-git~~（**已卸载**）— 自动同步改由 `scripts/backup-vaults.ps1` + 计划任务 `ObsidianVaultBackup` 负责
 
 ### AI 集成
 
@@ -199,17 +200,17 @@ dv.pages().file.etags.distinct().length // 唯一标签计数
 
 ### 日记
 - 格式：`YYYY-MM-DD.md`
-- 位置：`我的日记/YYYY/YYYY-MM/`
+- 位置：`我的日记/YYYY/YYYY-MM/`（**已迁至私密库** `E:\Obsidian\wuhy80_private`）
 - 示例：`我的日记/2025/2025-03/2025-03-25.md`
 
 ### 周报
 - 格式：`第N周.md`
-- 位置：`我的日记/我的周报/YYYY/第N季/`
+- 位置：`我的日记/我的周报/YYYY/第N季/`（已迁至私密库）
 - 示例：`我的日记/我的周报/2024/第2季/第16周.md`
 
 ### 月报
 - 格式：`MM.md`
-- 位置：`我的日记/我的月报/YYYY/`
+- 位置：`我的日记/我的月报/YYYY/`（已迁至私密库）
 - 示例：`我的日记/我的月报/2024/03.md`
 
 ### 技术笔记
@@ -225,14 +226,17 @@ dv.pages().file.etags.distinct().length // 唯一标签计数
 ## 常见任务
 
 ### 创建每日日记
-1. 使用 Calendar 插件或 `Ctrl+D`
+> [!warning] 日记已在私密库
+> 本库不再包含 `我的日记/`。请在私密库 `E:\Obsidian\wuhy80_private` 中创建日记（那边有完整的 `.obsidian/` 配置与模板），本库按 `Ctrl+D` 会生成到已被 `.gitignore` 排除的目录。
+
+1. 在**私密库**中使用 Calendar 插件或 `Ctrl+D`
 2. 文件从 `template/日志模板.md` 自动创建
 3. 从 Hitokoto API 获取名言
 4. 使用页脚链接在日期之间导航
 
 ### 添加快速笔记
 1. 按 `Ctrl+I` 触发 QuickAdd 捕获
-2. 内容附加到 `Inbox/待整理.md`
+2. 内容附加到 `Inbox/待整理.md`（该目录在私密库中）
 3. 定期处理收件箱到适当的文件夹
 
 ### 创建技术文档
@@ -365,8 +369,8 @@ dv.pages().file.etags.distinct().length // 唯一标签计数
 - 数据库以 `.ajson` 格式存储在 `.smart-env/multi/` 中
 
 ### 性能考虑
-- 总知识库大小：~291 MB
-- 832+ markdown 文件
+- 主库工作区大小：约 416 MB（另有一个独立的私密库）
+- git 跟踪文件：841 个（私密库另计）
 - 向量数据库压缩：4.2 MB
 - Dataview 查询自动缓存
 - 图片上传卸载到外部服务器
