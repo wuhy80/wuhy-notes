@@ -1,4 +1,4 @@
-# export-public.ps1 — 导出公开子集 + 自动脱敏 + 生成审查报告
+﻿# export-public.ps1 — 导出公开子集 + 自动脱敏 + 生成审查报告
 # 产物：E:\Obsidian\public-site\content\    （只含 .md 与被引用附件，且已脱敏）
 # 报告：E:\Obsidian\public-site\_reports\   （SUMMARY / dead-links / sensitive / masked）
 # 用法：powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-public.ps1
@@ -29,7 +29,11 @@ $ExcludeFileNames = @('CLAUDE.md', 'AGENTS.md')
 # 根目录散装笔记一律不发布
 $PublicRootFiles = @()
 $AttachExt  = @('.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.pdf', '.mp4', '.mp3', '.zip', '.xlsx', '.drawio')   # .crx 已排除：安装包不该公开，且单文件 3MB
-$ExcludeDirs = @('技术笔记\虚拟机', '技术笔记\安全')
+$ExcludeDirs = @(
+  '技术笔记\虚拟机', '技术笔记\安全',                          # 2026-10-01/02 迁至私密库
+  '专项学习\孩子学业学习规划',                            # 孩子的个人学业资料（姓名/学校/成绩/家校沟通）
+  '专项项目', '极客时间', '浏览剪切', '网络剪切', '网关开发', '网络资料'   # 2026-10-02 迁至私密库
+)
 
 # ── 脱敏规则 ──
 $privIpRe   = '\b(?:10|172\.(?:1[6-9]|2[0-9]|3[01])|192\.168)\.\d{1,3}\.\d{1,3}\b'
