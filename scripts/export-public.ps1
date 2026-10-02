@@ -28,11 +28,16 @@ $PublicDirs = @(
 $ExcludeFileNames = @('CLAUDE.md', 'AGENTS.md')
 # 根目录散装笔记一律不发布
 $PublicRootFiles = @()
-$AttachExt  = @('.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.pdf', '.mp4', '.mp3', '.zip', '.xlsx', '.drawio')   # .crx 已排除：安装包不该公开，且单文件 3MB
+# 附件白名单：只发布图片类（自己画的图）。
+# 不发布 PDF / 压缩包 / 安装包 / 音视频：多为第三方版权资料、体积大
+# （实测曾有 8 个行业报告 PDF 共 101 MB，其中 36 MB 那个超过 Cloudflare 单文件 25 MiB 上限）
+$AttachExt   = @('.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp')
+$AttachMaxMB = 10   # 单个附件体积上限，超过则跳过并记入报告
 $ExcludeDirs = @(
   '技术笔记\虚拟机', '技术笔记\安全',                          # 2026-10-01/02 迁至私密库
   '专项学习\孩子学业学习规划',                            # 孩子的个人学业资料（姓名/学校/成绩/家校沟通）
   '专项项目', '极客时间', '浏览剪切', '网络剪切', '网关开发', '网络资料'   # 2026-10-02 迁至私密库
+  '技术笔记\版本管理\知识库双仓库拆分与多机同步.md'                # 内部运维文档：含内部路径、备份架构、家庭信息，绝不发布
 )
 
 # ── 脱敏规则 ──
@@ -92,17 +97,19 @@ foreach ($f in $expFiles) {
   }
 }
 $attachOk = 0; $attachMiss = @()
+$attachSkip = @()
 foreach ($name in $attachWanted.Keys) {
   $found = Get-ChildItem -LiteralPath $Vault -Recurse -File -Filter $name -Force -ErrorAction SilentlyContinue | Select-Object -First 1
-  if ($found) {
-    $dstDir = Join-Path $Content '附件'
-    if (-not (Test-Path -LiteralPath $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
-    Copy-Item -LiteralPath $found.FullName -Destination (Join-Path $dstDir $name) -Force
-    $attachOk++
-  } else { $attachMiss += $name }
+  if (-not $found) { $attachMiss += $name; continue }
+  if ($found.Length -gt ($AttachMaxMB * 1MB)) { $attachSkip += "$name ($([math]::Round($found.Length/1MB,1)) MB)"; continue }
+  $dstDir = Join-Path $Content '附件'
+  if (-not (Test-Path -LiteralPath $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
+  Copy-Item -LiteralPath $found.FullName -Destination (Join-Path $dstDir $name) -Force
+  $attachOk++
 }
-Write-Host "  已复制 $attachOk 个；缺失 $($attachMiss.Count) 个" -ForegroundColor Green
+Write-Host "  已复制 $attachOk 个；缺失 $($attachMiss.Count) 个；因过大跳过 $($attachSkip.Count) 个" -ForegroundColor Green
 if ($attachMiss.Count) { $attachMiss | ForEach-Object { Write-Host "      缺失：$_" -ForegroundColor Yellow } }
+if ($attachSkip.Count) { $attachSkip | ForEach-Object { Write-Host "      过大跳过：$_" -ForegroundColor Yellow } }
 
 Write-Host "=== 4. 脱敏 ===" -ForegroundColor Cyan
 # 4.1 建立确定性的私网 IP 映射（同一地址每次都映射到同一示例地址）
@@ -147,6 +154,16 @@ foreach ($f in $expFiles) {
 }
 Write-Host "  共脱敏 $($maskLog.Count) 处，涉及文件 $(($maskLog | ForEach-Object { ($_ -split '\|')[1] } | Sort-Object -Unique).Count) 篇" -ForegroundColor Green
 
+# 清理内部用语：链接修复留下的「私密库：」前缀会暴露库结构
+$internalMap = @{ '私密库：' = ''; '私密库（' = '（'; '私密库' = '内部库'; 'zhanwan_tool' = 'internal_tool'; 'zhanwan_backup' = 'db_backup' }
+$phraseFiles = 0
+foreach ($f in $expFiles) {
+  $txt = [System.IO.File]::ReadAllText($f.FullName, [System.Text.Encoding]::UTF8)
+  $orig = $txt
+  foreach ($k in $internalMap.Keys) { $txt = $txt.Replace($k, $internalMap[$k]) }
+  if ($txt -ne $orig) { Write-Utf8 $f.FullName $txt; $phraseFiles++ }
+}
+Write-Host "  清理内部用语 $phraseFiles 篇" -ForegroundColor Green
 Write-Host "=== 4.5 frontmatter 规范化（YAML 不合法会让 Quartz 整体构建失败）===" -ForegroundColor Cyan
 $fmKeyRe = '^(?!(?:https?|ftp|file)$)([A-Za-z_][A-Za-z0-9_\-]*):(\S.*)$'
 $fmLog = New-Object System.Collections.ArrayList

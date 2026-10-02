@@ -50,6 +50,15 @@ if (Test-Path -LiteralPath $src) {
   Write-Host "  未找到 site-custom.scss，保留 Quartz 现有样式" -ForegroundColor Yellow
 }
 
+Write-Step "2.5/4 校验 frontmatter（YAML 不合法会让构建整体失败）"
+$checker = Join-Path $Vault 'scripts\check-yaml.cjs'
+if (Test-Path -LiteralPath $checker) {
+  $out = (& $Node $checker $Content 2>&1 | Out-String)
+  ($out -split "`r?`n") | Where-Object { $_ -match '文件总数|frontmatter' } | ForEach-Object { Write-Host "  $($_.Trim())" }
+  if ($out -match 'frontmatter 出错\s*=\s*[1-9]') { throw "导出内容存在 frontmatter 错误，中止构建" }
+} else {
+  Write-Host "  未找到 check-yaml.cjs，跳过校验" -ForegroundColor Yellow
+}
 Write-Step "3/4 Quartz 构建"
 Push-Location $Quartz
 try {
