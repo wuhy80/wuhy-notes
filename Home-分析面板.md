@@ -36,8 +36,12 @@ const rows = groups.map(([name, folders]) => {
     .length;
   return [name, n];
 });
+const tagSet = new Set();
+for (const p of dv.pages()) {
+  for (const t of p.file.etags) tagSet.add(t);
+}
 rows.push(["全库笔记数", dv.pages().length]);
-rows.push(["标签总数", dv.pages().file.etags.distinct().length]);
+rows.push(["标签总数", tagSet.size]);
 dv.table(["领域 / 指标", "数值"], rows);
 ```
 
@@ -113,7 +117,11 @@ ellipticity: 0.8
 
 ```dataviewjs
 for (let group of dv.pages("").filter(p => p.file.folder != "" && !p.file.folder.startsWith(".")).groupBy(p => p.file.folder.split("/")[0])) {
-  let tags = dv.pages(`"${group.key}"`).file.tags.distinct().sort().array();
+  const tagSet = new Set();
+  for (const p of group.rows) {
+    for (const t of (p.file.tags ?? [])) tagSet.add(t);
+  }
+  const tags = Array.from(tagSet).sort();
   if (tags.length === 0) continue;
   dv.header(4, `${group.key} (${tags.length} 个标签)`);
   dv.paragraph(tags.map(t => `\`${t}\``).join(" "));
