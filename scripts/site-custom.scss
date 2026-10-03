@@ -43,15 +43,26 @@ html body div#quartz-root.page div#quartz-body {
 }
 
 // 正文区域用满剩余宽度（基础样式与主题都可能给它限宽）
-html body div#quartz-root.page div#quartz-body .center,
+//
+// ⚠️ 关键坑：.center 是 content-box，且左右各有 1.5rem(24px) 内边距。
+// 主题（@quartz-themes/core）原本用 min/max-width: calc(100% - 3rem) 给内边距留补偿；
+// 若把它改成 min-width:100% / max-width:none，border box 就会比 grid 轨道宽出 3rem，
+// 右侧被 position:sticky 的右边栏盖住。
+// 实测（2026-10-03，线上站点，1300/1600/2000/2560 四种宽度）：
+//   .center 恒比轨道宽 48px，与右边栏固定重叠 43px，
+//   表现为 callout（Obsidian 卡片）右边框消失、正文末字被压住。
+// 因此必须同时把 .center 设为 border-box，让 padding 计入这 100% 之内。
+html body div#quartz-root.page div#quartz-body .center {
+  box-sizing: border-box !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+}
+
 html body div#quartz-root.page div#quartz-body .center > article,
 html body div#quartz-root.page .markdown-preview-view,
 html body div#quartz-root.page article {
+  box-sizing: border-box !important;
   max-width: none !important;
-}
-
-html body div#quartz-root.page div#quartz-body .center {
-  min-width: 100% !important;
 }
 
 // ---------------------------------------------------------------------------
