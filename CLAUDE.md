@@ -44,17 +44,17 @@
 
 ## Git 工作流
 
-### 自动同步（已不再使用 obsidian-git）
+### 提交与推送（已取消所有自动调度）
 
-> [!warning] obsidian-git 插件已卸载
-> 旧的 obsidian-git 自动备份自 2025-04 起就已失效（插件被卸载），现改用**独立脚本 + Windows 计划任务**。
+> [!important] 2026-10-03 起不再有定时备份
+> Windows 计划任务 `ObsidianVaultBackup` 与 DSH 看板卡的定时**都已停用**（用户明确要求"提交推送也不需要自动"）。
+> **约定：DSH 每次完成改动后顺手提交并推送**，不要指望定时任务兜底。
 
-- **脚本**：`scripts/backup-vaults.ps1`（一次运行同时处理主库与私密库）
-- **计划任务**：`ObsidianVaultBackup`，每 30 分钟 + 每次登录触发
+- **脚本**：`scripts/backup-vaults.mjs`（Node 版，一次处理主库与私密库；等价于 `backup-vaults.ps1`）
 - **流程**：提交本地改动 → `git fetch` → `git pull --ff-only`（只接受快进）→ 推送到远程
 - **日志**：`E:\Obsidian\_backup\backup.log`（超 1 MB 自动轮转）
-- **手动执行**：`powershell -NoProfile -ExecutionPolicy Bypass -File scripts\backup-vaults.ps1`
-- 提交信息格式沿用历史：主库 `自动备份: YYYY-MM-DD HH:mm:ss`，私密库 `私密备份: ...`
+- **手动执行**：`node E:\Obsidian\wuhy80_new\scripts\backup-vaults.mjs`
+- 手动提交用描述性中文信息；脚本自动提交沿用 `自动备份: YYYY-MM-DD HH:mm:ss` / `私密备份: ...`
 
 ### Git 配置
 
@@ -62,7 +62,7 @@
   原因：GitHub 账号开启了「阻止命令行推送暴露隐私邮箱」，用真实邮箱推送会被 `GH007` **确定性**拒绝
 - **分支映射**：本地 `master` → 远端 `main`（由 `remote.github.push` 的 refspec 配置）+ `push.default=upstream`
 - **禁止 force push**（仅首次建立仓库时例外）
-- **改写历史前必须先禁用计划任务**：`Disable-ScheduledTask -TaskName ObsidianVaultBackup`，否则并发提交会打断 `filter-repo`
+- **改写历史前先确认没有并发 git 操作**：计划任务 `ObsidianVaultBackup` 虽已停用，改历史前仍应确认（必要时 `Disable-ScheduledTask -TaskName ObsidianVaultBackup`），否则并发提交会打断 `filter-repo`
 
 **.gitignore 排除**:
 - `.obsidian/`（整个目录，避免插件内的密钥进入仓库）
@@ -74,7 +74,7 @@
 
 1. 内容更改使用描述性的中文提交信息
 2. 自动备份格式：`自动备份: YYYY-MM-DD HH:mm:ss`
-3. 使用 `scripts/backup-vaults.ps1` 或标准 git 命令；**不要**再依赖 obsidian-git
+3. 使用 `scripts/backup-vaults.mjs` 或标准 git 命令；**不要**再依赖 obsidian-git 或任何定时任务
 
 ## 模板系统 (Templater)
 
@@ -165,7 +165,7 @@ dv.pages().file.etags.distinct().length // 唯一标签计数
 3. **QuickAdd** - 快速捕获系统
 4. **Calendar** - 日历导航
 5. **Periodic Notes** - 日记/周报/月报自动化
-6. ~~Obsidian-git~~（**已卸载**）— 自动同步改由 `scripts/backup-vaults.ps1` + 计划任务 `ObsidianVaultBackup` 负责
+6. ~~Obsidian-git~~（**已卸载**）— 提交与推送由 DSH 在完成改动后执行（`scripts/backup-vaults.mjs`），**无定时任务**
 
 ### AI 集成
 
@@ -320,7 +320,7 @@ dv.pages().file.etags.distinct().length // 唯一标签计数
 - 状态标签：`#todo`、`#doing`、`#done`
 
 ### Git 卫生
-- 常规提交交给计划任务 `ObsidianVaultBackup`（每 30 分钟），无需手动
+- 提交与推送由 DSH 在完成改动后顺手执行（`node scripts/backup-vaults.mjs`）；**已无定时任务兜底**
 - 重大更改可手动提交，提交信息用描述性中文
 - 提交大文件前检查 `.gitignore`；单文件不得超过 100 MB（GitHub 硬限制）
 - 向量数据库（`.smart-connections/`、`.smtcmp_vector_db.tar.gz`）按设计排除
@@ -358,7 +358,7 @@ dv.pages().file.etags.distinct().length // 唯一标签计数
 
 ### 多设备同步策略
 - 统一使用 GitHub 私有仓库（原自托管 Gitea 已于 2026-10-02 退用）
-- 每台机器各自运行同一份 `scripts/backup-vaults.ps1` + `ObsidianVaultBackup` 计划任务
+- 每台机器共用同一份 `scripts/backup-vaults.mjs`；**已无计划任务**，需要时手动运行
 - 换机器前先让当前机器同步一次；新机器先 `git clone`，并把 `user.email` 设为 noreply 地址
 - 工作区状态（整个 `.obsidian/`）被排除以防止冲突
 

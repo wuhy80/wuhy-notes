@@ -33,12 +33,12 @@
 
 ## Git 与工作区约束
 
-- 当前仓库由计划任务 `ObsidianVaultBackup` 配合 `scripts/backup-vaults.ps1` 自动同步到 GitHub 私有仓库（每 30 分钟 + 登录时）；提交信息多为中文时间戳格式。原自托管 Gitea 与 obsidian-git 插件均已停用。
+- **本仓库已无自动备份调度**（2026-10-03 起）：Windows 计划任务 `ObsidianVaultBackup` 与 DSH 看板卡的定时**都已停用**。改为**由 DSH 在每次完成改动后顺手提交并推送**；备份脚本 `scripts/backup-vaults.mjs`（Node 版，等价于旧的 `backup-vaults.ps1`）可在需要时手动运行。提交信息用描述性中文。原自托管 Gitea 与 obsidian-git 插件均已停用。
 - 不要回滚、删除或覆盖用户已有改动，尤其是大量 `.smart-env/`、日记、附件和个人信息变更。
 - 执行修改前先确认目标文件内容，避免误改自动生成文件。
 - 当前 `.gitignore` 已排除整个 `.obsidian/`、recent-files 相关路径和 `.smart-connections`；`.smart-env`、`.smtcmp_json_db` 等状态目录未必被排除，且历史上可能已有文件被跟踪，处理前必须以 `git check-ignore` / `git status` 和实际文件为准。
 - 当前 `.gitignore` 实际排除了整个 `.obsidian/`；不要依据 `CLAUDE.md` 中“跟踪 `.obsidian/`”的历史描述修改 Git 规则。
-- 如需提交，内容变更使用描述性的中文提交信息；除非用户明确要求，不主动提交或推送。
+- **提交与推送约定（2026-10-03 起）**：内容变更使用描述性的中文提交信息；**DSH 完成一批改动后顺手提交并推送**（`node scripts/backup-vaults.mjs` 或标准 git 命令），因为已无定时任务兜底。推送前先 `git fetch` + `git pull --ff-only`；**绝不 force push**。
 
 ## Obsidian 内容规范
 

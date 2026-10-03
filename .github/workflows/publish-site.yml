@@ -18,9 +18,8 @@
 name: Publish site
 
 on:
-  # 推送到 main 即自动发布；也可在 Actions 页面手动触发重新发布
-  push:
-    branches: [main]
+  # 只在需要时手动触发（GitHub Actions 页面 Run workflow，或由 DSH 代为触发）。
+  # 刻意不挂 push：发布时机由人决定，避免每次提交都构建一次。
   workflow_dispatch:
 
 # 同一仓库同一时刻只跑一个发布，避免并发写 public/ 造成产物损坏
