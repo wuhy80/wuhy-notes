@@ -5,8 +5,15 @@
 $ErrorActionPreference = 'Stop'
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 
-$Vault    = 'E:\Obsidian\wuhy80_new'
-$SiteRoot = 'E:\Obsidian\public-site'
+# 路径可用环境变量覆盖（供 CI 使用）；未设置时与本地默认值完全一致
+function Get-EnvOr([string]$name, [string]$default) {
+  $v = [Environment]::GetEnvironmentVariable($name)
+  if ([string]::IsNullOrWhiteSpace($v)) { return $default }
+  return $v
+}
+
+$Vault    = Get-EnvOr 'VAULT_DIR' 'E:\Obsidian\wuhy80_new'
+$SiteRoot = Get-EnvOr 'SITE_ROOT' 'E:\Obsidian\public-site'
 $Content  = Join-Path $SiteRoot 'content'
 $Reports  = Join-Path $SiteRoot '_reports'
 

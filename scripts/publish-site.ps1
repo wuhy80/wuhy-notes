@@ -11,12 +11,19 @@ $ErrorActionPreference = 'Stop'
 $env:WRANGLER_SEND_METRICS = 'false'
 $env:GIT_TERMINAL_PROMPT   = '0'
 
-$Vault    = 'E:\Obsidian\wuhy80_new'
-$SiteRoot = 'E:\Obsidian\public-site'
+# 路径可用环境变量覆盖（供 CI 使用）；未设置时与本地默认值完全一致
+function Get-EnvOr([string]$name, [string]$default) {
+  $v = [Environment]::GetEnvironmentVariable($name)
+  if ([string]::IsNullOrWhiteSpace($v)) { return $default }
+  return $v
+}
+
+$Vault    = Get-EnvOr 'VAULT_DIR'   'E:\Obsidian\wuhy80_new'
+$SiteRoot = Get-EnvOr 'SITE_ROOT'   'E:\Obsidian\public-site'
 $Quartz   = Join-Path $SiteRoot 'quartz'
 $Content  = Join-Path $SiteRoot 'content'
-$Node     = 'C:\nvm4w\nodejs\node.exe'
-$Wrangler = 'C:\nvm4w\nodejs\node_modules\wrangler\bin\wrangler.js'
+$Node     = Get-EnvOr 'NODE_EXE'    'C:\nvm4w\nodejs\node.exe'
+$Wrangler = Get-EnvOr 'WRANGLER_JS' 'C:\nvm4w\nodejs\node_modules\wrangler\bin\wrangler.js'
 
 # Cloudflare Pages 项目名（决定网址 https://<项目名>.pages.dev）
 $ProjectName = 'wuhy-notes'
