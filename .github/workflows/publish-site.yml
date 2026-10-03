@@ -18,6 +18,9 @@
 name: Publish site
 
 on:
+  # 推送到 main 即自动发布；也可在 Actions 页面手动触发重新发布
+  push:
+    branches: [main]
   workflow_dispatch:
 
 # 同一仓库同一时刻只跑一个发布，避免并发写 public/ 造成产物损坏
