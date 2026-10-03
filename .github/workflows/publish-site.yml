@@ -2,11 +2,14 @@
 #
 # 设计要点：
 #   · 跑在 windows-latest：runner 自带可用的 PowerShell 与 Node，现有的
-#     export-public.ps1 / publish-site.ps1 原样复用，**脱敏逻辑一行都不用改**（最安全）
+#     export-public.ps1 / publish-site.ps1 原样复用，脱敏逻辑一行都不用改（最安全）
 #   · Quartz 不在本仓库里：按 pin 死的上游提交浅克隆，再叠加本仓库的
 #     scripts/quartz.config.yaml 与 scripts/site-custom.scss
 #   · 凭据只通过 secrets 注入，脚本里不落任何明文
 #   · 先只用 workflow_dispatch 手动触发；跑通后再考虑挂到 push 上
+#
+# 注意：job 级 env 里不能使用 runner 上下文（只支持 github/needs/strategy/matrix/vars/secrets/inputs），
+#       所以站点目录一律从 github.workspace 派生，不使用 runner.temp。
 #
 # 需要预先配置的仓库 secrets：
 #   CLOUDFLARE_API_TOKEN   —— 权限 Account → Cloudflare Pages → Edit
@@ -17,7 +20,7 @@ name: Publish site
 on:
   workflow_dispatch:
 
-# 同一个仓库同一时刻只跑一个发布，避免并发写 public/ 造成产物损坏
+# 同一仓库同一时刻只跑一个发布，避免并发写 public/ 造成产物损坏
 concurrency:
   group: publish-site
   cancel-in-progress: false
@@ -25,12 +28,14 @@ concurrency:
 jobs:
   publish:
     runs-on: windows-latest
+    timeout-minutes: 40
 
     env:
       VAULT_DIR: ${{ github.workspace }}
-      SITE_ROOT: ${{ runner.temp }}\site
-      # Quartz 上游提交（与本机 E:\Obsidian\public-site\quartz 的 HEAD 一致）
+      SITE_ROOT: '${{ github.workspace }}\_site'
+      WRANGLER_DIR: '${{ github.workspace }}\_wrangler'
       QUARTZ_REPO: https://github.com/jackyzha0/quartz.git
+      # Quartz 上游提交（与本机 E:\Obsidian\public-site\quartz 的 HEAD 一致）
       QUARTZ_SHA: 97a2d05f80c4c50534959b1d0d41cc4b3895625e
 
     steps:
@@ -61,7 +66,7 @@ jobs:
         run: |
           Copy-Item "$env:VAULT_DIR\scripts\quartz.config.yaml" "$env:SITE_ROOT\quartz\quartz.config.yaml" -Force
           Copy-Item "$env:VAULT_DIR\scripts\site-custom.scss" "$env:SITE_ROOT\quartz\quartz\styles\custom.scss" -Force
-          "quartz.config.yaml 已叠加"
+          "quartz.config.yaml 与 custom.scss 已叠加"
 
       - name: 5. 安装 Quartz 依赖（含 3 个主题包）与插件
         shell: pwsh
@@ -75,14 +80,14 @@ jobs:
       - name: 6. 隔离安装 wrangler（不污染知识库仓库）
         shell: pwsh
         run: |
-          npm --prefix "$env:RUNNER_TEMP\wrangler" install wrangler@4
+          npm --prefix $env:WRANGLER_DIR install wrangler@4
           if ($LASTEXITCODE -ne 0) { throw "安装 wrangler 失败" }
 
       - name: 7. 导出（含脱敏）→ 套主题 → 构建 → 部署
         shell: pwsh
         env:
           NODE_EXE: node
-          WRANGLER_JS: ${{ runner.temp }}\wrangler\node_modules\wrangler\bin\wrangler.js
+          WRANGLER_JS: '${{ github.workspace }}\_wrangler\node_modules\wrangler\bin\wrangler.js'
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
