@@ -78,3 +78,169 @@ html body div#quartz-root.page article {
     margin-block: 1.1em;
   }
 }
+
+// ===========================================================================
+// 代码块美化
+//
+// 病灶：claude-paper 主题（static/resource-style-*.css，加载顺序在 index-*.css 之后）
+// 同时给三层都加了描边 + 圆角 + 背景：
+//     figure[data-rehype-pretty-code-figure]   ← 外框
+//     pre:has(> code) / pre > code             ← 中框（与 figure 只差 1px，看起来是双线）
+//     body code                                ← 内框（被 pre 的 16px 内边距顶进去）
+// 而主题又给每行 [data-line] 加了 border-left 竖线，于是每个代码块"套了三个框"。
+//
+// 做法：只保留 figure 一层卡片；pre / code 全部去边框、去背景、去圆角；
+//       统一字体（IBM Plex Mono + 中文回退）与字号行高；右上角加语言角标；
+//       行号弱化并去掉逐行竖线；补回代码块上下外边距（基础样式给的是 margin: 0）。
+//
+// 注意：本文件先于主题样式加载，凡是主题也声明过的属性都必须 !important 才能覆盖。
+// ===========================================================================
+
+// 代码字体栈：等宽拉丁在前，中文回退放在 generic monospace 之前。
+// 否则中文字符会落到系统默认 serif（Windows 上是宋体），小字号下很难看。
+$codeFontStack: "IBM Plex Mono", "JetBrains Mono", ui-monospace, SFMono-Regular,
+  "Cascadia Mono", Consolas, "Liberation Mono", "Microsoft YaHei", "PingFang SC",
+  "Noto Sans CJK SC", "Source Han Sans SC", monospace;
+
+// --- 1/7 卡片本体：全站唯一的代码块边框 --------------------------------
+html body article figure[data-rehype-pretty-code-figure] {
+  margin: 1.1rem 0 !important;
+  padding: 0 !important;
+  border: 1px solid var(--claude-paper-border, var(--lightgray)) !important;
+  border-radius: 10px !important;
+  background-color: var(--code-background, var(--lightgray)) !important;
+  box-shadow: 0 1px 2px var(--claude-paper-shadow, rgba(20, 20, 19, 0.06));
+  overflow: hidden !important; // 让滚动内容与角标都收在圆角内
+  position: relative !important; // 语言角标的定位基准
+}
+
+// --- 2/7 pre / code：拆掉主题叠出来的中框与内框 -------------------------
+html body article figure[data-rehype-pretty-code-figure] > pre {
+  margin: 0 !important;
+  padding: 1.55rem 1.15rem 1rem !important; // 顶部多留一点给语言角标
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  position: static !important; // 让 ::before 角标以 figure 为基准，滚动时不跟着走
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  font-family: $codeFontStack !important;
+  font-size: 0.875rem !important;
+  line-height: 1.75 !important;
+  tab-size: 4;
+  scrollbar-width: thin;
+}
+
+html body article figure[data-rehype-pretty-code-figure] > pre > code {
+  display: grid !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important; // 横滚交给 pre，避免两层滚动条
+  font-family: inherit !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+  counter-reset: line !important;
+}
+
+// --- 3/7 行号：弱化，并去掉主题给每行加的竖线 --------------------------
+html body article figure[data-rehype-pretty-code-figure] > pre > code > [data-line] {
+  padding: 0 !important;
+  border-left: 0 !important;
+}
+
+html body article
+  figure[data-rehype-pretty-code-figure]
+  > pre
+  > code
+  > [data-line]::before {
+  content: counter(line) !important;
+  counter-increment: line !important;
+  display: inline-block !important;
+  width: 1.6rem !important; // 1.6rem 足够放下三位数行号
+  margin-right: 1.05rem !important;
+  text-align: right !important;
+  color: var(--claude-paper-ink-tertiary, var(--gray)) !important;
+  opacity: 0.45;
+  font-size: 0.82em !important;
+  user-select: none;
+}
+
+// 逐行高亮（`{1,3-4}` 语法）：用内阴影画左侧强调条，不挤动文字
+html body article
+  figure[data-rehype-pretty-code-figure]
+  > pre
+  > code
+  > [data-line][data-highlighted-line] {
+  background-color: var(--highlight) !important;
+  box-shadow: inset 2px 0 0 var(--tertiary);
+}
+
+// --- 4/7 语言角标：content 直接取 pre 的 data-language -----------------
+html body article figure[data-rehype-pretty-code-figure] > pre[data-language]::before {
+  content: attr(data-language);
+  position: absolute;
+  top: 0.55rem;
+  right: 0.95rem;
+  font-family: $codeFontStack;
+  font-size: 0.64rem;
+  line-height: 1;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--claude-paper-ink-tertiary, var(--gray));
+  opacity: 0.45;
+  pointer-events: none;
+  user-select: none;
+}
+
+// 纯文本代码块不显示角标（"TEXT" 没有信息量），顶部也不留角标高度
+html body article figure[data-rehype-pretty-code-figure] > pre[data-language="text"],
+html body article figure[data-rehype-pretty-code-figure] > pre[data-language="txt"],
+html body article figure[data-rehype-pretty-code-figure] > pre[data-language="plaintext"] {
+  padding-top: 1rem !important;
+}
+
+html body article figure[data-rehype-pretty-code-figure] > pre[data-language="text"]::before,
+html body article figure[data-rehype-pretty-code-figure] > pre[data-language="txt"]::before,
+html body
+  article
+  figure[data-rehype-pretty-code-figure]
+  > pre[data-language="plaintext"]::before {
+  content: none !important;
+}
+
+// --- 5/7 行内代码：去掉方框感，只留底色 --------------------------------
+html body article :not(pre) > code {
+  padding: 0.12em 0.36em !important;
+  border: 0 !important;
+  border-radius: 5px !important;
+  background-color: var(--code-background, var(--lightgray)) !important;
+  font-family: $codeFontStack !important;
+  font-size: 0.86em !important;
+}
+
+// --- 6/7 callout 内的代码块：首尾不要和 callout 内边距叠加 -------------
+html body article .callout-content > figure[data-rehype-pretty-code-figure]:first-child {
+  margin-top: 0 !important;
+}
+
+html body article .callout-content > figure[data-rehype-pretty-code-figure]:last-child {
+  margin-bottom: 0 !important;
+}
+
+// --- 7/7 横向滚动条：细一些，别抢视觉 ----------------------------------
+html body article figure[data-rehype-pretty-code-figure] > pre::-webkit-scrollbar {
+  height: 8px;
+}
+
+html body article figure[data-rehype-pretty-code-figure] > pre::-webkit-scrollbar-thumb {
+  background-color: var(--lightgray);
+  border-radius: 4px;
+}
+
+html body article figure[data-rehype-pretty-code-figure] > pre::-webkit-scrollbar-track {
+  background: transparent;
+}
