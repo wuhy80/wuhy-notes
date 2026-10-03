@@ -1,8 +1,9 @@
 ---
-🌻日期🌻: 2024-05-12
-🌙星期🌙: 星期日
-⌚️时间⌚️: 17:38:23
-tags: 
+tags:
+  - 网址收藏
+type: bookmark
+created: 2024-05-12
+updated: 2026-10-02
 ---
 
 # BiliBili 学习
@@ -12,4 +13,3 @@ tags:
 ### 算法
 
 - [数据结构教程（24 集）](https://www.bilibili.com/video/BV1Rh4y1R79E?p=1&vd_source=844054d6293010e5e0095549e25192be)：国外油管上高质量《数据结构》教程，Google顶尖程序员亲授，完全深度详细讲解，一共 24 集
-

@@ -35,7 +35,7 @@ updated: 2026-08-09
 > 私密库：我的任务 · 任务收件箱 / 待整理 / 日记总览（已迁至私密库 wuhy80_private）
 
 > [!info] 知识沉淀
-> [[技术笔记/技术笔记|技术]] · [[技术笔记/算法/算法学习导航|算法]] · [[编程语言/README|语言]] · [[Golang编程/README|Go]] · [[Rust编程/README|Rust]] · [[大模型/00-大模型学习导航|大模型]] · [[Ontology/README|Ontology]] · [[读书笔记/读书列表|读书]] · [[网址收藏/_index|网址]]
+> [[技术笔记/技术笔记|技术]] · [[技术笔记/算法/算法学习导航|算法]] · [[编程语言/README|语言]] · [[Golang编程/README|Go]] · [[Rust编程/README|Rust]] · [[大模型/00-大模型学习导航|大模型]] · [[Ontology/README|Ontology]] · [[读书笔记/读书列表|读书]] · [[网址收藏|网址]]
 
 > [!note] 环境与工具
 > 私密库：Ubuntu 虚拟机 · Gitea 私有 Git · 网站账号（已迁至私密库）

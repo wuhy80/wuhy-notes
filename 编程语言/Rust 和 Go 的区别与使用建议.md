@@ -458,8 +458,8 @@ Rust 模块：
 
 ## 相关笔记
 
-- [[Rust 编程]]
-- [[Rust 在 Windows 上的 GUI 方案选型]]
-- [[Golang 编程]]
+- [[Rust编程/README|Rust 编程]]
+- [[Rust编程/GUI/Rust 在 Windows 上的 GUI 方案选型|Rust 在 Windows 上的 GUI 方案选型]]
+- [[Golang编程/README|Golang 编程]]
 - [[Go学习路径]]
 
