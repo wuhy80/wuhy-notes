@@ -30,6 +30,7 @@
 - `Home.md`：知识库仪表板，包含 Dataview 统计、贡献图、标签云和最近文件。
 - `我的任务.md`：主要任务跟踪文件。
 - `CLAUDE.md`：更完整的历史协作说明，可作为本文件的补充参考。
+- `scripts/DESIGN.md`：**站点视觉契约**（按 Google Labs 的 DESIGN.md 规范写，含 YAML token + 正文规则）。改动已发布站点（Quartz / `claude-paper` 主题）的**样式、颜色、字体、布局前必读**；Token 源在 `scripts/quartz.config.yaml`，样式实现与实测依据在 `scripts/site-custom.scss`。
 
 ## Git 与工作区约束
 
