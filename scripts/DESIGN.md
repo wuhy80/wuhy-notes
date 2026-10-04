@@ -12,7 +12,6 @@ colors:
   ink-secondary: "#4e4e4e"    # 次要文字
   ink-tertiary: "#b8b8b8"     # 弱化文字（行号、角标）
   border: "#e5e5e5"           # 边框、代码块底色
-  link: "#284b63"             # 链接与强调文字
   accent: "#84a59d"           # 强调色（高亮条、当前态）
   highlight: "#8f9fa926"      # 逐行高亮底色（rgba(143,159,169,.15) 转 hex）
   text-highlight: "#fff23688" # 正文荧光笔
@@ -94,8 +93,8 @@ components:
 
 ## Colors
 
+- `primary` 是**链接与强调文字的专用色**（对应 Quartz 的 `secondary` token），别拿它做大面积填充
 - `ink` / `ink-secondary` / `ink-tertiary` 是三级文字层次，**不要引入第四级**
-- `link` 是链接与强调文字的专用色
 - `accent` 只用于**当前态与高亮条**，不做大面积填充
 - `border` 同时充当**代码块与行内代码的底色**（两者同色，靠圆角与内边距区分）
 - 暗色模式使用 `-dark` 后缀的同名 token，不另造颜色
