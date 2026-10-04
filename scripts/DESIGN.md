@@ -6,6 +6,7 @@ name: 技术笔记站（claude-paper）
 # 本文件是二者的「契约摘要」——只描述，不承载实现。
 colors:
   # 亮色
+  primary: "#284b63"          # 主色：链接与强调文字（与 link 同值）
   surface: "#faf8f8"          # 页面底色
   ink: "#2b2b2b"              # 正文文字
   ink-secondary: "#4e4e4e"    # 次要文字
@@ -60,7 +61,6 @@ spacing:
 components:
   code-block:
     backgroundColor: "{colors.border}"
-    borderColor: "{colors.border}"
     rounded: "{rounded.md}"
     textColor: "{colors.ink}"
   inline-code:
@@ -69,14 +69,19 @@ components:
     textColor: "{colors.ink}"
   code-line-number:
     textColor: "{colors.ink-tertiary}"
-    fontFamily: IBM Plex Mono
+    typography: "{typography.code}"
   code-language-label:
     textColor: "{colors.ink-tertiary}"
-    fontFamily: IBM Plex Mono
+    typography: "{typography.code}"
   link:
-    textColor: "{colors.link}"
+    textColor: "{colors.primary}"
   highlighted-line:
     backgroundColor: "{colors.highlight}"
+  highlight-bar:
+    backgroundColor: "{colors.accent}"
+  mark:
+    backgroundColor: "{colors.text-highlight}"
+    textColor: "{colors.ink}"
 ---
 
 ## Overview
@@ -123,7 +128,7 @@ components:
 
 ## Components
 
-- **代码块**：全站唯一带边框+圆角+底色的卡片
+- **代码块**：全站唯一带边框+圆角+底色的卡片（边框 `1px solid {colors.border}`，底色 `{colors.border}`，圆角 `{rounded.md}`，阴影 `0 1px 2px rgba(20,20,19,0.06)`）
   - 只允许 `figure[data-rehype-pretty-code-figure]` 一层承载边框与背景
   - `pre` 与 `code` 必须透明、无边框、无圆角、无阴影
   - 右上角显示语言角标（`0.64rem`、大写、字距 `0.09em`、透明度 `0.45`）
