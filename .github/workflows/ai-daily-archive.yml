@@ -1,0 +1,98 @@
+# 橘鸦 AI 早报归档 —— 跑在 GitHub Actions 上，不依赖任何本机
+#
+# 为什么搬到 CI：
+#   · 本机是家里的电脑，工作日基本不开机；而 DSH 看板错过的定时触发会被直接丢弃
+#   · Actions 的 cron 由 GitHub 调度，机器关着也照跑
+#   · 脚本本身是幂等回补：扫描最近 30 天，缺哪期补哪期。即使 Actions 被延迟或跳过，
+#     下一次运行会自动补齐，不丢数据
+#
+# 设计要点：
+#   · 不调用任何 AI —— 橘鸦原文自带的「概览」小节被提升为 summary callout，
+#     因此不需要任何 API Key secret
+#   · 只用一个 Node 脚本（.github/scripts/fetch-ai-daily.mjs），无第三方依赖
+#   · 先查本地再发 HTTP：追平之后一次网络请求都不发
+#   · 单次最多写 14 期，从最近往前补
+#   · 定时用 UTC：北京时间 11:00 / 15:00 / 19:00 / 23:00
+#     （GitHub 的 schedule 高峰期可能延迟数分钟到数十分钟，靠回补兜住）
+#
+# 需要的仓库配置：
+#   · Settings → Actions → General → Workflow permissions 选 "Read and write permissions"
+#     （或依赖本文件里的 permissions: contents: write）
+#   · 无需任何 secrets
+
+name: AI 早报归档
+
+on:
+  schedule:
+    # UTC 03/07/11/15 = 北京时间 11:00 / 15:00 / 19:00 / 23:00
+    - cron: "0 3,7,11,15 * * *"
+  # 支持手动触发（Actions 页面 Run workflow，或由 DSH 代为触发）
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "只演练不写盘（dry-run）"
+        type: boolean
+        default: false
+
+# 允许把归档结果推回本仓库
+permissions:
+  contents: write
+
+# 同一时刻只跑一个，避免并发提交冲突
+concurrency:
+  group: ai-daily-archive
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 1. 检出知识库
+        uses: actions/checkout@v4
+
+      - name: 2. 安装 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: 3. 抓取并归档（幂等回补）
+        env:
+          # 显式传工作区，脚本里用 GITHUB_WORKSPACE 定位仓库根
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            node .github/scripts/fetch-ai-daily.mjs --dry-run
+          else
+            node .github/scripts/fetch-ai-daily.mjs
+          fi
+
+      - name: 4. 提交并推送
+        if: ${{ inputs.dry_run != true }}
+        run: |
+          set -e
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -- "大模型/10-新闻/日报"
+
+          if git diff --cached --quiet; then
+            echo "没有新增内容，跳过提交"
+            exit 0
+          fi
+
+          COUNT=$(git diff --cached --name-only | grep -c 'AI 早报.md' || true)
+          git commit -m "AI 早报归档: 新增 ${COUNT} 期（$(date -u +%Y-%m-%d) UTC）"
+          git push
+          echo "已推送"
+
+      - name: 5. 汇总
+        if: always()
+        run: |
+          echo "### AI 早报归档结果" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- 仓库根: \`${{ github.workspace }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- 触发方式: \`${{ github.event_name }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "日报目录当前期数: $(find '大模型/10-新闻/日报' -name '*AI 早报.md' 2>/dev/null | wc -l)" >> "$GITHUB_STEP_SUMMARY"
