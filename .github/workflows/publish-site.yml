@@ -6,7 +6,15 @@
 #   · Quartz 不在本仓库里：按 pin 死的上游提交浅克隆，再叠加本仓库的
 #     scripts/quartz.config.yaml 与 scripts/site-custom.scss
 #   · 凭据只通过 secrets 注入，脚本里不落任何明文
-#   · 先只用 workflow_dispatch 手动触发；跑通后再考虑挂到 push 上
+#   · 触发方式：手动（workflow_dispatch）+ 每天一次定时（见下方 on.schedule）
+#
+# 为什么定时定在 UTC 03:10（北京时间 11:10）：
+#   · 日报归档工作流（ai-daily-archive.yml）在 UTC 03/07/11/15 各跑一次，
+#     而橘鸦 AI 早报实测在北京时间 09:10–11:00 之间发布，所以**拿到当天新一期的
+#     是 UTC 03（北京 11:00）那一次**。
+#   · 留 10 分钟缓冲，避免发布在归档提交落盘之前 checkout。
+#   · 只在 03:10 跑一次而不是跟着四次归档跑：发布要装 Quartz 与主题包再构建，
+#     单次约数分钟，一天四次会明显消耗私有仓库的 Actions 额度（免费额度 2000 分钟/月）。
 #
 # 注意：job 级 env 里不能使用 runner 上下文（只支持 github/needs/strategy/matrix/vars/secrets/inputs），
 #       所以站点目录一律从 github.workspace 派生，不使用 runner.temp。
@@ -18,7 +26,10 @@
 name: Publish site
 
 on:
-  # 只在需要时手动触发（GitHub Actions 页面 Run workflow，或由 DSH 代为触发）。
+  # 每天一次：北京时间 11:10，在日报归档（北京 11:00）之后 10 分钟
+  schedule:
+    - cron: "10 3 * * *"
+  # 也可以随时手动触发（GitHub Actions 页面 Run workflow，或由 DSH 代为触发）。
   # 刻意不挂 push：发布时机由人决定，避免每次提交都构建一次。
   workflow_dispatch:
 
