@@ -1,0 +1,21 @@
+{
+  "name": "obsidian_vault",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wuhy80/obsidian-vault.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/wuhy80/obsidian-vault/issues"
+  },
+  "homepage": "https://github.com/wuhy80/obsidian-vault#readme"
+}

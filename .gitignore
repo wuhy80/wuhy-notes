@@ -1,27 +1,3 @@
-.obsidian\workspace.json
-.obsidian\plugins\recent-files-obsidian\data.json
-/conflict-files-obsidian-git.md
-/.obsidian/plugins/recent-files-obsidian
-/.obsidian/workspace.json
-/.obsidian
-
-
-
-# Ignore Smart Connections folder
-.smart-connections
-
-# Local AI/plugin state and generated caches
-.smart-env/
-.smtcmp_json_db/
-.smtcmp_vector_db.tar.gz
-.trash/
-.claude/
-/temp_api_data.json
-/openrouter_state_of_ai.html
-
-# Private records are intentionally excluded from cloud source control
-/个人信息/
-/投资管理/
-/网址收藏/账号信息.md
-/专项项目/客户档案信息/
-.wrangler/
+# Quartz 本地预览产物（保留 content 源文件）
+_site/quartz/
+_site/
