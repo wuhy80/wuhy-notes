@@ -26,7 +26,7 @@ Docker 的核心配置文件位于 `/etc/docker/daemon.json`。
 ```json
 {
     "registry-mirrors": ["https://ake33s4p.mirror.aliyuncs.com"],
-    "insecure-registries": ["192.0.2.201:5000", "192.0.2.90", "192.0.2.90:80"],
+    "insecure-registries": ["192.0.2.172:5000", "192.0.2.90", "192.0.2.90:80"],
     "exec-opts": ["native.cgroupdriver=systemd"]
 }
 ```

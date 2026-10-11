@@ -12,7 +12,7 @@ tags:
 #!/bin/bash
 
 # 定义变量
-URL="http://192.0.2.201:30012"
+URL="http://192.0.2.211:30012"
 DB="backup"
 BACKUP_DIR="/data/zhanwan_backup/influx_backup"
 

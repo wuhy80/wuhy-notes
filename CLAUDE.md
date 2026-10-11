@@ -15,7 +15,7 @@
 这是一个**中英双语的 Obsidian 个人知识管理库**，专注于技术文档、项目管理和日常记录。知识库通过 Templater、Dataview 和 QuickAdd 插件实现了复杂的自动化，并通过 Smart Composer 和本地 LLM (Ollama) 集成了 AI 功能。
 
 > [!important] 本库已于 2026-10-01 拆分为两个 Git 仓库，2026-10-02 退用原自托管 Gitea
-> - **本目录（主库）** → `https://github.com/wuhy80/obsidian-vault.git`（私有）
+> - **本目录（主库）** → `https://github.com/wuhy80/obsidian-vault.git`（公开）
 > - **私密库** `E:\Obsidian\wuhy80_private` → `https://github.com/wuhy80/obsidian-private.git`（私有）
 > - 私密库内含：`我的日记/`、`个人信息/`、`投资管理/`、`专项项目/客户档案信息/`、`任务管理/`、`Inbox/`、`网址收藏/账号信息.md`、`技术笔记/虚拟机/`、`技术笔记/安全/`、`专项学习/孩子学业学习规划/（原名已脱敏）`、`专项项目/`、`极客时间/`、`浏览剪切/`、`网络剪切/`、`网关开发/`、`网络资料/`、`我的任务.md`
 > - 完整背景、多机同步与故障处理见 [[技术笔记/版本管理/知识库双仓库拆分与多机同步]]

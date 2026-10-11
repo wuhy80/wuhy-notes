@@ -39,24 +39,24 @@ tags:
 ## 集群配置示例
 
 集群包含以下三个节点：
-- **master-one**: 192.0.2.201
-- **master-two**: 192.0.2.201
-- **node-one**: 192.0.2.201
+- **master-one**: 192.0.2.211
+- **master-two**: 192.0.2.214
+- **node-one**: 192.0.2.135
 
-### master-one (192.0.2.201) 的 etcd 启动配置
+### master-one (192.0.2.211) 的 etcd 启动配置
 
 ```bash
-etcd --advertise-client-urls=https://192.0.2.201:2379 \
+etcd --advertise-client-urls=https://192.0.2.211:2379 \
   --cert-file=/etc/kubernetes/pki/etcd/server.crt \
   --client-cert-auth=true \
   --data-dir=/var/lib/etcd \
   --experimental-initial-corrupt-check=true \
-  --initial-advertise-peer-urls=https://192.0.2.201:2380 \
-  --initial-cluster=master-one=https://192.0.2.201:2380 \
+  --initial-advertise-peer-urls=https://192.0.2.211:2380 \
+  --initial-cluster=master-one=https://192.0.2.211:2380 \
   --key-file=/etc/kubernetes/pki/etcd/server.key \
-  --listen-client-urls=https://127.0.0.1:2379,https://192.0.2.201:2379 \
+  --listen-client-urls=https://127.0.0.1:2379,https://192.0.2.211:2379 \
   --listen-metrics-urls=http://127.0.0.1:2381 \
-  --listen-peer-urls=https://192.0.2.201:2380 \
+  --listen-peer-urls=https://192.0.2.211:2380 \
   --name=master-one \
   --peer-cert-file=/etc/kubernetes/pki/etcd/peer.crt \
   --peer-client-cert-auth=true \
@@ -66,21 +66,21 @@ etcd --advertise-client-urls=https://192.0.2.201:2379 \
   --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
 ```
 
-### master-two (192.0.2.201) 的 etcd 启动配置
+### master-two (192.0.2.214) 的 etcd 启动配置
 
 ```bash
-etcd --advertise-client-urls=https://192.0.2.201:2379 \
+etcd --advertise-client-urls=https://192.0.2.214:2379 \
   --cert-file=/etc/kubernetes/pki/etcd/server.crt \
   --client-cert-auth=true \
   --data-dir=/var/lib/etcd \
   --experimental-initial-corrupt-check=true \
-  --initial-advertise-peer-urls=https://192.0.2.201:2380 \
-  --initial-cluster=master-one=https://192.0.2.201:2380,master-two=https://192.0.2.201:2380 \
+  --initial-advertise-peer-urls=https://192.0.2.214:2380 \
+  --initial-cluster=master-one=https://192.0.2.211:2380,master-two=https://192.0.2.214:2380 \
   --initial-cluster-state=existing \
   --key-file=/etc/kubernetes/pki/etcd/server.key \
-  --listen-client-urls=https://127.0.0.1:2379,https://192.0.2.201:2379 \
+  --listen-client-urls=https://127.0.0.1:2379,https://192.0.2.214:2379 \
   --listen-metrics-urls=http://127.0.0.1:2381 \
-  --listen-peer-urls=https://192.0.2.201:2380 \
+  --listen-peer-urls=https://192.0.2.214:2380 \
   --name=master-two \
   --peer-cert-file=/etc/kubernetes/pki/etcd/peer.crt \
   --peer-client-cert-auth=true \
@@ -119,11 +119,11 @@ etcd --advertise-client-urls=https://192.0.2.201:2379 \
 
 ```bash
 etcd --name master-one \
-  --initial-advertise-peer-urls http://192.0.2.201:2380 \
-  --listen-peer-urls http://192.0.2.201:2380 \
-  --advertise-client-urls http://192.0.2.201:2379 \
-  --listen-client-urls http://192.0.2.201:2379 \
-  --initial-cluster master-one=http://192.0.2.201:2380,master-two=http://192.0.2.201:2380,master-three=http://192.0.2.201:2380 \
+  --initial-advertise-peer-urls http://192.0.2.211:2380 \
+  --listen-peer-urls http://192.0.2.211:2380 \
+  --advertise-client-urls http://192.0.2.211:2379 \
+  --listen-client-urls http://192.0.2.211:2379 \
+  --initial-cluster master-one=http://192.0.2.211:2380,master-two=http://192.0.2.214:2380,master-three=http://192.0.2.135:2380 \
   --initial-cluster-state new \
   --data-dir /var/lib/etcd
 ```
@@ -147,11 +147,11 @@ etcd --name master-one \
 
 ```bash
 etcd --name master-one \
-  --initial-advertise-peer-urls http://192.0.2.201:2380 \
-  --listen-peer-urls http://192.0.2.201:2380 \
-  --advertise-client-urls http://192.0.2.201:2379 \
-  --listen-client-urls http://192.0.2.201:2379 \
-  --initial-cluster master-one=http://192.0.2.201:2380 \
+  --initial-advertise-peer-urls http://192.0.2.211:2380 \
+  --listen-peer-urls http://192.0.2.211:2380 \
+  --advertise-client-urls http://192.0.2.211:2379 \
+  --listen-client-urls http://192.0.2.211:2379 \
+  --initial-cluster master-one=http://192.0.2.211:2380 \
   --initial-cluster-state new \
   --data-dir /var/lib/etcd
 ```
@@ -160,11 +160,11 @@ etcd --name master-one \
 
 ```bash
 etcd --name master-two \
-  --initial-advertise-peer-urls http://192.0.2.201:2380 \
-  --listen-peer-urls http://192.0.2.201:2380 \
-  --advertise-client-urls http://192.0.2.201:2379 \
-  --listen-client-urls http://192.0.2.201:2379 \
-  --initial-cluster master-one=http://192.0.2.201:2380,master-two=http://192.0.2.201:2380 \
+  --initial-advertise-peer-urls http://192.0.2.214:2380 \
+  --listen-peer-urls http://192.0.2.214:2380 \
+  --advertise-client-urls http://192.0.2.214:2379 \
+  --listen-client-urls http://192.0.2.214:2379 \
+  --initial-cluster master-one=http://192.0.2.211:2380,master-two=http://192.0.2.214:2380 \
   --initial-cluster-state existing \
   --data-dir /var/lib/etcd
 ```
@@ -173,11 +173,11 @@ etcd --name master-two \
 
 ```bash
 etcd --name master-three \
-  --initial-advertise-peer-urls http://192.0.2.201:2380 \
-  --listen-peer-urls http://192.0.2.201:2380 \
-  --advertise-client-urls http://192.0.2.201:2379 \
-  --listen-client-urls http://192.0.2.201:2379 \
-  --initial-cluster master-one=http://192.0.2.201:2380,master-two=http://192.0.2.201:2380,master-three=http://192.0.2.201:2380 \
+  --initial-advertise-peer-urls http://192.0.2.135:2380 \
+  --listen-peer-urls http://192.0.2.135:2380 \
+  --advertise-client-urls http://192.0.2.135:2379 \
+  --listen-client-urls http://192.0.2.135:2379 \
+  --initial-cluster master-one=http://192.0.2.211:2380,master-two=http://192.0.2.214:2380,master-three=http://192.0.2.135:2380 \
   --initial-cluster-state existing \
   --data-dir /var/lib/etcd
 ```
