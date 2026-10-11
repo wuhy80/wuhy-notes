@@ -43,7 +43,7 @@ Continue 主要有两种使用方式：
       "provider": "openai",
       "model": "deepseek-coder",
       "apiBase": "https://api.deepseek.com",
-      "apiKey": "***REMOVED***",
+      "apiKey": "<填入你的 DeepSeek Key，已脱敏：2026-10-11 检出泄露并作废原值，勿提交真实 Key>",
       "apiType": "openai"
     }
   ],

@@ -15,7 +15,7 @@ tags:
 | Chrome        | `V 1.3.13` | March 21, 2024    | [https://chrome.google.com/webstore/detail/bnnamacamhjbdoimlbkegmbgkekphcbb](https://chrome.google.com/webstore/detail/bnnamacamhjbdoimlbkegmbgkekphcbb)                 |
 | Edge          | `V 1.3.15` | April 18, 2024    | [https://microsoftedge.microsoft.com/addons/detail/bkpoijbobhmbglhjjmnoedomdoabilol](https://microsoftedge.microsoft.com/addons/detail/bkpoijbobhmbglhjjmnoedomdoabilol) |
 
-用户名: wu***@qq.com
+用户名: wu***@qq.com（已脱敏）
 
 
 ## 一些常用的 Chrome 插件
@@ -41,7 +41,7 @@ Chrome 插件列表，尤其是无忧行
 沉浸式翻译	
 自定义 API 接口地址: https://api.chatanywhere.tech
 自定义大模型: gpt-4o-mini
-APIKEY: ***REMOVED***
+APIKEY: sk-***（已脱敏：2026-10-11 检出泄露，原 Key 应作废；新值只存本机/密码管理器，勿再写入本库）
 
 
 

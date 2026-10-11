@@ -8,7 +8,7 @@ const { Packer } = require('docx');
 const args = process.argv.slice(2);
 if (args.length < 3) {
   console.log('使用方法: node generate-software-doc-safe.js <URL> <用户名> <密码>');
-  console.log('示例: node generate-software-doc-safe.js http://192.0.2.11:8648/ ***REMOVED*** ***REMOVED***');
+  console.log('示例: node generate-software-doc-safe.js http://<内网地址>/ <用户名> <密码>');
   process.exit(1);
 }
 

@@ -4,11 +4,11 @@ const path = require('path');
 const { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, ImageRun, TabStopType, TabStopPosition } = require('docx');
 const { Packer } = require('docx');
 
-// 配置
+// 配置：凭据一律从环境变量读取，避免写进仓库
 const CONFIG = {
-  url: 'http://192.0.2.11:8648/',
-  username: '***REMOVED***',
-  password: '***REMOVED***',
+  url: process.env.SOFTDOC_URL || '',
+  username: process.env.SOFTDOC_USER || '',
+  password: process.env.SOFTDOC_PASS || '',
   screenshotDir: path.join(__dirname, '../软著截图'),
   outputDoc: path.join(__dirname, '../软著说明书.docx'),
   viewport: {
@@ -16,6 +16,11 @@ const CONFIG = {
     height: 1080
   }
 };
+
+if (!CONFIG.url || !CONFIG.username || !CONFIG.password) {
+  console.error('缺少配置：请先设置环境变量 SOFTDOC_URL、SOFTDOC_USER、SOFTDOC_PASS（凭据勿写入仓库）');
+  process.exit(1);
+}
 
 // 确保截图目录存在
 if (!fs.existsSync(CONFIG.screenshotDir)) {

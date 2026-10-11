@@ -10,10 +10,14 @@ echo ""
 echo "此脚本将自动登录系统、截图并生成Word文档"
 echo ""
 
-# 配置信息
-URL="http://192.0.2.11:8648/"
-USERNAME="***REMOVED***"
-PASSWORD="***REMOVED***"
+# 配置信息：从环境变量读取（SOFTDOC_URL / SOFTDOC_USER / SOFTDOC_PASS），凭据勿写入仓库
+URL="${SOFTDOC_URL:-}"
+USERNAME="${SOFTDOC_USER:-}"
+PASSWORD="${SOFTDOC_PASS:-}"
+if [ -z "$URL" ] || [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
+  echo "缺少配置：请先设置环境变量 SOFTDOC_URL、SOFTDOC_USER、SOFTDOC_PASS"
+  exit 1
+fi
 
 echo "配置信息："
 echo "  系统地址: $URL"
