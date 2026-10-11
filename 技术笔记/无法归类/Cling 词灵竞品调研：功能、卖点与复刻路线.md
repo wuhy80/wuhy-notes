@@ -126,3 +126,13 @@ status: evergreen
 - 匿词落地页：https://neath.clingword.com/ （产品闭环叙述来源）
 - 用户协议 v3.0：https://doc.clingword.com/docs/Cling-Combined-UserAgreement
 - 备案查询：https://icplishi.com/clingword.com
+
+## 6. 自用版（不做产品，只给自己用）
+
+自用砍掉账号/支付/备案/多端后，剩下三选一：
+
+1. **Anki 直接用（首选试水）**：内置 FSRS；AI 批量生成词表牌组（释义/例句/词根记忆法）导入；AnkiConnect 插件 + 脚本实现摘词入卡；AnkiDroid 免费同步。投入一个晚上。
+2. **自建单机 Web**：FastAPI + SQLite + `py-fsrs` 官方库；两张表（words 讲解缓存 + cards 调度状态）；DeepSeek API 逐词生成讲解并缓存（省钱关键：一词只生成一次）；Windows 摘词用 AutoHotkey 热键 + 浏览器右键扩展；本地 localhost 运行。投入几个晚上，复习界面完全自定义。
+3. **Obsidian 方案**：Spaced Repetition 插件（FSRS）+ 生词卡片笔记 + Web Clipper 剪藏；与现有知识库打通，复习体验稍弱。
+
+决策：先用 Anki 跑一周，不满意再自建。
