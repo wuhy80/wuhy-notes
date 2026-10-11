@@ -10,6 +10,7 @@ tags:
 aliases:
   - Coder-390
   - 赛博治疗完结篇
+  - 赛博治疗（三）
   - Qwen3.8 27B 后训练
 created: 2026-10-11
 updated: 2026-10-11
@@ -23,7 +24,7 @@ status: evergreen
 > **UP 主**：Merkyor
 > **发布**：2026-10-07 ｜ **时长**：约 69 分钟 ｜ **系列**：赛博治疗三部曲第三期（完结篇）
 > **链接**：[Qwen3.8 27B赛博治疗完结篇……后训练全纪实](https://www.bilibili.com/video/BV16VHm6sEYB/)
-> **前作**：[赛博治疗实录](https://www.bilibili.com/video/BV1CCtz6WEvF)（第一期）、[赛博治疗续作](https://www.bilibili.com/video/BV1F5YM6rEaJ)（第二期）
+> **前作**：[[Qwen3.8-27B 赛博治疗实录（一）：三周对症治疗|（一）实录]]、[[Qwen3.8-27B 赛博治疗续作（二）：训练量化部署答疑|（二）续作·答疑]]
 > **模型仓库**：[ModelScope 主仓库](https://www.modelscope.cn/models/Merkyor/Qwen3.8-27B-Coder390-EfficientThink-Opus5.5-GPT6Astra-Grok4.7-DSV4Pro-K3-SFT-RLOO-MTP-DFlash2)（另有 [GGUF 版](https://www.modelscope.cn/models/Merkyor/Qwen3.8-27B-Coder390-EfficientThink-Opus5.5-GPT6Astra-Grok4.7-DSV4Pro-K3-SFT-RLOO-GGUF-NInfer)、[NVFP4 版](https://www.modelscope.cn/models/Merkyor/Qwen3.8-27B-Coder390-EfficientThink-Opus5.5-GPT6Astra-Grok4.7-DSV4Pro-K3-SFT-RLOO-NVFP4-NInfer)）
 
 > [!summary] 一句话总结
@@ -236,6 +237,6 @@ status: evergreen
 ## 参考资料
 
 - 本期视频：[Qwen3.8 27B赛博治疗完结篇……后训练全纪实](https://www.bilibili.com/video/BV16VHm6sEYB/)（Merkyor，2026-10-07）
-- 系列前作：[赛博治疗实录](https://www.bilibili.com/video/BV1CCtz6WEvF)、[赛博治疗续作](https://www.bilibili.com/video/BV1F5YM6rEaJ)
+- 系列笔记：[[Qwen3.8-27B 赛博治疗实录（一）：三周对症治疗|（一）实录]] ｜ [[Qwen3.8-27B 赛博治疗续作（二）：训练量化部署答疑|（二）续作·答疑]]
 - 模型仓库（ModelScope）：[MTP-DFlash2 主仓库](https://www.modelscope.cn/models/Merkyor/Qwen3.8-27B-Coder390-EfficientThink-Opus5.5-GPT6Astra-Grok4.7-DSV4Pro-K3-SFT-RLOO-MTP-DFlash2) ｜ [GGUF-NInfer](https://www.modelscope.cn/models/Merkyor/Qwen3.8-27B-Coder390-EfficientThink-Opus5.5-GPT6Astra-Grok4.7-DSV4Pro-K3-SFT-RLOO-GGUF-NInfer) ｜ [NVFP4-NInfer](https://www.modelscope.cn/models/Merkyor/Qwen3.8-27B-Coder390-EfficientThink-Opus5.5-GPT6Astra-Grok4.7-DSV4Pro-K3-SFT-RLOO-NVFP4-NInfer)
 - 相关笔记：[[后训练与对齐]]
