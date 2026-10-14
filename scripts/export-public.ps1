@@ -1,4 +1,4 @@
-﻿# export-public.ps1 — 导出公开子集 + 自动脱敏 + 生成审查报告
+# export-public.ps1 — 导出公开子集 + 自动脱敏 + 生成审查报告
 # 产物：E:\Obsidian\public-site\content\    （只含 .md 与被引用附件，且已脱敏）
 # 报告：E:\Obsidian\public-site\_reports\   （SUMMARY / dead-links / sensitive / masked）
 # 用法：powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-public.ps1
@@ -12,7 +12,8 @@ function Get-EnvOr([string]$name, [string]$default) {
   return $v
 }
 
-$Vault    = Get-EnvOr 'VAULT_DIR' 'E:\Obsidian\wuhy80_new'
+$DefaultVault = Split-Path $PSScriptRoot -Parent
+$Vault    = Get-EnvOr 'VAULT_DIR' (if (Test-Path -LiteralPath $DefaultVault) { $DefaultVault } else { 'E:\Obsidian\wuhy80_new' })
 $SiteRoot = Get-EnvOr 'SITE_ROOT' 'E:\Obsidian\public-site'
 $Content  = Join-Path $SiteRoot 'content'
 $Reports  = Join-Path $SiteRoot '_reports'

@@ -1,4 +1,4 @@
-﻿# publish-site.ps1 — 一键发布技术笔记展示站
+# publish-site.ps1 — 一键发布技术笔记展示站
 # 流程：导出公开子集（含脱敏与审查报告）→ 同步站点自定义样式 → Quartz 构建 → 部署到 Cloudflare Pages
 # 用法：powershell -NoProfile -ExecutionPolicy Bypass -File E:\Obsidian\wuhy80_new\scripts\publish-site.ps1
 #       加 -SkipDeploy 只本地构建不部署；加 -Serve 构建后启动本地预览（端口 8765）
@@ -18,7 +18,8 @@ function Get-EnvOr([string]$name, [string]$default) {
   return $v
 }
 
-$Vault    = Get-EnvOr 'VAULT_DIR'   'E:\Obsidian\wuhy80_new'
+$DefaultVault = Split-Path $PSScriptRoot -Parent
+$Vault    = Get-EnvOr 'VAULT_DIR'   (if (Test-Path -LiteralPath $DefaultVault) { $DefaultVault } else { 'E:\Obsidian\wuhy80_new' })
 $SiteRoot = Get-EnvOr 'SITE_ROOT'   'E:\Obsidian\public-site'
 $Quartz   = Join-Path $SiteRoot 'quartz'
 $Content  = Join-Path $SiteRoot 'content'

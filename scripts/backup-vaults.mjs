@@ -14,7 +14,8 @@
  */
 import { spawnSync } from 'node:child_process'
 import { appendFileSync, existsSync, mkdirSync, renameSync, statSync } from 'node:fs'
-import { dirname } from 'node:path'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 // 禁止 git 弹出凭据提示；并给 HTTP 传输加强保护，避免无人值守时长时间挂起
 const GIT_ENV = {
@@ -26,7 +27,13 @@ const GIT_ENV = {
   GIT_HTTP_LOW_SPEED_TIME: '25',
 }
 
-const LOG = 'E:\\Obsidian\\_backup\\backup.log'
+const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url))
+const DEFAULT_MAIN = resolve(SCRIPT_DIR, '..')
+const MAIN_PATH = process.env.VAULT_DIR || (existsSync(DEFAULT_MAIN) ? DEFAULT_MAIN : 'E:\\Obsidian\\wuhy80_new')
+const PRIVATE_PATH = process.env.PRIVATE_VAULT_DIR || 'E:\\Obsidian\\wuhy80_private'
+
+const DEFAULT_LOG_DIR = existsSync('E:\\Obsidian') ? 'E:\\Obsidian\\_backup' : resolve(MAIN_PATH, '_backup')
+const LOG = process.env.BACKUP_LOG_PATH || resolve(DEFAULT_LOG_DIR, 'backup.log')
 const LOG_MAX_BYTES = 1024 * 1024
 const RETRY_WAIT_MS = 3000
 
@@ -81,13 +88,13 @@ function git(args, cwd) {
 
 /** 两个仓库。prefix 决定提交信息：主库「自动备份: <时间>」，私密库「私密备份: <时间>」。 */
 const REPOS = [
-  { path: 'E:\\Obsidian\\wuhy80_new', name: '主库', prefix: '自动备份', sync: 'github', branch: 'main' },
-  { path: 'E:\\Obsidian\\wuhy80_private', name: '私密库', prefix: '私密备份', sync: 'github', branch: 'main' },
+  { path: MAIN_PATH, name: '主库', prefix: '自动备份', sync: 'origin', branch: 'main' },
+  { path: PRIVATE_PATH, name: '私密库', prefix: '私密备份', sync: 'github', branch: 'main' },
 ]
 
 function syncRepo(repo, message) {
   if (!existsSync(repo.path)) {
-    log(`${repo.name}: 路径不存在，跳过`)
+    log(`${repo.name}: 路径不存在，跳过 (${repo.path})`)
     return
   }
   // 未完成的合并/变基会让后续 git 操作处于半途状态，直接跳过
@@ -106,12 +113,23 @@ function syncRepo(repo, message) {
     log(`${repo.name}: 无改动`)
   }
 
+  // 探测可用远程：优先用配置的 sync，若不存在则探测 origin、github 或首个可用远程
+  const remotes = git(['remote'], repo.path).out.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+  const syncRemote = remotes.includes(repo.sync)
+    ? repo.sync
+    : (remotes.includes('origin') ? 'origin' : (remotes.includes('github') ? 'github' : remotes[0]))
+
+  if (!syncRemote) {
+    log(`${repo.name}: 未配置任何远程仓库，跳过拉取和推送`)
+    return
+  }
+
   // 2) fetch + pull --ff-only：只接受快进，分叉就跳过推送留待人工处理
-  const fetched = git(['fetch', repo.sync], repo.path)
+  const fetched = git(['fetch', syncRemote], repo.path)
   if (fetched.code !== 0) {
     log(`${repo.name}: fetch 失败 -> ${firstKeyLine(fetched.out, 'fatal|error|denied')}`)
   } else {
-    const pulled = git(['pull', '--ff-only', repo.sync, repo.branch], repo.path)
+    const pulled = git(['pull', '--ff-only', syncRemote, repo.branch], repo.path)
     if (pulled.code !== 0) {
       const detail = firstKeyLine(pulled.out, 'fatal|error|diverg|reject|unable to access')
       if (new RegExp(NETWORK_ERROR, 'i').test(detail)) {
@@ -122,12 +140,11 @@ function syncRepo(repo, message) {
         return
       }
     } else {
-      log(`${repo.name}: 已从 ${repo.sync}/${repo.branch} 同步`)
+      log(`${repo.name}: 已从 ${syncRemote}/${repo.branch} 同步`)
     }
   }
 
   // 3) 推送到所有远程（重试 1 次，绝不 force）
-  const remotes = git(['remote'], repo.path).out.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
   for (const remote of remotes) {
     let ok = false
     let detail = ''

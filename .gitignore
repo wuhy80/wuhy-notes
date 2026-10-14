@@ -3,3 +3,20 @@
 # 查找 .gitignore，把 _site/content 下的笔记全部排除，导致 CI 发布产物不完整。
 _site/quartz/
 _site/_reports/
+
+# Obsidian 本地状态与工作区
+.obsidian/
+/conflict-files-obsidian-git.md
+
+# 智能插件与本地 AI 向量缓存
+.smart-connections/
+.smart-env/
+.smtcmp_json_db/
+.smtcmp_vector_db.tar.gz
+
+# 回收站与本地辅助工具目录
+.trash/
+.claude/
+.wrangler/
+/temp_api_data.json
+/openrouter_state_of_ai.html

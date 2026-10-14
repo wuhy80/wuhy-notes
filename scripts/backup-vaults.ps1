@@ -1,4 +1,4 @@
-﻿# backup-vaults.ps1 — 双仓库自动同步（不依赖 Obsidian）
+# backup-vaults.ps1 — 双仓库自动同步（不依赖 Obsidian）
 # 流程：提交本地改动 → fetch → pull --ff-only（只允许快进）→ push 到所有远程
 # 由计划任务 ObsidianVaultBackup 在「每 30 分钟」与「每次登录」时触发
 # 日志：E:\Obsidian\_backup\backup.log
@@ -27,11 +27,15 @@ function First-KeyLine([string]$text, [string]$pattern) {
   return (($key -replace '^(git|git\.exe)\s*:\s*', '').Trim())
 }
 
+$DefaultMain = Split-Path $PSScriptRoot -Parent
+$MainPath = if ($env:VAULT_DIR) { $env:VAULT_DIR } elseif (Test-Path -LiteralPath $DefaultMain) { $DefaultMain } else { 'E:\Obsidian\wuhy80_new' }
+$PrivatePath = if ($env:PRIVATE_VAULT_DIR) { $env:PRIVATE_VAULT_DIR } else { 'E:\Obsidian\wuhy80_private' }
+
 $stamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
-# Sync = 用于拉取的远程（GitHub 是当前唯一可用且最新的远程）
+# Sync = 用于拉取的远程（优先检测 origin 或 github）
 $repos = @(
-  @{ Path = 'E:\Obsidian\wuhy80_new';     Name = '主库';   Msg = "自动备份: $stamp"; Sync = 'github'; Branch = 'main' },
-  @{ Path = 'E:\Obsidian\wuhy80_private'; Name = '私密库'; Msg = "私密备份: $stamp"; Sync = 'github'; Branch = 'main' }
+  @{ Path = $MainPath;    Name = '主库';   Msg = "自动备份: $stamp"; Sync = 'origin'; Branch = 'main' },
+  @{ Path = $PrivatePath; Name = '私密库'; Msg = "私密备份: $stamp"; Sync = 'github'; Branch = 'main' }
 )
 
 foreach ($r in $repos) {
@@ -52,12 +56,16 @@ foreach ($r in $repos) {
       else { Write-Log "$($r.Name): 提交失败" }
     } else { Write-Log "$($r.Name): 无改动" }
 
-    # 2) fetch + pull --ff-only：只接受快进，分叉就跳过推送留待人工处理
-    $fetchOut = (git fetch $r.Sync 2>&1 | Out-String)
+    # 2) 探测可用远程并 fetch + pull --ff-only
+    $remotes = @(git remote 2>$null)
+    $syncRemote = if ($remotes -contains $r.Sync) { $r.Sync } elseif ($remotes -contains 'origin') { 'origin' } elseif ($remotes -contains 'github') { 'github' } else { $remotes | Select-Object -First 1 }
+    if (-not $syncRemote) { Write-Log "$($r.Name): 未配置任何远程仓库，跳过"; continue }
+
+    $fetchOut = (git fetch $syncRemote 2>&1 | Out-String)
     if ($LASTEXITCODE -ne 0) {
       Write-Log "$($r.Name): fetch 失败 -> $(First-KeyLine $fetchOut 'fatal|error|denied')"
     } else {
-      $pullOut = (git pull --ff-only $r.Sync $r.Branch 2>&1 | Out-String)
+      $pullOut = (git pull --ff-only $syncRemote $r.Branch 2>&1 | Out-String)
       if ($LASTEXITCODE -ne 0) {
         $pulled = First-KeyLine $pullOut 'fatal|error|diverg|reject|unable to access'
         if ($pulled -match 'unable to access|Failed to connect|Could not resolve|timed out|too slow|Connection') {
@@ -67,7 +75,7 @@ foreach ($r in $repos) {
           continue
         }
       } else {
-        Write-Log "$($r.Name): 已从 $($r.Sync)/$($r.Branch) 同步"
+        Write-Log "$($r.Name): 已从 $($syncRemote)/$($r.Branch) 同步"
       }
     }
 
