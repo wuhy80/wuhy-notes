@@ -1,3 +1,5 @@
 # Quartz 本地预览产物（保留 content 源文件）
+# 注意：不要忽略整个 _site/ —— Quartz 构建时 globby(gitignore: true) 会向上
+# 查找 .gitignore，把 _site/content 下的笔记全部排除，导致 CI 发布产物不完整。
 _site/quartz/
-_site/
+_site/_reports/
