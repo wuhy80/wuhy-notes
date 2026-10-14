@@ -19,7 +19,7 @@ status: 整理中
 - [Ontology building overview](https://www.palantir.com/docs/foundry/ontology/overview/)
 - [Platform overview](https://www.palantir.com/docs/foundry/platform-overview/overview/)
 - [AIP, Foundry, and Apollo](https://www.palantir.com/docs/foundry/architecture-center/platforms)
-- [[01 Palantir Ontology 核心概念]]
+- [[Ontology/01-核心概念/Palantir Ontology 核心概念|01 Palantir Ontology 核心概念]]
 
 重点问题：
 
@@ -37,7 +37,7 @@ status: 整理中
 - [Object types overview](https://www.palantir.com/docs/foundry/object-link-types/object-types-overview)
 - [Link types overview](https://www.palantir.com/docs/foundry/object-link-types/link-types-overview)
 - [Interfaces overview](https://www.palantir.com/docs/foundry/interfaces/overview)
-- [[02 Ontology 资源模型]]
+- [[Ontology/02-资源模型/Ontology 资源模型|02 Ontology 资源模型]]
 
 重点问题：
 
@@ -56,7 +56,7 @@ status: 整理中
 - [Action type rules](https://www.palantir.com/docs/foundry/action-types/rules)
 - [Action log](https://www.palantir.com/docs/foundry/action-types/action-log)
 - [Functions overview](https://www.palantir.com/docs/foundry/functions/overview)
-- [[03 Actions、Functions 与写回机制]]
+- [[Ontology/03-动作与函数/Actions、Functions 与写回机制|03 Actions、Functions 与写回机制]]
 
 重点问题：
 
@@ -74,7 +74,7 @@ status: 整理中
 - [Object permissioning overview](https://www.palantir.com/docs/foundry/object-permissioning/overview)
 - [Ontology permissions](https://www.palantir.com/docs/foundry/object-permissioning/ontology-permissions)
 - [Action permissions](https://www.palantir.com/docs/foundry/action-types/permissions)
-- [[04 安全治理与权限]]
+- [[Ontology/04-安全治理/安全治理与权限|04 安全治理与权限]]
 
 重点问题：
 
@@ -92,7 +92,7 @@ status: 整理中
 - [Ontology SDK overview](https://www.palantir.com/docs/foundry/ontology-sdk/overview)
 - [AIP overview](https://www.palantir.com/docs/foundry/aip/overview/)
 - [AIP architecture overview](https://www.palantir.com/docs/foundry/architecture-center/aip-architecture/)
-- [[05 OSDK 与应用开发]]
+- [[Ontology/05-应用开发/OSDK 与应用开发|05 OSDK 与应用开发]]
 
 重点问题：
 

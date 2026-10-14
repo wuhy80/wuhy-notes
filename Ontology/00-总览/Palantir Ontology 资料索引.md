@@ -17,16 +17,16 @@ source: Palantir 官方文档
 
 ## 快速入口
 
-- [[01 Palantir Ontology 核心概念]]
-- [[02 Ontology 资源模型]]
-- [[03 Actions、Functions 与写回机制]]
-- [[04 安全治理与权限]]
-- [[05 OSDK 与应用开发]]
+- [[Ontology/01-核心概念/Palantir Ontology 核心概念|01 Palantir Ontology 核心概念]]
+- [[Ontology/02-资源模型/Ontology 资源模型|02 Ontology 资源模型]]
+- [[Ontology/03-动作与函数/Actions、Functions 与写回机制|03 Actions、Functions 与写回机制]]
+- [[Ontology/04-安全治理/安全治理与权限|04 安全治理与权限]]
+- [[Ontology/05-应用开发/OSDK 与应用开发|05 OSDK 与应用开发]]
 - [[基于 Hermes 的多用户 Ontology 分析系统评估]]
 - [[Ontology 多用户 Agent 分析平台替代方案选型]]
 - [[Palantir 实时数据分析与点位流处理]]
 - [[点位流处理自研与第三方软件选型]]
-- [[90 Palantir Ontology 阅读路线]]
+- [[Ontology/90-阅读路线/Palantir Ontology 阅读路线|90 Palantir Ontology 阅读路线]]
 
 ## 目录结构
 
