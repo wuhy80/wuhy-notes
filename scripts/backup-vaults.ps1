@@ -1,4 +1,4 @@
-# backup-vaults.ps1 — 双仓库自动同步（不依赖 Obsidian）
+﻿# backup-vaults.ps1 — 双仓库自动同步（不依赖 Obsidian）
 # 流程：提交本地改动 → fetch → pull --ff-only（只允许快进）→ push 到所有远程
 # 由计划任务 ObsidianVaultBackup 在「每 30 分钟」与「每次登录」时触发
 # 日志：E:\Obsidian\_backup\backup.log
