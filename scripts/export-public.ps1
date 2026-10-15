@@ -241,25 +241,116 @@ foreach ($f in $expFiles) {
   if ($changed) { Write-Utf8 $f.FullName (($lines -join "`n") + "`n") }
 }
 Write-Host "  规范化 $($fmLog.Count) 处；未闭合 $($fmBad.Count) 篇" -ForegroundColor Green
-Write-Host "=== 4.6 生成首页 index.md ===" -ForegroundColor Cyan
-$homePageContent = @(
+Write-Host "=== 4.6 生成首页 index.md 与静态早报索引 ===" -ForegroundColor Cyan
+
+# 1. 扫描最近早报（供首页和索引页静态使用）
+$dailyDir = Join-Path $Content '大模型\10-新闻\日报'
+$recentDailies = @()
+if (Test-Path -LiteralPath $dailyDir) {
+  $dailyFiles = @(Get-ChildItem -LiteralPath $dailyDir -Recurse -File -Filter "*AI 早报.md" -Force | Sort-Object Name -Descending)
+  $recentDailies = $dailyFiles | Select-Object -First 10
+}
+
+# 2. 为 00-日报索引.md 注入静态直达列表
+$dailyIndexFile = Join-Path $dailyDir '00-日报索引.md'
+if (Test-Path -LiteralPath $dailyIndexFile) {
+  $dContent = Get-Content -LiteralPath $dailyIndexFile -Raw -Encoding UTF8
+  $staticNav = @(
+    '',
+    '## 📰 静态归档直达（网页端）',
+    '',
+    '> [!tip] 网页端直达说明',
+    '> 静态站点不运行 Obsidian Dataview 插件，下方为构建时生成的直达归档列表。',
+    '',
+    '### 📅 月度索引',
+    '- [[00-2026 年索引|2026 年早报总索引]]'
+  )
+  $monthIndexFiles = @(Get-ChildItem -LiteralPath $dailyDir -Recurse -File -Filter "*月索引.md" -Force | Sort-Object Name -Descending)
+  foreach ($mf in $monthIndexFiles) {
+    $staticNav += "  - [[$($mf.BaseName)]]"
+  }
+  if ($recentDailies.Count -gt 0) {
+    $staticNav += ''
+    $staticNav += '### ⚡ 最近 10 期早报'
+    $staticNav += '| 日期 | 早报期号 |'
+    $staticNav += '|---|---|'
+    foreach ($df in $recentDailies) {
+      $base = $df.BaseName
+      $dateStr = if ($base -match '^(\d{4}-\d{2}-\d{2})') { $Matches[1] } else { '' }
+      $staticNav += "| $dateStr | [[$base]] |"
+    }
+  }
+  $dContent = $dContent + "`n" + ($staticNav -join "`n") + "`n"
+  Write-Utf8 $dailyIndexFile $dContent
+  Write-Host "  已为 00-日报索引.md 附加静态归档直达"
+}
+
+# 3. 为各个 月索引.md 注入当月早报列表
+$monthDirs = @(Get-ChildItem -LiteralPath $dailyDir -Recurse -Directory -Force | Where-Object { $_.Name -match '^\d{4}-\d{2}$' })
+foreach ($md in $monthDirs) {
+  $mIndexFile = Join-Path $md.FullName "00-$($md.Name) 月索引.md"
+  if (Test-Path -LiteralPath $mIndexFile) {
+    $mFiles = @(Get-ChildItem -LiteralPath $md.FullName -File -Filter "*AI 早报.md" -Force | Sort-Object Name -Descending)
+    if ($mFiles.Count -gt 0) {
+      $mContent = Get-Content -LiteralPath $mIndexFile -Raw -Encoding UTF8
+      $mNav = @(
+        '',
+        '## 📰 当月早报列表（网页端直达）',
+        '',
+        '| 日期 | 早报期号 |',
+        '|---|---|'
+      )
+      foreach ($mf in $mFiles) {
+        $base = $mf.BaseName
+        $dateStr = if ($base -match '^(\d{4}-\d{2}-\d{2})') { $Matches[1] } else { '' }
+        $mNav += "| $dateStr | [[$base]] |"
+      }
+      $mContent = $mContent + "`n" + ($mNav -join "`n") + "`n"
+      Write-Utf8 $mIndexFile $mContent
+    }
+  }
+}
+Write-Host "  已为月索引页附加当月早报直达列表"
+
+# 4. 生成公开站首页 index.md
+$dailySection = @()
+if ($recentDailies.Count -gt 0) {
+  $dailySection += ''
+  $dailySection += '## 📰 最近 AI 早报'
+  $dailySection += ''
+  $dailySection += '> 来源：[橘鸦 AI 早报](https://daily.juya.uk/) · 查看完整归档：[[00-日报索引|AI 早报日报索引]]'
+  $dailySection += ''
+  $dailySection += '| 日期 | 早报期号 |'
+  $dailySection += '|---|---|'
+  foreach ($df in $recentDailies) {
+    $base = $df.BaseName
+    $dateStr = if ($base -match '^(\d{4}-\d{2}-\d{2})') { $Matches[1] } else { '' }
+    $dailySection += "| $dateStr | [[$base]] |"
+  }
+}
+
+$homePageLines = @(
   '---',
   'title: 技术笔记',
   '---',
   '',
   '# 技术笔记',
   '',
-  '这里是我的技术学习笔记：后端开发、云原生、数据库、算法与编程语言。',
+  '这里是我的技术学习笔记与知识库：涵盖大模型、云原生、后端架构、数据库与系统运维。',
   '',
   '## 分区导航',
   '',
   '| 分区 | 内容 |',
   '|---|---|',
+  '| [大模型与 AI 早报](/大模型/00-大模型学习导航) | 基础原理、应用开发、Agent、[AI 早报](/大模型/10-新闻/日报/00-日报索引) 与周报 |',
   '| [技术笔记](/技术笔记/) | Kubernetes、Docker、Linux、数据库、网络、编辑器等 |',
+  '| [Ontology 知识模型](/Ontology/README) | Palantir 核心模型、概念与开发指南 |',
   '| [Golang 编程](/golang编程/) | Go 语言、Gin、GORM、并发与性能 |',
-  '| [读书笔记](/读书笔记/) | 技术书与科普书的阅读记录 |',
-  '| [编程语言](/编程语言/) | 语言特性与对比 |',
   '| [Rust 编程](/rust编程/) | Rust 学习笔记 |',
+  '| [编程语言](/编程语言/) | 语言特性与对比 |',
+  '| [读书笔记](/读书笔记/) | 技术书与科普书的阅读记录 |',
+  '| [网址收藏](/网址收藏/网址收藏) | 常用工具、技术社区与优质博客 |'
+) + $dailySection + @(
   '',
   '## 怎么用这个站',
   '',
@@ -268,9 +359,17 @@ $homePageContent = @(
   '- 每篇笔记右侧有目录与反向链接',
   '- 暗色/亮色可切换',
   ''
-) -join "`n"
-Write-Utf8 (Join-Path $Content 'index.md') $homePageContent
-Write-Host "  已生成 content/index.md"
+)
+
+$homePageContent = $homePageLines -join "`n"
+$indexPath = Join-Path $Content 'index.md'
+Write-Utf8 $indexPath $homePageContent
+Write-Host "  已生成 content/index.md（含导航与最近 $($recentDailies.Count) 期早报）"
+
+# 刷新 expFiles 与 nameIndex，确保新生成的 index.md 参与后续脱敏与死链校验
+$expFiles = @(Get-ChildItem -LiteralPath $Content -Recurse -File -Filter *.md -Force)
+foreach ($f in $expFiles) { if (-not $nameIndex.ContainsKey($f.BaseName)) { $nameIndex[$f.BaseName] = $f.FullName } }
+
 Write-Host "=== 5. 死链扫描 ===" -ForegroundColor Cyan
 $linkRe = '(?<!!)\[\[([^\]]+)\]\]'
 $dead = New-Object System.Collections.ArrayList
