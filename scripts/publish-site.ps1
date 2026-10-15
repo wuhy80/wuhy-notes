@@ -19,7 +19,8 @@ function Get-EnvOr([string]$name, [string]$default) {
 }
 
 $DefaultVault = Split-Path $PSScriptRoot -Parent
-$Vault    = Get-EnvOr 'VAULT_DIR'   (if (Test-Path -LiteralPath $DefaultVault) { $DefaultVault } else { 'E:\Obsidian\wuhy80_new' })
+if (-not (Test-Path -LiteralPath $DefaultVault)) { $DefaultVault = 'E:\Obsidian\wuhy80_new' }
+$Vault    = Get-EnvOr 'VAULT_DIR'   $DefaultVault
 $SiteRoot = Get-EnvOr 'SITE_ROOT'   'E:\Obsidian\public-site'
 $Quartz   = Join-Path $SiteRoot 'quartz'
 $Content  = Join-Path $SiteRoot 'content'
