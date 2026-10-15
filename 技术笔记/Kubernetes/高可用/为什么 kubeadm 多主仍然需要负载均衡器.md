@@ -12,7 +12,7 @@ tags:
 # 为什么 kubeadm 多主仍然需要负载均衡器
 
 > [!question]
-> 已经有多个 Master 节点了，为什么使用 [[Kubeadm]] 搭建多控制平面集群时，通常仍然建议配置负载均衡器？
+> 已经有多个 Master 节点了，为什么使用 [[技术笔记/Kubernetes/Kubeadm/Kubeadm的使用|Kubeadm]] 搭建多控制平面集群时，通常仍然建议配置负载均衡器？
 
 ## 一句话结论
 

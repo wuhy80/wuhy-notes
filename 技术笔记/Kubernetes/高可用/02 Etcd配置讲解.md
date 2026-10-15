@@ -130,7 +130,7 @@ etcd --name master-one \
 
 ### 方式二：增量配置（Incremental Configuration）
 
-[[Kubeadm]] 使用的方式。初始时每个节点配置有限的集群视图，后续节点逐步添加。
+[[技术笔记/Kubernetes/Kubeadm/Kubeadm的使用|Kubeadm]] 使用的方式。初始时每个节点配置有限的集群视图，后续节点逐步添加。
 
 > [!success] 优点
 > 1. **易于引导**：简化初始设置过程，节点可以逐个添加
