@@ -6,14 +6,14 @@ aliases:
   - 工作台
 tags:
   - obsidian/dashboard
-updated: 2026-10-03
+updated: 2026-10-15
 ---
 
 > [!hero] 知识库工作台
 > 本库是**可公开**的技术与学习知识库，只保留技术笔记、大模型研究、Ontology 与学习资料。
 > 个人任务、日记、投资、客户项目资料已迁至私密库 `E:\Obsidian\wuhy80_private`，本页不再放会指向空目录的查询。
 >
-> [[技术笔记/技术笔记|技术笔记]] · [[大模型/00-大模型学习导航|大模型]] · [[Ontology/README|Ontology]] · [[编程语言/README|编程语言]] · [[读书笔记/读书列表|读书]] · [[网址收藏/网址收藏|网址收藏]] · [[Home-分析面板|分析面板]]
+> [[技术笔记/技术笔记|技术笔记]] · [[大模型/00-大模型学习导航|大模型]] · [[Ontology/README|Ontology]] · [[编程语言/README|编程语言]] · [[大模型/10-新闻/日报/00-日报索引|AI 早报]] · [[读书笔记/读书列表|读书]] · [[网址收藏/网址收藏|网址收藏]] · [[Home-分析面板|分析面板]]
 
 ## 快速入口
 
@@ -29,7 +29,7 @@ updated: 2026-10-03
 > [!info] 大模型与 Ontology
 > - [[大模型/00-大模型学习导航|大模型学习导航]]：基础原理、应用开发、训练微调、部署工具链、评测选型
 > - [[大模型/09-Agent/00-Agent导航|Agent 导航]]：LangGraph、CrewAI、Dify、Manus、OpenHands 等
-> - [[大模型/10-新闻/00-新闻索引|大模型周报索引]]：每周新闻归档
+> - [[大模型/10-新闻/日报/00-日报索引|AI 早报]] ｜ [[大模型/10-新闻/周报/00-周报索引|大模型周报]]（[[大模型/10-新闻/00-新闻索引|新闻总览]]）
 > - [[大模型/08-个体重构/00-个体重构导航|个体重构]]：AI 时代的工作流与认知框架
 > - [[Ontology/README|Ontology 总览]]：[[Ontology/00-总览/Palantir Ontology 资料索引|资料索引]] · [[Ontology/90-阅读路线/Palantir Ontology 阅读路线|阅读路线]]
 
@@ -59,13 +59,24 @@ updated: 2026-10-03
 > LIMIT 8
 > ```
 
+> [!journal] 每日 AI 早报（最近 5 期）
+> ```dataview
+> TABLE WITHOUT ID
+>   file.link as "早报期号",
+>   dateformat(created, "MM-dd") as "日期"
+> FROM "大模型/10-新闻/日报"
+> WHERE type = "ai-daily"
+> SORT created DESC
+> LIMIT 5
+> ```
+
 > [!journal] 大模型周报（最近 5 期）
 > ```dataview
 > TABLE WITHOUT ID
->   file.link as "期号",
+>   file.link as "周报期号",
 >   dateformat(file.mtime, "yyyy-MM-dd") as "更新"
-> FROM "大模型/10-新闻"
-> WHERE file.name != "00-新闻索引"
+> FROM "大模型/10-新闻/周报"
+> WHERE type = "weekly-news" OR file.name != "00-周报索引"
 > SORT file.name DESC
 > LIMIT 5
 > ```
