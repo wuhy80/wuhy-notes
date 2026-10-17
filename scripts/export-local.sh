@@ -60,7 +60,7 @@ for dir in "${PUBLIC_DIRS[@]}"; do
     if [ "$skip" = false ]; then
       mkdir -p "$(dirname "$target")"
       cp "$file" "$target"
-      ((copied++))
+      copied=$((copied + 1))
     fi
   done
 

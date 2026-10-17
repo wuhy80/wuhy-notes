@@ -5,17 +5,17 @@ name: 技术笔记站（claude-paper）
 # 改颜色/字体请改 quartz.config.yaml，改样式规则请改 site-custom.scss，
 # 本文件是二者的「契约摘要」——只描述，不承载实现。
 colors:
-  # 亮色
-  primary: "#284b63"          # 主色：链接与强调文字（与 link 同值）
-  surface: "#faf8f8"          # 页面底色
-  ink: "#2b2b2b"              # 正文文字
-  ink-secondary: "#4e4e4e"    # 次要文字
-  ink-tertiary: "#b8b8b8"     # 弱化文字（行号、角标）
-  border: "#e5e5e5"           # 边框、代码块底色
-  accent: "#84a59d"           # 强调色（高亮条、当前态）
+  # 亮色（2026-10-11 起切换为暖纸色系，参考 xuanyuancode.com 课程页）
+  primary: "#c0481e"          # 主色：链接与强调文字（赭橙，与 link 同值）
+  surface: "#faf6ee"          # 页面底色（暖纸）
+  ink: "#1e2b38"              # 正文文字（墨青）
+  ink-secondary: "#5c6b79"    # 次要文字
+  ink-tertiary: "#93a0ac"     # 弱化文字（行号、角标）
+  border: "#e3d9c6"           # 边框、代码块底色（暖沙）
+  accent: "#e05a28"           # 强调色（高亮条、当前态，暖橙）
   highlight: "#8f9fa926"      # 逐行高亮底色（rgba(143,159,169,.15) 转 hex）
   text-highlight: "#fff23688" # 正文荧光笔
-  # 暗色
+  # 暗色（维持原值：参考站仅提供亮色方案）
   surface-dark: "#161618"
   ink-dark: "#ebebec"
   ink-secondary-dark: "#d4d4d4"
@@ -28,6 +28,15 @@ typography:
     fontFamily: Schibsted Grotesk
     fontWeight: 600
     lineHeight: 1.25
+  article-title:
+    fontFamily: 系统 CJK 衬线栈（Noto Serif SC → 宋体系 → Georgia）
+    fontWeight: 800
+    fontSize: clamp(30px, 3.4vw, 46px)
+    lineHeight: 1.22
+  h2:
+    fontFamily: 同 article-title 衬线栈
+    fontWeight: 700
+    前缀: 3px 暖橙左边条
   body:
     fontFamily: Source Sans Pro
     fontSize: 1rem
@@ -86,7 +95,10 @@ components:
 ## Overview
 
 中文技术笔记站点，内容以长文阅读为主（Quartz 静态生成，主题 `claude-paper`，
-亮/暗双模式）。视觉基调应**安静、克制**：正文是唯一焦点，装饰一律让位于可读性。
+亮/暗双模式）。2026-10-11 起视觉基调参考 xuanyuancode.com 的课程页风格：
+**暖纸底、墨青正文、赭橙强调、衬线大标题**——仍是"正文是唯一焦点"的安静阅读
+体验，只是从冷灰纸换成了暖纸，并加入了课程页的结构语汇（深色顶栏、左右栏
+边线、目录编号）。
 
 本文件是**给 coding agent 读的设计契约**。改动本站样式前先读它；
 实现细节在 `scripts/site-custom.scss`，Token 定义在 `scripts/quartz.config.yaml`。
@@ -109,9 +121,13 @@ components:
 
 ## Layout
 
-- **内容铺满视口宽度（硬要求）**：无论换哪个主题，`.page` 与 `#quartz-body` 都必须
-  `max-width: none; width: 100%`，且必须带 `!important`（主题会用更高特异性再设一遍）
-- 桌面（≥1200px）栅格固定为 `360px minmax(0, 1fr) 360px`：左右侧栏固定，中间正文列吃掉剩余空间
+- **内容区占视口 80%、水平居中（2026-10-11 硬要求，替代旧的"铺满视口"）**：
+  `.page` 必须 `width: 80%; max-width: none; margin: 0 auto`，且必须带 `!important`
+  （主题会用更高特异性再设一遍）；`#quartz-body` 在其内吃满 100%
+- 桌面（≥1200px）栅格为 `clamp(220px,16vw,300px) minmax(0,1fr) clamp(200px,14vw,280px)`：
+  左右侧栏按视口比例伸缩、带下限，**中间正文列永远是三栏里最宽的一栏**
+- 左右栏各以 1px 边线（`border`）与正文分隔（右栏 border-left、左栏 border-right），不用底色分区
+- 顶栏（navbar）为深墨底（`ink`）+ 纸色文字，全站唯一深色块
 - 间距只用上面 `spacing` 里定义的值
 
 ## Elevation & Depth
@@ -136,6 +152,13 @@ components:
   - 横向滚动条高 `8px`，滑块用 `border` 色，轨道透明
 - **行内代码**：只有底色与圆角，**不要方框感**（无边框）
 - **Callout 内的代码块**：首尾外边距归零，避免与 callout 内边距叠加
+- **文章 hero**：`h1.article-title` 衬线 800、`clamp(30px,3.4vw,46px)`，上边距 2.2rem；
+  其下 `.content-meta` 小号弱化并压 1px 底边线，构成 hero 收口
+- **frontmatter 属性表**（`details.note-properties.metadata-container`）：渲染成
+  暖橙左边线引言框（3px `tertiary` + 6% 洗色），对应参考站的导语条
+- **h2 小节**：衬线 700 + 3px 暖橙左边条
+- **右栏目录**：`li.depth-1` 前加 `01/02…` 等宽字体编号（对应参考站编号小节导航）
+- **左右栏**：≥1200px 时左栏 border-right、右栏 border-left（1px `border`）与正文分隔
 
 ## Do's and Don'ts
 
@@ -145,7 +168,15 @@ components:
 - 行号与语言角标**永不**使用正文色，必须是 `ink-tertiary` 且透明度 0.45
 - `text` / `txt` / `plaintext` 代码块**永不**显示语言角标，顶部也不保留角标高度
 - **永不**给 `.center` 只设 `min-width:100%` 而不设 `box-sizing:border-box`——实测会让它比栅格轨道宽 48px，被 `position:sticky` 的右边栏压住 43px，表现为 callout 右边框消失、正文末字被盖
-- **永不**用 `!important` 之外的普通规则去改全屏宽度——主题的特异性更高，改不动
+- **永不**用 `!important` 之外的普通规则去改内容区宽度——主题的特异性更高，改不动
+- **⚠️ 改颜色必须同步改 `site-custom.scss` 的「Token 强制块」**：主题包
+  `@quartz-themes/claude-paper` 会在自己的样式里重新声明 `--light/--lightgray/--tertiary`
+  等变量且加载更晚（实测 2026-10-11：只改 yaml 时 `--tertiary` 计算值仍是主题的
+  `#873f2b`），强制块用 `!important` 变量声明压过主题，且**只强制亮色**
+  （`:root[saved-theme="light"]`）——裸 `:root` 会把亮色值灌进暗色模式
+- 此版 Quartz 的**页头不在 `article` 里**（结构：`div.page-header` > `div.popover-hint`
+  > `h1.article-title`；正文在 `article.popover-hint` 里），hero 相关选择器不能带 `article`
+- 正文首个 `h1[id]`（Obsidian 惯例的 `# 标题`）**永不**显示——它与 hero 标题重复
 - 正文**永不**使用纯黑，底色**永不**使用纯白
 - 不新增上面未定义的间距值、圆角值与颜色
 

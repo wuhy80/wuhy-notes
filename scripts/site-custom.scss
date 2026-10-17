@@ -8,37 +8,41 @@
 // ============================================================================
 
 // ---------------------------------------------------------------------------
-// 全屏宽度（硬要求：无论换哪个主题，都必须铺满视口）
+// 内容宽度（2026-10-11 起：内容区占视口 80%，居中；替代旧的"铺满视口"规则）
 //
-// 两道阻力：
+// 两道阻力（与旧规则相同）：
 //   1. Quartz 基础样式：.page { max-width: calc(1200px + 300px); margin: 0 auto }
-//   2. 主题（@quartz-themes/core 系列）会再设一遍，特异性更高且加载更晚，例如：
-//        div#quartz-root.page div#quartz-body {
-//          max-width: min(100%, calc(1200px + 300px));
-//        }
-// 因此这里用 !important + 高特异性。主题规则均未加 !important，
-// 所以本文件的 !important 规则必定生效（!important 优先于特异性与顺序）。
-// 换主题后若发现又被限宽，先检查新主题是否给宽度加了 !important。
+//   2. 主题（@quartz-themes/core 系列）会再设一遍，特异性更高且加载更晚
+// 因此仍需 !important + 高特异性。主题规则均未加 !important，
+// 所以本文件的 !important 规则必定生效。
 // ---------------------------------------------------------------------------
 
 html body div#quartz-root.page {
   max-width: none !important;
-  width: 100% !important;
-  min-width: 100% !important;
+  width: 80% !important;
+  min-width: 0 !important;
+  margin: 0 auto !important;
   padding-left: 0 !important;
   padding-right: 0 !important;
 }
 
+// quartz-body 吃满 .page 的 80% 轨道
 html body div#quartz-root.page div#quartz-body {
   max-width: none !important;
   width: 100% !important;
   min-width: 100% !important;
 }
 
-// 桌面宽度：左右侧边栏固定宽度，中间正文列吃掉全部剩余空间
+// 桌面宽度：左右侧栏随视口按比例伸缩（带下限），中间正文列吃掉剩余空间——
+// 正文永远是三栏里最宽的一栏。参考 xuanyuancode 课程页（260/1fr/220）的比例感，
+// 但不设 1360px 上限，而是整体 80% 视口宽。
 @media all and (min-width: 1200px) {
   html body div#quartz-root.page div#quartz-body {
-    grid-template-columns: 360px minmax(0, 1fr) 360px !important;
+    grid-template-columns: clamp(220px, 16vw, 300px) minmax(0, 1fr) clamp(
+        200px,
+        14vw,
+        280px
+      ) !important;
   }
 }
 
@@ -243,4 +247,132 @@ html body article figure[data-rehype-pretty-code-figure] > pre::-webkit-scrollba
 
 html body article figure[data-rehype-pretty-code-figure] > pre::-webkit-scrollbar-track {
   background: transparent;
+}
+
+// ===========================================================================
+// 课程页风格化（2026-10-11，参考 xuanyuancode.com/ai-llm/lessons/*）
+//
+// 采纳的参考元素：暖纸配色（见下 Token 强制块与 quartz.config.yaml）、
+// 左右栏边线分隔、大号衬线文章标题、h2 左侧橙色强调条、
+// 右栏目录小节编号、frontmatter 属性表渲染成引言框。
+// 不做 DOM 级改造（prev/next 页脚需要自定义组件，本次未做）。
+//
+// ⚠️ 实测（2026-10-11）：@quartz-themes/claude-paper 会在自己的样式里重新
+// 声明 --light/--lightgray/--tertiary 等 token（如 --tertiary:#873f2b），
+// 且加载顺序在 custom.scss 之后——quartz.config.yaml 改了颜色会被主题盖掉。
+// 因此颜色必须在这里用 !important 的变量声明强制（主题规则无 !important）。
+// ===========================================================================
+
+// --- 0/6 Token 强制块：以 quartz.config.yaml 的值为准 -------------------
+// 只强制亮色；暗色 token 维持主题原值（本方案未改暗色调色板）。
+:root[saved-theme="light"] {
+  --light: #faf6ee !important; // 纸底
+  --lightgray: #e3d9c6 !important; // 边线/代码底
+  --gray: #93a0ac !important; // 弱化字
+  --darkgray: #5c6b79 !important; // 次要字
+  --dark: #1e2b38 !important; // 正文（墨青）
+  --secondary: #c0481e !important; // 链接/强调（赭橙）
+  --tertiary: #e05a28 !important; // 当前态/高亮条（暖橙）
+  --claude-paper-border: #e3d9c6 !important;
+  --claude-paper-ink-tertiary: #93a0ac !important;
+  --code-background: #e3d9c6 !important;
+}
+
+// --- 1/6 站点标题：左栏页题用衬线（参考站书卷气的标题处理） --------------
+// 此版本 Quartz 无顶部 navbar，站点标题位于左栏 h2.page-title。
+html body div#quartz-root.page .left.sidebar h2.page-title a {
+  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC",
+    "STZhongsong", "SimSun", Georgia, serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+// --- 2/6 左右栏边线：参考站 sidebar/rail 的分隔方式 ---------------------
+@media all and (min-width: 1200px) {
+  html body div#quartz-root.page div#quartz-body > .sidebar.left {
+    border-right: 1px solid var(--lightgray) !important;
+  }
+
+  html body div#quartz-root.page div#quartz-body > .sidebar.right {
+    border-left: 1px solid var(--lightgray) !important;
+  }
+}
+
+// --- 3/6 文章标题（hero）：大号衬线，参考 clamp(30px,4.6vw,48px)/900 ----
+// ⚠️ 此版 Quartz 的页头不在 article 里（div.page-header > div.popover-hint），
+// 选择器不能带 article；正文 markdown 在 article.popover-hint 里。
+// 衬线栈不引入新字体文件：中文走系统宋体系，拉丁走 Georgia。
+$headingSerifStack: "Noto Serif SC", "Source Han Serif SC", "Songti SC",
+  "STZhongsong", "SimSun", Georgia, serif;
+
+html body div#quartz-root.page h1.article-title {
+  font-family: $headingSerifStack !important;
+  font-size: clamp(30px, 3.4vw, 46px) !important;
+  font-weight: 800 !important;
+  line-height: 1.22 !important;
+  letter-spacing: 0.01em;
+  margin-top: 2.2rem !important; // hero 顶部留白
+  margin-bottom: 0.9rem !important;
+}
+
+// 正文里的重复标题：Obsidian 笔记惯例正文第一行是 `# 标题`，
+// 与 hero 的 article-title 重复，隐藏之（全库约定：正文 h1 ≡ 笔记名）。
+html body div#quartz-root.page article.popover-hint h1[id]:first-child {
+  display: none !important;
+}
+
+// 标题下的元信息行（日期等）：小号弱化，压住 hero 的底边
+html body div#quartz-root.page .content-meta {
+  font-size: 0.8rem !important;
+  color: var(--gray) !important;
+  padding-bottom: 1.1rem !important;
+  border-bottom: 1px solid var(--lightgray) !important;
+  margin-bottom: 1.6rem !important;
+}
+
+// --- 4/6 h2：衬线 + 左侧橙色强调条（参考站「第 N 站」小节的气质）--------
+html body div#quartz-root.page article h2 {
+  font-family: $headingSerifStack;
+  font-weight: 700;
+  border-left: 3px solid var(--tertiary) !important;
+  padding-left: 0.55em;
+}
+
+// --- 5/6 frontmatter 属性表 → 引言框（对应参考站橙色左边线导语）---------
+// 属性 details 渲染在 page-header 区（不在 article 内），选择器不能带 article。
+html body div#quartz-root.page details.note-properties.metadata-container {
+  background-color: color-mix(in srgb, var(--tertiary) 6%, transparent);
+  border-left: 3px solid var(--tertiary);
+  border-radius: 0 5px 5px 0;
+  padding: 0.7rem 1rem;
+  margin-bottom: 1.4rem;
+}
+
+// --- 6/6 右栏目录：小节编号（对应参考站 rail 的编号圆点导航）------------
+// 本库笔记遵循「H1 标题 + H2 小节」约定，小节在 TOC 里是 li.depth-1。
+html body div#quartz-root.page .sidebar.right .toc .toc-content {
+  counter-reset: toc-sec;
+}
+
+html body div#quartz-root.page .sidebar.right .toc .toc-content > li.depth-1 {
+  counter-increment: toc-sec;
+}
+
+html body div#quartz-root.page .sidebar.right .toc .toc-content > li.depth-1 > a::before {
+  content: counter(toc-sec, decimal-leading-zero);
+  font-family: $codeFontStack;
+  font-size: 0.72em;
+  color: var(--tertiary);
+  margin-right: 0.5em;
+  opacity: 0.85;
+}
+
+// 目录当前项与悬停：用强调色，贴近参考站 rail 的橙色活动态
+html body div#quartz-root.page .sidebar.right .toc li a {
+  border-left: 2px solid transparent;
+
+  &:hover {
+    color: var(--tertiary);
+    border-left-color: var(--tertiary);
+  }
 }

@@ -23,13 +23,16 @@ configuration:
       code: IBM Plex Mono
     colors:
       lightMode:
-        light: "#faf8f8"
-        lightgray: "#e5e5e5"
-        gray: "#b8b8b8"
-        darkgray: "#4e4e4e"
-        dark: "#2b2b2b"
-        secondary: "#284b63"
-        tertiary: "#84a59d"
+        # 暖纸色系（2026-10-11 参考 xuanyuancode 课程页风格调整）
+        # light=纸底 lightgray=边线/代码底 gray=弱化字 darkgray=次要字 dark=正文
+        # secondary=链接与强调（赭橙） tertiary=当前态/高亮条（暖橙）
+        light: "#faf6ee"
+        lightgray: "#e3d9c6"
+        gray: "#93a0ac"
+        darkgray: "#5c6b79"
+        dark: "#1e2b38"
+        secondary: "#c0481e"
+        tertiary: "#e05a28"
         highlight: rgba(143, 159, 169, 0.15)
         textHighlight: "#fff23688"
       darkMode:
