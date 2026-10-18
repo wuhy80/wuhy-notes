@@ -26,7 +26,7 @@ configuration:
         # 暖纸色系（2026-10-11 参考 xuanyuancode 课程页风格调整）
         # light=纸底 lightgray=边线/代码底 gray=弱化字 darkgray=次要字 dark=正文
         # secondary=链接与强调（赭橙） tertiary=当前态/高亮条（暖橙）
-        light: "#faf6ee"
+        light: "#f5eddb"
         lightgray: "#e3d9c6"
         gray: "#93a0ac"
         darkgray: "#5c6b79"

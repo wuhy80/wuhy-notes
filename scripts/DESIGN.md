@@ -7,7 +7,7 @@ name: 技术笔记站（claude-paper）
 colors:
   # 亮色（2026-10-11 起切换为暖纸色系，参考 xuanyuancode.com 课程页）
   primary: "#c0481e"          # 主色：链接与强调文字（赭橙，与 link 同值）
-  surface: "#faf6ee"          # 页面底色（暖纸）
+  surface: "#f5eddb"          # 页面底色（按参考站实际渲染像素采样，非其 CSS 名义值）
   ink: "#1e2b38"              # 正文文字（墨青）
   ink-secondary: "#5c6b79"    # 次要文字
   ink-tertiary: "#93a0ac"     # 弱化文字（行号、角标）

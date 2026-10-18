@@ -62,7 +62,7 @@ html body div#quartz-root.page div#quartz-body .center {
   // 正文两侧内边距与侧栏一致（2026-10-18：1.5rem → 1rem）
   padding-left: 1rem !important;
   padding-right: 1rem !important;
-  // 主题给中栏铺了自己的底色（#faf9f5），挡住了页面的暖纸色——置透明露出 #faf6ee
+  // 主题给中栏铺了自己的底色（#faf9f5），挡住了页面的暖纸色——置透明露出页面暖纸底
   background-color: transparent !important;
 }
 
@@ -271,7 +271,7 @@ html body article figure[data-rehype-pretty-code-figure] > pre::-webkit-scrollba
 // --- 0/6 Token 强制块：以 quartz.config.yaml 的值为准 -------------------
 // 只强制亮色；暗色 token 维持主题原值（本方案未改暗色调色板）。
 :root[saved-theme="light"] {
-  --light: #faf6ee !important; // 纸底
+  --light: #f5eddb !important; // 纸底（按参考站实际渲染像素色采样对齐，非其 CSS 名义值 #FAF6EE）
   --lightgray: #e3d9c6 !important; // 边线/代码底
   --gray: #93a0ac !important; // 弱化字
   --darkgray: #5c6b79 !important; // 次要字
@@ -295,11 +295,12 @@ $headingFontStack: "AlimamaShuHeiTi", "Noto Sans SC", -apple-system,
   font-display: swap;
 }
 
-// 页面背景精确对齐参考站 --paper #FAF6EE（主题的 body 背景走的是自己的
-// 变量 #faf9f5，不吃 --light token，所以这里直接指定；暗色用 var 回退原值）
+// 页面背景对齐参考站的【实际渲染色】#f5eddb——它 CSS 里声明的 --paper
+// 是 #FAF6EE，但页面有额外叠层，像素采样实测渲染为 #f4ecda~#f5eddb。
+// 2026-10-18 修正：此前错按名义值 #faf6ee 对齐，观感上「没变化」。
 html body,
 html body div#quartz-root.page {
-  background-color: #faf6ee !important;
+  background-color: #f5eddb !important;
 }
 
 html[data-theme="dark"] body,
