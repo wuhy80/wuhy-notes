@@ -176,7 +176,7 @@ components:
 - **代码字体栈里中文回退必须排在 `monospace` 之前**——否则中文会落到系统 serif（Windows 上是宋体），小字号下很难看
 - 行号与语言角标**永不**使用正文色，必须是 `ink-tertiary` 且透明度 0.45
 - `text` / `txt` / `plaintext` 代码块**永不**显示语言角标，顶部也不保留角标高度
-- **永不**给 `.center` 只设 `min-width:100%` 而不设 `box-sizing:border-box`——实测会让它比栅格轨道宽 48px，被 `position:sticky` 的右边栏压住 43px，表现为 callout 右边框消失、正文末字被盖
+- **永不**给 `.center` 只设 `min-width:100%` 而不设 `box-sizing:border-box`——实测会让它比栅格轨道宽（当前左右内边距 1rem×2=32px），被 `position:sticky` 的右边栏压住，表现为 callout 右边框消失、正文末字被盖
 - **永不**用 `!important` 之外的普通规则去改内容区宽度——主题的特异性更高，改不动
 - **⚠️ 改颜色必须同步改 `site-custom.scss` 的「Token 强制块」**：主题包
   `@quartz-themes/claude-paper` 会在自己的样式里重新声明 `--light/--lightgray/--tertiary`

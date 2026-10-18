@@ -59,6 +59,9 @@ html body div#quartz-root.page div#quartz-body .center {
   box-sizing: border-box !important;
   min-width: 100% !important;
   max-width: 100% !important;
+  // 正文两侧内边距与侧栏一致（2026-10-18：1.5rem → 1rem）
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
 }
 
 html body div#quartz-root.page div#quartz-body .center > article,
@@ -296,6 +299,13 @@ html body div#quartz-root.page .left.sidebar h2.page-title a {
   html body div#quartz-root.page div#quartz-body > .sidebar.right {
     border-left: 1px solid var(--lightgray) !important;
   }
+}
+
+// 侧栏内边距收紧（2026-10-18：主题默认 96px 32px，顶部与两侧空白过大，
+// 关系图谱/目录/探索树整体上抬，内容宽度吃满侧栏轨道）
+html body div#quartz-root.page div#quartz-body > .sidebar.left,
+html body div#quartz-root.page div#quartz-body > .sidebar.right {
+  padding: 16px 10px 32px !important;
 }
 
 // --- 3/6 文章标题（hero）：大号衬线，参考 clamp(30px,4.6vw,48px)/900 ----
