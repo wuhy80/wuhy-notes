@@ -281,11 +281,34 @@ html body article figure[data-rehype-pretty-code-figure] > pre::-webkit-scrollba
   --code-background: #e3d9c6 !important;
 }
 
-// --- 1/6 站点标题：左栏页题用衬线（参考站书卷气的标题处理） --------------
+// 标题字体：阿里妈妈数黑体（与参考站同款），回退链与参考站 --sans 一致。
+// woff2 由发布流水线拷入 Quartz static/font/（自托管）。
+$headingFontStack: "AlimamaShuHeiTi", "Noto Sans SC", -apple-system,
+  "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+
+@font-face {
+  font-family: "AlimamaShuHeiTi";
+  src: url("/static/font/AlimamaShuHeiTi-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
+// 页面背景精确对齐参考站 --paper #FAF6EE（主题的 body 背景走的是自己的
+// 变量 #faf9f5，不吃 --light token，所以这里直接指定；暗色用 var 回退原值）
+html body,
+html body div#quartz-root.page {
+  background-color: #faf6ee !important;
+}
+
+html[data-theme="dark"] body,
+html[data-theme="dark"] body div#quartz-root.page {
+  background-color: var(--light) !important;
+}
+
+// --- 1/6 站点标题：左栏页题用数黑体（与文章标题同款） --------------------
 // 此版本 Quartz 无顶部 navbar，站点标题位于左栏 h2.page-title。
 html body div#quartz-root.page .left.sidebar h2.page-title a {
-  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC",
-    "STZhongsong", "SimSun", Georgia, serif;
+  font-family: $headingFontStack;
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -322,17 +345,15 @@ html body div#quartz-root.page .sidebar.right .graph h3 {
   margin-top: 0 !important;
 }
 
-// --- 3/6 文章标题（hero）：大号衬线，参考 clamp(30px,4.6vw,48px)/900 ----
+// --- 3/6 文章标题（hero）：阿里妈妈数黑体，与参考站同款 -----------------
 // ⚠️ 此版 Quartz 的页头不在 article 里（div.page-header > div.popover-hint），
 // 选择器不能带 article；正文 markdown 在 article.popover-hint 里。
-// 衬线栈不引入新字体文件：中文走系统宋体系，拉丁走 Georgia。
-$headingSerifStack: "Noto Serif SC", "Source Han Serif SC", "Songti SC",
-  "STZhongsong", "SimSun", Georgia, serif;
+// $headingFontStack 与 @font-face 定义见本区块开头的 1/6 之前。
 
 html body div#quartz-root.page h1.article-title {
-  font-family: $headingSerifStack !important;
+  font-family: $headingFontStack !important;
   font-size: clamp(30px, 3.4vw, 46px) !important;
-  font-weight: 800 !important;
+  font-weight: 700 !important;
   line-height: 1.22 !important;
   letter-spacing: 0.01em;
   margin-top: 1.2rem !important; // hero 顶部留白（2026-10-18 收紧）
@@ -354,11 +375,11 @@ html body div#quartz-root.page .content-meta {
   margin-bottom: 0.9rem !important;
 }
 
-// --- 4/6 h2：衬线 + 左侧橙色强调条（参考站「第 N 站」小节的气质）--------
+// --- 4/6 h2/h3：数黑体 + 左侧橙色强调条（参考站「第 N 站」小节的气质）----
 // 纵向节奏（2026-10-18 收紧）：标题与正文的间距偏大，统一压小。
 html body div#quartz-root.page article h2 {
-  font-family: $headingSerifStack;
-  font-weight: 700;
+  font-family: $headingFontStack !important;
+  font-weight: 700 !important;
   border-left: 3px solid var(--tertiary) !important;
   padding-left: 0.55em;
   margin-top: 1.4em !important;
@@ -366,8 +387,18 @@ html body div#quartz-root.page article h2 {
 }
 
 html body div#quartz-root.page article h3 {
+  font-family: $headingFontStack;
+  font-weight: 700;
   margin-top: 1.1em !important;
   margin-bottom: 0.35em !important;
+}
+
+// 正文与界面字体：与参考站 --sans 同链（Noto Sans SC 缺省时回退苹方/雅黑），
+// 替代原 Source Sans Pro（中文实际仍落到系统字体，拉丁字形与参考站对齐）
+html body div#quartz-root.page,
+html body div#quartz-root.page article {
+  font-family: "Noto Sans SC", -apple-system, "PingFang SC", "Microsoft YaHei",
+    "Segoe UI", sans-serif !important;
 }
 
 // 正文段落的段间距：默认约 1em+，收紧一档

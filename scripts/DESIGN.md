@@ -24,27 +24,30 @@ colors:
   link-dark: "#7b97aa"
   highlight-dark: "#b3aa0288"
 typography:
+  # 2026-10-18 字体与参考站（xuanyuancode）靠齐：标题 = 阿里妈妈数黑体
+  # （自托管 woff2，发布流水线拷入 Quartz static/font/），正文 = 参考站
+  # --sans 同链（Noto Sans SC 缺省时落到苹方/雅黑，无 webfont）
   header:
-    fontFamily: Schibsted Grotesk
-    fontWeight: 600
+    fontFamily: AlimamaShuHeiTi
+    fontWeight: 700
     lineHeight: 1.25
   article-title:
-    fontFamily: 系统 CJK 衬线栈（Noto Serif SC → 宋体系 → Georgia）
-    fontWeight: 800
+    fontFamily: AlimamaShuHeiTi
+    fontWeight: 700
     fontSize: clamp(30px, 3.4vw, 46px)
     lineHeight: 1.22
     marginTop: 1.2rem
   h2:
-    fontFamily: 同 article-title 衬线栈
+    fontFamily: AlimamaShuHeiTi
     fontWeight: 700
     前缀: 3px 暖橙左边条
   body:
-    fontFamily: Source Sans Pro
+    fontFamily: Noto Sans SC → 苹方 → 雅黑（参考站 --sans 同链）
     fontSize: 1rem
     fontWeight: 400
     lineHeight: 1.75
   body-wide:
-    fontFamily: Source Sans Pro
+    fontFamily: Noto Sans SC → 苹方 → 雅黑
     fontSize: 1rem
     lineHeight: 1.8          # ≥1800px 视口时启用
   code:

@@ -59,6 +59,17 @@ if (Test-Path -LiteralPath $src) {
   Write-Host "  未找到 site-custom.scss，保留 Quartz 现有样式" -ForegroundColor Yellow
 }
 
+# 站点自托管字体（阿里妈妈数黑体，标题字体）→ Quartz static，构建时随 public 发布
+$fontSrc = Join-Path $Vault 'scripts\site-assets\AlimamaShuHeiTi-Bold.woff2'
+$fontDstDir = Join-Path $Quartz 'quartz\static\font'
+if (Test-Path -LiteralPath $fontSrc) {
+  New-Item -ItemType Directory -Force -Path $fontDstDir | Out-Null
+  Copy-Item -LiteralPath $fontSrc -Destination (Join-Path $fontDstDir 'AlimamaShuHeiTi-Bold.woff2') -Force
+  Write-Host "  已部署站点字体 AlimamaShuHeiTi-Bold.woff2"
+} else {
+  Write-Host "  未找到站点字体文件，标题将回退到系统字体" -ForegroundColor Yellow
+}
+
 Write-Step "2.2/4 应用站点主题"
 $ThemeName = 'claude-paper'    # 站点主题（@quartz-themes/core 的 theme 选项）
 $CfgPath = Join-Path $Quartz 'quartz.config.yaml'

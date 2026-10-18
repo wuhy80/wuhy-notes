@@ -20,6 +20,8 @@ setup:
 	@echo "复制配置文件..."
 	@cp scripts/quartz.config.yaml $(QUARTZ_DIR)/quartz.config.yaml
 	@cp scripts/site-custom.scss $(QUARTZ_DIR)/quartz/styles/custom.scss
+	@mkdir -p $(QUARTZ_DIR)/quartz/static/font
+	@cp scripts/site-assets/AlimamaShuHeiTi-Bold.woff2 $(QUARTZ_DIR)/quartz/static/font/
 	@echo "✅ 安装完成！"
 
 run: setup
