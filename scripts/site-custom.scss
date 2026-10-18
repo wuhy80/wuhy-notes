@@ -115,9 +115,12 @@ $codeFontStack: "IBM Plex Mono", "JetBrains Mono", ui-monospace, SFMono-Regular,
 html body article figure[data-rehype-pretty-code-figure] {
   margin: 1.1rem 0 !important;
   padding: 0 !important;
-  border: 1px solid var(--claude-paper-border, var(--lightgray)) !important;
+  border: 1px solid var(--claude-paper-border, var(--line)) !important;
   border-radius: 10px !important;
-  background-color: var(--code-background, var(--lightgray)) !important;
+  // ⚠️ 不能用 var(--code-background)：主题在 figure 元素自身上把这个变量设成了空值
+  // （实测 2026-10-18：figure 上取到 ""，于是声明落到 fallback --lightgray，
+  // 代码块变成了「边线色卡片」而不是白卡）。改用本站自己的 --card。
+  background-color: var(--card) !important;
   box-shadow: 0 1px 2px var(--claude-paper-shadow, rgba(20, 20, 19, 0.06));
   overflow: hidden !important; // 让滚动内容与角标都收在圆角内
   position: relative !important; // 语言角标的定位基准
@@ -221,12 +224,16 @@ html body
   content: none !important;
 }
 
-// --- 5/7 行内代码：去掉方框感，只留底色 --------------------------------
+// --- 5/7 行内代码：橙洗色块（对齐参考站 .article-body :not(pre) > code）--
+// 参考站行内代码 = 橙色 8% 洗色底 + 深赭橙文字；这里沿用同一套语言。
+// ⚠️ 与 2026-10-11 版不同：行内代码不再是「代码块底色」同色，而是橙色洗色
+// （参考站实测：background rgba(249,115,22,.08) / color rgb(199,64,43)）。
 html body article :not(pre) > code {
   padding: 0.12em 0.36em !important;
   border: 0 !important;
   border-radius: 5px !important;
-  background-color: var(--code-background, var(--lightgray)) !important;
+  background-color: var(--inline-code) !important;
+  color: var(--accent-deep) !important;
   font-family: $codeFontStack !important;
   font-size: 0.86em !important;
 }
@@ -268,19 +275,95 @@ html body article figure[data-rehype-pretty-code-figure] > pre::-webkit-scrollba
 // 因此颜色必须在这里用 !important 的变量声明强制（主题规则无 !important）。
 // ===========================================================================
 
-// --- 0/6 Token 强制块：以 quartz.config.yaml 的值为准 -------------------
-// 只强制亮色；暗色 token 维持主题原值（本方案未改暗色调色板）。
+// --- 0/6 调色板：与参考站逐值对齐（2026-10-18 二次对齐）-----------------
+//
+// 参考站（xuanyuancode.com 课程页）自己声明的调色板，取自其 .ai-llm-scope：
+//   --paper      #F5EDDB  页面纸底      --line        #D8CEB6  边线
+//   --paper-deep #EDE3C4  深一档纸色    --accent      #C2410C  赭橙（链接/强调条/编号）
+//   --paper-card #FFFFFF  卡片底        --accent-deep #9A3010  当前态文字
+//   --ink        #1C1C1C  正文/标题     --accent-warm #E0561F  暖橙（当前态描边）
+//   --ink-soft   #57544E  次要文字      --accent-wash #FBE6C7  当前态洗色
+//   --ink-faint  #8C8676  弱化文字
+//
+// ⚠️ 实测（2026-10-18，对线上站点取计算样式）：上一版只强制了 --light/--dark
+// 这几个 Quartz token，而 claude-paper 主题另有一整套 --claude-paper-surface*
+// （#faf9f5 主底、#f5f4ed 侧栏、#eeece3、#ffffff）与 --claude-paper-ink（#141413），
+// 且主题样式加载更晚——结果页面上同时存在 #f5eddb / #faf9f5 / #f5f4ed 三种「纸色」，
+// 观感是一张灰白网页，而不是参考站那种整片暖纸。下面把两套变量一起压。
 :root[saved-theme="light"] {
-  --light: #f5eddb !important; // 纸底（按参考站实际渲染像素色采样对齐，非其 CSS 名义值 #FAF6EE）
-  --lightgray: #e3d9c6 !important; // 边线/代码底
-  --gray: #93a0ac !important; // 弱化字
-  --darkgray: #5c6b79 !important; // 次要字
-  --dark: #1e2b38 !important; // 正文（墨青）
-  --secondary: #c0481e !important; // 链接/强调（赭橙）
-  --tertiary: #e05a28 !important; // 当前态/高亮条（暖橙）
-  --claude-paper-border: #e3d9c6 !important;
-  --claude-paper-ink-tertiary: #93a0ac !important;
-  --code-background: #e3d9c6 !important;
+  // 本站调色板（下面所有组件规则都引用这几个，不再散落字面值）
+  --paper: #f5eddb;
+  --paper-deep: #ede3c4;
+  --card: #ffffff;
+  --ink: #1c1c1c;
+  --ink-soft: #57544e;
+  --ink-faint: #8c8676;
+  --line: #d8ceb6;
+  --accent: #c2410c;
+  --accent-deep: #9a3010;
+  --accent-warm: #e0561f;
+  --accent-wash: #fbe6c7;
+  --inline-code: rgba(194, 65, 12, 0.08); // 行内代码底（参考站实测 8% 洗色）
+
+  // Quartz token（主题也会重声明，必须 !important）
+  --light: var(--paper) !important;
+  --lightgray: var(--line) !important;
+  --gray: var(--ink-faint) !important;
+  --darkgray: var(--ink-soft) !important;
+  --dark: var(--ink) !important;
+  --secondary: var(--accent) !important;
+  --tertiary: var(--accent-warm) !important;
+  --highlight: var(--accent-wash) !important;
+
+  // claude-paper 主题的 surface / ink / accent / border 家族
+  --claude-paper-surface: var(--paper) !important;
+  --claude-paper-surface-alt: var(--paper) !important;
+  --claude-paper-surface-secondary: var(--paper) !important;
+  --claude-paper-surface-tertiary: var(--paper-deep) !important;
+  --claude-paper-surface-raised: var(--card) !important;
+  --claude-paper-surface-code: var(--paper-deep) !important;
+  --claude-paper-ink: var(--ink) !important;
+  --claude-paper-ink-secondary: var(--ink-soft) !important;
+  --claude-paper-ink-tertiary: var(--ink-faint) !important;
+  --claude-paper-border: var(--line) !important;
+  --claude-paper-border-strong: var(--line) !important;
+  --claude-paper-accent: var(--accent) !important;
+  --claude-paper-accent-hover: var(--accent-warm) !important;
+  --claude-paper-accent-soft: rgba(194, 65, 12, 0.12) !important;
+  --claude-paper-accent-softer: rgba(194, 65, 12, 0.07) !important;
+  --claude-paper-accent-text: var(--accent-deep) !important;
+  --claude-paper-accent-rgb: 194, 65, 12 !important;
+  --claude-paper-highlight: rgba(194, 65, 12, 0.1) !important;
+  --claude-paper-selection: rgba(194, 65, 12, 0.18) !important;
+
+  // 交互态：主题默认是灰调（rgba(31,30,29,.055)），参考站一律用暖橙洗色
+  --background-modifier-hover: rgba(194, 65, 12, 0.07) !important;
+  --background-modifier-active-hover: var(--accent-wash) !important;
+  --nav-item-background-active: var(--accent-wash) !important;
+  --nav-item-color-active: var(--accent-deep) !important;
+
+  // 本站自用 token：代码块 = 白卡（参考站 fig-frame 同色）
+  // ⚠️ 不要再往 --code-background 上写：主题会在 figure 元素上把它清空，
+  // 那条链上的值不可信（详见下方代码块规则里的实测说明）。
+  --code-background: var(--card) !important;
+}
+
+// 暗色调色板：沿用 claude-paper 主题原有暗色值（本方案不改暗色观感），
+// 只为上面新引入的 --paper/--card/--line/--accent 补一份暗色映射，
+// 否则暗色模式会掉进亮色的纸色里。
+:root[saved-theme="dark"] {
+  --paper: #30302e;
+  --paper-deep: #262624;
+  --card: #383835;
+  --ink: #faf9f5;
+  --ink-soft: #c2c0b6;
+  --ink-faint: #9c9a92;
+  --line: rgba(222, 220, 209, 0.16);
+  --accent: #e38b6b;
+  --accent-deep: #f0a283;
+  --accent-warm: #e38b6b;
+  --accent-wash: rgba(227, 139, 107, 0.15);
+  --inline-code: rgba(227, 139, 107, 0.12);
 }
 
 // 标题字体：阿里妈妈数黑体（与参考站同款），回退链与参考站 --sans 一致。
@@ -295,12 +378,21 @@ $headingFontStack: "AlimamaShuHeiTi", "Noto Sans SC", -apple-system,
   font-display: swap;
 }
 
-// 页面背景对齐参考站的【实际渲染色】#f5eddb——它 CSS 里声明的 --paper
-// 是 #FAF6EE，但页面有额外叠层，像素采样实测渲染为 #f4ecda~#f5eddb。
-// 2026-10-18 修正：此前错按名义值 #faf6ee 对齐，观感上「没变化」。
+// 整页铺满参考站的纸色 #F5EDDB。
+// 参考站是「一整片暖纸 + 白色卡片」两层结构（其 .ai-llm-scope 就是 --paper），
+// 而主题把 --claude-paper-surface(#faf9f5) 画在 #quartz-body、把
+// --claude-paper-surface-secondary(#f5f4ed) 画在左右侧栏上——只改页面底色
+// 是盖不住的，必须把这些容器一起改回纸色。
 html body,
-html body div#quartz-root.page {
-  background-color: #f5eddb !important;
+html body div#quartz-root.page,
+html body div#quartz-root.page div#quartz-body,
+html body div#quartz-root.page div#quartz-body > .sidebar.left,
+html body div#quartz-root.page div#quartz-body > .sidebar.right,
+html body div#quartz-root.page div#quartz-body .center,
+html body div#quartz-root.page .explorer-content,
+html body div#quartz-root.page .graph-outer,
+html body div#quartz-root.page footer {
+  background-color: var(--paper) !important;
 }
 
 html[data-theme="dark"] body,
@@ -455,12 +547,25 @@ html body div#quartz-root.page details.note-properties.metadata-container table.
 
 // --- 5/6 frontmatter 属性表 → 引言框（对应参考站橙色左边线导语）---------
 // 属性 details 渲染在 page-header 区（不在 article 内），选择器不能带 article。
+// 2026-10-18：左边条与洗色改用 --accent（#C2410C），与参考站 .lesson-lede 一致。
 html body div#quartz-root.page details.note-properties.metadata-container {
-  background-color: color-mix(in srgb, var(--tertiary) 6%, transparent);
-  border-left: 3px solid var(--tertiary);
+  background-color: color-mix(in srgb, var(--accent) 6%, transparent);
+  border-left: 3px solid var(--accent);
   border-radius: 0 5px 5px 0;
   padding: 0.7rem 1rem;
   margin-bottom: 1.4rem;
+}
+
+// 属性表内部的行：主题给每行铺了半透明白（rgba(255,255,255,.46)），
+// 在暖纸上会显出「白条」，这里一律置透明，让引言框的橙洗色透出来。
+html body div#quartz-root.page details.note-properties.metadata-container tr,
+html body div#quartz-root.page details.note-properties.metadata-container tr :is(td, th) {
+  background-color: transparent !important;
+}
+
+// 行分隔线也用暖线色（主题给的是 rgba(31,30,29,.16) 灰线）
+html body div#quartz-root.page details.note-properties.metadata-container tr :is(td, th) {
+  border-color: var(--line) !important;
 }
 
 // --- 6/6 右栏目录：小节编号（对应参考站 rail 的编号圆点导航）------------
@@ -490,4 +595,86 @@ html body div#quartz-root.page .sidebar.right .toc li a {
     color: var(--tertiary);
     border-left-color: var(--tertiary);
   }
+}
+
+// ===========================================================================
+// 7/7 卡片语言与当前态（2026-10-18 二次对齐参考站）
+//
+// 参考站只有两层：整片暖纸（--paper #F5EDDB）+ 白卡（--paper-card #FFFFFF）
+// 配 1px --line #D8CEB6 边线；当前态是「--accent-wash 洗色底 + --accent-deep 文字
+// + --accent 左边条」（见其 .sidebar-lesson-item a.active 与 .quiz-item）。
+// 代码块已在上面改成白卡，这里把表格 / callout / 目录与探索树的当前态补齐。
+// ===========================================================================
+
+// --- 表格：白卡 + 线色边框，去掉主题的灰线与橙色斑马纹 --------------------
+html body article table {
+  background-color: var(--card) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  border-collapse: separate !important; // collapse 下圆角不生效
+  border-spacing: 0 !important;
+  overflow: hidden !important;
+}
+
+html body article table :is(th, td) {
+  border: 0 !important;
+  border-bottom: 1px solid var(--line) !important;
+  border-right: 1px solid var(--line) !important;
+}
+
+html body article table tr:last-child :is(th, td) {
+  border-bottom: 0 !important;
+}
+
+html body article table tr :is(th, td):last-child {
+  border-right: 0 !important;
+}
+
+// 表头 = 深一档纸色；斑马纹取消（参考站卡片内部是干净的单色）
+html body article table thead th {
+  background-color: var(--paper-deep) !important;
+}
+
+html body article table tbody tr,
+html body article table tbody tr:nth-child(2n) {
+  background-color: transparent !important;
+}
+
+// --- callout：白卡 + 线色描边 + 类型色左边条 -----------------------------
+// Quartz 给每种 callout 设了 --color（类型色），保留它作左边条颜色；
+// 底色一律换成白卡，与参考站 .quiz-item（白卡 + 1px 线 + 3px 左边条）同构。
+html body article .callout {
+  background-color: var(--card) !important;
+  border: 1px solid var(--line) !important;
+  border-left: 3px solid var(--color, var(--accent)) !important;
+  border-radius: 8px !important;
+}
+
+// callout 标题用正文色（类型色只留在左边条与图标上，避免整块花掉）
+html body article .callout > .callout-title {
+  color: var(--ink) !important;
+}
+
+// callout 内嵌的代码块：白卡对着白卡，改用纸色卡片区分层次
+html body article .callout figure[data-rehype-pretty-code-figure] {
+  background-color: var(--paper) !important;
+  border-color: var(--line) !important;
+}
+
+// --- 当前态：探索树中的当前文件（对齐参考站侧栏 .active）------------------
+html body div#quartz-root.page .explorer .nav-file-title.is-active,
+html body div#quartz-root.page .explorer .nav-file-title.active,
+html body div#quartz-root.page .explorer-content ul li > a.active {
+  background-color: var(--accent-wash) !important;
+  color: var(--accent-deep) !important;
+  font-weight: 700;
+  border-left: 2px solid var(--accent) !important;
+}
+
+// --- 当前态：右栏目录正在阅读的小节 -------------------------------------
+html body div#quartz-root.page .sidebar.right .toc li a.active,
+html body div#quartz-root.page .sidebar.right .toc li a[aria-current] {
+  color: var(--accent-deep) !important;
+  font-weight: 700;
+  border-left-color: var(--accent) !important;
 }

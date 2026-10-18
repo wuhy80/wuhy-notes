@@ -23,18 +23,22 @@ configuration:
       code: IBM Plex Mono
     colors:
       lightMode:
-        # 暖纸色系（2026-10-11 参考 xuanyuancode 课程页风格调整）
-        # light=纸底 lightgray=边线/代码底 gray=弱化字 darkgray=次要字 dark=正文
+        # 暖纸色系（2026-10-18 二次对齐 xuanyuancode.com 课程页）
+        # 取值不再是「像素采样近似」，而是参考站 .ai-llm-scope 自己声明的 CSS 变量：
+        #   --paper #F5EDDB / --line #D8CEB6 / --ink #1C1C1C / --ink-soft #57544E
+        #   --ink-faint #8C8676 / --accent #C2410C / --accent-warm #E0561F
+        #   --accent-wash #FBE6C7
+        # light=纸底 lightgray=边线 gray=弱化字 darkgray=次要字 dark=正文
         # secondary=链接与强调（赭橙） tertiary=当前态/高亮条（暖橙）
-        light: "#f5eddb"
-        lightgray: "#e3d9c6"
-        gray: "#93a0ac"
-        darkgray: "#5c6b79"
-        dark: "#1e2b38"
-        secondary: "#c0481e"
-        tertiary: "#e05a28"
-        highlight: rgba(143, 159, 169, 0.15)
-        textHighlight: "#fff23688"
+        light: "#f5eddb"        # --paper
+        lightgray: "#d8ceb6"    # --line（同时充当本站边框色）
+        gray: "#8c8676"         # --ink-faint
+        darkgray: "#57544e"     # --ink-soft
+        dark: "#1c1c1c"         # --ink
+        secondary: "#c2410c"    # --accent
+        tertiary: "#e0561f"     # --accent-warm
+        highlight: "#fbe6c7"    # --accent-wash（逐行高亮底色）
+        textHighlight: "rgba(225, 181, 92, 0.45)"  # 暖金荧光笔（参考站 highlight 色相）
       darkMode:
         light: "#161618"
         lightgray: "#393639"
