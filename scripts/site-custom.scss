@@ -346,10 +346,20 @@ html body div#quartz-root.page article h3 {
   margin-bottom: 0.35em !important;
 }
 
-// 正文段落与列表项的段间距：默认约 1em+，收紧一档
-html body div#quartz-root.page article p,
-html body div#quartz-root.page article li {
+// 正文段落的段间距：默认约 1em+，收紧一档
+html body div#quartz-root.page article p {
   margin-block: 0.8em;
+}
+
+// 列表项之间贴紧（2026-10-18：* 与 1. 列表项间距过大的修复）。
+// 松散列表（项之间有空行）里每个 li 还包着一层 <p>，会再吃一份段落间距，
+// 所以 li 自身与 li>p 要分别压小，只压其中一个看不出效果。
+html body div#quartz-root.page article li {
+  margin-block: 0.15em;
+}
+
+html body div#quartz-root.page article li > p {
+  margin-block: 0.2em;
 }
 
 // --- 4b/6 框内节奏：callout / 属性表 / 引言框，标题与内容的间隔收紧 -----

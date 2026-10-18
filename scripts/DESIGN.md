@@ -67,12 +67,14 @@ spacing:
   lg: 1.5rem
   code-y: 1.1rem      # 代码块上下外边距
   code-x: 1.15rem     # 代码块左右内边距
-  # 纵向节奏（2026-10-18 收紧：标题与正文的间隔偏大）
-  p-block: 0.8em      # 正文段落/列表项段间距（≥1800px 视口 1em）
+  # 纵向节奏（2026-10-18 收紧：标题与正文的间隔偏大；10-18 二次修复列表项间距）
+  p-block: 0.8em      # 正文段落段间距（≥1800px 视口 1em）
+  li-block: 0.15em    # 列表项之间贴紧；松散列表 li>p 另压 0.2em
   h2-block: 1.4em 0.45em   # h2 上/下外边距
   h3-block: 1.1em 0.35em   # h3 上/下外边距
   hero-top: 1.2rem    # 文章标题上边距
   meta-bottom: 0.9rem # 元信息行下边距（压底边线后）
+  callout-in: 0       # callout 标题与内容贴合（content 顶部内边距归零）
 components:
   code-block:
     backgroundColor: "{colors.border}"
