@@ -2,6 +2,10 @@
 # 产物：E:\Obsidian\public-site\content\    （只含 .md 与被引用附件，且已脱敏）
 # 报告：E:\Obsidian\public-site\_reports\   （SUMMARY / dead-links / sensitive / masked）
 # 用法：powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-public.ps1
+#       加 -Force 强制完整重新导出（默认增量：公开子集源内容与导出脚本均未变化时直接跳过）
+param(
+  [switch]$Force
+)
 $ErrorActionPreference = 'Stop'
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 
@@ -61,6 +65,53 @@ $DocNet     = '192.0.2.'
 
 function Write-Utf8([string]$path, [string]$text) { [System.IO.File]::WriteAllText($path, $text, $utf8) }
 
+# ── 增量导出：指纹计算 ──
+function Get-StringHash([string]$text) {
+  $sha = [System.Security.Cryptography.SHA256]::Create()
+  try { return ([BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($text))) -replace '-', '').ToLower() }
+  finally { $sha.Dispose() }
+}
+# 内容树指纹：所有文件的 相对路径 + SHA256（内容变了才算变，mtime 无关）
+function Get-TreeSig([string]$root) {
+  if (-not (Test-Path -LiteralPath $root)) { return '' }
+  $parts = New-Object System.Collections.ArrayList
+  $prefixLen = $root.Length + 1
+  foreach ($f in (Get-ChildItem -LiteralPath $root -Recurse -File -Force)) {
+    $h = Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256
+    [void]$parts.Add($f.FullName.Substring($prefixLen) + '|' + $h.Hash.ToLower())
+  }
+  return Get-StringHash (($parts | Sort-Object) -join "`n")
+}
+# 输入指纹：公开子集源 .md 的 路径|大小|mtimeUtc + 本导出脚本自身（规则改动也会触发重导）
+function Get-InputSig {
+  $parts = New-Object System.Collections.ArrayList
+  foreach ($d in $PublicDirs) {
+    $src = Join-Path $Vault $d
+    if (-not (Test-Path -LiteralPath $src)) { continue }
+    $prefixLen = $src.Length + 1
+    foreach ($f in (Get-ChildItem -LiteralPath $src -Recurse -File -Filter *.md -Force -ErrorAction SilentlyContinue)) {
+      $vaultRel = "$d\$($f.FullName.Substring($prefixLen))"
+      $skip = $false
+      foreach ($x in $ExcludeDirs) { if ($vaultRel -like "$x*") { $skip = $true; break } }
+      if (-not $skip -and ($ExcludeFileNames -contains $f.Name)) { $skip = $true }
+      if ($skip) { continue }
+      [void]$parts.Add($vaultRel + '|' + $f.Length + '|' + $f.LastWriteTimeUtc.Ticks)
+    }
+  }
+  $scriptSig = Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256
+  [void]$parts.Add('export-public.ps1|' + $scriptSig.Hash.ToLower())
+  return Get-StringHash (($parts | Sort-Object) -join "`n")
+}
+$ExportStatePath = Join-Path $Reports 'export-state.json'
+$inputSig = Get-InputSig
+$prevExportState = $null
+if (Test-Path -LiteralPath $ExportStatePath) {
+  try { $prevExportState = Get-Content -LiteralPath $ExportStatePath -Raw -Encoding UTF8 | ConvertFrom-Json } catch { $prevExportState = $null }
+}
+if (-not $Force -and $prevExportState -and $prevExportState.inputSig -eq $inputSig -and (Test-Path -LiteralPath $Content) -and $prevExportState.exportSig -eq (Get-TreeSig $Content)) {
+  Write-Host "=== 公开子集无变化，跳过导出（-Force 可强制重导）===" -ForegroundColor Green
+  exit 0
+}
 Write-Host "=== 1. 重建导出目录 ===" -ForegroundColor Cyan
 if (Test-Path -LiteralPath $Content) {
   if ($Content -ne (Join-Path $SiteRoot 'content')) { throw "拒绝删除非预期路径：$Content" }
@@ -439,5 +490,12 @@ foreach ($x in $maskLog) { $p = $x -split '\|'; [void]$mk.AppendLine("| $($p[0])
 Write-Utf8 (Join-Path $Reports 'masked.md') $mk.ToString()
 
 Write-Host "  报告已写入 $Reports" -ForegroundColor Green
+
+# 记录增量状态：输入指纹 + 本次导出结果指纹（供下次运行短路）
+$exportSig = Get-TreeSig $Content
+@{ inputSig = $inputSig; exportSig = $exportSig; exportedAt = (Get-Date -Format 'o') } |
+  ConvertTo-Json | Set-Content -LiteralPath $ExportStatePath -Encoding UTF8
+Write-Host "  增量状态已更新（inputSig/exportSig）"
+
 Write-Host ""
 Write-Host "=== 完成 ===" -ForegroundColor Green

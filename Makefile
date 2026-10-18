@@ -1,4 +1,4 @@
-.PHONY: setup run build clean
+.PHONY: setup run build clean publish publish-force
 
 QUARTZ_DIR := _site/quartz
 CONTENT_DIR := _site/content
@@ -52,3 +52,11 @@ clean-all:
 	@echo "=== 删除 Quartz 与所有构建产物 ==="
 	@rm -rf _site
 	@echo "✅ 完全清理完成！"
+
+# 正式发布（公开站 → Cloudflare Pages）：增量，无变化自动跳过
+publish:
+	powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/publish-site.ps1
+
+# 强制全量重新导出 + 构建 + 部署
+publish-force:
+	powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/publish-site.ps1 -Force
