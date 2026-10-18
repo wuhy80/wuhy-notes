@@ -72,8 +72,12 @@ function Save-PubState([string]$exportSig, [string]$siteSig) {
 Write-Step "0/4 前置检查：识别常驻 watch 工作进程与并发进程"
 $allBoot = @(Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
   Where-Object { $_.CommandLine -match 'bootstrap-cli\.mjs' })
-# 本脚本的常驻 worker：--watch 且指向 public-site 内容目录
-$workerProc = $allBoot | Where-Object { $_.CommandLine -match '--watch' -and $_.CommandLine -match 'public-site' } | Select-Object -First 1
+# 本脚本的常驻 worker：--watch 且指向**本次的**内容目录
+# ⚠️ 不能写死 'public-site' 字面量：worker 命令行里带的是 $Content
+#    （如 SITE_ROOT=D:\...\_site 时是 `_site\content`，CI 里是 `<workspace>\_site\content`），
+#    写死会导致 worker 永远检测不到、Start-Worker 白等 20 秒后抛异常，发布直接失败
+#    （2026-10-18 实测：CI 与本机 _site 路径都命中这个坑）。
+$workerProc = $allBoot | Where-Object { $_.CommandLine -match '--watch' -and $_.CommandLine -match [regex]::Escape($Content) } | Select-Object -First 1
 $others = @($allBoot | Where-Object { -not $workerProc -or $_.ProcessId -ne $workerProc.ProcessId })
 if ($others.Count -gt 0) {
   $pids = ($others | ForEach-Object { $_.ProcessId }) -join ', '
@@ -85,8 +89,9 @@ else { Write-Host "  无常驻 worker（稍后将按需启动）" }
 # ── 常驻 worker 管理 ──
 $WorkerLog = Join-Path $SiteRoot 'worker.log'
 function Find-WorkerPid {
+  # 同上面：按「本次的 $Content」匹配，不写死 'public-site'
   $w = @(Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
-    Where-Object { $_.CommandLine -match '--watch' -and $_.CommandLine -match 'public-site' })
+    Where-Object { $_.CommandLine -match '--watch' -and $_.CommandLine -match [regex]::Escape($Content) })
   return ($w | Select-Object -First 1).ProcessId
 }
 function Start-Worker {
