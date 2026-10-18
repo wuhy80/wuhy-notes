@@ -29,7 +29,12 @@ const GIT_ENV = {
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url))
 const DEFAULT_MAIN = resolve(SCRIPT_DIR, '..')
-const MAIN_PATH = process.env.VAULT_DIR || (existsSync(DEFAULT_MAIN) ? DEFAULT_MAIN : 'E:\\Obsidian\\wuhy80_new')
+// 主库 = 本脚本所在 scripts/ 的上一级；不再回退到写死的旧路径（猜错库比报错危险）
+if (!process.env.VAULT_DIR && !existsSync(DEFAULT_MAIN)) {
+  console.error(`无法确定主库目录（${DEFAULT_MAIN} 不存在）。请把脚本放在 <知识库>\\scripts\\ 下，或用 VAULT_DIR 指定。`)
+  process.exit(1)
+}
+const MAIN_PATH = process.env.VAULT_DIR || DEFAULT_MAIN
 const PRIVATE_PATH = process.env.PRIVATE_VAULT_DIR || 'E:\\Obsidian\\wuhy80_private'
 
 const DEFAULT_LOG_DIR = existsSync('E:\\Obsidian') ? 'E:\\Obsidian\\_backup' : resolve(MAIN_PATH, '_backup')

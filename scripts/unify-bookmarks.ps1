@@ -7,7 +7,8 @@ param(
   [switch]$WhatIf   # 只预览不写入
 )
 
-$root = 'E:\Obsidian\wuhy80_new'
+# 知识库根目录 = 本脚本所在 scripts/ 的上一级（不再写死任何绝对路径）
+$root = Split-Path $PSScriptRoot -Parent
 $dir = Join-Path $root '网址收藏'
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 

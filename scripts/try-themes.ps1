@@ -9,7 +9,8 @@ param(
 $ErrorActionPreference = 'Continue'   # 构建时的 LaTeX/stderr 警告不应终止脚本，改用退出码判断成败
 $env:WRANGLER_SEND_METRICS = 'false'
 
-$Vault    = 'E:\Obsidian\wuhy80_new'
+# 知识库根目录 = 本脚本所在 scripts/ 的上一级（不再写死任何绝对路径）
+$Vault    = Split-Path $PSScriptRoot -Parent
 $SiteRoot = 'E:\Obsidian\public-site'
 $Quartz   = Join-Path $SiteRoot 'quartz'
 $Content  = Join-Path $SiteRoot 'content'

@@ -53,7 +53,7 @@
 - **脚本**：`scripts/backup-vaults.mjs`（Node 版，一次处理主库与私密库；等价于 `backup-vaults.ps1`）
 - **流程**：提交本地改动 → `git fetch` → `git pull --ff-only`（只接受快进）→ 推送到远程
 - **日志**：`E:\Obsidian\_backup\backup.log`（超 1 MB 自动轮转）
-- **手动执行**：`node E:\Obsidian\wuhy80_new\scripts\backup-vaults.mjs`
+- **手动执行**：`node <知识库>\scripts\backup-vaults.mjs`（脚本按自身所在位置推导知识库根目录，不依赖绝对路径）
 - 手动提交用描述性中文信息；脚本自动提交沿用 `自动备份: YYYY-MM-DD HH:mm:ss` / `私密备份: ...`
 
 ### Git 配置

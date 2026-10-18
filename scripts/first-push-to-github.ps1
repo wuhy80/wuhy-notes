@@ -7,7 +7,8 @@ $env:GCM_INTERACTIVE          = 'never'
 $env:GIT_HTTP_LOW_SPEED_LIMIT = '1000'
 $env:GIT_HTTP_LOW_SPEED_TIME  = '25'
 
-$main = 'E:\Obsidian\wuhy80_new'
+# 主库 = 本脚本所在 scripts/ 的上一级（不再写死任何绝对路径）
+$main = Split-Path $PSScriptRoot -Parent
 $priv = 'E:\Obsidian\wuhy80_private'
 $logf = 'E:\Obsidian\_backup\first-push.log'
 

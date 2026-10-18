@@ -27,8 +27,12 @@ function First-KeyLine([string]$text, [string]$pattern) {
   return (($key -replace '^(git|git\.exe)\s*:\s*', '').Trim())
 }
 
+# 主库 = 本脚本所在 scripts/ 的上一级；不再回退到写死的旧路径（猜错库比报错危险）
 $DefaultMain = Split-Path $PSScriptRoot -Parent
-$MainPath = if ($env:VAULT_DIR) { $env:VAULT_DIR } elseif (Test-Path -LiteralPath $DefaultMain) { $DefaultMain } else { 'E:\Obsidian\wuhy80_new' }
+if (-not $env:VAULT_DIR -and -not (Test-Path -LiteralPath $DefaultMain)) {
+  throw "无法确定主库目录（$DefaultMain 不存在）。请把脚本放在 <知识库>\scripts\ 下，或用 VAULT_DIR 指定。"
+}
+$MainPath = if ($env:VAULT_DIR) { $env:VAULT_DIR } else { $DefaultMain }
 $PrivatePath = if ($env:PRIVATE_VAULT_DIR) { $env:PRIVATE_VAULT_DIR } else { 'E:\Obsidian\wuhy80_private' }
 
 $stamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'

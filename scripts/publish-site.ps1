@@ -20,8 +20,12 @@ function Get-EnvOr([string]$name, [string]$default) {
   return $v
 }
 
+# 知识库根目录 = 本脚本所在 scripts/ 的上一级。不再回退到任何写死的旧路径：
+# 猜错目录比直接报错危险得多（会把别人的库导出/覆盖），所以找不到就直接失败。
 $DefaultVault = Split-Path $PSScriptRoot -Parent
-if (-not (Test-Path -LiteralPath $DefaultVault)) { $DefaultVault = 'E:\Obsidian\wuhy80_new' }
+if (-not (Test-Path -LiteralPath $DefaultVault)) {
+  throw "无法确定知识库根目录（$DefaultVault 不存在）。请把脚本放在 <知识库>\scripts\ 下，或用环境变量 VAULT_DIR 指定。"
+}
 $Vault    = Get-EnvOr 'VAULT_DIR'   $DefaultVault
 $SiteRoot = Get-EnvOr 'SITE_ROOT'   'E:\Obsidian\public-site'
 $Quartz   = Join-Path $SiteRoot 'quartz'
@@ -69,7 +73,17 @@ function Save-PubState([string]$exportSig, [string]$siteSig) {
     ConvertTo-Json | Set-Content -LiteralPath $PubStatePath -Encoding UTF8
 }
 
-Write-Step "0/4 前置检查：识别常驻 watch 工作进程与并发进程"
+Write-Step "0/4 前置检查：脚本 BOM、常驻 watch 工作进程与并发进程"
+
+# PowerShell 脚本必须带 UTF-8 BOM：PS 5.1 在无 BOM 时按 GBK 解码，中文注释会让
+# 整个脚本解析失败（实测踩过两次）。这里先查一遍，避免带病发布/带病提交。
+$bomCheck = Join-Path $Vault 'scripts\check-bom.mjs'
+if ((Test-Path -LiteralPath $bomCheck) -and (Test-Path -LiteralPath $Node)) {
+  $bomOut = (& $Node $bomCheck 2>&1 | Out-String)
+  if ($LASTEXITCODE -ne 0) { throw "PowerShell 脚本缺少 UTF-8 BOM，请先补齐再发布：`n$bomOut" }
+  ($bomOut -split "`r?`n") | Where-Object { $_.Trim() } | ForEach-Object { Write-Host "  $($_.Trim())" -ForegroundColor Green }
+}
+
 $allBoot = @(Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
   Where-Object { $_.CommandLine -match 'bootstrap-cli\.mjs' })
 # 本脚本的常驻 worker：--watch 且指向**本次的**内容目录

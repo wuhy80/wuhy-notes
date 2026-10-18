@@ -16,8 +16,12 @@ function Get-EnvOr([string]$name, [string]$default) {
   return $v
 }
 
+# 知识库根目录 = 本脚本所在 scripts/ 的上一级。不再回退到任何写死的旧路径：
+# 猜错目录比直接报错危险得多（会把别人的库导出/覆盖），所以找不到就直接失败。
 $DefaultVault = Split-Path $PSScriptRoot -Parent
-if (-not (Test-Path -LiteralPath $DefaultVault)) { $DefaultVault = 'E:\Obsidian\wuhy80_new' }
+if (-not (Test-Path -LiteralPath $DefaultVault)) {
+  throw "无法确定知识库根目录（$DefaultVault 不存在）。请把脚本放在 <知识库>\scripts\ 下，或用环境变量 VAULT_DIR 指定。"
+}
 $Vault    = Get-EnvOr 'VAULT_DIR' $DefaultVault
 $SiteRoot = Get-EnvOr 'SITE_ROOT' 'E:\Obsidian\public-site'
 $Content  = Join-Path $SiteRoot 'content'
