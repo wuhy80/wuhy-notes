@@ -33,6 +33,7 @@ typography:
     fontWeight: 800
     fontSize: clamp(30px, 3.4vw, 46px)
     lineHeight: 1.22
+    marginTop: 1.2rem
   h2:
     fontFamily: 同 article-title 衬线栈
     fontWeight: 700
@@ -66,6 +67,12 @@ spacing:
   lg: 1.5rem
   code-y: 1.1rem      # 代码块上下外边距
   code-x: 1.15rem     # 代码块左右内边距
+  # 纵向节奏（2026-10-18 收紧：标题与正文的间隔偏大）
+  p-block: 0.8em      # 正文段落/列表项段间距（≥1800px 视口 1em）
+  h2-block: 1.4em 0.45em   # h2 上/下外边距
+  h3-block: 1.1em 0.35em   # h3 上/下外边距
+  hero-top: 1.2rem    # 文章标题上边距
+  meta-bottom: 0.9rem # 元信息行下边距（压底边线后）
 components:
   code-block:
     backgroundColor: "{colors.border}"
@@ -121,8 +128,8 @@ components:
 
 ## Layout
 
-- **内容区占视口 80%、水平居中（2026-10-11 硬要求，替代旧的"铺满视口"）**：
-  `.page` 必须 `width: 80%; max-width: none; margin: 0 auto`，且必须带 `!important`
+- **内容铺满视口宽度（2026-10-18 恢复硬要求；80% 居中方案仅 10-11~10-17 存活一天多）**：
+  `.page` 必须 `width: 100%; max-width: none`，且必须带 `!important`
   （主题会用更高特异性再设一遍）；`#quartz-body` 在其内吃满 100%
 - 桌面（≥1200px）栅格为 `clamp(220px,16vw,300px) minmax(0,1fr) clamp(200px,14vw,280px)`：
   左右侧栏按视口比例伸缩、带下限，**中间正文列永远是三栏里最宽的一栏**

@@ -8,7 +8,7 @@
 // ============================================================================
 
 // ---------------------------------------------------------------------------
-// 内容宽度（2026-10-11 起：内容区占视口 80%，居中；替代旧的"铺满视口"规则）
+// 内容宽度（2026-10-18 改回铺满视口 100%；80% 方案仅存活了一天）
 //
 // 两道阻力（与旧规则相同）：
 //   1. Quartz 基础样式：.page { max-width: calc(1200px + 300px); margin: 0 auto }
@@ -19,14 +19,14 @@
 
 html body div#quartz-root.page {
   max-width: none !important;
-  width: 80% !important;
-  min-width: 0 !important;
-  margin: 0 auto !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  margin: 0 !important;
   padding-left: 0 !important;
   padding-right: 0 !important;
 }
 
-// quartz-body 吃满 .page 的 80% 轨道
+// quartz-body 吃满 .page 轨道
 html body div#quartz-root.page div#quartz-body {
   max-width: none !important;
   width: 100% !important;
@@ -34,8 +34,7 @@ html body div#quartz-root.page div#quartz-body {
 }
 
 // 桌面宽度：左右侧栏随视口按比例伸缩（带下限），中间正文列吃掉剩余空间——
-// 正文永远是三栏里最宽的一栏。参考 xuanyuancode 课程页（260/1fr/220）的比例感，
-// 但不设 1360px 上限，而是整体 80% 视口宽。
+// 正文永远是三栏里最宽的一栏。
 @media all and (min-width: 1200px) {
   html body div#quartz-root.page div#quartz-body {
     grid-template-columns: clamp(220px, 16vw, 300px) minmax(0, 1fr) clamp(
@@ -71,15 +70,16 @@ html body div#quartz-root.page article {
 
 // ---------------------------------------------------------------------------
 // 超宽屏可读性补偿：行宽很大时加大行高与段间距，缓解视线回扫
+// （选择器特异性须与下方「纵向节奏」的段间距规则一致，否则会被压掉）
 // ---------------------------------------------------------------------------
 @media all and (min-width: 1800px) {
-  article p,
-  article li {
+  html body div#quartz-root.page article p,
+  html body div#quartz-root.page article li {
     line-height: 1.8;
   }
 
-  article p {
-    margin-block: 1.1em;
+  html body div#quartz-root.page article p {
+    margin-block: 1em;
   }
 }
 
@@ -311,8 +311,8 @@ html body div#quartz-root.page h1.article-title {
   font-weight: 800 !important;
   line-height: 1.22 !important;
   letter-spacing: 0.01em;
-  margin-top: 2.2rem !important; // hero 顶部留白
-  margin-bottom: 0.9rem !important;
+  margin-top: 1.2rem !important; // hero 顶部留白（2026-10-18 收紧）
+  margin-bottom: 0.6rem !important;
 }
 
 // 正文里的重复标题：Obsidian 笔记惯例正文第一行是 `# 标题`，
@@ -325,17 +325,62 @@ html body div#quartz-root.page article.popover-hint h1[id]:first-child {
 html body div#quartz-root.page .content-meta {
   font-size: 0.8rem !important;
   color: var(--gray) !important;
-  padding-bottom: 1.1rem !important;
+  padding-bottom: 0.8rem !important;
   border-bottom: 1px solid var(--lightgray) !important;
-  margin-bottom: 1.6rem !important;
+  margin-bottom: 0.9rem !important;
 }
 
 // --- 4/6 h2：衬线 + 左侧橙色强调条（参考站「第 N 站」小节的气质）--------
+// 纵向节奏（2026-10-18 收紧）：标题与正文的间距偏大，统一压小。
 html body div#quartz-root.page article h2 {
   font-family: $headingSerifStack;
   font-weight: 700;
   border-left: 3px solid var(--tertiary) !important;
   padding-left: 0.55em;
+  margin-top: 1.4em !important;
+  margin-bottom: 0.45em !important;
+}
+
+html body div#quartz-root.page article h3 {
+  margin-top: 1.1em !important;
+  margin-bottom: 0.35em !important;
+}
+
+// 正文段落与列表项的段间距：默认约 1em+，收紧一档
+html body div#quartz-root.page article p,
+html body div#quartz-root.page article li {
+  margin-block: 0.8em;
+}
+
+// --- 4b/6 框内节奏：callout / 属性表 / 引言框，标题与内容的间隔收紧 -----
+html body div#quartz-root.page article .callout {
+  .callout-title {
+    padding-bottom: 0 !important;
+    margin-bottom: 0.1em !important;
+  }
+
+  .callout-content {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  // 内容首尾元素的段落外边距与容器内边距叠加，归零
+  .callout-content > p:first-child,
+  .callout-content > ul:first-child,
+  .callout-content > ol:first-child {
+    margin-top: 0 !important;
+  }
+
+  .callout-content > p:last-child,
+  .callout-content > ul:last-child,
+  .callout-content > ol:last-child {
+    margin-bottom: 0 !important;
+  }
+}
+
+// frontmatter 属性表：行内边距收紧
+html body div#quartz-root.page details.note-properties.metadata-container table.note-properties-table :is(td, th) {
+  padding-block: 0.35rem !important;
 }
 
 // --- 5/6 frontmatter 属性表 → 引言框（对应参考站橙色左边线导语）---------
