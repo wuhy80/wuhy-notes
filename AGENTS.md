@@ -40,7 +40,7 @@
 - 当前 `.gitignore` 已排除整个 `.obsidian/`、recent-files 相关路径和 `.smart-connections`；`.smart-env`、`.smtcmp_json_db` 等状态目录未必被排除，且历史上可能已有文件被跟踪，处理前必须以 `git check-ignore` / `git status` 和实际文件为准。
 - 当前 `.gitignore` 实际排除了整个 `.obsidian/`；不要依据 `CLAUDE.md` 中“跟踪 `.obsidian/`”的历史描述修改 Git 规则。
 - **提交与推送约定（2026-10-03 起）**：内容变更使用描述性的中文提交信息；**DSH 完成一批改动后顺手提交并推送**（`node scripts/backup-vaults.mjs` 或标准 git 命令），因为已无定时任务兜底。推送前先 `git fetch` + `git pull --ff-only`；**绝不 force push**。
-- **路径约定（2026-10-18 起）**：知识库根目录一律**按脚本自身位置推导**（`scripts/` 的上一级，可用 `VAULT_DIR` / `SITE_ROOT` 覆盖），脚本里不写死任何本机绝对路径；找不到就直接报错，不回退到猜测的目录。旧的 `E:\Obsidian\wuhy80_new` 已弃用，不要再引用。
+- **路径约定（2026-10-18 起）**：知识库根目录一律**按脚本自身位置推导**（`scripts/` 的上一级，可用 `VAULT_DIR` / `SITE_ROOT` 覆盖），脚本里不写死任何本机绝对路径；找不到就直接报错，不回退到猜测的目录。历史上用过的旧主库克隆已全部弃用，不要再引用、也不要重新加回任何回退分支。
 - **⚠️ `scripts/*.ps1` 必须保留 UTF-8 BOM**：Windows PowerShell 5.1 在文件无 BOM 时按 GBK 解码，脚本里的中文注释会让**整个脚本解析失败**（报 `Unexpected token '<乱码>'`）。很多编辑器和补丁动作会顺手吞掉 BOM，改过 `.ps1` 后务必用 `node scripts/check-bom.mjs` 校验（发布流水线第 0 步也会自动查）。
 
 ## Obsidian 内容规范
