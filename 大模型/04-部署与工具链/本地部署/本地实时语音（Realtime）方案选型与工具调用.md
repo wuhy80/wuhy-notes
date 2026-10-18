@@ -296,7 +296,7 @@ MiniCPM-o 4.5 这类模型不发 function call，但它**会输出文本 token �
 其余必须提前设计的点：
 
 1. **打断与工具调用的竞态**：工具执行中用户插话，`response.cancel` 之后结果回来还续不续答？语义要自己定，平台不会替你决定
-2. **回传结果必须精炼**：音频 token 极贵（gpt-realtime-2 音频输入约 $32 / 输出约 $64 每 1M token）。**别把整篇文档塞回去**，先二次摘要到几百字
+2. **回传结果必须精炼**：音频 token 极贵（gpt-realtime-2 音频输入约 \$32 / 输出约 \$64 每 1M token）。**别把整篇文档塞回去**，先二次摘要到几百字
 3. **会话时长上限**：云端 Realtime session 最长 60 分钟，到期要重建 session 并恢复上下文
 4. **幻觉窗口**：模型可能在工具结果返回前"抢答"。要么用填充话术压住，要么在 prompt 里强约束
 5. **审核卡点消失**：级联里文本是天然审核点，Realtime 里没有。可用 `turn_detection.create_response: false`（检测到说话但不自动生成）+ 自己审核后再 `response.create` 补回

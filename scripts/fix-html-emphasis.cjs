@@ -55,6 +55,21 @@ function fixText(text, stats) {
   return cur
 }
 
+/**
+ * 相邻强调的特殊形态：`**微信****WeLM**`（两条加粗紧挨着）。
+ * CommonMark 的「rule of three」会拒绝把中间那串 **** 拆开，于是渲染成
+ * <strong>微信****WeLM</strong> —— 四个星号原样留在页面上。
+ * 这是作者意图明确的两条加粗，直接在 HTML 层按意图拆开。
+ */
+const ADJACENT = /<(strong|em)>([^<]*?)\*\*\*\*([^<]*?)<\/\1>/g
+
+function fixAdjacent(html, stats) {
+  return html.replace(ADJACENT, (all, tag, before, after) => {
+    stats.adjacent++
+    return `<${tag}>${before}</${tag}><${tag}>${after}</${tag}>`
+  })
+}
+
 function fixHtml(html, stats) {
   const parts = html.split(/(<[^>]*>)/)
   let skipDepth = 0
@@ -75,10 +90,11 @@ function fixHtml(html, stats) {
     }
     out += skipDepth > 0 ? seg : fixText(seg, stats)
   }
-  return out
+  // 最后再处理「相邻加粗」这种跨标签的形态（必须在标签切分之后整体做）
+  return fixAdjacent(out, stats)
 }
 
-const stats = { files: 0, changed: 0, spans: 0, ems: 0 }
+const stats = { files: 0, changed: 0, spans: 0, ems: 0, adjacent: 0 }
 const samples = []
 
 function walk(dir) {
@@ -103,5 +119,5 @@ function walk(dir) {
 }
 walk(PUB)
 
-console.log(`扫描 HTML ${stats.files} 个；改写 ${stats.changed} 个；替换字面强调 ${stats.spans} 处 + 斜体 ${stats.ems} 处`)
+console.log(`扫描 HTML ${stats.files} 个；改写 ${stats.changed} 个；替换字面强调 ${stats.spans} 处 + 斜体 ${stats.ems} 处 + 相邻加粗 ${stats.adjacent} 处`)
 for (const [f, s] of samples) console.log('  ·', f, '::', s)
