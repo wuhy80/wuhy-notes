@@ -62,6 +62,8 @@ html body div#quartz-root.page div#quartz-body .center {
   // 正文两侧内边距与侧栏一致（2026-10-18：1.5rem → 1rem）
   padding-left: 1rem !important;
   padding-right: 1rem !important;
+  // 主题给中栏铺了自己的底色（#faf9f5），挡住了页面的暖纸色——置透明露出 #faf6ee
+  background-color: transparent !important;
 }
 
 html body div#quartz-root.page div#quartz-body .center > article,
