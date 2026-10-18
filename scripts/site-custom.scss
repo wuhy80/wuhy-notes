@@ -678,3 +678,21 @@ html body div#quartz-root.page .sidebar.right .toc li a[aria-current] {
   font-weight: 700;
   border-left-color: var(--accent) !important;
 }
+
+// ===========================================================================
+// 8/8 文章插图（导出时把 ![[x.svg]] 改写成 <img class="site-svg">）
+//
+// 为什么不用 Quartz 原生的 <object>：它对 Obsidian 的 SVG 嵌入固定输出
+// <object width="auto" height="auto">，浏览器按「替换元素默认尺寸」渲染成
+// 300×150 的小框（2026-10-18 实测），图看着像没出来。改成 <img> 后，
+// SVG 只带 viewBox 时浏览器会按 viewBox 的宽高比自适应：
+// width:100% + height:auto 就能铺满正文列并保持比例。
+// ===========================================================================
+html body article img.site-svg {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  margin: 1.2rem 0 0.35rem !important; // 下边距小一点：图注紧跟其后
+  border-radius: 4px;
+}

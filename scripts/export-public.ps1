@@ -101,6 +101,19 @@ function Get-InputSig {
       if ($skip) { continue }
       [void]$parts.Add($vaultRel + '|' + $f.Length + '|' + $f.LastWriteTimeUtc.Ticks)
     }
+    # 附件（目前是教程的 .svg 插图）也要参与指纹：它们不叫 .md，上面那轮扫不到。
+    # 否则「只换了图、没动笔记」时增量判断会认为无变化而跳过导出，
+    # 线上就一直留着旧图（2026-10-18 重取教程插图时踩到）。
+    if ($AttachExt.Count -gt 0) {
+      foreach ($f in (Get-ChildItem -LiteralPath $src -Recurse -File -Force -ErrorAction SilentlyContinue)) {
+        if ($AttachExt -notcontains $f.Extension.ToLower()) { continue }
+        $vaultRel = "$d\$($f.FullName.Substring($prefixLen))"
+        $skip = $false
+        foreach ($x in $ExcludeDirs) { if ($vaultRel -like "$x*") { $skip = $true; break } }
+        if ($skip) { continue }
+        [void]$parts.Add($vaultRel + '|' + $f.Length + '|' + $f.LastWriteTimeUtc.Ticks)
+      }
+    }
   }
   $scriptSig = Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256
   [void]$parts.Add('export-public.ps1|' + $scriptSig.Hash.ToLower())
@@ -161,15 +174,25 @@ Write-Host "=== 3. 收集并复制被引用的附件 ===" -ForegroundColor Cyan
 $embedRe = '!\[\[([^\]]+)\]\]'
 $attachOk = 0; $attachMiss = @()
 $attachSkip = @()
-# 整库文件按文件名索引一次（重名取先枚举到的那个）。放行 .svg 后有 110 个附件，
+# 整库文件按文件名索引一次（重名取先枚举到的那个）。放行 .svg 后有 110+ 个附件，
 # 逐个 `Get-ChildItem -Recurse` 扫全库会慢到不可接受。
+# ⚠️ 必须跳过站点构建目录（$SiteRoot）与 .git/.trash/.smart-env：它们就在 vault 里，
+#    且 _site/content 存着上一次导出留下的同名附件，不跳过就会被它们抢到、导出旧图
+#    （2026-10-18 重取教程插图时踩到：修好的图没生效，导出里还是坏的）。
+$indexSkipPrefixes = @($SiteRoot, (Join-Path $Vault '.git'), (Join-Path $Vault '.trash'), (Join-Path $Vault '.smart-env')) |
+  ForEach-Object { $_.ToLower() }
 $vaultFileIndex = @{}
 foreach ($vf in (Get-ChildItem -LiteralPath $Vault -Recurse -File -Force -ErrorAction SilentlyContinue)) {
+  $low = $vf.FullName.ToLower()
+  $skipFile = $false
+  foreach ($p in $indexSkipPrefixes) { if ($low.StartsWith($p)) { $skipFile = $true; break } }
+  if ($skipFile) { continue }
   if (-not $vaultFileIndex.ContainsKey($vf.Name)) { $vaultFileIndex[$vf.Name] = $vf }
 }
 foreach ($f in $expFiles) {
   $noteDir = Split-Path $f.FullName -Parent
   $txt = Get-Content -LiteralPath $f.FullName -Raw -Encoding UTF8
+  $rewrote = $false
   foreach ($m in [regex]::Matches($txt, $embedRe)) {
     $t = ($m.Groups[1].Value -split '\|')[0].Trim()
     if ([string]::IsNullOrWhiteSpace($t)) { continue }
@@ -182,16 +205,26 @@ foreach ($f in $expFiles) {
       if ($attachSkip -notcontains $tooBig) { $attachSkip += $tooBig }
       continue
     }
-    # 镜像嵌入目标里的相对路径（丢掉 . 与 ..），落点 = 笔记所在目录
+    # 镜像嵌入目标里的相对路径（丢掉 . 与 ..），落点 = 笔记所在目录。
+    # 一律 -Force 覆盖：源图改了（比如重取教程插图）必须刷新，
+    # 不能因为「目标已存在」就跳过，否则站点上会一直挂着旧图。
     $relParts = @(($t -replace '\\', '/') -split '/' | Where-Object { $_ -and $_ -ne '.' -and $_ -ne '..' })
     $dest = Join-Path $noteDir ($relParts -join '\')
     $destDir = Split-Path $dest -Parent
     if (-not (Test-Path -LiteralPath $destDir)) { New-Item -ItemType Directory -Path $destDir -Force | Out-Null }
-    if (-not (Test-Path -LiteralPath $dest)) {
-      Copy-Item -LiteralPath $found.FullName -Destination $dest -Force
-      $attachOk++
+    Copy-Item -LiteralPath $found.FullName -Destination $dest -Force
+    $attachOk++
+    # 同时把 Obsidian 嵌入改写成 <img>：
+    # Quartz 原生的 <object width="auto" height="auto"> 会退化成 300×150 的小框（2026-10-18 实测），
+    # 只有 <img> 配 width:100%/height:auto 才能按 SVG 的 viewBox 自适应铺满正文列。
+    # URL 规则与 Quartz 的 slugifyFilePath 对齐：斜杠化 + ASCII 转小写（中文不受影响）。
+    $imgSrc = ($t -replace '\\', '/').ToLower()
+    if ($txt.Contains($m.Value)) {
+      $txt = $txt.Replace($m.Value, '<img class="site-svg" src="' + $imgSrc + '" alt="' + $name + '">')
+      $rewrote = $true
     }
   }
+  if ($rewrote) { Write-Utf8 $f.FullName $txt }
 }
 Write-Host "  已复制 $attachOk 个；缺失 $($attachMiss.Count) 个；因过大跳过 $($attachSkip.Count) 个" -ForegroundColor Green
 if ($attachMiss.Count) { $attachMiss | ForEach-Object { Write-Host "      缺失：$_" -ForegroundColor Yellow } }

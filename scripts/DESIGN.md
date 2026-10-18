@@ -214,6 +214,12 @@ components:
 - **Callout**：白卡（`card` + 1px `line` 描边）配 **3px 类型色左边条**（`--color`，由 Quartz 按类型给出），
   标题用 `ink`——对应参考站 `.quiz-item`（白卡 + 线 + 3px 左边条）
 - **Callout 内的代码块**：首尾外边距归零，避免与 callout 内边距叠加；底色改回 `paper-deep`（白卡叠白卡会失去层次）
+- **文章插图**（导出时把 `![[x.svg]]` 改写成 `<img class="site-svg">`）：`width:100%` + `height:auto`
+  按列宽自适应，上下外边距 1.2rem / 0.35rem（下边距小，紧接图注）
+  - **永不**用 Quartz 原生的 `<object>`：它对 Obsidian 的 SVG 嵌入固定输出
+    `<object width="auto" height="auto">`，浏览器按替换元素默认尺寸渲染成 300×150 的小框
+  - 插图文件必须与引用它的笔记**同目录**（导出脚本按嵌入目标镜像路径），
+    且必须带 `xmlns="http://www.w3.org/2000/svg"`——缺命名空间的独立 SVG 在 `<img>` 里加载失败
 - **文章 hero**：`h1.article-title` 数黑体 700、`clamp(30px,3.4vw,46px)`；
   其下 `.content-meta` 小号弱化（`ink-faint`）并压 1px `line` 底边线，构成 hero 收口
 - **frontmatter 属性表**（`details.note-properties.metadata-container`）：渲染成
