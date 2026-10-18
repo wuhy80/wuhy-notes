@@ -99,25 +99,39 @@ spacing:
   callout-in: 0       # callout 标题与内容贴合（content 顶部内边距归零）
 components:
   code-block:
-    backgroundColor: "{colors.border}"
+    backgroundColor: "{colors.card}"
+    borderColor: "{colors.line}"
     rounded: "{rounded.md}"
     textColor: "{colors.ink}"
   inline-code:
-    backgroundColor: "{colors.border}"
+    backgroundColor: "{colors.inline-code}"
     rounded: "{rounded.sm}"
-    textColor: "{colors.ink}"
+    textColor: "{colors.accent-deep}"
+  table:
+    backgroundColor: "{colors.card}"
+    borderColor: "{colors.line}"
+    headerBackgroundColor: "{colors.paper-deep}"
+  callout:
+    backgroundColor: "{colors.card}"
+    borderColor: "{colors.line}"
+    accentBarColor: "Quartz 的 --color（按 callout 类型）"
+    titleColor: "{colors.ink}"
   code-line-number:
-    textColor: "{colors.ink-tertiary}"
+    textColor: "{colors.ink-faint}"
     typography: "{typography.code}"
   code-language-label:
-    textColor: "{colors.ink-tertiary}"
+    textColor: "{colors.ink-faint}"
     typography: "{typography.code}"
   link:
-    textColor: "{colors.primary}"
+    textColor: "{colors.accent}"
+  active-item:
+    backgroundColor: "{colors.accent-wash}"
+    borderColor: "{colors.accent}"
+    textColor: "{colors.accent-deep}"
   highlighted-line:
-    backgroundColor: "{colors.highlight}"
+    backgroundColor: "{colors.accent-wash}"
   highlight-bar:
-    backgroundColor: "{colors.accent}"
+    backgroundColor: "{colors.accent-warm}"
   mark:
     backgroundColor: "{colors.text-highlight}"
     textColor: "{colors.ink}"
