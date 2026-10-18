@@ -696,3 +696,11 @@ html body article img.site-svg {
   margin: 1.2rem 0 0.35rem !important; // 下边距小一点：图注紧跟其后
   border-radius: 4px;
 }
+
+// 图注段落：导出时在 <img> 后补了空行（否则 HTML 块会吞掉图注行），
+// 图注因此成为独立段落，这里把它的上边距收一收，视觉上仍贴着图。
+html body article p:has(> em:only-child) {
+  margin-top: 0.15em;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}

@@ -22,6 +22,8 @@ $Vault    = Get-EnvOr 'VAULT_DIR' $DefaultVault
 $SiteRoot = Get-EnvOr 'SITE_ROOT' 'E:\Obsidian\public-site'
 $Content  = Join-Path $SiteRoot 'content'
 $Reports  = Join-Path $SiteRoot '_reports'
+# Node 可执行文件（4.55 步的 CJK 强调修复脚本要用）
+$Node     = Get-EnvOr 'NODE_EXE' 'C:\nvm4w\nodejs\node.exe'
 
 # ── 发布范围 ──
 # 原则：只发布技术学习类内容。以下类别不发布（判断记录见运维笔记「展示层」一节）：
@@ -220,7 +222,19 @@ foreach ($f in $expFiles) {
     # URL 规则与 Quartz 的 slugifyFilePath 对齐：斜杠化 + ASCII 转小写（中文不受影响）。
     $imgSrc = ($t -replace '\\', '/').ToLower()
     if ($txt.Contains($m.Value)) {
-      $txt = $txt.Replace($m.Value, '<img class="site-svg" src="' + $imgSrc + '" alt="' + $name + '">')
+      $eol = if ($txt.Contains("`r`n")) { "`r`n" } else { "`n" }
+      $imgTag = '<img class="site-svg" src="' + $imgSrc + '" alt="' + $name + '">'
+      # ⚠️ 独占一行时必须在 <img> 后面留一个空行（原行尾的换行 + 这一行 = 一个空行）：
+      # 以 <img> 开头的行会被 Markdown 当成 HTML 块，块一直延伸到下一个空行为止，
+      # 紧随其后的图注行（`*图 1-1…*`）就被整行吞掉、不再按 Markdown 解析——
+      # 页面上表现为图注原样露出 * 星号（2026-10-18 实测 01-什么是向量 的图 1-1）。
+      $at = $txt.IndexOf($m.Value)
+      $lineStart = $txt.LastIndexOf("`n", [Math]::Max(0, $at - 1)) + 1
+      $lineEnd = $txt.IndexOf("`n", $at)
+      if ($lineEnd -lt 0) { $lineEnd = $txt.Length }
+      $lineText = $txt.Substring($lineStart, $lineEnd - $lineStart)
+      if ($lineText.Trim() -eq $m.Value.Trim()) { $imgTag += $eol }
+      $txt = $txt.Replace($m.Value, $imgTag)
       $rewrote = $true
     }
   }
@@ -357,6 +371,19 @@ foreach ($f in $expFiles) {
   if ($changed) { Write-Utf8 $f.FullName (($lines -join "`n") + "`n") }
 }
 Write-Host "  规范化 $($fmLog.Count) 处；未闭合 $($fmBad.Count) 篇" -ForegroundColor Green
+
+# 4.55 CJK 强调修复：中文标点紧贴 ** ** 时 CommonMark 判定分隔符不合格，页面上会
+# 露出字面星号（Obsidian 自己解析更宽松，所以只在静态站暴露）。
+# 交给 Node 脚本按 flanking 规则判定，失效的那一对改写成 <strong>/<em>。
+Write-Host "=== 4.55 CJK 强调修复（**重点。**下一句 这类写法）===" -ForegroundColor Cyan
+$emphFixer = Join-Path $Vault 'scripts\fix-cjk-emphasis.cjs'
+if ((Test-Path -LiteralPath $emphFixer) -and (Test-Path -LiteralPath $Node)) {
+  $out = (& $Node $emphFixer $Content 2>&1 | Out-String)
+  ($out -split "`r?`n") | Where-Object { $_ -match '扫描|Error' } | ForEach-Object { Write-Host "  $($_.Trim())" -ForegroundColor Green }
+} else {
+  Write-Host "  未找到 fix-cjk-emphasis.cjs 或 node，跳过" -ForegroundColor Yellow
+}
+
 Write-Host "=== 4.6 生成首页 index.md 与静态早报索引 ===" -ForegroundColor Cyan
 
 # 1. 扫描最近早报（供首页和索引页静态使用）

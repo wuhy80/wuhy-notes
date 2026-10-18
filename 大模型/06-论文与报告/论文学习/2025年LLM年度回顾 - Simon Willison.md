@@ -97,13 +97,13 @@ aliases:
 - **关键洞察**：Agent 的成功依赖于推理能力 + 工具调用的结合
 
 ### 3. Claude Code 的巨大成功
-- **里程碑**：CLI 工具达到 $10 亿年收入！
+- **里程碑**：CLI 工具达到 \$10 亿年收入！
 - **异步编程 Agent**：可以在后台运行，完成后自动提交 PR
 - **启示**：命令行工具在 AI 时代迎来复兴
 
 ### 4. 中国开源模型崛起
 - **领先者**：DeepSeek、Qwen、Kimi K2、GLM、MiniMax
-- **震撼事件**：DeepSeek R1 发布导致 NVIDIA 市值单日蒸发 $5930 亿
+- **震撼事件**：DeepSeek R1 发布导致 NVIDIA 市值单日蒸发 \$5930 亿
 - **重要意义**：
   - 打破了 AI 是美国垄断的假设
   - 大多数采用 MIT/Apache 2.0 真正开源协议
@@ -115,8 +115,8 @@ aliases:
 - **致命三角**：私有数据访问 + 外部通信 + 不可信内容 = 灾难配方
 - **浏览器 Agent 风险**：AI 控制浏览器带来严重安全隐患
 
-### 6. $200/月订阅时代
-- **新定价标准**：Claude Pro Max、ChatGPT Pro、Google AI Ultra 都在 $200/月左右
+### 6. \$200/月订阅时代
+- **新定价标准**：Claude Pro Max、ChatGPT Pro、Google AI Ultra 都在 \$200/月左右
 - **经济逻辑**：编程 Agent 消耗大量 token，订阅比按量付费更划算
 - **市场验证**：用户愿意为高质量 AI 服务付费
 
@@ -159,7 +159,7 @@ It’s been a year filled with a *lot* of different trends.
 - [The year of coding agents and Claude Code](https://simonwillison.net/2025/Dec/31/the-year-in-llms/#the-year-of-coding-agents-and-claude-code)
 - [The year of LLMs on the command-line](https://simonwillison.net/2025/Dec/31/the-year-in-llms/#the-year-of-llms-on-the-command-line)
 - [The year of YOLO and the Normalization of Deviance](https://simonwillison.net/2025/Dec/31/the-year-in-llms/#the-year-of-yolo-and-the-normalization-of-deviance)
-- [The year of $200/month subscriptions](https://simonwillison.net/2025/Dec/31/the-year-in-llms/#the-year-of-200-month-subscriptions)
+- [The year of \$200/month subscriptions](https://simonwillison.net/2025/Dec/31/the-year-in-llms/#the-year-of-200-month-subscriptions)
 - [The year of top-ranked Chinese open weight models](https://simonwillison.net/2025/Dec/31/the-year-in-llms/#the-year-of-top-ranked-chinese-open-weight-models)
 - [The year of long tasks](https://simonwillison.net/2025/Dec/31/the-year-in-llms/#the-year-of-long-tasks)
 - [The year of prompt-driven image editing](https://simonwillison.net/2025/Dec/31/the-year-in-llms/#the-year-of-prompt-driven-image-editing)
@@ -195,7 +195,7 @@ My favourite explanation of the significance of this trick comes [from Andrej Ka
 
 > By training LLMs against ==automatically verifiable rewards== (自动可验证奖励) across a number of environments (e.g. think math/code puzzles), the LLMs ==spontaneously develop strategies== (自发发展策略) that look like "reasoning" to humans—they learn to ==break down problem solving into intermediate calculations== (将问题分解为中间计算步骤) and they learn a number of problem solving strategies for going back and forth to figure things out (see DeepSeek R1 paper for examples). \[...\]
 >
-> Running RLVR turned out to offer high ==capability/$== (性价比), which ==gobbled up== (吞噬) the compute that was originally intended for ==pretraining== (预训练). Therefore, most of the capability progress of 2025 was defined by the LLM labs ==chewing through the overhang== (消化积压) of this new stage and overall we saw ~similar sized LLMs but a lot longer ==RL runs== (强化学习训练).
+> Running RLVR turned out to offer high ==capability/\$== (性价比), which ==gobbled up== (吞噬) the compute that was originally intended for ==pretraining== (预训练). Therefore, most of the capability progress of 2025 was defined by the LLM labs ==chewing through the overhang== (消化积压) of this new stage and overall we saw ~similar sized LLMs but a lot longer ==RL runs== (强化学习训练).
 
 Every notable AI lab released at least one reasoning model in 2025. Some labs released hybrids that could be run in reasoning or non-reasoning modes. Many API models now include dials for increasing or decreasing the amount of reasoning applied to a given prompt.
 
@@ -279,7 +279,7 @@ Claude Code and friends have conclusively demonstrated that developers will embr
 
 It helps that terminal commands with obscure syntax like `sed` and `ffmpeg` and `bash` itself are no longer a barrier to entry when an LLM can spit out the right command for you.
 
-As-of December 2nd [Anthropic credit Claude Code with $1bn in run-rate revenue](https://www.anthropic.com/news/anthropic-acquires-bun-as-claude-code-reaches-usd1b-milestone)! I did *not* expect a CLI tool to reach anything close to those numbers.
+As-of December 2nd [Anthropic credit Claude Code with \$1bn in run-rate revenue](https://www.anthropic.com/news/anthropic-acquires-bun-as-claude-code-reaches-usd1b-milestone)! I did *not* expect a CLI tool to reach anything close to those numbers.
 
 With hindsight, maybe I should have promoted LLM from a side-project to a key focus!
 
@@ -308,19 +308,19 @@ This was originally described by sociologist Diane Vaughan as part of her work t
 
 Johann argues that the longer we get away with running these systems in fundamentally insecure ways, the closer we are getting to a Challenger disaster of our own.
 
-#### The year of $200/month subscriptions
+#### The year of \$200/month subscriptions
 
-ChatGPT Plus’s original $20/month price turned out to be a [snap decision by Nick Turley](https://simonwillison.net/2025/Aug/12/nick-turley/) based on a Google Form poll on Discord. That price point has stuck firmly ever since.
+ChatGPT Plus’s original \$20/month price turned out to be a [snap decision by Nick Turley](https://simonwillison.net/2025/Aug/12/nick-turley/) based on a Google Form poll on Discord. That price point has stuck firmly ever since.
 
-This year a new pricing precedent has emerged: the Claude Pro Max 20x plan, at $200/month.
+This year a new pricing precedent has emerged: the Claude Pro Max 20x plan, at \$200/month.
 
-OpenAI have a similar $200 plan called ChatGPT Pro. Gemini have Google AI Ultra at $249/month with a $124.99/month 3-month starting discount.
+OpenAI have a similar \$200 plan called ChatGPT Pro. Gemini have Google AI Ultra at \$249/month with a \$124.99/month 3-month starting discount.
 
 These plans appear to be driving some serious revenue, though none of the labs have shared figures that break down their subscribers by tier.
 
-I’ve personally paid $100/month for Claude in the past and will upgrade to the $200/month plan once my current batch of free allowance (from previewing one of their models—thanks, Anthropic) runs out. I’ve heard from plenty of other people who are happy to pay these prices too.
+I’ve personally paid \$100/month for Claude in the past and will upgrade to the \$200/month plan once my current batch of free allowance (from previewing one of their models—thanks, Anthropic) runs out. I’ve heard from plenty of other people who are happy to pay these prices too.
 
-You have to use models *a lot* in order to spend $200 of API credits, so you would think it would make economic sense for most people to pay by the token instead. It turns out tools like Claude Code and Codex CLI can burn through enormous amounts of tokens once you start setting them more challenging tasks, to the point that $200/month offers a substantial discount.
+You have to use models *a lot* in order to spend \$200 of API credits, so you would think it would make economic sense for most people to pay by the token instead. It turns out tools like Claude Code and Codex CLI can burn through enormous amounts of tokens once you start setting them more challenging tasks, to the point that \$200/month offers a substantial discount.
 
 #### The year of top-ranked Chinese open weight models
 
@@ -339,9 +339,9 @@ Here’s the [Artificial Analysis ranking for open weight models as-of 30th Dece
 
 GLM-4.7, Kimi K2 Thinking, MiMo-V2-Flash, DeepSeek V3.2, MiniMax-M2.1 are all Chinese open weight models. The highest non-Chinese model in that chart is OpenAI’s gpt-oss-120B (high), which comes in sixth place.
 
-The Chinese model revolution really kicked off on Christmas day 2024 with [the release of DeepSeek 3](https://simonwillison.net/2024/Dec/31/llms-in-2024/#was-the-best-currently-available-llm-trained-in-china-for-less-than-6m-), supposedly trained for around $5.5m. DeepSeek followed that on 20th January with [DeepSeek R1](https://simonwillison.net/2025/Jan/20/deepseek-r1/) which promptly [triggered a major AI/semiconductor selloff](https://simonwillison.net/2025/Jun/6/six-months-in-llms/#ai-worlds-fair-2025-09.jpeg): NVIDIA lost ~$593bn in market cap as investors panicked that AI maybe wasn’t an American monopoly after all.
+The Chinese model revolution really kicked off on Christmas day 2024 with [the release of DeepSeek 3](https://simonwillison.net/2024/Dec/31/llms-in-2024/#was-the-best-currently-available-llm-trained-in-china-for-less-than-6m-), supposedly trained for around \$5.5m. DeepSeek followed that on 20th January with [DeepSeek R1](https://simonwillison.net/2025/Jan/20/deepseek-r1/) which promptly [triggered a major AI/semiconductor selloff](https://simonwillison.net/2025/Jun/6/six-months-in-llms/#ai-worlds-fair-2025-09.jpeg): NVIDIA lost ~\$593bn in market cap as investors panicked that AI maybe wasn’t an American monopoly after all.
 
-![NVIDIA corp stock price chart showing a huge drop in January 27th which I've annotated with -$600bn](https://static.simonwillison.net/static/2025/ai-worlds-fair/ai-worlds-fair-2025-09.jpeg)
+![NVIDIA corp stock price chart showing a huge drop in January 27th which I've annotated with -\$600bn](https://static.simonwillison.net/static/2025/ai-worlds-fair/ai-worlds-fair-2025-09.jpeg)
 
 The panic didn’t last—NVIDIA quickly recovered and today are up significantly from their pre-DeepSeek R1 levels. It was still a remarkable moment. Who knew an open weight model release could have that kind of impact?
 
@@ -698,7 +698,7 @@ Here’s a Guardian headline from December 8th: [More than 200 environmental gro
 
 I’ve been convinced by Andy Masley that [the water usage issue](https://andymasley.substack.com/p/the-ai-water-issue-is-fake) is mostly overblown, which is a problem mainly because it acts as a distraction from the very real issues around energy consumption, carbon emissions and noise pollution.
 
-AI labs continue to find new efficiencies to help serve increased quality of models using less energy per token, but the impact of that is classic [Jevons paradox](https://en.wikipedia.org/wiki/Jevons_paradox) —as tokens get cheaper we find more intense ways to use them, like spending $200/month on millions of tokens to run coding agents.
+AI labs continue to find new efficiencies to help serve increased quality of models using less energy per token, but the impact of that is classic [Jevons paradox](https://en.wikipedia.org/wiki/Jevons_paradox) —as tokens get cheaper we find more intense ways to use them, like spending \$200/month on millions of tokens to run coding agents.
 
 #### My own words of the year
 
@@ -726,7 +726,7 @@ If you’ve made it this far, I hope you’ve found this useful!
 
 You can subscribe to my blog [in a feed reader](https://simonwillison.net/about/#atom) or [via email](https://simonwillison.net/about/#newsletter), or follow me on [Bluesky](https://bsky.app/profile/simonwillison.net) or [Mastodon](https://fedi.simonwillison.net/@simon) or [Twitter](https://twitter.com/simonw).
 
-If you’d like a review like this on a monthly basis instead I also operate a [$10/month sponsors only](https://github.com/sponsors/simonw) newsletter with a round-up of the key developments in the LLM space over the past 30 days. Here are preview editions for [September](https://gist.github.com/simonw/d6d4d86afc0d76767c63f23fc5137030), [October](https://gist.github.com/simonw/3385bc8c83a8157557f06865a0302753), and [November](https://gist.github.com/simonw/fc34b780a9ae19b6be5d732078a572c8) —I’ll be sending December’s out some time tomorrow.
+If you’d like a review like this on a monthly basis instead I also operate a [\$10/month sponsors only](https://github.com/sponsors/simonw) newsletter with a round-up of the key developments in the LLM space over the past 30 days. Here are preview editions for [September](https://gist.github.com/simonw/d6d4d86afc0d76767c63f23fc5137030), [October](https://gist.github.com/simonw/3385bc8c83a8157557f06865a0302753), and [November](https://gist.github.com/simonw/fc34b780a9ae19b6be5d732078a572c8) —I’ll be sending December’s out some time tomorrow.
 
 Part of series **[LLMs annual review](https://simonwillison.net/series/llms-annual-review/)**
 

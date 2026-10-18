@@ -316,6 +316,17 @@ try {
     throw "构建产物仅 $($built.Count) 个文件，明显不完整，中止发布"
   }
   Write-Host "  产物校验通过：$($built.Count) 个文件 / $([math]::Round((($built | Measure-Object Length -Sum).Sum)/1MB,2)) MB"
+
+  # 强调兜底：中文标点紧贴 ** 时 CommonMark 会吐字面星号；导出层只按 flanking 判定，
+  # 覆盖不到「分隔符栈 / rule of three / 与 $公式$ 交互」这类解析器层面的失效。
+  # 所以再在构建产物上收口一次：产物里还能看到的字面 ** 就是坏的，直接换成 <strong>。
+  $emphHtmlFixer = Join-Path $Vault 'scripts\fix-html-emphasis.cjs'
+  if (Test-Path -LiteralPath $emphHtmlFixer) {
+    $o = (& $Node $emphHtmlFixer $PublicDir 2>&1 | Out-String)
+    ($o -split "`r?`n") | Where-Object { $_ -match '扫描|Error' } | ForEach-Object { Write-Host "  $($_.Trim())" }
+  } else {
+    Write-Host "  未找到 fix-html-emphasis.cjs，跳过强调兜底" -ForegroundColor Yellow
+  }
 } finally { Pop-Location }
 
 Write-Step "4/4 部署到 Cloudflare Pages"
