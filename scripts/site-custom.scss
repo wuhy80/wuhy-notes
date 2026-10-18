@@ -308,6 +308,20 @@ html body div#quartz-root.page div#quartz-body > .sidebar.right {
   padding: 16px 10px 32px !important;
 }
 
+// 三栏顶部对齐（2026-10-18）：中栏页头自带 96px 顶距、面包屑另有 12px，
+// 右栏图谱标题另有 ~30px——全部压平，让左中右首屏内容都从 16px 开始
+html body div#quartz-root.page .page-header {
+  margin-top: 1rem !important;
+}
+
+html body div#quartz-root.page .breadcrumb-container {
+  margin-top: 0 !important;
+}
+
+html body div#quartz-root.page .sidebar.right .graph h3 {
+  margin-top: 0 !important;
+}
+
 // --- 3/6 文章标题（hero）：大号衬线，参考 clamp(30px,4.6vw,48px)/900 ----
 // ⚠️ 此版 Quartz 的页头不在 article 里（div.page-header > div.popover-hint），
 // 选择器不能带 article；正文 markdown 在 article.popover-hint 里。
