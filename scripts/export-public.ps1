@@ -41,17 +41,21 @@ $PublicDirs = @(
 $ExcludeFileNames = @('CLAUDE.md', 'AGENTS.md')
 # 根目录散装笔记一律不发布
 $PublicRootFiles = @()
-# 附件白名单：只发布图片类（自己画的图）。
+# 附件白名单：只发布图片类。
 # 不发布 PDF / 压缩包 / 安装包 / 音视频：多为第三方版权资料、体积大
 # （实测曾有 8 个行业报告 PDF 共 101 MB，其中 36 MB 那个超过 Cloudflare 单文件 25 MiB 上限）
-$AttachExt   = @()   # 附件一律不发布（2026-10-02 决定）；笔记里的嵌入会被改写成文字提示
+# 2026-10-18：放行 .svg——《AI 大模型原理教程-轩辕》的 94 张插图是 SVG，
+# 不放行的话教程页面上只会留下一行行「附件未随站点发布」的文字占位。
+$AttachExt   = @('.svg')
 $AttachMaxMB = 10   # 单个附件体积上限，超过则跳过并记入报告
 $ExcludeDirs = @(
   '技术笔记\虚拟机', '技术笔记\安全',                          # 2026-10-01/02 迁至私密库
   '专项学习\*学习规划',                                        # 孩子的个人学业资料（姓名/学校/成绩/家校沟通），通配排除
   '专项项目', '极客时间', '浏览剪切', '网络剪切', '网关开发', '网络资料'   # 2026-10-02 迁至私密库
-  '技术笔记\版本管理\知识库双仓库拆分与多机同步.md',                # 内部运维文档：含内部路径、备份架构、家庭信息，绝不发布
-  '大模型\07-教程与课程\AI大模型原理教程-轩辕'                      # 2026-10-18 收录的第三方教程全文（轩辕），版权归原作者，仅限本地学习，绝不发布
+  '技术笔记\版本管理\知识库双仓库拆分与多机同步.md'                 # 内部运维文档：含内部路径、备份架构、家庭信息，绝不发布
+  # 2026-10-18 该目录曾因「第三方教程全文（轩辕），版权归原作者」被列入本清单；
+  # 2026-10-18 晚按用户要求解除排除，教程随站点发布（正文 38 篇 + 94 张 SVG）。
+  # 需要回退时：把 '大模型\07-教程与课程\AI大模型原理教程-轩辕' 加回本数组末尾即可。
 )
 
 # ── 脱敏规则 ──
@@ -149,24 +153,45 @@ $nameIndex = @{}
 foreach ($f in $expFiles) { if (-not $nameIndex.ContainsKey($f.BaseName)) { $nameIndex[$f.BaseName] = $f.FullName } }
 
 Write-Host "=== 3. 收集并复制被引用的附件 ===" -ForegroundColor Cyan
+# ⚠️ 附件必须放在【引用它的那篇笔记旁边】，不能只丢进 content/附件/。
+# 原因（2026-10-18 实测）：Quartz 转换 Obsidian 嵌入时只做 `url = slugifyFilePath(嵌入目标)`——
+# ![[L01-fig1.svg]] 会原样写成相对「当前页面目录」的 <object data="l01-fig1.svg">，
+# 不解析、也不指向统一附件目录。所以 SVG 只有与笔记同目录（或按 `附件/xx/x.svg`
+# 这种带路径写法在笔记目录下镜像出来）才加载得到；放统一附件目录会让整站图片 404。
 $embedRe = '!\[\[([^\]]+)\]\]'
-$attachWanted = @{}
-foreach ($f in $expFiles) {
-  foreach ($m in [regex]::Matches((Get-Content -LiteralPath $f.FullName -Raw -Encoding UTF8), $embedRe)) {
-    $t = ($m.Groups[1].Value -split '\|')[0].Trim()
-    if ($AttachExt -contains ([System.IO.Path]::GetExtension($t).ToLower())) { $attachWanted[[System.IO.Path]::GetFileName($t)] = $true }
-  }
-}
 $attachOk = 0; $attachMiss = @()
 $attachSkip = @()
-foreach ($name in $attachWanted.Keys) {
-  $found = Get-ChildItem -LiteralPath $Vault -Recurse -File -Filter $name -Force -ErrorAction SilentlyContinue | Select-Object -First 1
-  if (-not $found) { $attachMiss += $name; continue }
-  if ($found.Length -gt ($AttachMaxMB * 1MB)) { $attachSkip += "$name ($([math]::Round($found.Length/1MB,1)) MB)"; continue }
-  $dstDir = Join-Path $Content '附件'
-  if (-not (Test-Path -LiteralPath $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
-  Copy-Item -LiteralPath $found.FullName -Destination (Join-Path $dstDir $name) -Force
-  $attachOk++
+# 整库文件按文件名索引一次（重名取先枚举到的那个）。放行 .svg 后有 110 个附件，
+# 逐个 `Get-ChildItem -Recurse` 扫全库会慢到不可接受。
+$vaultFileIndex = @{}
+foreach ($vf in (Get-ChildItem -LiteralPath $Vault -Recurse -File -Force -ErrorAction SilentlyContinue)) {
+  if (-not $vaultFileIndex.ContainsKey($vf.Name)) { $vaultFileIndex[$vf.Name] = $vf }
+}
+foreach ($f in $expFiles) {
+  $noteDir = Split-Path $f.FullName -Parent
+  $txt = Get-Content -LiteralPath $f.FullName -Raw -Encoding UTF8
+  foreach ($m in [regex]::Matches($txt, $embedRe)) {
+    $t = ($m.Groups[1].Value -split '\|')[0].Trim()
+    if ([string]::IsNullOrWhiteSpace($t)) { continue }
+    if ($AttachExt -notcontains ([System.IO.Path]::GetExtension($t).ToLower())) { continue }
+    $name = [System.IO.Path]::GetFileName($t)
+    $found = $vaultFileIndex[$name]
+    if (-not $found) { if ($attachMiss -notcontains $name) { $attachMiss += $name }; continue }
+    if ($found.Length -gt ($AttachMaxMB * 1MB)) {
+      $tooBig = "$name ($([math]::Round($found.Length/1MB,1)) MB)"
+      if ($attachSkip -notcontains $tooBig) { $attachSkip += $tooBig }
+      continue
+    }
+    # 镜像嵌入目标里的相对路径（丢掉 . 与 ..），落点 = 笔记所在目录
+    $relParts = @(($t -replace '\\', '/') -split '/' | Where-Object { $_ -and $_ -ne '.' -and $_ -ne '..' })
+    $dest = Join-Path $noteDir ($relParts -join '\')
+    $destDir = Split-Path $dest -Parent
+    if (-not (Test-Path -LiteralPath $destDir)) { New-Item -ItemType Directory -Path $destDir -Force | Out-Null }
+    if (-not (Test-Path -LiteralPath $dest)) {
+      Copy-Item -LiteralPath $found.FullName -Destination $dest -Force
+      $attachOk++
+    }
+  }
 }
 Write-Host "  已复制 $attachOk 个；缺失 $($attachMiss.Count) 个；因过大跳过 $($attachSkip.Count) 个" -ForegroundColor Green
 if ($attachMiss.Count) { $attachMiss | ForEach-Object { Write-Host "      缺失：$_" -ForegroundColor Yellow } }
@@ -225,19 +250,25 @@ foreach ($f in $expFiles) {
   if ($txt -ne $orig) { Write-Utf8 $f.FullName $txt; $phraseFiles++ }
 }
 Write-Host "  清理内部用语 $phraseFiles 篇" -ForegroundColor Green
-# 附件不发布：把附件嵌入改写成文字提示，避免页面上出现断图/坏链
-$embedFileRe = '!\[\[([^\]]+\.(?:png|jpg|jpeg|gif|svg|webp|pdf|mp4|mp3|zip|crx|xlsx|drawio|csv|docx|pptx))(?:\|[^\]]*)?\]\]'
+# 未发布的附件类型：把嵌入改写成文字提示，避免页面上出现断图/坏链。
+# ⚠️ 已放行的类型（$AttachExt，目前是 .svg）必须从这张表里排除，
+# 否则图片仍会被改写成「附件未随站点发布」，放行白名单等于白设。
+$allEmbedExt = @('png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'pdf', 'mp4', 'mp3', 'zip', 'crx', 'xlsx', 'drawio', 'csv', 'docx', 'pptx')
+$unpublishedExt = @($allEmbedExt | Where-Object { $AttachExt -notcontains ".$_" })
 $embedFiles = 0
-$embedTextEval = [System.Text.RegularExpressions.MatchEvaluator]{ param($m) '（附件 ' + (($m.Groups[1].Value -split '/')[-1]) + ' 未随站点发布）' }
-foreach ($f in $expFiles) {
-  $txt = [System.IO.File]::ReadAllText($f.FullName, [System.Text.Encoding]::UTF8)
-  if ($txt -match $embedFileRe) {
-    $txt = [regex]::Replace($txt, $embedFileRe, $embedTextEval)
-    Write-Utf8 $f.FullName $txt
-    $embedFiles++
+if ($unpublishedExt.Count -gt 0) {
+  $embedFileRe = '!\[\[([^\]]+\.(?:' + (($unpublishedExt | ForEach-Object { [regex]::Escape($_) }) -join '|') + '))(?:\|[^\]]*)?\]\]'
+  $embedTextEval = [System.Text.RegularExpressions.MatchEvaluator]{ param($m) '（附件 ' + (($m.Groups[1].Value -split '/')[-1]) + ' 未随站点发布）' }
+  foreach ($f in $expFiles) {
+    $txt = [System.IO.File]::ReadAllText($f.FullName, [System.Text.Encoding]::UTF8)
+    if ($txt -match $embedFileRe) {
+      $txt = [regex]::Replace($txt, $embedFileRe, $embedTextEval)
+      Write-Utf8 $f.FullName $txt
+      $embedFiles++
+    }
   }
 }
-Write-Host "  附件嵌入改文字 $embedFiles 篇" -ForegroundColor Green
+Write-Host "  附件嵌入改文字 $embedFiles 篇（已放行类型：$($AttachExt -join ' ')）" -ForegroundColor Green
 # cardlink → callout：Quartz 不认识 ```cardlink，会裸露成代码块（url:/title: 全显出来）
 # 只在导出副本里转换，源笔记保持 cardlink，Obsidian 里的 auto-card-link 卡片不受影响
 $cardFiles = 0

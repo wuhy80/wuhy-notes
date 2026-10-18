@@ -69,28 +69,95 @@ function Save-PubState([string]$exportSig, [string]$siteSig) {
     ConvertTo-Json | Set-Content -LiteralPath $PubStatePath -Encoding UTF8
 }
 
-Write-Step "0/4 前置检查：确认没有并发的 Quartz 构建/预览进程"
-$serving = @(Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
+Write-Step "0/4 前置检查：识别常驻 watch 工作进程与并发进程"
+$allBoot = @(Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
   Where-Object { $_.CommandLine -match 'bootstrap-cli\.mjs' })
-if ($serving.Count -gt 0) {
-  $pids = ($serving | ForEach-Object { $_.ProcessId }) -join ', '
-  throw "检测到 Quartz 构建/预览进程仍在运行（PID $pids）。两者会并发写入 public/ 导致产物损坏，请先停止本地预览服务器再发布。"
+# 本脚本的常驻 worker：--watch 且指向 public-site 内容目录
+$workerProc = $allBoot | Where-Object { $_.CommandLine -match '--watch' -and $_.CommandLine -match 'public-site' } | Select-Object -First 1
+$others = @($allBoot | Where-Object { -not $workerProc -or $_.ProcessId -ne $workerProc.ProcessId })
+if ($others.Count -gt 0) {
+  $pids = ($others | ForEach-Object { $_.ProcessId }) -join ', '
+  throw "检测到其它 Quartz 构建/预览进程（PID $pids）。它们会并发写入 public/ 导致产物损坏，请先停止后再发布。"
 }
-Write-Host "  无并发进程，可以安全构建"
+if ($workerProc) { Write-Host "  常驻 worker 运行中（PID $($workerProc.ProcessId)）" }
+else { Write-Host "  无常驻 worker（稍后将按需启动）" }
+
+# ── 常驻 worker 管理 ──
+$WorkerLog = Join-Path $SiteRoot 'worker.log'
+function Find-WorkerPid {
+  $w = @(Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
+    Where-Object { $_.CommandLine -match '--watch' -and $_.CommandLine -match 'public-site' })
+  return ($w | Select-Object -First 1).ProcessId
+}
+function Start-Worker {
+  if (Test-Path -LiteralPath $WorkerLog) { Remove-Item -LiteralPath $WorkerLog -Force -ErrorAction SilentlyContinue }
+  # 用 WMI 创建进程：完全脱离当前控制台，不继承任何句柄——
+  # 若用 Start-Process，worker 会继承脚本的 stdout 管道句柄，脚本输出接管道时调用方永远等不到 EOF
+  $cmdLine = "cmd.exe /c `"`"$Node`" quartz/bootstrap-cli.mjs build -d `"$Content`" --watch > `"$WorkerLog`" 2>&1`""
+  $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = $cmdLine; CurrentDirectory = $Quartz }
+  if ($r.ReturnValue -ne 0) { throw "worker 启动失败（Win32_Process.Create 返回 $($r.ReturnValue)）" }
+  # 等待 node 进程出现（cmd 只是壳）
+  for ($i = 0; $i -lt 10; $i++) {
+    Start-Sleep -Seconds 2
+    $pid2 = Find-WorkerPid
+    if ($pid2) { Write-Host "  已启动常驻 worker（PID $pid2，日志 $WorkerLog）"; return $pid2 }
+  }
+  throw "worker 启动后未检测到 node 进程，详见 $WorkerLog"
+}
+function Stop-Worker([int]$id) {
+  try { Stop-Process -Id $id -Force -ErrorAction Stop } catch {}
+  Start-Sleep -Seconds 1
+  Write-Host "  已停止 worker（PID $id）"
+}
+# 等待 worker 完成（增量）重建：日志里 Done 行数相对基线增加且静默 8 秒
+function Wait-WorkerSettle([int]$baselineDone, [int]$timeoutSec) {
+  $deadline = (Get-Date).AddSeconds($timeoutSec)
+  while ((Get-Date) -lt $deadline) {
+    Start-Sleep -Seconds 3
+    if (-not (Find-WorkerPid)) { Write-Host "  worker 进程已退出"; return $false }
+    $doneNow = 0
+    if (Test-Path -LiteralPath $WorkerLog) {
+      $doneNow = @((Get-Content -LiteralPath $WorkerLog -Encoding UTF8 | Where-Object { $_ -match '^Done (re)?building|^Done processing' })).Count
+    }
+    if ($doneNow -gt $baselineDone) {
+      Start-Sleep -Seconds 15   # 静默窗口：需大于单次增量重建耗时（实测约 7-10s），确认没有在途重建
+      $doneNow2 = @((Get-Content -LiteralPath $WorkerLog -Encoding UTF8 | Where-Object { $_ -match '^Done (re)?building|^Done processing' })).Count
+      if ($doneNow2 -eq $doneNow) { Write-Host "  worker 重建完成（Done $doneNow2 次）"; return $true }
+      $doneNow = $doneNow2   # 期间又有新重建完成，继续静默观察
+    }
+  }
+  Write-Host "  等待 worker 重建超时（${timeoutSec}s）" -ForegroundColor Yellow
+  return $false
+}
+function Get-LogDoneCount {
+  if (-not (Test-Path -LiteralPath $WorkerLog)) { return 0 }
+  return @((Get-Content -LiteralPath $WorkerLog -Encoding UTF8 | Where-Object { $_ -match '^Done (re)?building|^Done processing' })).Count
+}
 
 Write-Step "1/4 导出公开子集（脱敏 + 审查报告；内部自带增量判断）"
+$doneBaseline = Get-LogDoneCount   # worker 日志基线（导出期间 watcher 可能已触发重建）
+$contentSigBefore = Get-TreeSig $Content
 $exportArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $Vault 'scripts\export-public.ps1'))
 if ($Force) { $exportArgs += '-Force' }
-& powershell.exe @exportArgs
+$exportOut = & powershell.exe @exportArgs
+$exportOut | ForEach-Object { Write-Host $_ }
 if ($LASTEXITCODE -ne 0) { throw "导出失败，中止发布" }
+$exportRan = -not ($exportOut -match '跳过导出')
 $exportSig = Get-TreeSig $Content
+# 内容相对「导出前」是否真的变了（导出被跳过 → 内容未动 → worker 无需重建）
+$contentChanged = $exportRan -and ($contentSigBefore -ne $exportSig)
 
 Write-Step "2/4 同步站点自定义样式"
 $src = Join-Path $Vault 'scripts\site-custom.scss'
 $dst = Join-Path $Quartz 'quartz\styles\custom.scss'
+# 只在内容变化时才覆盖：mtime 无谓变化会触发 worker 的源码监视，导致 hard rebuild 失败退出
 if (Test-Path -LiteralPath $src) {
-  Copy-Item -LiteralPath $src -Destination $dst -Force
-  Write-Host "  已应用 site-custom.scss"
+  if (-not (Test-Path -LiteralPath $dst) -or (Get-FileHash -LiteralPath $src).Hash -ne (Get-FileHash -LiteralPath $dst).Hash) {
+    Copy-Item -LiteralPath $src -Destination $dst -Force
+    Write-Host "  已应用 site-custom.scss（内容有变化）"
+  } else {
+    Write-Host "  site-custom.scss 无变化，跳过覆盖"
+  }
 } else {
   Write-Host "  未找到 site-custom.scss，保留 Quartz 现有样式" -ForegroundColor Yellow
 }
@@ -100,8 +167,13 @@ $fontSrc = Join-Path $Vault 'scripts\site-assets\AlimamaShuHeiTi-Bold.woff2'
 $fontDstDir = Join-Path $Quartz 'quartz\static\font'
 if (Test-Path -LiteralPath $fontSrc) {
   New-Item -ItemType Directory -Force -Path $fontDstDir | Out-Null
-  Copy-Item -LiteralPath $fontSrc -Destination (Join-Path $fontDstDir 'AlimamaShuHeiTi-Bold.woff2') -Force
-  Write-Host "  已部署站点字体 AlimamaShuHeiTi-Bold.woff2"
+  $fontDst = Join-Path $fontDstDir 'AlimamaShuHeiTi-Bold.woff2'
+  if (-not (Test-Path -LiteralPath $fontDst) -or (Get-FileHash -LiteralPath $fontSrc).Hash -ne (Get-FileHash -LiteralPath $fontDst).Hash) {
+    Copy-Item -LiteralPath $fontSrc -Destination $fontDst -Force
+    Write-Host "  已部署站点字体 AlimamaShuHeiTi-Bold.woff2（内容有变化）"
+  } else {
+    Write-Host "  站点字体无变化，跳过覆盖"
+  }
 } else {
   Write-Host "  未找到站点字体文件，标题将回退到系统字体" -ForegroundColor Yellow
 }
@@ -110,21 +182,38 @@ Write-Step "2.2/4 应用站点主题"
 $ThemeName = 'claude-paper'    # 站点主题（@quartz-themes/core 的 theme 选项）
 $CfgPath = Join-Path $Quartz 'quartz.config.yaml'
 $cfgLines = @([System.IO.File]::ReadAllLines($CfgPath, [System.Text.Encoding]::UTF8))
-$cfgOut = New-Object System.Collections.ArrayList
+# 检查主题块是否已正确：Quartz 构建时插件会往 config 回写自己的状态（无害漂移），
+# 若只是字节差异就回写，mtime 变化会触发 worker 源码监视 → hard rebuild 失败退出。
+# 因此只有主题字段真正缺失/错误时才写。
 $inThemeBlock = $false
-$themeFound = $false
+$hasEnabled = $false; $hasTheme = $false; $hasFonts = $false
 foreach ($cl in $cfgLines) {
-  if ($cl -match 'source:\s*"@quartz-themes/core"') { $inThemeBlock = $true; [void]$cfgOut.Add($cl); continue }
+  if ($cl -match 'source:\s*"@quartz-themes/core"') { $inThemeBlock = $true; continue }
   if ($inThemeBlock -and $cl -match '^\s+-\s+source:') { $inThemeBlock = $false }
   if ($inThemeBlock) {
-    if ($cl -match '^\s+enabled:') { [void]$cfgOut.Add('    enabled: true'); continue }
-    if ($cl -match '^\s+theme:') { [void]$cfgOut.Add("      theme: $ThemeName"); $themeFound = $true; continue }
-    if ($cl -match '^\s+themeFonts:') { [void]$cfgOut.Add('      themeFonts: true'); continue }
+    if ($cl -match '^\s+enabled:\s*true\s*$') { $hasEnabled = $true }
+    if ($cl -match "^\s+theme:\s*$ThemeName\s*$") { $hasTheme = $true }
+    if ($cl -match '^\s+themeFonts:\s*true\s*$') { $hasFonts = $true }
   }
-  [void]$cfgOut.Add($cl)
 }
-[System.IO.File]::WriteAllLines($CfgPath, $cfgOut, (New-Object System.Text.UTF8Encoding($false)))
-Write-Host "  主题 = $ThemeName（配置中找到 theme 行: $themeFound）"
+if ($hasEnabled -and $hasTheme -and $hasFonts) {
+  Write-Host "  主题 = $ThemeName（配置已正确，跳过写入）"
+} else {
+  $cfgOut = New-Object System.Collections.ArrayList
+  $inThemeBlock = $false
+  foreach ($cl in $cfgLines) {
+    if ($cl -match 'source:\s*"@quartz-themes/core"') { $inThemeBlock = $true; [void]$cfgOut.Add($cl); continue }
+    if ($inThemeBlock -and $cl -match '^\s+-\s+source:') { $inThemeBlock = $false }
+    if ($inThemeBlock) {
+      if ($cl -match '^\s+enabled:') { [void]$cfgOut.Add('    enabled: true'); continue }
+      if ($cl -match '^\s+theme:') { [void]$cfgOut.Add("      theme: $ThemeName"); continue }
+      if ($cl -match '^\s+themeFonts:') { [void]$cfgOut.Add('      themeFonts: true'); continue }
+    }
+    [void]$cfgOut.Add($cl)
+  }
+  [System.IO.File]::WriteAllLines($CfgPath, $cfgOut, (New-Object System.Text.UTF8Encoding($false)))
+  Write-Host "  主题 = $ThemeName（配置已修正写入）"
+}
 
 # ── 增量判断：导出内容与站点外观相对上次成功部署均无变化 → 跳过构建与部署 ──
 # 注意：config 用仓库权威副本（scripts/quartz.config.yaml）而非站点上的活文件——
@@ -135,8 +224,9 @@ $siteSig = Get-StringHash (@(
   (Get-FileSig (Join-Path $Vault 'scripts\quartz.config.yaml')),
   $ThemeName
 ) -join '|')
+$pub = Load-PubState
+$siteSigChanged = (-not $pub) -or ($pub.siteSig -ne $siteSig)
 if (-not $Force -and -not $Serve) {
-  $pub = Load-PubState
   if ($pub) {
     Write-Host ("  增量比对：exportSig {0}，siteSig {1}" -f ($(if ($pub.exportSig -eq $exportSig) { '一致' } else { '变化' })), ($(if ($pub.siteSig -eq $siteSig) { '一致' } else { '变化' })))
   }
@@ -157,28 +247,76 @@ if (Test-Path -LiteralPath $checker) {
 } else {
   Write-Host "  未找到 check-yaml.cjs，跳过校验" -ForegroundColor Yellow
 }
-Write-Step "3/4 Quartz 构建"
+Write-Step "3/4 Quartz 构建（worker 常驻增量 / 冷启全量）"
 Push-Location $Quartz
 try {
   if ($Serve) {
+    if ($workerProc) { Stop-Worker $workerProc.ProcessId }
     Write-Host "  构建后启动本地预览：http://localhost:$PreviewPort" -ForegroundColor Green
     & $Node 'quartz/bootstrap-cli.mjs' build -d $Content --serve --port $PreviewPort
     exit 0
   }
-  & $Node 'quartz/bootstrap-cli.mjs' build -d $Content
-  if ($LASTEXITCODE -ne 0) { throw "构建失败，中止发布" }
+  # 构建指纹：public 是否对应「当前 content」以此为准——
+  # 只看本次导出是否有变是不够的（如上次导出失败、构建用的是旧内容）
+  $BuildSigPath = Join-Path $SiteRoot '.build-sig'
+  $buildSig = if (Test-Path -LiteralPath $BuildSigPath) { (Get-Content -LiteralPath $BuildSigPath -Raw -Encoding UTF8).Trim() } else { '' }
+  $publicIndex = Join-Path $Quartz 'public\index.html'
+  $needBuild = $Force -or $siteSigChanged -or ($exportSig -ne $buildSig) -or (-not (Test-Path -LiteralPath $publicIndex))
+  $settled = $false
+  if (-not $needBuild) {
+    Write-Host "  public/ 与 content 指纹一致，跳过构建"
+  } else {
+    if ($Force -or $siteSigChanged) {
+      if ($workerProc) { Stop-Worker $workerProc.ProcessId }
+      Write-Host "  $(if ($Force) { '-Force' } else { '站点外观' })触发全量重建"
+    }
+    if (-not (Find-WorkerPid)) {
+      $baseline = 0
+      $timeout = 600   # 冷启动 = 全量构建，给足 10 分钟
+      Write-Host "  启动常驻 worker（首次全量构建，预计 4 分钟左右）..."
+      [void](Start-Worker)
+    } else {
+      $baseline = Get-LogDoneCount
+      $timeout = 120
+      Write-Host "  worker 在跑，等待其增量重建（至多 ${timeout}s）..."
+    }
+    $settled = Wait-WorkerSettle $baseline $timeout
+    if (-not $settled) {
+      # worker 可能早已把内容建完（如导出期间已增量重建）：用 public 新鲜度判断
+      $wid = Find-WorkerPid
+      if ($wid) {
+        $pubNew = (Get-ChildItem -LiteralPath (Join-Path $Quartz 'public') -Recurse -File -Force |
+          Measure-Object LastWriteTimeUtc -Maximum).Maximum
+        $conNew = (Get-ChildItem -LiteralPath $Content -Recurse -File -Force |
+          Measure-Object LastWriteTimeUtc -Maximum).Maximum
+        if ($pubNew -ge $conNew) {
+          Write-Host "  public 修改时间晚于 content，认定已是最新（worker 早已增量建完）"
+          $settled = $true
+        }
+      }
+    }
+    if (-not $settled) {
+      # 保底：停掉失效 worker，前台一次性全量构建，绝不发布残缺产物
+      Write-Host "  worker 未能完成重建，转为前台全量构建" -ForegroundColor Yellow
+      $wid = Find-WorkerPid
+      if ($wid) { try { Stop-Process -Id $wid -Force -ErrorAction SilentlyContinue } catch {} }
+      & $Node 'quartz/bootstrap-cli.mjs' build -d $Content
+      if ($LASTEXITCODE -ne 0) { throw "构建失败，中止发布" }
+      $settled = $true
+    }
+    Set-Content -LiteralPath $BuildSigPath -Value $exportSig -Encoding UTF8
+  }
+  # 产物完整性校验：绝不允许把残缺构建部署上线
+  $PublicDir = Join-Path $Quartz 'public'
+  if (-not (Test-Path -LiteralPath (Join-Path $PublicDir 'index.html'))) {
+    throw "构建产物缺少 index.html，中止发布（检查是否有其它进程并发写入 public）"
+  }
+  $built = @(Get-ChildItem -LiteralPath $PublicDir -Recurse -File -Force)
+  if ($built.Count -lt 1000) {
+    throw "构建产物仅 $($built.Count) 个文件，明显不完整，中止发布"
+  }
+  Write-Host "  产物校验通过：$($built.Count) 个文件 / $([math]::Round((($built | Measure-Object Length -Sum).Sum)/1MB,2)) MB"
 } finally { Pop-Location }
-
-# 产物完整性校验：绝不允许把残缺构建部署上线
-$PublicDir = Join-Path $Quartz 'public'
-if (-not (Test-Path -LiteralPath (Join-Path $PublicDir 'index.html'))) {
-  throw "构建产物缺少 index.html，中止发布（检查是否有其它进程并发写入 public）"
-}
-$built = @(Get-ChildItem -LiteralPath $PublicDir -Recurse -File -Force)
-if ($built.Count -lt 1000) {
-  throw "构建产物仅 $($built.Count) 个文件，明显不完整，中止发布"
-}
-Write-Host "  产物校验通过：$($built.Count) 个文件 / $([math]::Round((($built | Measure-Object Length -Sum).Sum)/1MB,2)) MB"
 
 Write-Step "4/4 部署到 Cloudflare Pages"
 if ($SkipDeploy) {
