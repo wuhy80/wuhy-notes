@@ -51,23 +51,26 @@ typography:
     lineHeight: 1.25
   article-title:
     fontFamily: AlimamaShuHeiTi
-    fontWeight: 700
-    fontSize: clamp(30px, 3.4vw, 46px)
+    fontWeight: 900
+    fontSize: 48px
     lineHeight: 1.22
-    marginTop: 1.2rem
+    marginTop: 1.4rem
   h2:
     fontFamily: AlimamaShuHeiTi
-    fontWeight: 700
-    前缀: 3px 暖橙左边条
+    fontWeight: 900
+    fontSize: 25px
+    lineHeight: 1.3
+    前缀: 站号徽标「第 N 站」（accent 底 + paper 字 + 等宽 11px/字距 .22em）+ 右侧 170px 水印数字
+  h3:
+    fontFamily: AlimamaShuHeiTi
+    fontWeight: 900
+    fontSize: 17px
   body:
     fontFamily: Noto Sans SC → 苹方 → 雅黑（参考站 --sans 同链）
-    fontSize: 1rem
+    fontSize: 17px
     fontWeight: 400
-    lineHeight: 1.75
-  body-wide:
-    fontFamily: Noto Sans SC → 苹方 → 雅黑
-    fontSize: 1rem
-    lineHeight: 1.8          # ≥1800px 视口时启用
+    lineHeight: 1.95
+    color: "{colors.ink}"
   code:
     fontFamily: IBM Plex Mono
     fontSize: 0.875rem
@@ -88,15 +91,26 @@ spacing:
   lg: 1.5rem
   code-y: 1.1rem      # 代码块上下外边距
   code-x: 1.15rem     # 代码块左右内边距
-  # 纵向节奏（2026-10-18 收紧：标题与正文的间隔偏大；10-18 二次修复列表项间距）
-  p-block: 0.8em      # 正文段落段间距（≥1800px 视口 1em）
-  li-block: 0         # 列表项外边距归零；行高压到 1.55（2026-10-18 二次收紧）
+  # 纵向节奏（2026-10-21 按参考站实测重定：段距 20px、站间距 68/24px）
+  p-block: 20px       # 正文段落段间距（参考站 .station p { margin-top: 20px }）
+  li-block: 0         # 列表项外边距归零（行高随正文 1.95）
   li-p-block: 0.1em   # 松散列表 li>p 段落间距
-  h2-block: 1.4em 0.45em   # h2 上/下外边距
-  h3-block: 1.1em 0.35em   # h3 上/下外边距
-  hero-top: 1.2rem    # 文章标题上边距
-  meta-bottom: 0.9rem # 元信息行下边距（压底边线后）
-  callout-in: 0       # callout 标题与内容贴合（content 顶部内边距归零）
+  h2-block: 68px 24px # h2 上/下外边距（参考站 .station 上留白 68、标题下 24）
+  h3-block: 34px 12px # h3 上/下外边距
+  hero-top: 1.4rem    # 文章标题上边距
+  meta-bottom: 10px   # eyebrow 下边距
+  callout-in: 0       # callout 标题与内容贴合
+layout:
+  # 2026-10-21 按参考站实测：40 + 260 + 82 + 716 + 82 + 220 + 40 = 1440
+  container: 1360px            # 三栏总宽，居中（两侧各 40px 留白）
+  columns: 260px minmax(0,1fr) 220px
+  article: 716px               # 正文列（阅读宽度），列内居中，左右各 82px 留白
+  sidebar-left: 260px
+  sidebar-right: 220px
+  rail-padding: 28px 0 48px 18px
+  navbar: 64px                 # 深色固定顶栏（rgba(28,28,28,.96) + 底边 1px 白 10%）
+  progress-bar: 2px            # accent 色阅读进度条（纯 CSS 滚动驱动）
+  footer: 716px                # 深色页脚，与正文列同宽
 components:
   code-block:
     backgroundColor: "{colors.card}"
@@ -114,8 +128,39 @@ components:
   callout:
     backgroundColor: "{colors.card}"
     borderColor: "{colors.line}"
-    accentBarColor: "Quartz 的 --color（按 callout 类型）"
+    accentBarColor: "{colors.accent}"   # 2026-10-21 起统一赭橙（不再按类型上色）
     titleColor: "{colors.ink}"
+    rounded: 4px
+    abstractVariant: 导语条（无卡片、无标题、衬线字体 + 3px accent 左边条）
+  figure-card:            # 插图白卡（对应参考站 .fig-frame）
+    backgroundColor: "{colors.card}"
+    borderColor: "{colors.line}"
+    padding: 26px 22px 18px
+    rounded: 0
+    captionTextColor: "{colors.ink-faint}"
+    captionFontSize: 13px
+    figureNumberColor: "{colors.accent}"   # 「图 3-1」等宽赭橙（导出时注入 .fig-no）
+  station-badge:          # 「第 N 站」徽标（h2::before）
+    backgroundColor: "{colors.accent}"
+    textColor: "{colors.paper}"
+    typography: IBM Plex Mono 11px / 字距 0.22em
+  station-watermark:      # 站号水印（h2::after，170px，颜色很淡）
+    textColor: "rgba(28,28,28,0.055)"
+  dropcap:                # 小节首字下沉（h2 + p::first-letter）
+    fontSize: 3.2em
+    textColor: "{colors.accent}"
+  eyebrow:                # 标题上方的元信息行（.content-meta）
+    typography: IBM Plex Mono 12px / 字距 0.1em
+    textColor: "{colors.accent}"
+  toc-marker:             # 右栏目录的圆点标记（未激活 ○ / 激活 ●）+ 编号
+    textColor: "{colors.accent}"
+  navbar:                 # 深色固定顶栏（复用左栏的 .page-title，fixed 定位）
+    backgroundColor: "rgba(28,28,28,0.96)"
+    textColor: "{colors.paper}"
+    borderBottom: "1px rgba(255,255,255,0.1)"
+  footer:                 # 深色页脚
+    backgroundColor: "{colors.ink}"
+    textColor: "color-mix(in srgb, paper 68%, transparent)"
   code-line-number:
     textColor: "{colors.ink-faint}"
     typography: "{typography.code}"
@@ -155,6 +200,15 @@ components:
 本文件是**给 coding agent 读的设计契约**。改动本站样式前先读它；
 实现细节在 `scripts/site-custom.scss`，Token 定义在 `scripts/quartz.config.yaml`。
 
+2026-10-21 的**第三次对齐**（本次）解决的是「**版式语汇不像参考站**」：同一课页面
+逐项实测后把差异全部补齐——阅读宽度 966→716、正文 16/1.6→17/1.95 且颜色从
+`ink-soft` 改回 `ink`、插图从"裸图 + 卡外图注"改成**白卡 + 卡内图注 + 等宽赭橙图号**、
+callout 的四种类型色左边条统一成**单一赭橙**、补齐参考站的课程页语汇（深色固定顶栏、
+eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、深色页脚、阅读进度条），
+并隐藏了会把 h1 往下推的 frontmatter 属性表。**三条旧的硬规则因此作废**：
+"内容铺满视口"→ 现在正文列固定 716 居中；"h2 带 3px 左边条"→ 现在靠站号徽标；
+"callout 左边条按类型上色"→ 现在全站一种赭橙。
+
 ## Colors
 
 - 全站**只有两层底色**：`paper`（页面与侧栏）与 `card`（卡片：代码块、表格、callout）
@@ -171,20 +225,29 @@ components:
 ## Typography
 
 - 标题 `AlimamaShuHeiTi`（自托管 woff2），正文 `Noto Sans SC → 苹方 → 雅黑`，代码 `IBM Plex Mono`
-- 正文 1rem / 行高 1.75；**≥1800px 视口时行高提到 1.8**（超宽行宽下的视线回扫补偿）
+- **正文 17px / 行高 1.95 / 颜色 `ink`（#1c1c1c）**——2026-10-21 起与参考站逐值一致；
+  段间距 20px。旧的 16px/1.75 + `ink-soft` 是"读起来发灰又挤"的根因
+- ⚠️ 主题把段落的 `font-family` 单独设成了界面字体（实测 `p` 计算值是 `ui-sans-serif`，
+  既不是 Noto Sans SC 也不是 Source Sans Pro）。因此**必须对 `article p/li/td` 显式
+  设 `font-family: inherit` 并把 `article` 的字体压在 `Noto Sans SC`**，否则中文正文会落到系统 UI 字体
 - 代码块 0.875rem / 行高 1.75，`tab-size: 4`
-- 标题层级最多到 `h3`，不再往下分
+- 标题层级最多到 `h3`，不再往下分；h1 48/900、h2 25/900、h3 17/900
 
 ## Layout
 
-- **内容铺满视口宽度（2026-10-18 恢复硬要求；80% 居中方案仅 10-11~10-17 存活一天多）**：
-  `.page` 必须 `width: 100%; max-width: none`，且必须带 `!important`
-  （主题会用更高特异性再设一遍）；`#quartz-body` 在其内吃满 100%
-- 桌面（≥1200px）栅格为 `clamp(220px,16vw,300px) minmax(0,1fr) clamp(200px,14vw,280px)`：
-  左右侧栏按视口比例伸缩、带下限，**中间正文列永远是三栏里最宽的一栏**
+- **三栏整体居中 1360px**（视口 1440 时两侧各 40px 留白），列宽 `260 / minmax(0,1fr) / 220`
+- **正文列固定 716px 并在中栏居中对齐**（870 − 716 = 164，左右各 82px 留白），
+  与参考站 `40+260+82+716+82+220+40=1440` 完全同构；图片、图卡、页脚都在这个 716 内
+  - ⚠️ 改宽度时**必须同时把 `min-width` 归零**：旧的"铺满视口"规则写了
+    `min-width:100%`，只设 `max-width` 会被它压住（2026-10-21 实测：`#quartz-body`
+    与 `footer` 都踩过这个坑，`footer` 还有主题自带的 `min-width: calc(100% - 48px)`）
 - 左右栏各以 1px 边线（`border`）与正文分隔（右栏 border-left、左栏 border-right），不用底色分区
-- 顶栏（navbar）为深墨底（`ink`）+ 纸色文字，全站唯一深色块
+- **深色固定顶栏 64px**：复用左栏里的 `.page-title`（`position: fixed` 铺满宽度，
+  `rgba(28,28,28,.96)` + 底边 1px 白 10%），工具栏（搜索/暗色/阅读模式）一并 fixed 到右侧；
+  `#quartz-body` 加 `padding-top: 64px` 让位，左右栏 `sticky top: 64px`
+- **深色页脚 716px**（与正文列同宽）：`ink` 底 + 纸色 68% 文字，padding 40/24
 - 间距只用上面 `spacing` 里定义的值
+- <1200px 时不启用上述栅格（保持 Quartz 默认单列/抽屉），深色顶栏也不启用
 
 ## Elevation & Depth
 
@@ -211,25 +274,45 @@ components:
   圆角 `rounded.sm`，**不要方框感**（无边框）——对应参考站 `.article-body :not(pre) > code`
 - **表格**：白卡（`card` + 1px `line` 描边 + 8px 圆角），单元格只保留 1px `line` 分隔线，
   表头铺 `paper-deep` 且**取消斑马纹**——对应参考站 `.fig-frame` 的卡片语汇
-- **Callout**：白卡（`card` + 1px `line` 描边）配 **3px 类型色左边条**（`--color`，由 Quartz 按类型给出），
-  标题用 `ink`——对应参考站 `.quiz-item`（白卡 + 线 + 3px 左边条）
+- **Callout**：白卡（`card` + 1px `line` 描边）+ **3px 赭橙左边条**（全站统一用 `accent`，
+  图标同色），圆角 4px，padding `0 24px`——2026-10-21 起不再按类型上色（之前 abstract 蓝 /
+  question 琥珀 / tip 青 / example 紫，一页四种颜色，与"全站一种强调色"的基调冲突）
+- **「本课导读」callout（abstract）= 参考站的导语条**：无卡片、无边框、无标题，
+  3px `accent` 左边条 + 16px 左内边距，文字用衬线 `Noto Serif SC`、`ink-soft`、17/1.95
 - **Callout 内的代码块**：首尾外边距归零，避免与 callout 内边距叠加；底色改回 `paper-deep`（白卡叠白卡会失去层次）
-- **文章插图**（导出时把 `![[x.svg]]` 改写成 `<img class="site-svg">`）：`width:100%` + `height:auto`
-  按列宽自适应，上下外边距 1.2rem / 0.35rem（下边距小，紧接图注）
+- **文章插图 = 白卡 + 卡内图注**（对应参考站 `.fig-frame` + `figcaption`）：
+  `<img class="site-svg">` 自身是卡片上半部（`card` 底 + 1px `line` 描边、**圆角 0**、
+  padding `26px 22px 18px`、下边线去掉），紧随其后的图注段落
+  （`p:has(> em:only-child)`）是卡片下半部（同底色、左右下三条边、上边线去掉、
+  padding `0 22px 14px`、13px `ink-faint`、**斜体转正**），两者拼接成一个连续卡片
+  - `width:100%` + `height:auto` + `box-sizing:border-box`，图片内容区 = 716 − 44 = 672px，
+    与参考站卡片内图宽一致
+  - 图注里的「图 3-1」由导出脚本包成 `<span class="fig-no">`（等宽 + `accent`），
+    只处理行首的 `*图 N-M…*`，不影响正文里的图号引用
   - **永不**用 Quartz 原生的 `<object>`：它对 Obsidian 的 SVG 嵌入固定输出
     `<object width="auto" height="auto">`，浏览器按替换元素默认尺寸渲染成 300×150 的小框
   - 插图文件必须与引用它的笔记**同目录**（导出脚本按嵌入目标镜像路径），
     且必须带 `xmlns="http://www.w3.org/2000/svg"`——缺命名空间的独立 SVG 在 `<img>` 里加载失败
-- **文章 hero**：`h1.article-title` 数黑体 700、`clamp(30px,3.4vw,46px)`；
-  其下 `.content-meta` 小号弱化（`ink-faint`）并压 1px `line` 底边线，构成 hero 收口
-- **frontmatter 属性表**（`details.note-properties.metadata-container`）：渲染成
-  赭橙左边线引言框（3px `accent` + 6% 洗色），行底色一律透明，对应参考站的导语条
-- **h2 小节**：数黑体 700 + 3px `accent-warm` 左边条
-- **右栏目录**：`li.depth-1` 前加 `01/02…` 等宽字体编号（用 `accent-warm`）；
-  当前小节加粗并转 `accent-deep`，左边线转 `accent`
+- **文章 hero**：`h1.article-title` 数黑体 48px/900；**h1 下方没有边线**（主题默认画了一条
+  `rgba(31,30,29,.16)` 的灰线，已去掉）；h1 上方依次是面包屑、**eyebrow**（`.content-meta`：
+  等宽 12px、字距 0.1em、`accent` 色——参考站的 `LESSON 03 · 卷一 基础数学 · ◉ 4,903 次阅读`）。
+  实现靠 `.popover-hint` 的 flex + `order` 重排（breadcrumb −4 / meta −3 / h1 0）
+- **frontmatter 属性表在正文页隐藏**（`display:none`）：参考站标题区只有「eyebrow → h1 → 导语条」
+  三段；教材笔记的属性表有 6 行，会把 h1 往下推 60~100px。frontmatter 仍在源文件里，
+  标签页（`/tags`）不受影响。需要恢复时删掉那条 `display:none` 即可
+- **h2 = 站号徽标 + 标题 + 水印数字**（对应参考站 `.station-head` + `.station::before`）：
+  `h2::before` 输出「第 N 站」（`accent` 底、`paper` 字、等宽 11px、字距 0.22em、
+  padding 3×12、无圆角），`h2::after` 输出 170px 的同序号水印（`rgba(28,28,28,.055)`）；
+  **h2 本身不再有左边条**；序号来自 `counter-increment: station`
+- **小节首字下沉**：`h2 + p::first-letter` = 3.2em / 900 / `accent`（对应参考站 `.dropcap-letter`）
+- **右栏目录**：`li.depth-1` 前加「○/● + 编号」（等宽 0.78em、`accent`；当前小节实心 ● 并加粗转 `accent-deep`）；
+  字号 12.5px（参考站 rail 是 12.5px，之前 16px 明显偏大）
 - **探索树当前文件**：`accent-wash` 底色 + 2px `accent` 左边条 + `accent-deep` 加粗文字
-  （对应参考站 `.sidebar-lesson-item a.active`）
-- **左右栏**：≥1200px 时左栏 border-right、右栏 border-left（1px `line`）与正文分隔
+  （对应参考站 `.sidebar-lesson-item a.active`）；探索树条目与「探索」小标题统一 13px
+- **左右栏**：≥1200px 时左栏 260px、右栏 220px（padding `28px 0 48px 18px`），
+  各以 1px `line` 边线与正文分隔；右栏栏目标题降为 13px，关系图谱压到 150px 给目录腾位置
+- **阅读进度条**：`body::before` 2px `accent` 条，`animation-timeline: scroll(root block)`
+  纯 CSS 驱动（无需 JS，Chrome 115+；不支持时静默不显示）
 
 ## Do's and Don'ts
 
@@ -238,8 +321,18 @@ components:
 - **代码字体栈里中文回退必须排在 `monospace` 之前**——否则中文会落到系统 serif（Windows 上是宋体），小字号下很难看
 - 行号与语言角标**永不**使用正文色，必须是 `ink-faint` 且透明度 0.45
 - `text` / `txt` / `plaintext` 代码块**永不**显示语言角标，顶部也不保留角标高度
-- **永不**给 `.center` 只设 `min-width:100%` 而不设 `box-sizing:border-box`——实测会让它比栅格轨道宽（当前左右内边距 1rem×2=32px），被 `position:sticky` 的右边栏压住，表现为 callout 右边框消失、正文末字被盖
+- **改宽度时先查 `min-width`**：主题与早期规则给 `#quartz-body` 写了 `min-width:100%`、
+  给 `footer` 写了 `min-width: calc(100% - 48px)`——只设 `max-width` 会被它们压住
+  （2026-10-21 两次踩坑，表现为"设了 716 却仍是 822/870"）。凡改宽度都同时写
+  `min-width: 0 !important`
 - **永不**用 `!important` 之外的普通规则去改内容区宽度——主题的特异性更高，改不动
+- **h1 下不要边线**：主题给 `h1.article-title` 画了 `border-bottom: 1px rgba(31,30,29,.16)`，
+  参考站的标题是"裸露"的，需显式 `border-bottom: 0`
+- **深色顶栏靠 fixed 复用 DOM**：`.page-title` 是左栏的子元素，靠 `position: fixed` 拉成
+  全宽顶栏；它所在的 `.sidebar.left` 是 `sticky`（无 `transform`/`filter`），所以 fixed
+  才相对视口定位。**一旦给侧栏加 `transform`/`filter`/`contain`，顶栏会缩进侧栏宽度内**
+- **callout 只用一种强调色**：改 `--color` 到 `accent` 即可同时改变左边条与图标；
+  不要按类型再上色，参考站全站只有赭橙一种强调色
 - **⚠️ 改颜色要动三处**（`quartz.config.yaml` + `site-custom.scss` 的「0/6 调色板」强制块 + 本文件）：
   主题包 `@quartz-themes/claude-paper` 会在自己的样式里重新声明两套变量且加载更晚——
   (1) Quartz token（`--light/--lightgray/--dark/--secondary/--tertiary`…）；

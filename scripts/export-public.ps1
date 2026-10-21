@@ -242,7 +242,14 @@ foreach ($f in $expFiles) {
       $rewrote = $true
     }
   }
-  if ($rewrote) { Write-Utf8 $f.FullName $txt }
+  if ($rewrote) {
+    # 图注编号单独着色：把行首的 `*图 3-1…` 里的「图 3-1」包成 <span class="fig-no">，
+    # 与参考站一致（等宽字体 + 赭橙）。只处理斜体图注（`*图 …*`），不影响正文里的「图 3-1」。
+    $txt = [regex]::Replace($txt,
+      '(?m)^([ \t]*)\*(图[ \t]*\d{1,3}[ \t]*[–—\-][ \t]*\d{1,3})(?=[^\r\n])',
+      '$1*<span class="fig-no">$2</span>')
+    Write-Utf8 $f.FullName $txt
+  }
 }
 Write-Host "  已复制 $attachOk 个；缺失 $($attachMiss.Count) 个；因过大跳过 $($attachSkip.Count) 个" -ForegroundColor Green
 if ($attachMiss.Count) { $attachMiss | ForEach-Object { Write-Host "      缺失：$_" -ForegroundColor Yellow } }
