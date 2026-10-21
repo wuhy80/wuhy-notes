@@ -718,26 +718,28 @@ html body article p:has(> em:only-child) {
 // 本段全部为覆盖规则，集中在此便于回退（删掉本段即回到上一版观感）。
 // ===========================================================================
 
-// --- A. 栅格：侧栏 390 / 330（+50%）、正文上限 860（+20%）、外壳上限 1744 -----
-// 2026-10-21 二次调整：用户要求两边栏各 +50%、正文 +20%（原来 260/220/716）。
-// 390 + 82 + 860 + 82 + 330 = 1744，即"宽屏下仍是参考站比例，只是整体更宽"。
+// --- A. 栅格：左 500 / 正文 980 / 右 390，外壳上限 2034 ----------------------
+// 演变：参考站 260/716/220 → 各 +50%/+20%（390/860/330）→ 本轮再放大
+// （500/980/390，左栏明显更宽，因为用户要求「尤其左边栏」）。
+// 500 + 82 + 980 + 82 + 390 = 2034 = 外壳上限。
 // 视口不足 1744 时：侧栏按 vw 回缩（下限 240/200），**优先保住正文宽度**，
 // 不让正文被侧栏挤窄。
 @media all and (min-width: 1200px) {
   html body div#quartz-root.page div#quartz-body {
-    max-width: 1744px !important;
+    max-width: 2034px !important;
     min-width: 0 !important; // 早期规则里的 min-width:100% 会压住 max-width，必须一起改
     margin-inline: auto !important;
+    // 左栏给得比右栏多（用户要求「尤其左边栏」）：26vw / 20.3vw，宽屏封顶 500 / 390
     grid-template-columns:
-      clamp(240px, 24vw, 390px)
+      clamp(240px, 26vw, 500px)
       minmax(0, 1fr)
-      clamp(200px, 20vw, 330px) !important;
+      clamp(200px, 20.3vw, 390px) !important;
     padding-top: 64px !important; // 给固定顶栏让位
   }
 
   // 中列上限 = 正文 860 + 左右各 24 的呼吸位
   html body div#quartz-root.page div#quartz-body .center {
-    max-width: 908px !important;
+    max-width: 1028px !important; // 正文 980 + 左右各 24
     width: 100% !important;
     min-width: 0 !important;
     margin-inline: auto !important;
@@ -1071,7 +1073,7 @@ html body div#quartz-root.page footer {
   // 页脚深色带与正文同宽：正文 = min(860, 中列 - 48)，所以页脚 = calc(100% - 48) 且上限 860
   width: calc(100% - 48px) !important;
   min-width: 0 !important; // 主题给了 min-width: calc(100% - 48px)，会压住 max-width
-  max-width: 860px !important;
+  max-width: 980px !important;
   box-sizing: border-box !important;
   justify-self: center !important;
   margin: 48px auto 0 !important;
