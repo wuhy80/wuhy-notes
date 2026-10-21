@@ -1105,3 +1105,255 @@ html body div#quartz-root.page .explorer h2 {
     }
   }
 }
+
+// ===========================================================================
+// 10/10 内容增强（由 scripts/enhance-content.cjs 在构建后生成的 DOM 配套样式）
+//
+// 两件事：测验（纯 CSS 判分，无 JS）+ 文末上一课/下一课导航卡。
+// 结构由 enhance-content.cjs 产出，这里只负责外观与状态。
+// ===========================================================================
+
+// 判分用的语义色：只在测验的对/错两种状态里出现，不参与全站配色
+:root {
+  --quiz-ok: #2f7d4f;
+  --quiz-bad: #b3261e;
+}
+
+// --- 测验 --------------------------------------------------------------
+html body div#quartz-root.page article .quiz {
+  margin: 34px 0;
+}
+
+.quiz-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.quiz-badge {
+  display: inline-block;
+  padding: 3px 12px 4px;
+  background: var(--accent);
+  color: var(--paper);
+  font-family: $codeFontStack;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+}
+
+.quiz-hint {
+  font-family: $codeFontStack;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+
+.quiz-item {
+  margin: 16px 0;
+  padding: 20px 24px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+html body div#quartz-root.page article .quiz-q {
+  margin: 0 0 14px !important;
+  font-size: 16px !important;
+  font-weight: 600;
+  line-height: 1.7 !important;
+  color: var(--ink) !important;
+}
+
+.quiz-opts {
+  display: grid;
+  gap: 8px;
+}
+
+.quiz-opt {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.quiz-opt:hover {
+  border-color: var(--accent);
+}
+
+// 真单选框铺满整行（可点、可键盘操作），视觉上隐藏
+.quiz-opt input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.quiz-key {
+  font-family: $codeFontStack;
+  font-size: 12px;
+  color: var(--accent);
+  min-width: 1.5em;
+}
+
+.quiz-txt {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.quiz-opt:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+}
+
+// 作答后：正确项常亮（即使选错也标出来）
+.quiz-item:has(input:checked) .quiz-opt.is-answer {
+  border-color: var(--quiz-ok);
+  background: color-mix(in srgb, var(--quiz-ok) 8%, transparent);
+}
+
+.quiz-item:has(input:checked) .quiz-opt.is-answer .quiz-key {
+  color: var(--quiz-ok);
+}
+
+.quiz-item:has(input:checked) .quiz-opt.is-answer .quiz-txt::after {
+  content: "  ✓ 答对";
+  color: var(--quiz-ok);
+  font-size: 0.85em;
+}
+
+// 选中了错误项
+.quiz-item:has(input:checked) .quiz-opt:has(input:checked):not(.is-answer) {
+  border-color: var(--quiz-bad);
+  background: color-mix(in srgb, var(--quiz-bad) 7%, transparent);
+}
+
+.quiz-item:has(input:checked) .quiz-opt:has(input:checked):not(.is-answer) .quiz-txt::after {
+  content: "  ✗ 再想想";
+  color: var(--quiz-bad);
+  font-size: 0.85em;
+}
+
+// 讲解：选中任意选项后自动展开（grid-template-rows 0fr → 1fr，无需 JS）
+.quiz-why {
+  display: grid;
+  grid-template-rows: 0fr;
+  margin-top: 0;
+  transition: grid-template-rows 0.3s ease, margin-top 0.3s ease;
+}
+
+.quiz-why > .quiz-why-inner {
+  overflow: hidden;
+}
+
+.quiz-item:has(input:checked) .quiz-why {
+  grid-template-rows: 1fr;
+  margin-top: 16px;
+}
+
+.quiz-why-inner {
+  border-left: 3px solid var(--accent);
+  padding-left: 14px;
+}
+
+.quiz-why-label {
+  font-family: $codeFontStack;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+}
+
+html body div#quartz-root.page article .quiz-why p {
+  margin: 6px 0 0 !important;
+  font-size: 15px !important;
+  line-height: 1.85 !important;
+  color: var(--ink-soft) !important;
+}
+
+// --- 文末上一课 / 下一课 ------------------------------------------------
+// 「相关笔记」这一节不参与站号编号（它是导航，不是教学站点）
+html body div#quartz-root.page article h2.lesson-nav-heading {
+  counter-increment: none !important;
+  font-size: 17px !important;
+  margin: 56px 0 16px !important;
+}
+
+html body div#quartz-root.page article h2.lesson-nav-heading::before,
+html body div#quartz-root.page article h2.lesson-nav-heading::after {
+  content: none !important;
+}
+
+.lesson-nav {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 0 0 12px;
+}
+
+.lesson-nav-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  text-decoration: none !important;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.lesson-nav-card.is-empty {
+  border-style: dashed;
+  opacity: 0.45;
+}
+
+.lesson-nav-card:hover {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+}
+
+.lesson-nav-label {
+  font-family: $codeFontStack;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--ink-faint);
+}
+
+.lesson-nav-title {
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.lesson-nav-card.next {
+  text-align: right;
+  align-items: flex-end;
+}
+
+.lesson-nav-card:hover .lesson-nav-title {
+  color: var(--accent-deep);
+}
+
+html body div#quartz-root.page article .lesson-nav-meta {
+  margin: 2px 0 0 !important;
+  font-size: 13px !important;
+  color: var(--ink-faint) !important;
+}
+
+html body div#quartz-root.page article .lesson-nav-meta a {
+  color: var(--accent);
+}
+
+@media all and (max-width: 760px) {
+  .lesson-nav {
+    grid-template-columns: 1fr;
+  }
+}

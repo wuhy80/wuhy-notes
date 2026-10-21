@@ -346,6 +346,17 @@ try {
   } else {
     Write-Host "  未找到 fix-html-emphasis.cjs，跳过强调兜底" -ForegroundColor Yellow
   }
+
+  # 内容增强：测验（callout → 可点选、纯 CSS 判分）与文末上一课/下一课导航卡。
+  # 放在强调兜底之后：它依赖 <strong>Q1.…</strong> 已经正确生成。
+  # Quartz 没有这两个插槽，改 layout/components 要维护 fork；在产物上改写零维护。
+  $enhancer = Join-Path $Vault 'scripts\enhance-content.cjs'
+  if (Test-Path -LiteralPath $enhancer) {
+    $o = (& $Node $enhancer $PublicDir 2>&1 | Out-String)
+    ($o -split "`r?`n") | Where-Object { $_ -match 'enhance|Error' } | ForEach-Object { Write-Host "  $($_.Trim())" }
+  } else {
+    Write-Host "  未找到 enhance-content.cjs，跳过内容增强" -ForegroundColor Yellow
+  }
 } finally { Pop-Location }
 
 Write-Step "4/4 部署到 Cloudflare Pages"

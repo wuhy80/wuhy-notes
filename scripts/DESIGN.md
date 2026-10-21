@@ -161,6 +161,18 @@ components:
   footer:                 # 深色页脚
     backgroundColor: "{colors.ink}"
     textColor: "color-mix(in srgb, paper 68%, transparent)"
+  quiz:                   # 测验（enhance-content.cjs 把 callout 结构化后才有）
+    badgeBackgroundColor: "{colors.accent}"
+    itemBackgroundColor: "{colors.card}"
+    itemBorderColor: "{colors.line}"
+    optionBackgroundColor: "{colors.paper}"
+    okColor: "#2f7d4f"    # 只用于「答对」，不参与全站配色
+    badColor: "#b3261e"   # 只用于「答错」，不参与全站配色
+  lesson-nav:             # 文末上一课/下一课（enhance-content.cjs 生成）
+    cardBackgroundColor: "{colors.card}"
+    cardBorderColor: "{colors.line}"
+    labelTypography: IBM Plex Mono 11px / 字距 0.16em
+    emptyBorderStyle: dashed
   code-line-number:
     textColor: "{colors.ink-faint}"
     typography: "{typography.code}"
@@ -313,6 +325,16 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
   各以 1px `line` 边线与正文分隔；右栏栏目标题降为 13px，关系图谱压到 150px 给目录腾位置
 - **阅读进度条**：`body::before` 2px `accent` 条，`animation-timeline: scroll(root block)`
   纯 CSS 驱动（无需 JS，Chrome 115+；不支持时静默不显示）
+- **测验**（`scripts/enhance-content.cjs` 构建后生成）：把 `> [!example] 学习小测验` 的
+  「Q1/Q2 + A~D + ✅ 正解 + 折叠讲解」改写成 `<section class="quiz">`：
+  每题一张白卡，选项是真 `<input type="radio">`（可点、可键盘操作），
+  **判分纯 CSS**：`:has(input:checked)` + 正确项上的 `.is-answer` 类 →
+  选对绿 `✓ 答对`、选错红 `✗ 再想想` 同时把正确项标绿，讲解用
+  `grid-template-rows: 0fr→1fr` 过渡自动展开。**无 JS、无后端**
+- **文末上一课/下一课**（同一脚本）：把 `<h2 id="相关笔记">` 后的 `<ul>`
+  （所属卷/上一课/下一课/课程总览）改写成 `<nav class="lesson-nav">` 两张箭头卡
+  + 一行「所属卷 · 总览」小字；该 h2 加 `.lesson-nav-heading` 类以跳过站号徽标与水印。
+  卡片直接复用原 `<a>` 的 `href`（相对路径，已由 Quartz 解析）+ `internal` 类保留 SPA 跳转
 
 ## Do's and Don'ts
 
@@ -333,6 +355,12 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
   才相对视口定位。**一旦给侧栏加 `transform`/`filter`/`contain`，顶栏会缩进侧栏宽度内**
 - **callout 只用一种强调色**：改 `--color` 到 `accent` 即可同时改变左边条与图标；
   不要按类型再上色，参考站全站只有赭橙一种强调色
+- **构建后两个改写器的顺序不能颠倒**：先 `fix-html-emphasis.cjs`（兜住字面 `**`），
+  再 `enhance-content.cjs`（测验要靠已经生成好的 `<strong>Q1.…</strong>` 才能识别题目）
+- **`enhance-content.cjs` 只认「有选项且恰好标了一个 ✅」的 example callout**，
+  不满足就原样保留——不要在样式里硬把它当测验，否则普通示例块会被误伤
+- 测验的对/错用 `--quiz-ok` / `--quiz-bad` **两个语义色，只在判分状态里出现**；
+  全站其余地方仍然只有赭橙一种强调色，不要拿它们做装饰
 - **⚠️ 改颜色要动三处**（`quartz.config.yaml` + `site-custom.scss` 的「0/6 调色板」强制块 + 本文件）：
   主题包 `@quartz-themes/claude-paper` 会在自己的样式里重新声明两套变量且加载更晚——
   (1) Quartz token（`--light/--lightgray/--dark/--secondary/--tertiary`…）；
@@ -361,4 +389,6 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
 | `scripts/quartz.config.yaml` | **Token 源**（颜色、字体、主题、插件） |
 | `scripts/site-custom.scss` | **样式实现**（含每条硬规则的实测依据） |
 | `scripts/DESIGN.md` | **本文件**：给 agent 的设计契约 |
+| `scripts/fix-html-emphasis.cjs` | 构建后：把产物里残留的字面 `**` 收口成 `<strong>`（在 `enhance-content.cjs` 之前跑） |
+| `scripts/enhance-content.cjs` | 构建后：测验结构化（纯 CSS 判分）+ 文末上一课/下一课导航卡 |
 | `.github/workflows/publish-site.yml` | 发布流水线（把上面两个文件覆盖进 Quartz 后构建） |
