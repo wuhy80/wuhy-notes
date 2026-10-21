@@ -709,7 +709,7 @@ html body article p:has(> em:only-child) {
 // 9/9 参考站（xuanyuancode.com 课程页）版式对齐 —— 2026-10-21
 //
 // 依据：同一课（math-03-matrix）的实测对比，参考站关键实测值：
-//   栅格 40 + 260 + 82 + 716 + 82 + 220 + 40 = 1440（正文 716，左右各 82 留白）
+//   参考站原栅格 40 + 260 + 82 + 716 + 82 + 220 + 40 = 1440（本站已按用户要求放大，见 A 段）
 //   正文 Noto Sans SC 17px / 行高 1.95 / #1C1C1C；段间距 20px
 //   h1 48/900；h2 25/900（无左边条，靠「第 N 站」徽标 + 170px 水印数字 + 首字下沉）
 //   图卡：白底 + 1px #D8CEB6 + padding 26×22 + 圆角 0，图注 13px 在卡内
@@ -718,32 +718,41 @@ html body article p:has(> em:only-child) {
 // 本段全部为覆盖规则，集中在此便于回退（删掉本段即回到上一版观感）。
 // ===========================================================================
 
-// --- A. 栅格：整体居中 1360，正文列 716（左右各 82 留白）-------------------
+// --- A. 栅格：侧栏 390 / 330（+50%）、正文上限 860（+20%）、外壳上限 1744 -----
+// 2026-10-21 二次调整：用户要求两边栏各 +50%、正文 +20%（原来 260/220/716）。
+// 390 + 82 + 860 + 82 + 330 = 1744，即"宽屏下仍是参考站比例，只是整体更宽"。
+// 视口不足 1744 时：侧栏按 vw 回缩（下限 240/200），**优先保住正文宽度**，
+// 不让正文被侧栏挤窄。
 @media all and (min-width: 1200px) {
   html body div#quartz-root.page div#quartz-body {
-    max-width: 1360px !important;
+    max-width: 1744px !important;
     min-width: 0 !important; // 早期规则里的 min-width:100% 会压住 max-width，必须一起改
     margin-inline: auto !important;
-    grid-template-columns: 260px minmax(0, 1fr) 220px !important;
+    grid-template-columns:
+      clamp(240px, 24vw, 390px)
+      minmax(0, 1fr)
+      clamp(200px, 20vw, 330px) !important;
     padding-top: 64px !important; // 给固定顶栏让位
   }
 
+  // 中列上限 = 正文 860 + 左右各 24 的呼吸位
   html body div#quartz-root.page div#quartz-body .center {
-    max-width: 716px !important;
+    max-width: 908px !important;
     width: 100% !important;
     min-width: 0 !important;
     margin-inline: auto !important;
-    padding-inline: 0 !important;
+    padding-inline: 24px !important;
+    box-sizing: border-box !important;
   }
 
-  // 侧栏不再贴视口边：左侧栏 260、右栏 220（与参考站一致），sticky 让开顶栏
+  // 侧栏加宽后内部留白同步放大（原来 260/220 时的内边距显得挤）
   html body div#quartz-root.page div#quartz-body > .sidebar.left {
-    padding: 24px 0 48px !important;
+    padding: 24px 8px 48px 14px !important;
     top: 64px !important;
   }
 
   html body div#quartz-root.page div#quartz-body > .sidebar.right {
-    padding: 28px 0 48px 18px !important; // 参考站 rail：padding 28/18
+    padding: 28px 0 48px 22px !important;
     top: 64px !important;
   }
 }
@@ -1058,12 +1067,14 @@ html body div#quartz-root.page .sidebar.right .graph .graph-outer {
 
 // --- K. 深色页脚（参考站 #1C1C1C 页脚带）--------------------------------
 html body div#quartz-root.page footer {
-  width: 716px !important;
+  // 与正文列对齐：中列上限 908（= 正文 860 + 左右各 24 呼吸位），页脚内边距同为 24
+  // 页脚深色带与正文同宽：正文 = min(860, 中列 - 48)，所以页脚 = calc(100% - 48) 且上限 860
+  width: calc(100% - 48px) !important;
   min-width: 0 !important; // 主题给了 min-width: calc(100% - 48px)，会压住 max-width
-  max-width: 716px !important;
+  max-width: 860px !important;
   box-sizing: border-box !important;
   justify-self: center !important;
-  margin: 48px 82px 0 !important; // 82 = 正文列两侧留白（与参考站一致）
+  margin: 48px auto 0 !important;
   padding: 40px 24px !important;
   background: var(--ink) !important;
   border-top: 0 !important;
