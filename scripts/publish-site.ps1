@@ -357,6 +357,16 @@ try {
   } else {
     Write-Host "  未找到 enhance-content.cjs，跳过内容增强" -ForegroundColor Yellow
   }
+
+  # 分区导航：顶栏放一级目录，左栏只显示当前一级的「卷 + 条目」。
+  # Quartz 的探索树是客户端渲染的一整棵树，样式层没法过滤出当前分支，所以同样在产物上生成。
+  $sectionNav = Join-Path $Vault 'scripts\build-section-nav.cjs'
+  if (Test-Path -LiteralPath $sectionNav) {
+    $o = (& $Node $sectionNav $PublicDir 2>&1 | Out-String)
+    ($o -split "`r?`n") | Where-Object { $_ -match 'section-nav|Error' } | ForEach-Object { Write-Host "  $($_.Trim())" }
+  } else {
+    Write-Host "  未找到 build-section-nav.cjs，跳过分区导航" -ForegroundColor Yellow
+  }
 } finally { Pop-Location }
 
 Write-Step "4/4 部署到 Cloudflare Pages"

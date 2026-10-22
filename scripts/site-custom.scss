@@ -1778,3 +1778,182 @@ html body div#quartz-root.page .explorer .nav-file-title.is-active .ex-idx,
 html body div#quartz-root.page .explorer-content ul li > a.active .ex-idx {
   color: var(--accent-deep);
 }
+
+// ===========================================================================
+// 10/10 分区导航（2026-10-22）—— 一级目录搬到顶栏，左栏只显示当前一级的章节
+//
+// 由 scripts/build-section-nav.cjs 在构建后生成静态 HTML：
+//   顶栏 <nav class="top-nav">：首页 + 各一级目录
+//   左栏 <nav class="side-nav">：卷（二级目录，罗马数字 + 名称 + 篇数）→ 条目（两位序号）
+// Quartz 自己的客户端探索树（.explorer）在这里整体隐藏，避免两套导航并存。
+// ===========================================================================
+html body div#quartz-root.page .left.sidebar .explorer {
+  display: none !important;
+}
+
+// --- 顶栏分区导航：贴在深色固定栏里，站名右侧 ---
+@media all and (min-width: 1200px) {
+  html body div#quartz-root.page .left.sidebar > .top-nav {
+    position: fixed !important;
+    top: 0 !important;
+    left: 132px !important;
+    height: 64px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+    z-index: 61 !important;
+  }
+}
+
+html body div#quartz-root.page .top-nav a {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 3px;
+  font-size: 13.5px;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.72);
+  text-decoration: none !important;
+  white-space: nowrap;
+}
+
+html body div#quartz-root.page .top-nav a:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+html body div#quartz-root.page .top-nav a.on {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+@media all and (max-width: 1199px) {
+  html body div#quartz-root.page .top-nav {
+    display: none !important;
+  }
+}
+
+// --- 左栏分区目录 ---
+html body div#quartz-root.page .side-nav {
+  padding: 18px 0 56px;
+}
+
+html body div#quartz-root.page .side-nav-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0 18px 10px;
+  font-family: $codeFontStack;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+}
+
+html body div#quartz-root.page .side-nav-head b {
+  font-family: $headingFontStack;
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+
+// 卷头：<details>/<summary>，默认收起，当前卷展开
+html body div#quartz-root.page .side-nav .vol > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 15px 18px 6px;
+  font-family: $codeFontStack;
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  color: var(--ink-faint);
+  cursor: pointer;
+  list-style: none;
+}
+
+html body div#quartz-root.page .side-nav .vol > summary::-webkit-details-marker {
+  display: none;
+}
+
+html body div#quartz-root.page .side-nav .vol > summary:hover {
+  color: var(--ink-soft);
+}
+
+html body div#quartz-root.page .side-nav .vol .badge {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 1px 8px;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  transition: background 0.15s ease;
+}
+
+html body div#quartz-root.page .side-nav .vol.on > summary,
+html body div#quartz-root.page .side-nav .vol[open] > summary {
+  color: var(--accent);
+}
+
+html body div#quartz-root.page .side-nav .vol.on > summary .badge {
+  background: var(--accent);
+}
+
+html body div#quartz-root.page .side-nav .vol .cnt {
+  margin-left: auto;
+  font-size: 10px;
+  letter-spacing: 0;
+  color: var(--ink-faint);
+}
+
+// 条目
+html body div#quartz-root.page .side-nav .items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+html body div#quartz-root.page .side-nav .items li > a {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  padding: 7px 18px 7px 26px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  text-decoration: none !important;
+  border-left: 2px solid transparent;
+}
+
+html body div#quartz-root.page .side-nav .items li > a:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--paper-deep) 80%, transparent);
+}
+
+html body div#quartz-root.page .side-nav .items li > a.active {
+  color: var(--accent-deep);
+  font-weight: 700;
+  border-left-color: var(--accent);
+  background: var(--accent-wash);
+}
+
+html body div#quartz-root.page .side-nav .items .num {
+  flex: none;
+  margin-right: 6px;
+  font-family: $codeFontStack;
+  font-size: 10.5px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+html body div#quartz-root.page .side-nav .items li > a.active .num {
+  color: var(--accent);
+}
+
+// 大卷只列子目录时，右侧带篇数
+html body div#quartz-root.page .side-nav .items .cnt {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: var(--ink-faint);
+}
+
+html body div#quartz-root.page .side-nav .vol .items li > a {
+  padding-left: 26px;
+}
