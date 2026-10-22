@@ -251,7 +251,7 @@ foreach ($f in $expFiles) {
     # 镜像嵌入目标里的相对路径（丢掉 . 与 ..），落点 = 笔记所在目录。
     # 一律 -Force 覆盖：源图改了（比如重取教程插图）必须刷新，
     # 不能因为「目标已存在」就跳过，否则站点上会一直挂着旧图。
-    $relParts = @(($t -replace '\\', '/') -split '/' | Where-Object { $_ -and $_ -ne '.' -and $_ -ne '..' })
+    $relParts = @($name)
     $dest = Join-Path $noteDir ($relParts -join '\')
     $destDir = Split-Path $dest -Parent
     if (-not (Test-Path -LiteralPath $destDir)) { New-Item -ItemType Directory -Path $destDir -Force | Out-Null }
@@ -261,7 +261,10 @@ foreach ($f in $expFiles) {
     # Quartz 原生的 <object width="auto" height="auto"> 会退化成 300×150 的小框（2026-10-18 实测），
     # 只有 <img> 配 width:100%/height:auto 才能按 SVG 的 viewBox 自适应铺满正文列。
     # URL 规则与 Quartz 的 slugifyFilePath 对齐：斜杠化 + ASCII 转小写（中文不受影响）。
-    $imgSrc = ($t -replace '\\', '/').ToLower()
+    # 统一用「文件名」做站内路径：站点上图片一律复制到笔记同目录、以文件名引用。
+    # 以前按嵌入目标的原路径镜像（![[附件/算法可视化/x.gif]] 会生成 ../../../../附件/...），
+    # Quartz 再按 content 根解析一次，最终 404（2026-10-22 实测）。
+    $imgSrc = $name.ToLower()
     # SVG 走 site-svg（按 viewBox 铺满正文列）；位图走 site-img（max-width，不放大）
     $imgClass = if ($e -eq '.svg') { 'site-svg' } else { 'site-img' }
     if ($txt.Contains($m.Value)) {
