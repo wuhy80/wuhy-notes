@@ -505,13 +505,16 @@ html body div#quartz-root.page article p {
 // 松散列表（项之间有空行）里每个 li 还包着一层 <p>，会再吃一份段落间距，
 // 所以 li 自身与 li>p 要分别压小，只压其中一个看不出效果。
 // 2026-10-18 二次收紧：外边距归零，列表行高压到 1.55（正文仍 1.75）。
+// 2026-10-22：这里必须带 !important——后面「正文段落 20px」那条是 !important，
+// 没有 !important 的 li>p 会被它压掉，表现为列表项之间突然出现 40px 大空隙
+// （实测 li 高度 82px 而不是 ~44px）。散列表里每一项都包 <p>，所以特别明显。
 html body div#quartz-root.page article li {
-  margin-block: 0;
+  margin-block: 0 !important;
   line-height: 1.55;
 }
 
 html body div#quartz-root.page article li > p {
-  margin-block: 0.1em;
+  margin-block: 0.1em !important;
 }
 
 // --- 4b/6 框内节奏：callout / 属性表 / 引言框，标题与内容的间隔收紧 -----
