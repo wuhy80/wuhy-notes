@@ -57,7 +57,11 @@ $PublicRootFiles = @()
 # 全库放行会把它们一并公开，属于没人要求、也不该顺手做的范围外变更。
 $AttachExt        = @('.svg')
 $AttachRasterExt  = @('.png', '.webp', '.jpg', '.jpeg')
-$AttachRasterDirs = @('附件\逐层分解')
+$AttachRasterDirs = @(
+  '附件\逐层分解',
+  '附件\大模型',        # 2026-10-22：模型/评测/订阅图表（60 处引用）
+  '附件\算法可视化'     # 2026-10-22：排序/搜索算法演示 gif（10 处引用）
+)
 $AttachMaxMB = 10   # 单个附件体积上限，超过则跳过并记入报告
 $ExcludeDirs = @(
   '技术笔记\虚拟机', '技术笔记\安全',                          # 2026-10-01/02 迁至私密库
@@ -274,6 +278,17 @@ foreach ($f in $expFiles) {
       $lineText = $txt.Substring($lineStart, $lineEnd - $lineStart)
       if ($lineText.Trim() -eq $m.Value.Trim()) { $imgTag += $eol }
       $txt = $txt.Replace($m.Value, $imgTag)
+      $rewrote = $true
+    }
+  }
+  # 纯索引页（文件名以 00- 开头，约定为目录/导航页）里的 Dataview 查询在静态站点上
+  # 只会显示成代码；换成一句说明，避免读者看到一坨查询语法（教学笔记不在此列）。
+  if ($f.Name -match '^00-') {
+    $dvPattern = '(?ms)^```dataview(?:js)?[ \t]*\r?\n.*?\r?\n```[ \t]*\r?\n'
+    if ($txt -match $dvPattern) {
+      $notice = "> [!info] 此页是知识库内的动态索引`n" +
+                "> Dataview 查询不会在静态站点执行；完整列表请回到 Obsidian 知识库查看。`n`n"
+      $txt = [regex]::Replace($txt, $dvPattern, $notice)
       $rewrote = $true
     }
   }
