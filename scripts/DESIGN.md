@@ -352,6 +352,14 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
   标题回 600（`li:has(> .folder-outer a.active)`）；悬停 5% `ink` 洗色 + 130ms；导轨降到 62% `line`、
   末项之后不拖尾。树本体 `overflow-y: auto` 内滚（`calc(100dvh - 136px)`）+ 6px `line` 细滚动条，
   「探索」页头固定不随树滚动
+- **探索树里的重复标题会瘦身**（`enhance-content.cjs` 注入，2026-10-22）：链接文字若以**父文件夹名**
+  开头、且紧跟「系列?(序号)」，只缩短**侧栏里的显示**——去掉文件夹名与「系列」，序号变成
+  11px `ink-faint` 的「（八）」；完整标题写进 `title` 属性（悬停可见）。笔记自身的 frontmatter
+  title / H1 / URL / 搜索索引**一律不动**。例：`5分钟手把手系列(八)：本地通过Browser Use…`
+  → `（八）本地通过Browser Use…`
+  - **只认带括号的序号**（（八）/(8)/【三】）：日期目录里「2026-06-18 AI 早报」的剩余部分是
+    「-18 AI 早报」，按分隔符削会变成「18 AI 早报」，把月份削掉（实测误伤 156 条）
+  - 序号用**正文体**而不是等宽体：一/二/三 在 IBM Plex Mono 里会细成一条横线，认不出来
 - **探索树当前文件**：`accent-wash` 底色 + 2px `accent` 左边条 + `accent-deep` 加粗文字
   （对应参考站 `.sidebar-lesson-item a.active`）；探索树的完整外观见下方「左栏探索树」一条
 - **左右栏**：≥1200px 时左栏 260px、右栏 220px（padding `28px 0 48px 18px`），
@@ -397,6 +405,9 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
   侧栏没有自己的滚动容器时，这个调用会把**整个窗口**往下拖（实测 `scrollY` 0 → 462，
   打开笔记直接落在正文中段）。两道保险都要留：`.explorer-content { overflow-y:auto; max-height }`
   与 `enhance-content.cjs` 注入的护栏（只拦 `.explorer` 内的调用，其余元素行为不变）
+- **标题瘦身只做在侧栏，别去改 frontmatter title**：树是客户端渲染的（`contentIndex.json`
+  建树），纯 CSS 拿不到父文件夹名；而改内容标题会波及 H1、搜索、反向链接和站外引用。
+  需要放宽规则时改 `enhance-content.cjs` 里的 `shorten()`，并在真实站点上点数（`data-ex-short`）确认
 - **深色顶栏靠 fixed 复用 DOM**：`.page-title` 是左栏的子元素，靠 `position: fixed` 拉成
   全宽顶栏；它所在的 `.sidebar.left` 是 `sticky`（无 `transform`/`filter`），所以 fixed
   才相对视口定位。**一旦给侧栏加 `transform`/`filter`/`contain`，顶栏会缩进侧栏宽度内**

@@ -7,13 +7,16 @@
  * 而产物里链接已经解析成相对 href、锚点已经生成，在这一层做结构改写既精确又零维护。
  * （同一层的先例：scripts/fix-html-emphasis.cjs）
  *
- * 做三件事：
+ * 做四件事：
  *   1) 测验：<blockquote class="callout example"> 里的「Q1/Q2 + A~D 选项 + ✅ 正解 + 讲解」
  *      → <section class="quiz"> + 单选框 + 纯 CSS 判分（选中即时对错、讲解自动展开，无 JS）
  *   2) 文末导航：<h2 id="相关笔记"> 后的 <ul>（所属卷/上一课/下一课/课程总览）
  *      → <nav class="lesson-nav"> 两张箭头卡 + 一行小字
  *   3) 探索树滚动护栏：每页 <head> 最前注入 12 行补丁，拦住探索树渲染完后
  *      对当前项调用 scrollIntoView 把整个窗口拖走（实测 scrollY 0 → 462）
+ *   4) 探索树标题瘦身：树里的链接文字若重复了父文件夹名（「5分钟手把手」下的
+ *      「5分钟手把手系列(八)：…」），只缩短**侧栏里的显示**，序号提成小徽标，
+ *      完整标题留在 title 属性里；笔记自身的 title / H1 / URL 一律不动
  *
  * 用法：node scripts/enhance-content.cjs <public 目录> [--dry]
  */
@@ -306,9 +309,76 @@ function injectScrollGuard(html, stats) {
 }
 
 // ───────────────────────────────────────────────────────────────────────────
+// 4) 探索树标题瘦身
+//
+// 场景：大模型/07-教程与课程/5分钟手把手 下的 9 篇，title 都是
+// 「5分钟手把手系列(八)：本地通过Browser Use…」。侧栏里父文件夹已经写着
+// 「5分钟手把手」，每行再重复一遍，宽度全被吃掉、换行后更难扫。
+//
+// 做法：只改**侧栏里的显示文本**——去掉与父文件夹重复的前缀，把「(八)」提成
+// 小徽标；完整标题写进 title 属性（悬停可见）。笔记自身的 frontmatter title、
+// H1、URL、搜索索引一律不动，所以不会影响反向链接和站外引用。
+//
+// 触发条件保守：必须是「父文件夹名 + 系列?(序号) + 分隔符……」，且序号带括号
+// （（八）/ (8) / 【三】）。不带括号的写法一律不动——日期目录里
+// 「2026-06-18 AI 早报」的剩余部分是「-18 AI 早报」，按分隔符削会变成「18 AI 早报」，
+// 把月份信息弄丢（2026-10-22 实测踩过，156 条被误伤）。
+// ───────────────────────────────────────────────────────────────────────────
+const TITLES_MARK = 'data-explorer-titles'
+const TITLES = `<script ${TITLES_MARK}>(function(){
+if(window.__qzExplorerTitles)return;window.__qzExplorerTitles=1;
+var IDX=/^[（(【\\[]\\s*([0-9]{1,3}|[一二三四五六七八九十百]{1,3})\\s*[）)】\\]]/;
+var SEP=/^[\\s:：\\-—–、,，.。]+/;
+function folderOf(a){
+  var li=a.closest('li'),ul=li&&li.parentElement,outer=ul&&ul.closest('.folder-outer');
+  var box=outer&&outer.previousElementSibling,ft=box&&box.querySelector('.folder-title');
+  return ft?ft.textContent.trim():'';
+}
+function shorten(a){
+  if(a.hasAttribute('data-ex-short'))return;
+  var full=(a.textContent||'').trim(),folder=folderOf(a),body='',idx='';
+  if(folder&&full.length>folder.length&&full.indexOf(folder)===0){
+    var rest=full.slice(folder.length).replace(/^系列/,'');
+    var m=rest.match(IDX);
+    if(m){idx=m[1];body=rest.slice(m[0].length).replace(SEP,'');}
+  }
+  if(!body||body.length>full.length-2){a.setAttribute('data-ex-short','');return;}
+  a.setAttribute('data-ex-short','1');
+  a.setAttribute('title',full);
+  a.textContent='';
+  var line=document.createElement('span');line.className='ex-line';
+  if(idx){var sp=document.createElement('span');sp.className='ex-idx';sp.textContent='（'+idx+'）';line.appendChild(sp);}
+  line.appendChild(document.createTextNode(body));
+  a.appendChild(line);
+}
+function sweep(){
+  var links=document.querySelectorAll('.explorer a.nav-file-title');
+  for(var i=0;i<links.length;i++)shorten(links[i]);
+}
+var queued=false;
+function schedule(){if(queued)return;queued=true;setTimeout(function(){queued=false;sweep();},120);}
+function start(){
+  if(!document.body){document.addEventListener('DOMContentLoaded',start,{once:true});return;}
+  new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});
+  document.addEventListener('nav',schedule);
+  schedule();
+}
+start();
+})();</script>`
+
+function injectExplorerTitles(html, stats) {
+  if (html.indexOf(TITLES_MARK) >= 0) return html
+  const head = html.match(/<head[^>]*>/i)
+  if (!head) return html
+  const at = head.index + head[0].length
+  stats.titles++
+  return html.slice(0, at) + TITLES + html.slice(at)
+}
+
+// ───────────────────────────────────────────────────────────────────────────
 // 主流程
 // ───────────────────────────────────────────────────────────────────────────
-const stats = { files: 0, changed: 0, quizBlocks: 0, quizQuestions: 0, navs: 0, guards: 0 }
+const stats = { files: 0, changed: 0, quizBlocks: 0, quizQuestions: 0, navs: 0, guards: 0, titles: 0 }
 
 function walk(dir) {
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -325,6 +395,7 @@ function walk(dir) {
     out = transformQuizzes(out, stats)
     out = transformLessonNav(out, stats)
     out = injectScrollGuard(out, stats)
+    out = injectExplorerTitles(out, stats)
     if (out !== src) {
       stats.changed++
       if (!DRY) fs.writeFileSync(p, out, 'utf8')
@@ -342,6 +413,6 @@ walk(PUB)
 console.log(
   `[enhance] 扫描 HTML ${stats.files} 个；改写 ${stats.changed} 个；` +
     `测验 ${stats.quizBlocks} 块 / ${stats.quizQuestions} 题；课程导航 ${stats.navs} 处；` +
-    `滚动护栏 ${stats.guards} 处` +
+    `滚动护栏 ${stats.guards} 页；标题瘦身 ${stats.titles} 页` +
     (DRY ? '（干跑，未写入）' : '')
 )

@@ -1759,3 +1759,22 @@ html body div#quartz-root.page .explorer .folder-title,
 html body div#quartz-root.page .explorer .nav-file-title {
   font-variant-numeric: tabular-nums;
 }
+
+// --- 11.7 侧栏标题瘦身后的序号 --------------------------------------------
+// 由 enhance-content.cjs 注入的脚本生成：侧栏里把「5分钟手把手系列(八)：…」
+// 压成「（八）本地通过…」，序号弱化成小号 ink-faint；完整标题留在链接的
+// title 属性里，笔记自身的 title / H1 / URL 不动。
+// 序号用正文体而不是等宽体：一/二/三 在 IBM Plex Mono 里会细成一条横线，
+// 认不出来（2026-10-22 实测）。整行包在一个 .ex-line 里，让序号与正文
+// 同处一个文本流，换行与基线都不用额外处理。
+html body div#quartz-root.page .explorer .nav-file-title .ex-idx {
+  margin-right: 4px;
+  font-size: 11px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+html body div#quartz-root.page .explorer .nav-file-title.is-active .ex-idx,
+html body div#quartz-root.page .explorer-content ul li > a.active .ex-idx {
+  color: var(--accent-deep);
+}
