@@ -661,15 +661,8 @@ html body article .callout figure[data-rehype-pretty-code-figure] {
   border-color: var(--line) !important;
 }
 
-// --- 当前态：探索树中的当前文件（对齐参考站侧栏 .active）------------------
-html body div#quartz-root.page .explorer .nav-file-title.is-active,
-html body div#quartz-root.page .explorer .nav-file-title.active,
-html body div#quartz-root.page .explorer-content ul li > a.active {
-  background-color: var(--accent-wash) !important;
-  color: var(--accent-deep) !important;
-  font-weight: 700;
-  border-left: 2px solid var(--accent) !important;
-}
+// --- 当前态：探索树中的当前文件迁移到文末「11/11 左栏探索树」统一处理 ------
+// （旧的 border-left 方案会跟着主题的 6px 圆角弯成「(」，已作废）
 
 // --- 当前态：右栏目录正在阅读的小节 -------------------------------------
 html body div#quartz-root.page .sidebar.right .toc li a.active,
@@ -1159,13 +1152,7 @@ html body div#quartz-root.page .sidebar.right .toc .toc-content > li.depth-1 > a
   opacity: 1;
 }
 
-// --- I. 左栏探索树：13px（参考站侧栏课程条 13px）------------------------
-html body div#quartz-root.page .explorer .nav-file-title,
-html body div#quartz-root.page .explorer .folder-title,
-html body div#quartz-root.page .explorer button,
-html body div#quartz-root.page .explorer-content ul li > a {
-  font-size: 13px !important;
-}
+// --- I. 左栏探索树：字号 / 行节奏 / 当前态，见文末「11/11 左栏探索树」------
 
 // --- I2. 右栏：栏目标题降级到小号，图谱收紧给目录腾出首屏位置 ------------
 html body div#quartz-root.page .sidebar.right h2,
@@ -1246,13 +1233,7 @@ html body div#quartz-root.page footer a {
   font-size: 13px !important;
 }
 
-// 探索树的小标题（Quartz 默认给了 21px，与参考站侧栏的 12–13px 小标签不符）
-html body div#quartz-root.page .explorer h2 {
-  font-size: 13px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.06em;
-  color: var(--ink-soft) !important;
-}
+// 探索树的小标题见文末「11/11 左栏探索树」。
 
 // --- L. 阅读进度条（纯 CSS 滚动驱动，无需 JS）----------------------------
 @supports (animation-timeline: scroll()) {
@@ -1527,4 +1508,241 @@ html body div#quartz-root.page article .lesson-nav-meta a {
   .lesson-nav {
     grid-template-columns: 1fr;
   }
+}
+
+// ===========================================================================
+// 11/11 左栏探索树（2026-10-22 重做）
+//
+// 旧版的三个问题（线上实测）：
+//   1) 当前态用 border-left 做竖条，主题又给 .nav-file-title 6px 圆角，
+//      2px 左边框跟着圆角渲染成一个「(」，文字还贴着它；
+//   2) 文件夹、文件、当前项三者同为 13px 同色，层级只剩缩进；
+//   3) 「探索」是普通 13px 文字，和右栏「目录 / 关系图谱」的小标签语汇不一致。
+//
+// 这里的做法：小标签页头 + 等距 28px 行 + 文件夹/文件分字重 + 文件小圆点
+// + 4px 圆角的当前态 tab（竖条改为独立伪元素，不再受圆角影响）
+// + 当前文件的祖先链路染赭橙。只用本站既有 token，不新增颜色与阴影。
+//
+// 配套（脚本侧）：enhance-content.cjs 注入「探索树滚动护栏」，否则树渲染完
+// 会对当前项调用 scrollIntoView，把整个窗口往下拖（实测 scrollY 0 → 462）。
+// ===========================================================================
+
+// --- 11.1 页头：11px 等宽小标签 + 1px 暖线 ---------------------------------
+html body div#quartz-root.page .explorer > button.title-button {
+  align-items: center !important;
+  gap: 0 !important;
+  width: 100% !important;
+  padding: 0 6px 6px !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent) !important;
+  margin-bottom: 0 !important;
+}
+
+html body div#quartz-root.page .explorer > button.title-button h2 {
+  margin: 0 !important;
+  font-family: $codeFontStack !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.14em !important;
+  color: var(--ink-soft) !important;
+}
+
+html body div#quartz-root.page .explorer > button.title-button .fold {
+  width: 12px !important;
+  height: 12px !important;
+  opacity: 0.6 !important;
+  margin-left: 0.4rem !important;
+  color: var(--ink-faint) !important;
+}
+
+html body div#quartz-root.page .explorer > button.title-button:hover h2,
+html body div#quartz-root.page .explorer > button.title-button:hover .fold {
+  color: var(--accent) !important;
+  opacity: 1 !important;
+}
+
+// --- 11.2 树本体：独立滚动（展开后不再顶出视口，也不把整页顶下去）---------
+// 桌面端侧栏是 sticky，树比视口高时底部条目永远够不到，因此必须有内滚。
+// 高度 = 视口 - 深色顶栏 64 - 侧栏上下内边距 24/48。
+@media all and (min-width: 1200px) {
+  html body div#quartz-root.page .explorer-content {
+    max-height: calc(100vh - 136px);
+    max-height: calc(100dvh - 136px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--line) 80%, transparent) transparent;
+  }
+
+  html body div#quartz-root.page .explorer-content::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  html body div#quartz-root.page .explorer-content::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--line) 80%, transparent);
+    border-radius: 3px;
+  }
+
+  html body div#quartz-root.page .explorer-content::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+// --- 11.3 层级：导轨降噪，末项之后不再拖尾 ---------------------------------
+html body div#quartz-root.page .explorer-content .folder-outer > ul {
+  margin-left: 7px !important;
+  padding-left: 0.8rem !important;
+  border-left: 1px solid color-mix(in srgb, var(--line) 62%, transparent) !important;
+}
+
+html body div#quartz-root.page .explorer-content .folder-outer > ul > li:last-child {
+  position: relative !important;
+}
+
+html body div#quartz-root.page .explorer-content .folder-outer > ul > li:last-child::after {
+  content: "" !important;
+  position: absolute !important;
+  left: -0.8rem !important;
+  bottom: 0 !important;
+  width: 1px !important;
+  height: 13px !important;
+  background: var(--paper) !important;
+}
+
+// --- 11.4 行：等距 28px、4px 圆角悬停、可点区域对齐 ------------------------
+@media all and (min-width: 1200px) {
+  // 文件行
+  html body div#quartz-root.page .explorer-content ul li > a.nav-file-title {
+    display: flex !important;
+    align-items: center !important;
+    min-height: 28px !important;
+    box-sizing: border-box !important;
+    padding: 0 8px 0 16px !important;
+    margin: 0 6px 0 0 !important;
+    border-radius: 4px !important;
+    line-height: 1.35 !important;
+    font-size: 12.5px !important;
+    color: var(--ink-soft) !important;
+    opacity: 1 !important;
+    background: transparent !important;
+    position: relative !important;
+    transition: background-color 0.13s ease, color 0.13s ease !important;
+  }
+
+  // 嵌套层文件前缀小圆点：让「文件」与「文件夹」在缩进里一眼可分。
+  // 顶层文件不加点（`00-大模型学习导航` 这类会被误看成列表项）。
+  html body div#quartz-root.page .explorer-content .folder-outer ul li > a.nav-file-title::after {
+    content: "" !important;
+    position: absolute !important;
+    left: 7px !important;
+    top: 50% !important;
+    width: 2px !important;
+    height: 2px !important;
+    margin-top: -1px !important;
+    border-radius: 50% !important;
+    background: color-mix(in srgb, var(--ink-faint) 40%, transparent) !important;
+  }
+
+  html body div#quartz-root.page .explorer-content ul li > a.nav-file-title:hover {
+    background: color-mix(in srgb, var(--ink) 5%, transparent) !important;
+    color: var(--ink) !important;
+  }
+
+  html body div#quartz-root.page .explorer-content ul li > a.nav-file-title:focus-visible {
+    outline: 2px solid var(--accent) !important;
+    outline-offset: -2px !important;
+  }
+
+  // 文件夹行（箭头 + 标题整行可点）
+  html body div#quartz-root.page .explorer .folder-container {
+    min-height: 28px !important;
+    margin: 0 6px 0 0 !important;
+    padding: 0 8px 0 0 !important;
+    border-radius: 4px !important;
+    transition: background-color 0.13s ease !important;
+  }
+
+  html body div#quartz-root.page .explorer .folder-container:hover {
+    background: color-mix(in srgb, var(--ink) 5%, transparent) !important;
+  }
+
+  html body div#quartz-root.page .explorer .folder-container .folder-icon {
+    width: 13px !important;
+    height: 13px !important;
+    min-width: 13px !important;
+    margin-right: 3px !important;
+    color: var(--ink-faint) !important;
+    stroke: currentColor !important;
+    opacity: 0.85 !important;
+    transition: color 0.13s ease !important;
+  }
+
+  html body div#quartz-root.page .explorer .folder-container:hover .folder-icon {
+    color: var(--accent) !important;
+    opacity: 1 !important;
+  }
+
+  html body div#quartz-root.page .explorer .folder-container .folder-title {
+    font-size: 13px !important;
+    line-height: 1.35 !important;
+    font-weight: 500 !important;
+    color: var(--ink) !important;
+    letter-spacing: 0.005em !important;
+    background: transparent !important;
+    transition: color 0.13s ease !important;
+  }
+
+  // 深层文件夹降一档：层级由缩进与导轨表达，不靠字号
+  html body div#quartz-root.page .explorer-content .folder-outer .folder-outer .folder-title {
+    font-size: 12.5px !important;
+    font-weight: 500 !important;
+    color: var(--ink-soft) !important;
+  }
+
+  // 当前文件的祖先链路：字重回到 600，配合赭橙箭头指出「你在哪」
+  html body div#quartz-root.page .explorer li:has(> .folder-outer a.active) > .folder-container .folder-title {
+    font-weight: 600 !important;
+    color: var(--ink) !important;
+  }
+
+  html body div#quartz-root.page .explorer li:has(> .folder-outer a.active) > .folder-container .folder-icon {
+    color: var(--accent) !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+  }
+}
+
+// --- 11.5 当前文件：暖洗色 tab + 2px 赭橙竖条 ------------------------------
+// 竖条用伪元素绝对定位，避开圆角；左右内边距加宽给竖条留出呼吸位。
+html body div#quartz-root.page .explorer .nav-file-title.is-active,
+html body div#quartz-root.page .explorer-content ul li > a.active {
+  background: var(--accent-wash) !important;
+  border-left: 0 !important;
+  border-radius: 4px !important;
+  color: var(--accent-deep) !important;
+  font-weight: 700 !important;
+  padding-left: 16px !important;
+}
+
+html body div#quartz-root.page .explorer .nav-file-title.is-active::after,
+html body div#quartz-root.page .explorer-content ul li > a.active::after {
+  display: none !important; // 当前项不显示文件小圆点
+}
+
+html body div#quartz-root.page .explorer .nav-file-title.is-active::before,
+html body div#quartz-root.page .explorer-content ul li > a.active::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 4px !important;
+  top: 5px !important;
+  bottom: 5px !important;
+  width: 2px !important;
+  border-radius: 1px !important;
+  background: var(--accent) !important;
+}
+
+// --- 11.6 数字对齐：01- / 90- 这类序号用等宽数字，长列表更好扫 --------------
+html body div#quartz-root.page .explorer .folder-title,
+html body div#quartz-root.page .explorer .nav-file-title {
+  font-variant-numeric: tabular-nums;
 }

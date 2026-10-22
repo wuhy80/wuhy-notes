@@ -114,6 +114,8 @@ layout:
   navbar: 64px                 # 深色固定顶栏（rgba(28,28,28,.96) + 底边 1px 白 10%）
   progress-bar: 2px            # accent 色阅读进度条（纯 CSS 滚动驱动）
   footer: 980px                # 深色页脚，与正文列同宽（含 24 内边距）
+  explorer-row: 28px           # 左栏探索树行高（文件行与文件夹行统一）
+  explorer-scroll: calc(100dvh - 136px)  # 探索树内滚高度 = 视口 - 顶栏 64 - 侧栏上下内边距 24/48
 components:
   code-block:
     backgroundColor: "{colors.card}"
@@ -223,6 +225,13 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
 并隐藏了会把 h1 往下推的 frontmatter 属性表。**三条旧的硬规则因此作废**：
 "内容铺满视口"→ 现在正文列固定 716 居中；"h2 带 3px 左边条"→ 现在靠站号徽标；
 "callout 左边条按类型上色"→ 现在全站一种赭橙。
+
+2026-10-22 只动**左栏探索树**（正文、卡片、配色一行未改）：旧版文件夹/文件/当前项
+三者同为 13px 同色，层级只剩缩进，当前项还用 `border-left` 画竖条，跟着主题的 6px
+圆角渲染成一个「(」。重做后是「小标签页头 + 28px 等距行 + 文件夹/文件分字重 +
+嵌套层文件小圆点 + 4px 圆角 tab 型的当前态 + 祖先链路染赭橙」，并让树体自己滚。
+同一次还修掉一个真 bug：树建完对当前项调 `scrollIntoView` 会把**整页**往下拖
+（`scrollY` 0 → 462），护栏代码在 `enhance-content.cjs`。
 
 ## Colors
 
@@ -335,8 +344,16 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
 - **小节首字下沉**：`h2 + p::first-letter` = 3.2em / 900 / `accent`（对应参考站 `.dropcap-letter`）
 - **右栏目录**：`li.depth-1` 前加「○/● + 编号」（等宽 0.78em、`accent`；当前小节实心 ● 并加粗转 `accent-deep`）；
   字号 12.5px（参考站 rail 是 12.5px，之前 16px 明显偏大）
+- **左栏探索树**（2026-10-22 重做）：`探索` 页头是 **11px 等宽 + 0.14em 字距 + 1px 暖线**（`ink-soft`），
+  和右栏「目录 / 关系图谱」同一套小标签语汇；行高统一 `28px`（文件 12.5px/400 `ink-soft`，
+  文件夹 13px/500 `ink`，深层文件夹 12.5px/500 `ink-soft`）；嵌套层文件前 2px 小圆点
+  （**顶层文件不加**，否则像列表项）；**当前文件 = 4px 圆角 `accent-wash` tab + 2px `accent` 竖条**
+  （竖条是绝对定位伪元素，**不是** `border-left`），当前文件的**祖先文件夹**箭头染 `accent`、
+  标题回 600（`li:has(> .folder-outer a.active)`）；悬停 5% `ink` 洗色 + 130ms；导轨降到 62% `line`、
+  末项之后不拖尾。树本体 `overflow-y: auto` 内滚（`calc(100dvh - 136px)`）+ 6px `line` 细滚动条，
+  「探索」页头固定不随树滚动
 - **探索树当前文件**：`accent-wash` 底色 + 2px `accent` 左边条 + `accent-deep` 加粗文字
-  （对应参考站 `.sidebar-lesson-item a.active`）；探索树条目与「探索」小标题统一 13px
+  （对应参考站 `.sidebar-lesson-item a.active`）；探索树的完整外观见下方「左栏探索树」一条
 - **左右栏**：≥1200px 时左栏 260px、右栏 220px（padding `28px 0 48px 18px`），
   各以 1px `line` 边线与正文分隔；右栏栏目标题降为 13px，关系图谱压到 150px 给目录腾位置
 - **阅读进度条**：`body::before` 2px `accent` 条，`animation-timeline: scroll(root block)`
@@ -373,6 +390,13 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
 - **永不**用 `!important` 之外的普通规则去改内容区宽度——主题的特异性更高，改不动
 - **h1 下不要边线**：主题给 `h1.article-title` 画了 `border-bottom: 1px rgba(31,30,29,.16)`，
   参考站的标题是"裸露"的，需显式 `border-bottom: 0`
+- **探索树的当前项永不**用 `border-left` 做竖条：主题给 `.nav-file-title` 6px 圆角，
+  2px 左边框会跟着圆角渲染成一个「(」，文字还贴着它（2026-10-22 线上实测）。
+  竖条必须是绝对定位伪元素（`::before`，`left:4px`）
+- **探索树必须保留内滚 + 滚动护栏**：树建好后会对当前项调用 `scrollIntoView`；
+  侧栏没有自己的滚动容器时，这个调用会把**整个窗口**往下拖（实测 `scrollY` 0 → 462，
+  打开笔记直接落在正文中段）。两道保险都要留：`.explorer-content { overflow-y:auto; max-height }`
+  与 `enhance-content.cjs` 注入的护栏（只拦 `.explorer` 内的调用，其余元素行为不变）
 - **深色顶栏靠 fixed 复用 DOM**：`.page-title` 是左栏的子元素，靠 `position: fixed` 拉成
   全宽顶栏；它所在的 `.sidebar.left` 是 `sticky`（无 `transform`/`filter`），所以 fixed
   才相对视口定位。**一旦给侧栏加 `transform`/`filter`/`contain`，顶栏会缩进侧栏宽度内**
@@ -417,5 +441,5 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
 | `scripts/site-custom.scss` | **样式实现**（含每条硬规则的实测依据） |
 | `scripts/DESIGN.md` | **本文件**：给 agent 的设计契约 |
 | `scripts/fix-html-emphasis.cjs` | 构建后：把产物里残留的字面 `**` 收口成 `<strong>`（在 `enhance-content.cjs` 之前跑） |
-| `scripts/enhance-content.cjs` | 构建后：测验结构化（纯 CSS 判分）+ 文末上一课/下一课导航卡 |
+| `scripts/enhance-content.cjs` | 构建后：测验结构化（纯 CSS 判分）+ 文末上一课/下一课导航卡 + 探索树滚动护栏 |
 | `.github/workflows/publish-site.yml` | 发布流水线（把上面两个文件覆盖进 Quartz 后构建） |

@@ -7,11 +7,13 @@
  * 而产物里链接已经解析成相对 href、锚点已经生成，在这一层做结构改写既精确又零维护。
  * （同一层的先例：scripts/fix-html-emphasis.cjs）
  *
- * 做两件事：
+ * 做三件事：
  *   1) 测验：<blockquote class="callout example"> 里的「Q1/Q2 + A~D 选项 + ✅ 正解 + 讲解」
  *      → <section class="quiz"> + 单选框 + 纯 CSS 判分（选中即时对错、讲解自动展开，无 JS）
  *   2) 文末导航：<h2 id="相关笔记"> 后的 <ul>（所属卷/上一课/下一课/课程总览）
  *      → <nav class="lesson-nav"> 两张箭头卡 + 一行小字
+ *   3) 探索树滚动护栏：每页 <head> 最前注入 12 行补丁，拦住探索树渲染完后
+ *      对当前项调用 scrollIntoView 把整个窗口拖走（实测 scrollY 0 → 462）
  *
  * 用法：node scripts/enhance-content.cjs <public 目录> [--dry]
  */
@@ -272,9 +274,41 @@ function transformLessonNav(html, stats) {
 }
 
 // ───────────────────────────────────────────────────────────────────────────
+// 3) 探索树滚动护栏
+//
+// 问题（2026-10-22 线上实测）：探索树用 contentIndex 异步建树，建完会对当前文件
+// 调用 scrollIntoView；侧栏没有自己的滚动容器时，浏览器把这个"滚进视野"一路
+// 冒泡到文档，打开的笔记直接落在正文中段（同一页 window.scrollY：0 → 462）。
+//
+// 护栏把 .explorer 内的 scrollIntoView 改成"只滚 .explorer-content"，
+// 其余元素行为不变。必须放在 <head> 最前：探索树的模块脚本晚于它执行。
+// ───────────────────────────────────────────────────────────────────────────
+const GUARD_MARK = 'data-explorer-scroll-guard'
+const GUARD =
+  `<script ${GUARD_MARK}>(function(){` +
+  `var orig=Element.prototype.scrollIntoView;` +
+  `Element.prototype.scrollIntoView=function(){` +
+  `if(this.closest&&this.closest('.explorer')){` +
+  `var box=this.closest('.explorer-content');` +
+  `if(box){var top=this.getBoundingClientRect().top-box.getBoundingClientRect().top+box.scrollTop;` +
+  `box.scrollTop=Math.max(0,top-Math.round(box.clientHeight/3));}` +
+  `return;}` +
+  `return orig.apply(this,arguments);` +
+  `};})();</script>`
+
+function injectScrollGuard(html, stats) {
+  if (html.indexOf(GUARD_MARK) >= 0) return html
+  const head = html.match(/<head[^>]*>/i)
+  if (!head) return html
+  const at = head.index + head[0].length
+  stats.guards++
+  return html.slice(0, at) + GUARD + html.slice(at)
+}
+
+// ───────────────────────────────────────────────────────────────────────────
 // 主流程
 // ───────────────────────────────────────────────────────────────────────────
-const stats = { files: 0, changed: 0, quizBlocks: 0, quizQuestions: 0, navs: 0 }
+const stats = { files: 0, changed: 0, quizBlocks: 0, quizQuestions: 0, navs: 0, guards: 0 }
 
 function walk(dir) {
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -290,6 +324,7 @@ function walk(dir) {
     const before = { ...stats }
     out = transformQuizzes(out, stats)
     out = transformLessonNav(out, stats)
+    out = injectScrollGuard(out, stats)
     if (out !== src) {
       stats.changed++
       if (!DRY) fs.writeFileSync(p, out, 'utf8')
@@ -306,6 +341,7 @@ if (!fs.existsSync(PUB)) {
 walk(PUB)
 console.log(
   `[enhance] 扫描 HTML ${stats.files} 个；改写 ${stats.changed} 个；` +
-    `测验 ${stats.quizBlocks} 块 / ${stats.quizQuestions} 题；课程导航 ${stats.navs} 处` +
+    `测验 ${stats.quizBlocks} 块 / ${stats.quizQuestions} 题；课程导航 ${stats.navs} 处；` +
+    `滚动护栏 ${stats.guards} 处` +
     (DRY ? '（干跑，未写入）' : '')
 )
