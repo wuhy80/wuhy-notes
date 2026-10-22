@@ -78,7 +78,12 @@ const pages = []
 for (const [slug, v] of Object.entries(index)) {
   // index 是「首页 + 导出脚本为每个目录生成的目录页」，不进侧栏条目与篇数
   // （否则 MOE / Transformer / 01-基础原理 这些目录名会混进编号列表，篇数也虚高）
-  if (slug === 'index' || /(^|\/)index$/.test(slug)) continue
+  // index 结尾的 slug 有两种：① 导出脚本为目录生成的 index.md（应排除）；
+  // ② Quartz 把「文件名与目录同名」的笔记（如 幻觉与可靠性/幻觉与可靠性.md）映射成
+  //    目录首页 slug —— 这种是正经笔记，必须保留。用 filePath 是否 index.md 区分。
+  if (slug === 'index') continue
+  const fp = (v && v.filePath) || ''
+  if (/(^|\/)index$/.test(slug) && /(^|[\\/])index\.md$/i.test(fp)) continue
   if (/^(tags|static|404)\b/.test(slug)) continue
   pages.push({ slug, title: (v && v.title) || slug.split('/').pop(), filePath: (v && v.filePath) || '' })
 }
