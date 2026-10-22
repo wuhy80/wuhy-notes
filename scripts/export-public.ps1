@@ -288,7 +288,10 @@ foreach ($f in $expFiles) {
     if ($txt -match $dvPattern) {
       $notice = "> [!info] 此页是知识库内的动态索引`n" +
                 "> Dataview 查询不会在静态站点执行；完整列表请回到 Obsidian 知识库查看。`n`n"
-      $txt = [regex]::Replace($txt, $dvPattern, $notice)
+      # 一页可能有多段查询：第一段换成提示，其余直接删掉，免得同一句提示刷三遍
+      $dvRx = [regex]::new($dvPattern)
+      $txt = $dvRx.Replace($txt, $notice, 1)
+      $txt = $dvRx.Replace($txt, '')
       $rewrote = $true
     }
   }
