@@ -56,7 +56,7 @@ $PublicRootFiles = @()
 # 站内另有一批位图嵌入（模型训练 49 处、AI 早报 11 处、软著 8 处），
 # 全库放行会把它们一并公开，属于没人要求、也不该顺手做的范围外变更。
 $AttachExt        = @('.svg')
-$AttachRasterExt  = @('.png', '.webp', '.jpg', '.jpeg')
+$AttachRasterExt  = @('.png', '.webp', '.jpg', '.jpeg', '.gif')   # gif：算法可视化动画
 $AttachRasterDirs = @(
   '附件\逐层分解',
   '附件\大模型',        # 2026-10-22：模型/评测/订阅图表（60 处引用）
