@@ -342,6 +342,13 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
   **判分纯 CSS**：`:has(input:checked)` + 正确项上的 `.is-answer` 类 →
   选对绿 `✓ 答对`、选错红 `✗ 再想想` 同时把正确项标绿，讲解用
   `grid-template-rows: 0fr→1fr` 过渡自动展开。**无 JS、无后端**
+- **「停下来 · 想一想」自学卡**（纯 CSS，2026-10-22，对齐参考站 `.think`）：源写法是
+  `> [!question] 想一想` + 内嵌折叠的 `> > [!tip]- 我想好了，看答案`；样式用
+  `:has(> .callout-content > .callout[data-callout="tip"])` 认领这个组合后整块换皮：
+  1.5px 虚线框（`accent` 48%）+ 压住顶边的等宽小标签（`::before` 写「停下来 · 想一想」，
+  底色用 `paper`→`card` 的两段渐变，才能同时对上框外的纸底和框内的白卡）+ 衬线加粗问句
+  + `accent-wash` 米色按钮。展开沿用 Quartz 自带折叠，展开后按钮隐藏，只留 `line`
+  细分隔线与 `ink-soft` 答案
 - **文末上一课/下一课**（同一脚本）：把 `<h2 id="相关笔记">` 后的 `<ul>`
   （所属卷/上一课/下一课/课程总览）改写成 `<nav class="lesson-nav">` 两张箭头卡
   + 一行「所属卷 · 总览」小字；该 h2 加 `.lesson-nav-heading` 类以跳过站号徽标与水印。
@@ -370,6 +377,10 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
   再 `enhance-content.cjs`（测验要靠已经生成好的 `<strong>Q1.…</strong>` 才能识别题目）
 - **`enhance-content.cjs` 只认「有选项且恰好标了一个 ✅」的 example callout**，
   不满足就原样保留——不要在样式里硬把它当测验，否则普通示例块会被误伤
+- **自学卡靠 `:has()` 精确认领**（必须同时有内嵌 tip），别用 `[data-callout="question"]`
+  一把抓：站内还有「后续问题」「待研究」这类普通 question callout，仍应是赭橙卡片
+- **自学卡必须 `overflow: visible`**：Quartz 基础样式给 `.callout` 设了 `overflow-y: hidden`，
+  会把压在顶边外的标签整行裁掉（2026-10-22 实测：只剩一块没字的色块）
 - 测验的对/错用 `--quiz-ok` / `--quiz-bad` **两个语义色，只在判分状态里出现**；
   全站其余地方仍然只有赭橙一种强调色，不要拿它们做装饰
 - **⚠️ 改颜色要动三处**（`quartz.config.yaml` + `site-custom.scss` 的「0/6 调色板」强制块 + 本文件）：

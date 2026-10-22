@@ -934,6 +934,134 @@ html body div#quartz-root.page article .callout > .callout-content {
   padding: 0 0 18px !important;
 }
 
+// --- F3. 「停下来 · 想一想」自学卡（对齐参考站 .think）--------------------
+// 源写法：> [!question] 想一想 + 内嵌折叠的 > > [!tip]- 参考答案
+// 参考站把它做成「虚线卡 + 压住顶边的等宽小标签 + 米色按钮，点按钮才展开答案」；
+// 我们不改内容结构，只用 :has() 认领这个组合，把外层 callout 换掉外观。
+// 折叠沿用 Quartz 自带的 callout 折叠（点标题区 = 点按钮），不引入 JS。
+$thinkSerif: "Noto Serif SC", "Songti SC", Georgia, serif;
+
+html body div#quartz-root.page article .callout[data-callout="question"]:has(> .callout-content > .callout[data-callout="tip"]) {
+  position: relative !important;
+  margin: 34px 0 !important;
+  padding: 24px 26px !important;
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 48%, transparent) !important;
+  border-radius: 0 !important;
+  background: var(--card) !important;
+  // 关键：Quartz 基础样式给 .callout 设了 overflow-y:hidden，会把顶边外的标签裁掉
+  overflow: visible !important;
+
+  // 左上角标签：小字号 + 等宽 + 拉开字距，压在虚线框的顶边上
+  &::before {
+    content: "停下来 · 想一想";
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    padding: 0 10px;
+    font-family: $codeFontStack;
+    font-size: 11px;
+    line-height: 1.4;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    // 标签压在虚线框顶边上：上半个字高在纸底上、下半个在卡片上。
+    // 两段底色分别对齐外部纸色与卡片色，才不会出现一块「膏药」。
+    background: linear-gradient(to bottom, var(--paper) 10px, var(--card) 10px);
+    pointer-events: none;
+  }
+
+  // 原标题「想一想」的意思已被标签承担，去掉图标与标题行
+  > .callout-title {
+    display: none !important;
+  }
+
+  > .callout-content {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+
+    // 正文字族是 !important 的无衬线，这里必须同样加 !important 才换得动
+    > p {
+      margin: 0 !important;
+      font-family: $thinkSerif !important;
+      font-size: 17px !important;
+      font-weight: 700 !important;
+      line-height: 1.9 !important;
+      color: var(--ink) !important;
+    }
+  }
+
+  // 内嵌答案：折叠时是米色按钮；展开后按钮让位给「细分割线 + 答案正文」
+  .callout[data-callout="tip"] {
+    margin: 14px 0 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+
+    > .callout-title {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 0 !important;
+      margin: 0 !important;
+      padding: 8px 16px !important;
+      background: var(--accent-wash) !important;
+      color: var(--accent-deep) !important;
+      font-family: $codeFontStack !important;
+      font-size: 12px !important;
+      letter-spacing: 0.08em !important;
+      cursor: pointer;
+      transition: background 0.18s ease !important;
+
+      &:hover {
+        background: color-mix(in srgb, var(--accent) 20%, var(--card)) !important;
+      }
+
+      // 图标和折叠箭头都不属于「按钮」这套语汇
+      > .callout-icon,
+      > .fold-callout-icon {
+        display: none !important;
+      }
+
+      > .callout-title-inner {
+        font-weight: 400 !important;
+        color: inherit !important;
+
+        > p {
+          margin: 0 !important;
+          font-size: inherit !important;
+          line-height: 1.2 !important;
+          letter-spacing: inherit !important;
+          color: inherit !important;
+        }
+      }
+    }
+
+    > .callout-content {
+      margin: 16px 0 0 !important;
+      padding: 16px 0 0 !important;
+      border-top: 1px solid var(--line) !important;
+      color: var(--ink-soft) !important;
+      font-size: 15.5px !important;
+
+      > p {
+        margin: 0 !important;
+      }
+    }
+
+    // 折叠态：不预留分割线与内边距，按钮下面直接收口
+    &.is-collapsed > .callout-content {
+      margin: 0 !important;
+      padding: 0 !important;
+      border-top: 0 !important;
+    }
+
+    // 展开后按钮消失（与参考站一致：点完只剩答案）
+    &:not(.is-collapsed) > .callout-title {
+      display: none !important;
+    }
+  }
+}
+
 // 「本课导读」（abstract）= 参考站的导语条：无卡片、无标题，衬线 + 3px 赭橙左边条
 html body div#quartz-root.page article .callout[data-callout="abstract"] {
   background: transparent !important;
