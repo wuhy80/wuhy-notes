@@ -911,8 +911,23 @@ html body div#quartz-root.page article .callout {
   padding: 0 24px !important;
 }
 
+// callout 标题：图标与文字必须同一条中线（2026-10-22 用 CDP 实测定位）
+// 症状：图标浮在标题上方，文字整体下沉，看起来「不在一条线」。
+// 成因有两处叠加，缺一不可：
+//   ① 正文段落规则 article p { margin-block: 20px !important } 也命中了标题里的 <p>
+//      —— 标题段被撑出 20px 上边距；
+//   ② .callout-title 是 align-items:flex-start 的 flex 行，18px 的图标盒子贴顶，
+//      而标题行高 1.95（33.15px）比图标盒子高得多，文字再往下沉。
+// 实测错位 24.4px（图标中心 2020.0 / 文字中心 2044.4）。修法是行内居中 + 标题段清零
+// 外边距，行高收到 1.45（≈24.65px，与 18px 图标 + 上下 .2rem 内边距等高），实测错位 0.1px。
 html body div#quartz-root.page article .callout > .callout-title {
   padding: 16px 0 10px !important;
+  align-items: center !important;
+
+  > .callout-title-inner > p {
+    margin-block: 0 !important;
+    line-height: 1.45 !important;
+  }
 }
 
 html body div#quartz-root.page article .callout > .callout-content {
