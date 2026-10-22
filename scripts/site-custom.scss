@@ -872,6 +872,16 @@ html body div#quartz-root.page article h2 + p::first-letter {
   margin-right: 0.04em;
 }
 
+// 整段只有加粗时不做首字下沉：这类段落多是「Transformer 的内部结构图」这种短标，
+// 下沉字母会把行盒拉高，看着像标题下面凭空多出一大块空白（2026-10-22 实测）。
+html body div#quartz-root.page article h2 + p:has(> strong:only-child)::first-letter {
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  line-height: inherit;
+  margin-right: 0;
+}
+
 // --- E. 插图：白卡 + 图注在卡内（参考站 .fig-frame）----------------------
 html body div#quartz-root.page article img.site-svg {
   display: block !important;
