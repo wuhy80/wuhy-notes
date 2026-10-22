@@ -127,9 +127,12 @@ const sectionLabel = (s) => {
 }
 
 const relHref = (fromSlug, toSlug) => {
+  // 「文件名与目录同名」的笔记会被 Quartz 映射成 .../index；直接链到目录 URL（带尾斜杠），
+  // 省掉一次 308 跳转
+  const target = /(^|\/)index$/.test(toSlug) ? path.posix.dirname(toSlug) + '/' : toSlug
   const dir = path.posix.dirname(fromSlug)
-  const rel = path.posix.relative(dir === '.' ? '' : dir, toSlug)
-  return rel === '' ? path.posix.basename(toSlug) : rel
+  const rel = path.posix.relative(dir === '.' ? '' : dir, target)
+  return rel === '' ? path.posix.basename(target) : rel
 }
 
 // 首页是 /index.html，用「退到根目录」的写法，别写 index（会被当成 /index 而 404）

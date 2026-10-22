@@ -128,7 +128,7 @@ hidden_size -> vocab_size
 
 ## 相关笔记
 
-- [[大模型/01-基础原理/Token与Embedding/Token、Tokenizer 与 Embedding|Token、Tokenizer 与 Embedding]]
+- [[大模型/01-基础原理/Token、Tokenizer 与 Embedding|Token、Tokenizer 与 Embedding]]
 - [[大模型/01-基础原理/Transformer/图解 Transformer 中的 QKV 机制|图解 Transformer 中的 QKV 机制]]
 - [[大模型/01-基础原理/Transformer/逐层分解 Transformer|逐层分解 Transformer]]
 - [[大模型/01-基础原理/MOE/关于MOE的问题|关于 MOE 的问题]]
