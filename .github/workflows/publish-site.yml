@@ -55,6 +55,7 @@ on:
       - "scripts/site-custom.scss"
       - "scripts/quartz.config.yaml"
       - "scripts/enhance-content.cjs"
+      - "scripts/build-section-nav.cjs"
       - "scripts/fix-html-emphasis.cjs"
       - "scripts/export-public.ps1"
       - "scripts/publish-site.ps1"
