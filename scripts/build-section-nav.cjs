@@ -76,7 +76,9 @@ const index = JSON.parse(fs.readFileSync(indexPath, 'utf8'))
 // 收集页面：slug 里排除 tags / static / 404
 const pages = []
 for (const [slug, v] of Object.entries(index)) {
-  if (slug === 'index') continue
+  // index 是「首页 + 导出脚本为每个目录生成的目录页」，不进侧栏条目与篇数
+  // （否则 MOE / Transformer / 01-基础原理 这些目录名会混进编号列表，篇数也虚高）
+  if (slug === 'index' || /(^|\/)index$/.test(slug)) continue
   if (/^(tags|static|404)\b/.test(slug)) continue
   pages.push({ slug, title: (v && v.title) || slug.split('/').pop(), filePath: (v && v.filePath) || '' })
 }
