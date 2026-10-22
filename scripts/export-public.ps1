@@ -52,7 +52,12 @@ $PublicRootFiles = @()
 # （实测曾有 8 个行业报告 PDF 共 101 MB，其中 36 MB 那个超过 Cloudflare 单文件 25 MiB 上限）
 # 2026-10-18：放行 .svg——《AI 大模型原理教程-轩辕》的 94 张插图是 SVG，
 # 不放行的话教程页面上只会留下一行行「附件未随站点发布」的文字占位。
-$AttachExt   = @('.svg')
+# 2026-10-22：位图（png/webp/jpg）只放行 $AttachRasterDirs 里的目录，不做全库放行——
+# 站内另有一批位图嵌入（模型训练 49 处、AI 早报 11 处、软著 8 处），
+# 全库放行会把它们一并公开，属于没人要求、也不该顺手做的范围外变更。
+$AttachExt        = @('.svg')
+$AttachRasterExt  = @('.png', '.webp', '.jpg', '.jpeg')
+$AttachRasterDirs = @('附件\逐层分解')
 $AttachMaxMB = 10   # 单个附件体积上限，超过则跳过并记入报告
 $ExcludeDirs = @(
   '技术笔记\虚拟机', '技术笔记\安全',                          # 2026-10-01/02 迁至私密库
@@ -107,18 +112,25 @@ function Get-InputSig {
       if ($skip) { continue }
       [void]$parts.Add($vaultRel + '|' + $f.Length + '|' + $f.LastWriteTimeUtc.Ticks)
     }
-    # 附件（目前是教程的 .svg 插图）也要参与指纹：它们不叫 .md，上面那轮扫不到。
+    # 附件也要参与指纹：它们不叫 .md，上面那轮扫不到。
     # 否则「只换了图、没动笔记」时增量判断会认为无变化而跳过导出，
     # 线上就一直留着旧图（2026-10-18 重取教程插图时踩到）。
-    if ($AttachExt.Count -gt 0) {
-      foreach ($f in (Get-ChildItem -LiteralPath $src -Recurse -File -Force -ErrorAction SilentlyContinue)) {
-        if ($AttachExt -notcontains $f.Extension.ToLower()) { continue }
-        $vaultRel = "$d\$($f.FullName.Substring($prefixLen))"
-        $skip = $false
-        foreach ($x in $ExcludeDirs) { if ($vaultRel -like "$x*") { $skip = $true; break } }
-        if ($skip) { continue }
-        [void]$parts.Add($vaultRel + '|' + $f.Length + '|' + $f.LastWriteTimeUtc.Ticks)
+    # 位图只统计白名单目录，免得全库位图的 mtime 变化都被当成「站点有更新」。
+    foreach ($f in (Get-ChildItem -LiteralPath $src -Recurse -File -Force -ErrorAction SilentlyContinue)) {
+      $e = $f.Extension.ToLower()
+      $isSvg = $AttachExt -contains $e
+      $isRaster = $AttachRasterExt -contains $e
+      if (-not ($isSvg -or $isRaster)) { continue }
+      $vaultRel = "$d\$($f.FullName.Substring($prefixLen))"
+      if ($isRaster) {
+        $allowed = $false
+        foreach ($rd in $AttachRasterDirs) { if ($vaultRel -like "$rd*") { $allowed = $true; break } }
+        if (-not $allowed) { continue }
       }
+      $skip = $false
+      foreach ($x in $ExcludeDirs) { if ($vaultRel -like "$x*") { $skip = $true; break } }
+      if ($skip) { continue }
+      [void]$parts.Add($vaultRel + '|' + $f.Length + '|' + $f.LastWriteTimeUtc.Ticks)
     }
   }
   $scriptSig = Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256
@@ -202,10 +214,20 @@ foreach ($f in $expFiles) {
   foreach ($m in [regex]::Matches($txt, $embedRe)) {
     $t = ($m.Groups[1].Value -split '\|')[0].Trim()
     if ([string]::IsNullOrWhiteSpace($t)) { continue }
-    if ($AttachExt -notcontains ([System.IO.Path]::GetExtension($t).ToLower())) { continue }
+    $e = [System.IO.Path]::GetExtension($t).ToLower()
+    $isSvg = $AttachExt -contains $e
+    $isRaster = $AttachRasterExt -contains $e
+    if (-not ($isSvg -or $isRaster)) { continue }
     $name = [System.IO.Path]::GetFileName($t)
     $found = $vaultFileIndex[$name]
     if (-not $found) { if ($attachMiss -notcontains $name) { $attachMiss += $name }; continue }
+    # 位图只在白名单目录里放行（见 $AttachRasterDirs 的注释）
+    if ($isRaster) {
+      $foundRel = $found.FullName.Substring($Vault.Length).TrimStart('\')
+      $allowed = $false
+      foreach ($rd in $AttachRasterDirs) { if ($foundRel -like "$rd*") { $allowed = $true; break } }
+      if (-not $allowed) { continue }
+    }
     if ($found.Length -gt ($AttachMaxMB * 1MB)) {
       $tooBig = "$name ($([math]::Round($found.Length/1MB,1)) MB)"
       if ($attachSkip -notcontains $tooBig) { $attachSkip += $tooBig }
@@ -225,9 +247,11 @@ foreach ($f in $expFiles) {
     # 只有 <img> 配 width:100%/height:auto 才能按 SVG 的 viewBox 自适应铺满正文列。
     # URL 规则与 Quartz 的 slugifyFilePath 对齐：斜杠化 + ASCII 转小写（中文不受影响）。
     $imgSrc = ($t -replace '\\', '/').ToLower()
+    # SVG 走 site-svg（按 viewBox 铺满正文列）；位图走 site-img（max-width，不放大）
+    $imgClass = if ($e -eq '.svg') { 'site-svg' } else { 'site-img' }
     if ($txt.Contains($m.Value)) {
       $eol = if ($txt.Contains("`r`n")) { "`r`n" } else { "`n" }
-      $imgTag = '<img class="site-svg" src="' + $imgSrc + '" alt="' + $name + '">'
+      $imgTag = '<img class="' + $imgClass + '" src="' + $imgSrc + '" alt="' + $name + '">'
       # ⚠️ 独占一行时必须在 <img> 后面留一个空行（原行尾的换行 + 这一行 = 一个空行）：
       # 以 <img> 开头的行会被 Markdown 当成 HTML 块，块一直延伸到下一个空行为止，
       # 紧随其后的图注行（`*图 1-1…*`）就被整行吞掉、不再按 Markdown 解析——

@@ -697,6 +697,21 @@ html body article img.site-svg {
   border-radius: 4px;
 }
 
+// 位图插图（png/webp/jpg，2026-10-22 起导出到站点的转载文档用）：
+// 与 SVG 的差别是**不能放大**——SVG 是矢量、铺满正文列只会更清晰，
+// 而截图放大会糊。所以只设 max-width:100%，并给一条线色描边，
+// 让白底截图和纸色背景之间有边界。
+html body article img.site-img {
+  display: block !important;
+  width: auto !important;
+  max-width: 100% !important;
+  height: auto !important;
+  margin: 1.2rem 0 0.35rem !important;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--card);
+}
+
 // 图注段落：导出时在 <img> 后补了空行（否则 HTML 块会吞掉图注行），
 // 图注因此成为独立段落，这里把它的上边距收一收，视觉上仍贴着图。
 html body article p:has(> em:only-child) {

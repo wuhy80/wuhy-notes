@@ -316,6 +316,11 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
     `<object width="auto" height="auto">`，浏览器按替换元素默认尺寸渲染成 300×150 的小框
   - 插图文件必须与引用它的笔记**同目录**（导出脚本按嵌入目标镜像路径），
     且必须带 `xmlns="http://www.w3.org/2000/svg"`——缺命名空间的独立 SVG 在 `<img>` 里加载失败
+  - **位图插图用 `<img class="site-img">`**（2026-10-22，转载文档用）：与 SVG 同位置、同圆角，
+    但**不设 `width:100%`**——矢量图铺满只会更清晰，截图放大会糊，所以只给
+    `max-width:100%` + `height:auto`，并用 1px `line` 描边 + `card` 底把白底截图和纸色页面分开。
+    导出脚本按扩展名分流（`.svg` → `site-svg`，位图 → `site-img`），位图**只放行**
+    `scripts/export-public.ps1` 里 `$AttachRasterDirs` 列出的目录，不做全库放行
 - **文章 hero**：`h1.article-title` 数黑体 48px/900；**h1 下方没有边线**（主题默认画了一条
   `rgba(31,30,29,.16)` 的灰线，已去掉）；h1 上方依次是面包屑、**eyebrow**（`.content-meta`：
   等宽 12px、字距 0.1em、`accent` 色——参考站的 `LESSON 03 · 卷一 基础数学 · ◉ 4,903 次阅读`）。
