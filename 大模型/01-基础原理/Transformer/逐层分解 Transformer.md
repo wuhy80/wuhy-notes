@@ -38,7 +38,7 @@ Transformer 的输入表示
 Transformer Decoder 预测
 
 > [!note] 说明
-> 上图**Decoder**接收了**Encoder**的**编码矩阵 C**，然后首先输入一个翻译开始符 `"<Begin>"`，预测第一个单词 **"I"**；然后输入翻译开始符 `"<Begin>"` 和单词**"I"**，预测单词**"have"**，以此类推。这是 **Transformer** 使用时候的大致流程，接下来是里面各个部分的细节。
+> 上图**Decoder**接收了**Encoder**的**编码矩阵 C**，然后首先输入一个翻译开始符 `"<Begin>"`，预测第一个单词 **"I"**；然后输入翻译开始符 `"<Begin>"` 和单词 **"I"**，预测单词 **"have"**，以此类推。这是 **Transformer** 使用时候的大致流程，接下来是里面各个部分的细节。
 
 ## 2. Transformer 的输入
 
@@ -249,7 +249,7 @@ print(y.shape)
 
 多个 Self-Attention
 
-得到 **8 个输出矩阵**  $Z_1$ 到  $Z_8$之后，**Multi-Head Attention**将它们拼接在一起**(Concat)**，然后传入一个**Linear**层，得到 Multi-Head Attention 最终的输出Z。
+得到 **8 个输出矩阵**  $Z_1$ 到  $Z_8$之后，**Multi-Head Attention**将它们拼接在一起 **(Concat)** ，然后传入一个 **Linear** 层，得到 Multi-Head Attention 最终的输出Z。
 
 ![[tf-3-11.webp]]
 
