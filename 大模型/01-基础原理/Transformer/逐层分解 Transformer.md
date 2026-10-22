@@ -22,7 +22,7 @@ status: evergreen
 
 Transformer 的整体结构，左图Encoder和右图Decoder
 
-> [!note]
+> [!note] 说明
 > 可以看 到**Transformer**由**`Encoder`** 和**`Decoder`**两个部分组成，**`Encoder`** 和**`Decoder`** 都包含**6 个 `block`。**
 
 * **Transformer**的工作流程大体如下：
@@ -37,12 +37,12 @@ Transformer 的输入表示
 
 Transformer Decoder 预测
 
-> [!note]
+> [!note] 说明
 > 上图**`Decoder`**接收了**`  Encoder  `**的**编码矩阵 C**，然后首先输入一个翻译开始符 **`"<Begin>"`**，预测第一个单词 **`"I"`**；然后输入翻译开始符 **`"<Begin>"`** 和单词**` "I"`**，预测单词**` "have"`**，以此类推。这是 **Transformer** 使用时候的大致流程，接下来是里面各个部分的细节。
 
 ## 2. Transformer 的输入
 
-> [!note]
+> [!note] 说明
 > **Transformer** 中单词的输入表示**x**由**`单词 Embedding`** 和**`位置 Embedding `** **（`Positional Encoding`）**相加得到。
 
 ![[tf-2-1.webp]]
@@ -55,7 +55,7 @@ Transformer 的输入表示
 
 ### 2.2 位置 Embedding
 
-> [!note]
+> [!note] 说明
 > **`Transformer`** 中除了单词的**Embedding**，还需要使用位置 Embedding 表示单词出现在句子中的位置。因为 Transformer **`不采用 RNN 的结构`**，而是使用全局信息，不能利用单词的顺序信息，而这部分信息对于 **NLP** 来说非常重要。所以 **Transformer** 中使用位置 **Embedding** 保存单词在序列中的相对或绝对位置。
 
 位置 Embedding 用**PE**表示，**PE** 的维度与单词 **`Embedding`** 是一样的。PE 可以通过训练得到，也可以使用某种公式计算得到。在 Transformer 中采用了后者
@@ -66,7 +66,7 @@ Transformer 的输入表示
 
 其中，**`pos 表示单词在句子中的位置`**，**`d 表示 PE的维度 (与词 Embedding 一样`)**，**`2i 表示偶数的维度`**，**`2i+1 表示奇数维度 (即 2i≤d, 2i+1≤d)`**。使用这种公式计算 PE 有以下的好处：
 
-> [!note]
+> [!note] 说明
 > * 使**PE** 能够适应比**训练集**里面所有句子更长的句子，假设训练集里面最长的句子是有 20 个单词，突然来了一个长度为 21 的句子，则使用公式计算的方法可以计算出第 21 位的**Embedding**。
 > * **可以让模型容易地计算出相对位置**，对于固定长度的间距**k，PE(pos+k)**可以用 **PE(pos)**计算得到。
 > * 因为 **`Sin(A+B) = Sin(A)Cos(B) + Cos(A)Sin(B), Cos(A+B) = Cos(A)Cos(B) - Sin(A)Sin(B)`**。
@@ -105,7 +105,7 @@ Self-Attention 结构
 
 ### 3.2 Q, K, V 的计算
 
-> [!note]
+> [!note] 说明
 > **`Self-Attention`**的输入用**矩阵X**进行表示，则可以使用**线性变阵矩阵WQ**,**WK**,**WV**计算得到**Q**,**K**,**V**。计算如下图所示，注意 X, Q, K, V 的每一行都表示一个单词。
 
 ![[tf-3-3.png]]
@@ -163,7 +163,7 @@ print(res.shape)  # [4,3,5]
 
 Self-Attention 的输出
 
-> [!note]
+> [!note] 说明
 > 公式中计算矩阵**Q**和**K**每一行向量的内积，为了防止内积过大，因此除以 $d_k$的平方根。**Q乘以K**的转置后，得到的矩阵行列数都为 **n**，**n**为句子单词数，这个矩阵可以表示单词之间的**attention** 强度。下图为Q乘以$K^{T}$ ，**1234** 表示的是句子中的单词。
 
 ![[tf-3-5.png]]
@@ -295,7 +295,7 @@ Feed Forward
 
 ### 4.3 组成 Encoder
 
-> [!note]
+> [!note] 说明
 > 通过上面描述的**` Multi-Head Attention`,` Feed Forward`**`,`**` Add & Norm`** 就可以构造出一个 **Encoder block**，**Encoder block**接收输入矩阵 $X_{(n\times d)}$ ，并输出一个矩阵$O_{(n\times d)}$ 。通过多个 Encoder block 叠加就可以组成 Encoder。
 
 * 第一个 **`Encoder block `**的输入为句子单词的表示**向量矩阵**，
@@ -324,7 +324,7 @@ Transformer Decoder block
 
 ### 5.1 第一个 Multi-Head Attention
 
-> [!note]
+> [!note] 说明
 > **`Decoder block`** 的第一个 Multi-Head Attention 采用了 Masked 操作，因为在翻译的过程中是顺序翻译的，即翻译完第 i 个单词，才可以翻译第 i+1 个单词。通过 Masked 操作可以防止第 i 个单词知道 i+1 个单词之后的信息。下面以 "我有一只猫" 翻译成 "I have a cat" 为例，了解一下 Masked 操作。
 
 * 在**Decoder** 的时候，是需要根据之前的翻译，求解当前最有可能的翻译，如下图所示。首先根据输入 "\<Begin>" 预测出第一个单词为**"I"**，然后根据输入**` "<Begin> I`"** 预测下一个单词 **"`have"`。**
@@ -339,7 +339,7 @@ Decoder 预测
 
 **第一步**：
 
-> [!note]
+> [!note] 说明
 > 1. 是 Decoder 的输入矩阵和 Mask 矩阵，输入矩阵包含 "\<Begin> I have a cat" (0, 1, 2, 3, 4) 五个单词的表示向量，Mask 是一个 5×5 的矩阵。在 Mask 可以发现单词 0 只能使用单词 0 的信息，而单词 1 可以使用单词 0, 1 的信息，即只能使用之前的信息。
 
 ![[tf-5-3.png]]
@@ -348,7 +348,7 @@ Decoder 预测
 
 **第二步**：
 
-> [!note]
+> [!note] 说明
 > 2. '接下来的操作和之前的 Self-Attention 一样，通过输入矩阵X计算得到Q,K,V矩阵。然后计算Q和 $K^T$ 的乘积 $QK^T$
 
 ![[tf-5-4.png]]
@@ -357,7 +357,7 @@ Q乘以K的转置
 
 **第三步**：
 
-> [!note]
+> [!note] 说明
 > 3. 在得到 $QK^{T}$之后需要进行 Softmax，计算 attention score，我们在 Softmax 之前需要使用Mask矩阵遮挡住每一个单词之后的信息，遮挡操作如下：
 
 ![[tf-5-5.png]]
@@ -368,12 +368,12 @@ Softmax 之前 Mask
 
 **第四步**：
 
-> [!note]
+> [!note] 说明
 > 4. 使用 Mask  $QK^{T}$与矩阵 V相乘，得到输出 Z，则单词 1 的输出向量  $Z_1$ 是只包含单词 1 信息的。
 
 **第五步**：
 
-> [!note]
+> [!note] 说明
 > 5. 通过上述步骤就可以得到一个 Mask Self-Attention 的输出矩阵  $Z_i$ ，然后和 Encoder 类似，通过 Multi-Head Attention 拼接多个输出$Z_i$ 然后计算得到第一个 Multi-Head Attention 的输出Z，Z与输入X维度一样。
 
 ### 5.2 第二个 Multi-Head Attention
@@ -402,7 +402,7 @@ Decoder Softmax 预测
 
 ## 6. Transformer 总结
 
-> [!tip]
+> [!tip] 小结
 > * Transformer 与 RNN 不同，可以比较好地并行训练。
 > * Transformer 本身是不能利用单词的顺序信息的，因此需要在输入中添加位置 Embedding，否则 Transformer 就是一个词袋模型了。
 > * Transformer 的重点是 Self-Attention 结构，其中用到的 Q, K, V矩阵通过输出进行线性变换得到。

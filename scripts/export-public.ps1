@@ -133,6 +133,17 @@ function Get-InputSig {
       [void]$parts.Add($vaultRel + '|' + $f.Length + '|' + $f.LastWriteTimeUtc.Ticks)
     }
   }
+  # 位图白名单目录（附件/…）不在 $PublicDirs 里——附件目录只发布被引用的图，没有 .md。
+  # 不单独扫一遍的话，「只换了图、没动笔记」不会改变指纹，导出会被误判为无变化。
+  foreach ($rd in $AttachRasterDirs) {
+    $src = Join-Path $Vault $rd
+    if (-not (Test-Path -LiteralPath $src)) { continue }
+    $prefixLen = $src.Length + 1
+    foreach ($f in (Get-ChildItem -LiteralPath $src -Recurse -File -Force -ErrorAction SilentlyContinue)) {
+      if ($AttachRasterExt -notcontains $f.Extension.ToLower()) { continue }
+      [void]$parts.Add($rd + '\' + $f.FullName.Substring($prefixLen) + '|' + $f.Length + '|' + $f.LastWriteTimeUtc.Ticks)
+    }
+  }
   $scriptSig = Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256
   [void]$parts.Add('export-public.ps1|' + $scriptSig.Hash.ToLower())
   return Get-StringHash (($parts | Sort-Object) -join "`n")
