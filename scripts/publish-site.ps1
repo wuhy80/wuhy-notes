@@ -239,6 +239,10 @@ if ($hasEnabled -and $hasTheme -and $hasFonts) {
 # Quartz 构建时 @quartz-themes 插件会回写活文件，若用它做信号，每次构建后哈希都变，永远无法命中增量
 $siteSig = Get-StringHash (@(
   (Get-FileSig (Join-Path $Vault 'scripts\site-custom.scss')),
+  # 构建后改写脚本也会改变产物：不进指纹的话「只改脚本」会被增量判断当成无变化
+  (Get-FileSig (Join-Path $Vault 'scripts\build-section-nav.cjs')),
+  (Get-FileSig (Join-Path $Vault 'scripts\enhance-content.cjs')),
+  (Get-FileSig (Join-Path $Vault 'scripts\fix-html-emphasis.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\site-assets\AlimamaShuHeiTi-Bold.woff2')),
   (Get-FileSig (Join-Path $Vault 'scripts\quartz.config.yaml')),
   $ThemeName

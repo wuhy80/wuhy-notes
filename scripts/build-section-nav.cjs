@@ -167,7 +167,12 @@ function renderSideNav(currentSlug) {
     const roman = ROMAN[gi] || String(gi + 1)
     // 卷名也回退到 filePath 的原始大小写（Agent / Transformer 这类英文目录 slug 会变全小写）
     const fpSeg = (items[0].filePath || '').split(/[\\/]/)
-    const label = gname === '（顶层）' ? '未归档' : stripNum(fpSeg[1] || gname)
+    const rawLabel = fpSeg[1] || gname
+    let label = gname === '（顶层）' ? '未归档' : stripNum(rawLabel)
+    // 去掉编号后撞名（大模型下同时有 01-基础原理 与 基础原理）：这批保留原名，避免两条同名卷
+    if (label !== '未归档' && groups.some((g2) => g2 !== gname && stripNum((st.groups.get(g2)[0].filePath || '').split(/[\\/]/)[1] || g2) === label)) {
+      label = rawLabel
+    }
 
     let body = ''
     if (items.length > BIG_GROUP) {
