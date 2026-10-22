@@ -261,10 +261,12 @@ foreach ($f in $expFiles) {
     # Quartz 原生的 <object width="auto" height="auto"> 会退化成 300×150 的小框（2026-10-18 实测），
     # 只有 <img> 配 width:100%/height:auto 才能按 SVG 的 viewBox 自适应铺满正文列。
     # URL 规则与 Quartz 的 slugifyFilePath 对齐：斜杠化 + ASCII 转小写（中文不受影响）。
-    # 统一用「文件名」做站内路径：站点上图片一律复制到笔记同目录、以文件名引用。
-    # 以前按嵌入目标的原路径镜像（![[附件/算法可视化/x.gif]] 会生成 ../../../../附件/...），
-    # Quartz 再按 content 根解析一次，最终 404（2026-10-22 实测）。
-    $imgSrc = $name.ToLower()
+    # Quartz 会把 <img src> 当成「相对 content 根」的路径，再改写成相对页面的 URL
+    # （实测：src="x.gif" 在 4 层深的笔记里被改写成 ../../../../x.gif，指向站点根 → 404）。
+    # 所以这里要给「图片在 content 里的完整相对路径」，Quartz 才会算出正确的一级相对路径。
+    $noteRel = ($noteDir.Substring($Content.Length).TrimStart('\')) -replace '\\', '/'
+    $imgSrc = if ([string]::IsNullOrWhiteSpace($noteRel)) { $name } else { "$noteRel/$name" }
+    $imgSrc = $imgSrc.ToLower()
     # SVG 走 site-svg（按 viewBox 铺满正文列）；位图走 site-img（max-width，不放大）
     $imgClass = if ($e -eq '.svg') { 'site-svg' } else { 'site-img' }
     if ($txt.Contains($m.Value)) {
