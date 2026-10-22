@@ -165,7 +165,9 @@ function renderSideNav(currentSlug) {
     const items = st.groups.get(gname).slice().sort((a, b) => natCompare(a.slug, b.slug))
     const isCur = gname === curGroup
     const roman = ROMAN[gi] || String(gi + 1)
-    const label = gname === '（顶层）' ? '未归档' : stripNum(gname)
+    // 卷名也回退到 filePath 的原始大小写（Agent / Transformer 这类英文目录 slug 会变全小写）
+    const fpSeg = (items[0].filePath || '').split(/[\\/]/)
+    const label = gname === '（顶层）' ? '未归档' : stripNum(fpSeg[1] || gname)
 
     let body = ''
     if (items.length > BIG_GROUP) {
