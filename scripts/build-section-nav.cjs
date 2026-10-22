@@ -85,15 +85,20 @@ for (const [slug, v] of Object.entries(index)) {
 pages.sort((a, b) => natCompare(a.slug, b.slug))
 
 // ── 组织成 一级 → 二级 → 条目 ────────────────────────────────────────────
-const sections = new Map() // 一级 → { groups: Map(二级 → items[]), total }
+// 二级目录按「去掉编号后的名字」合并：库里存在 大模型/01-基础原理 与 大模型/基础原理
+// 这种重复目录时，侧栏不应该出现两个同名卷——合并成一卷，篇数相加。
+const sections = new Map() // 一级 → { groups: Map(卷名 → { items[], sortKey }), total }
 for (const p of pages) {
   const seg = p.slug.split('/')
+  const fpSeg = (p.filePath || '').split(/[\\/]/)
   const sec = seg.length > 1 ? seg[0] : '首页'
-  const grp = seg.length > 2 ? seg[1] : '（顶层）'
+  const rawGroup = seg.length > 2 ? (fpSeg[1] || seg[1]) : '（顶层）'
+  const label = rawGroup === '（顶层）' ? '未归档' : stripNum(rawGroup)
+
   if (!sections.has(sec)) sections.set(sec, { groups: new Map(), total: 0 })
   const s = sections.get(sec)
-  if (!s.groups.has(grp)) s.groups.set(grp, [])
-  s.groups.get(grp).push(p)
+  if (!s.groups.has(label)) s.groups.set(label, { items: [], sortKey: rawGroup })
+  s.groups.get(label).items.push(p)
   s.total++
 }
 
@@ -130,11 +135,22 @@ const homeHref = (fromSlug) => {
 }
 
 // ── 生成顶栏 ────────────────────────────────────────────────────────────
+const pageBySlug = new Map(pages.map((p) => [p.slug, p]))
+
+const firstPageOfSection = (sec) => {
+  const st = sections.get(sec)
+  if (!st) return null
+  const all = [...st.groups.values()].flatMap((g) => g.items)
+  all.sort((a, b) => natCompare(a.slug, b.slug))
+  return all[0] || null
+}
+
+// ── 生成顶栏 ────────────────────────────────────────────────────────────
 function renderTopNav(currentSlug) {
   const cur = currentSlug.split('/')[0]
   const links = ['<a' + (currentSlug === 'index' ? ' class="on"' : '') + ' href="' + esc(homeHref(currentSlug)) + '">首页</a>']
   for (const s of sectionNames) {
-    const first = [...sections.get(s).groups.values()].flat().sort((a, b) => natCompare(a.slug, b.slug))[0]
+    const first = firstPageOfSection(s)
     const href = first ? relHref(currentSlug, first.slug) : '#'
     links.push('<a' + (cur === s ? ' class="on"' : '') + ' href="' + esc(href) + '">' + esc(sectionLabel(s)) + '</a>')
   }
@@ -149,10 +165,10 @@ function renderSideNav(currentSlug) {
   // 首页 / 根级页面：列出所有一级，当作站点地图
   if (!sec) {
     const rows = sectionNames.map((s) => {
-      const st = sections.get(s)
-      const first = [...st.groups.values()].flat().sort((a, b) => natCompare(a.slug, b.slug))[0]
-      return '<li><a href="' + esc(relHref(currentSlug, first.slug)) + '">' + esc(sectionLabel(s)) +
-        '<span class="cnt">' + st.total + '</span></a></li>'
+      const first = firstPageOfSection(s)
+      const href = first ? relHref(currentSlug, first.slug) : '#'
+      return '<li><a href="' + esc(href) + '">' + esc(sectionLabel(s)) +
+        '<span class="cnt">' + sections.get(s).total + '</span></a></li>'
     })
     return '<nav class="side-nav" aria-label="全站分区"><div class="side-nav-head"><b>全部笔记</b>' +
       '<span>' + pages.length + ' 篇</span></div><ul class="items">' + rows.join('') + '</ul></nav>'
@@ -160,29 +176,26 @@ function renderSideNav(currentSlug) {
 
   const st = sections.get(sec)
   if (!st) return ''
-  const curGroup = seg.length > 2 ? seg[1] : '（顶层）'
 
-  const groups = [...st.groups.keys()].sort(natCompare)
-  const blocks = groups.map((gname, gi) => {
-    const items = st.groups.get(gname).slice().sort((a, b) => natCompare(a.slug, b.slug))
-    const isCur = gname === curGroup
+  // 当前页所属的卷名（与分组时同一套规则：filePath 的原始目录名 → 去掉编号）
+  const curPage = pageBySlug.get(currentSlug)
+  const curFp = (curPage && curPage.filePath ? curPage.filePath : '').split(/[\\/]/)
+  const curLabel = seg.length > 2 ? stripNum(curFp[1] || seg[1]) : '未归档'
+
+  const groupKeys = [...st.groups.keys()].sort((a, b) => natCompare(st.groups.get(a).sortKey, st.groups.get(b).sortKey))
+  const blocks = groupKeys.map((gname, gi) => {
+    const g = st.groups.get(gname)
+    const items = g.items.slice().sort((a, b) => natCompare(a.slug, b.slug))
+    const isCur = gname === curLabel
     const roman = ROMAN[gi] || String(gi + 1)
-    // 卷名也回退到 filePath 的原始大小写（Agent / Transformer 这类英文目录 slug 会变全小写）
-    const fpSeg = (items[0].filePath || '').split(/[\\/]/)
-    const rawLabel = fpSeg[1] || gname
-    let label = gname === '（顶层）' ? '未归档' : stripNum(rawLabel)
-    // 去掉编号后撞名（大模型下同时有 01-基础原理 与 基础原理）：这批保留原名，避免两条同名卷
-    if (label !== '未归档' && groups.some((g2) => g2 !== gname && stripNum((st.groups.get(g2)[0].filePath || '').split(/[\\/]/)[1] || g2) === label)) {
-      label = rawLabel
-    }
 
     let body = ''
     if (items.length > BIG_GROUP) {
-      // 大卷：只列子目录（取第三段），每个子目录链到它的第一篇
+      // 大卷：只列子目录（filePath 第三段），每个子目录链到它的第一篇
       const subs = new Map()
       for (const it of items) {
-        const s = it.slug.split('/')
-        const key = s.length > 3 ? s[2] : '（散篇）'
+        const fp = (it.filePath || '').split(/[\\/]/)
+        const key = fp.length > 3 ? fp[2] : '（散篇）'
         if (!subs.has(key)) subs.set(key, [])
         subs.get(key).push(it)
       }
@@ -190,9 +203,7 @@ function renderSideNav(currentSlug) {
         const list = subs.get(k)
         const active = list.some((x) => x.slug === currentSlug) ? ' class="active"' : ''
         const href = relHref(currentSlug, list[0].slug)
-        // 子目录名同样回退到 filePath 的原始大小写（slug 是小写的）
-        const fp = (list[0].filePath || '').split(/[\\/]/)
-        const label = k === '（散篇）' ? k : stripNum(fp[2] || k)
+        const label = k === '（散篇）' ? k : stripNum(k)
         return '<li><a' + active + ' href="' + esc(href) + '">' + esc(label) +
           '<span class="cnt">' + list.length + '</span></a></li>'
       })
@@ -207,7 +218,7 @@ function renderSideNav(currentSlug) {
     }
 
     return '<details class="vol' + (isCur ? ' on' : '') + '"' + (isCur ? ' open' : '') + '>' +
-      '<summary><span class="badge">' + roman + '</span><span class="vol-name">' + esc(label) + '</span>' +
+      '<summary><span class="badge">' + roman + '</span><span class="vol-name">' + esc(gname) + '</span>' +
       '<span class="cnt">' + items.length + '</span></summary>' + body + '</details>'
   })
 
