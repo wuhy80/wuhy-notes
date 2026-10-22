@@ -20,7 +20,7 @@
 | Workflow | 作用 | 频率 |
 |---|---|---|
 | `ai-daily-archive.yml` | 抓取橘鸦 AI 早报 → 归档日报 → 从日报聚合周报 | 每天 4 次 |
-| `publish-site.yml` | 导出公开子集（含脱敏）→ Quartz 构建 → 部署 Cloudflare Pages | 每天 1 次 |
+| `publish-site.yml` | 导出公开子集（含脱敏）→ Quartz 构建 → 部署 Cloudflare Pages | 推送内容变更即发 + 每天兜底 1 次 |
 | `gitleaks.yml` | 密钥泄露扫描 | 每次 push |
 
 ## 说明
