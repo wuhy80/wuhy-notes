@@ -349,7 +349,7 @@ Decoder 预测
 **第二步**：
 
 > [!note]
-> 2. '接下来的操作和之前的 Self-Attention 一样，通过输入矩阵X计算得到Q,K,V矩阵。然后计算Q和 $K^T\text{ 的乘积 }QK^T$
+> 2. '接下来的操作和之前的 Self-Attention 一样，通过输入矩阵X计算得到Q,K,V矩阵。然后计算Q和 $K^T$ 的乘积 $QK^T$
 
 ![[tf-5-4.png]]
 
