@@ -1,10 +1,10 @@
-# Obsidian 知识库（公开镜像）
+# wuhy-notes
 
-[![站点发布](https://github.com/wuhy80/obsidian-vault/actions/workflows/publish-site.yml/badge.svg)](https://github.com/wuhy80/obsidian-vault/actions/workflows/publish-site.yml)
-[![AI 早报归档](https://github.com/wuhy80/obsidian-vault/actions/workflows/ai-daily-archive.yml/badge.svg)](https://github.com/wuhy80/obsidian-vault/actions/workflows/ai-daily-archive.yml)
+个人 Obsidian 知识库的**公开镜像**（仓库名与在线阅读站点同名）：技术笔记、大模型资料、项目文档与 AI 新闻归档。站点由 [Quartz](https://github.com/jackyzha0/quartz) 构建并发布到 Cloudflare Pages。
+
+[![站点发布](https://github.com/wuhy80/wuhy-notes/actions/workflows/publish-site.yml/badge.svg)](https://github.com/wuhy80/wuhy-notes/actions/workflows/publish-site.yml)
+[![AI 早报归档](https://github.com/wuhy80/wuhy-notes/actions/workflows/ai-daily-archive.yml/badge.svg)](https://github.com/wuhy80/wuhy-notes/actions/workflows/ai-daily-archive.yml)
 [![在线阅读](https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E9%98%85%E8%AF%BB-wuhy--notes.pages.dev-2ea44f?logo=cloudflarepages&logoColor=white)](https://wuhy-notes.pages.dev/)
-
-个人 Obsidian 知识库的公开镜像：技术笔记、大模型资料、项目文档与 AI 新闻归档。站点由 [Quartz](https://github.com/jackyzha0/quartz) 构建并发布到 Cloudflare Pages。
 
 **[👉 在线阅读：https://wuhy-notes.pages.dev/](https://wuhy-notes.pages.dev/)**
 

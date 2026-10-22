@@ -1,5 +1,5 @@
 {
-  "name": "obsidian_vault",
+  "name": "wuhy-notes",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wuhy80/obsidian-vault.git"
+    "url": "git+https://github.com/wuhy80/wuhy-notes.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/wuhy80/obsidian-vault/issues"
+    "url": "https://github.com/wuhy80/wuhy-notes/issues"
   },
-  "homepage": "https://github.com/wuhy80/obsidian-vault#readme"
+  "homepage": "https://github.com/wuhy80/wuhy-notes#readme"
 }
