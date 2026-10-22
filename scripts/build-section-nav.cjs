@@ -78,7 +78,7 @@ const pages = []
 for (const [slug, v] of Object.entries(index)) {
   if (slug === 'index') continue
   if (/^(tags|static|404)\b/.test(slug)) continue
-  pages.push({ slug, title: (v && v.title) || slug.split('/').pop() })
+  pages.push({ slug, title: (v && v.title) || slug.split('/').pop(), filePath: (v && v.filePath) || '' })
 }
 pages.sort((a, b) => natCompare(a.slug, b.slug))
 
@@ -95,14 +95,24 @@ for (const p of pages) {
   s.total++
 }
 
+// Quartz 的 slug 会把目录名小写（Golang编程 → golang编程），排序与显示名都要按小写对表
+const SECTION_ORDER_LC = SECTION_ORDER.map((s) => s.toLowerCase())
+const DISPLAY_NAME = new Map(SECTION_ORDER.map((s) => [s.toLowerCase(), s]))
 const sectionNames = [...sections.keys()].filter((s) => s !== '首页')
 sectionNames.sort((a, b) => {
-  const ia = SECTION_ORDER.indexOf(a), ib = SECTION_ORDER.indexOf(b)
+  const ia = SECTION_ORDER_LC.indexOf(a), ib = SECTION_ORDER_LC.indexOf(b)
   if (ia !== -1 && ib !== -1) return ia - ib
   if (ia !== -1) return -1
   if (ib !== -1) return 1
   return natCompare(a, b)
 })
+const sectionLabel = (s) => {
+  if (DISPLAY_NAME.has(s)) return DISPLAY_NAME.get(s)
+  const st = sections.get(s)
+  const any = st && [...st.groups.values()].flat()[0]
+  const seg = any && any.filePath ? any.filePath.split(/[\\/]/) : []
+  return seg[0] || s
+}
 
 const relHref = (fromSlug, toSlug) => {
   const dir = path.posix.dirname(fromSlug)
@@ -124,7 +134,7 @@ function renderTopNav(currentSlug) {
   for (const s of sectionNames) {
     const first = [...sections.get(s).groups.values()].flat().sort((a, b) => natCompare(a.slug, b.slug))[0]
     const href = first ? relHref(currentSlug, first.slug) : '#'
-    links.push('<a' + (cur === s ? ' class="on"' : '') + ' href="' + esc(href) + '">' + esc(s) + '</a>')
+    links.push('<a' + (cur === s ? ' class="on"' : '') + ' href="' + esc(href) + '">' + esc(sectionLabel(s)) + '</a>')
   }
   return '<nav class="top-nav" aria-label="分区导航">' + links.join('') + '</nav>'
 }
@@ -139,7 +149,7 @@ function renderSideNav(currentSlug) {
     const rows = sectionNames.map((s) => {
       const st = sections.get(s)
       const first = [...st.groups.values()].flat().sort((a, b) => natCompare(a.slug, b.slug))[0]
-      return '<li><a href="' + esc(relHref(currentSlug, first.slug)) + '">' + esc(s) +
+      return '<li><a href="' + esc(relHref(currentSlug, first.slug)) + '">' + esc(sectionLabel(s)) +
         '<span class="cnt">' + st.total + '</span></a></li>'
     })
     return '<nav class="side-nav" aria-label="全站分区"><div class="side-nav-head"><b>全部笔记</b>' +
@@ -171,7 +181,10 @@ function renderSideNav(currentSlug) {
         const list = subs.get(k)
         const active = list.some((x) => x.slug === currentSlug) ? ' class="active"' : ''
         const href = relHref(currentSlug, list[0].slug)
-        return '<li><a' + active + ' href="' + esc(href) + '">' + esc(stripNum(k)) +
+        // 子目录名同样回退到 filePath 的原始大小写（slug 是小写的）
+        const fp = (list[0].filePath || '').split(/[\\/]/)
+        const label = k === '（散篇）' ? k : stripNum(fp[2] || k)
+        return '<li><a' + active + ' href="' + esc(href) + '">' + esc(label) +
           '<span class="cnt">' + list.length + '</span></a></li>'
       })
       body = '<ul class="items subdirs">' + subRows.join('') + '</ul>'
@@ -189,7 +202,7 @@ function renderSideNav(currentSlug) {
       '<span class="cnt">' + items.length + '</span></summary>' + body + '</details>'
   })
 
-  return '<nav class="side-nav" aria-label="本区目录"><div class="side-nav-head"><b>' + esc(sec) +
+  return '<nav class="side-nav" aria-label="本区目录"><div class="side-nav-head"><b>' + esc(sectionLabel(sec)) +
     '</b><span>' + st.total + ' 篇</span></div>' + blocks.join('') + '</nav>'
 }
 
