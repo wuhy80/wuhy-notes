@@ -376,9 +376,40 @@ function injectExplorerTitles(html, stats) {
 }
 
 // ───────────────────────────────────────────────────────────────────────────
+// 5) 动手实验组件（lab-widgets.js）
+//
+// 源站的 .lab 是 React 交互组件（拖动物点、滑块割线、点词看注意力），
+// 导入时只能降级成「请去原站体验」的占位。这里把 scripts/lab-widgets.js
+// 拷进 public/static/js/ 并在 <head> 挂一个 defer 脚本；笔记里只留
+// <div class="lab" data-lab="animal-map"></div> 这样的占位。
+// ───────────────────────────────────────────────────────────────────────────
+const LAB_MARK = 'data-lab-widgets'
+const LAB_SRC = path.join(__dirname, 'lab-widgets.js')
+
+function copyLabWidgets(publicDir) {
+  if (!fs.existsSync(LAB_SRC)) {
+    console.warn('[enhance] 未找到 lab-widgets.js，跳过动手实验')
+    return false
+  }
+  const dir = path.join(publicDir, 'static', 'js')
+  fs.mkdirSync(dir, { recursive: true })
+  fs.copyFileSync(LAB_SRC, path.join(dir, 'lab-widgets.js'))
+  return true
+}
+
+function injectLabWidgets(html, stats) {
+  if (html.indexOf(LAB_MARK) >= 0) return html
+  const at = html.toLowerCase().lastIndexOf('</head>')
+  if (at < 0) return html
+  stats.labs++
+  const tag = `<script ${LAB_MARK} defer src="/static/js/lab-widgets.js"></script>`
+  return html.slice(0, at) + tag + html.slice(at)
+}
+
+// ───────────────────────────────────────────────────────────────────────────
 // 主流程
 // ───────────────────────────────────────────────────────────────────────────
-const stats = { files: 0, changed: 0, quizBlocks: 0, quizQuestions: 0, navs: 0, guards: 0, titles: 0 }
+const stats = { files: 0, changed: 0, quizBlocks: 0, quizQuestions: 0, navs: 0, guards: 0, titles: 0, labs: 0 }
 
 function walk(dir) {
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -396,6 +427,7 @@ function walk(dir) {
     out = transformLessonNav(out, stats)
     out = injectScrollGuard(out, stats)
     out = injectExplorerTitles(out, stats)
+    out = injectLabWidgets(out, stats)
     if (out !== src) {
       stats.changed++
       if (!DRY) fs.writeFileSync(p, out, 'utf8')
@@ -409,10 +441,11 @@ if (!fs.existsSync(PUB)) {
   console.error(`[enhance] 目录不存在：${PUB}`)
   process.exit(1)
 }
+if (!DRY) copyLabWidgets(PUB)
 walk(PUB)
 console.log(
   `[enhance] 扫描 HTML ${stats.files} 个；改写 ${stats.changed} 个；` +
     `测验 ${stats.quizBlocks} 块 / ${stats.quizQuestions} 题；课程导航 ${stats.navs} 处；` +
-    `滚动护栏 ${stats.guards} 页；标题瘦身 ${stats.titles} 页` +
+    `滚动护栏 ${stats.guards} 页；标题瘦身 ${stats.titles} 页；动手实验 ${stats.labs} 页` +
     (DRY ? '（干跑，未写入）' : '')
 )

@@ -350,6 +350,12 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
   居中、上下 30px，强调词用 `.hl`（`accent`）。对应参考站那种把结论单独居中放大的写法
 - **源站组件的内联样式依赖三个变量**：笔记里的 `.formula` 变体（衬线 18px / 左对齐 14px）
   直接内联了 `font-family:var(--serif/--sans/--mono)`，`:root` 里已补同名映射，别删
+- **动手实验 `.lab`**（2026-10-23，站内原生实现）：笔记里只写占位
+  `<div class="lab" data-lab="animal-map"></div>`，由 `scripts/lab-widgets.js`
+  （构建后拷到 `/static/js/`，`enhance-content.cjs` 注入 `<head>`）渲染。
+  卡片 = 1.5px `ink` 边框 + `paper-deep` 页头 + 等宽「动手实验」黑底标签 + 底部 `lab-hint` 虚线说明。
+  已有三种：`animal-map`（拖「？」算最近动物）、`secant`（拖滑块让割线贴近切线）、
+  `attention`（切句子 + 点词看注意力权重）
 - **右栏目录**：`li.depth-1` 前加「○/● + 编号」（等宽 0.78em、`accent`；当前小节实心 ● 并加粗转 `accent-deep`）；
   字号 12.5px（参考站 rail 是 12.5px，之前 16px 明显偏大）
 - **左栏探索树**（2026-10-22 重做）：`探索` 页头是 **11px 等宽 + 0.14em 字距 + 1px 暖线**（`ink-soft`），
@@ -427,6 +433,10 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
   （参考站 CSS：白卡 + 3px `ink` 左边条 + 等宽居中；金句是衬线 19px 居中加粗），
   压成普通段落就会和源站对不上（2026-10-23 实测：40 个公式卡全被降级成段落）。
   只有 `formula-tex`（LaTeX 版）例外：它在笔记里写成 `$$` 块，**不要**把 KaTeX 的 HTML 搬进来
+- **交互实验一律走 `data-lab` 占位 + `scripts/lab-widgets.js`**：笔记里不要写死实验的
+  SVG/JS，也不要用「请去原站体验」的占位 callout（默认折叠，读起来像没迁移）。
+  新增实验时在 `lab-widgets.js` 里加一个 `mountXxx` 并在 `init()` 里注册，
+  样式加在 13/13 节；颜色只用本站 token（曲线 `ink-soft`、切线 `ink`、割线 `accent`）
 - **深色顶栏靠 fixed 复用 DOM**：`.page-title` 是左栏的子元素，靠 `position: fixed` 拉成
   全宽顶栏；它所在的 `.sidebar.left` 是 `sticky`（无 `transform`/`filter`），所以 fixed
   才相对视口定位。**一旦给侧栏加 `transform`/`filter`/`contain`，顶栏会缩进侧栏宽度内**
