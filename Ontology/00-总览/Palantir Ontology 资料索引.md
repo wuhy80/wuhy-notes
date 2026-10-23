@@ -19,6 +19,7 @@ source: Palantir 官方文档
 
 - [[Ontology/01-核心概念/Palantir Ontology 核心概念|01 Palantir Ontology 核心概念]]
 - [[Ontology/02-资源模型/Ontology 资源模型|02 Ontology 资源模型]]
+- [[Ontology/02-资源模型/关系建模：Link、关系对象与 Object-backed Link|02 附：关系建模]]
 - [[Ontology/03-动作与函数/Actions、Functions 与写回机制|03 Actions、Functions 与写回机制]]
 - [[Ontology/04-安全治理/安全治理与权限|04 安全治理与权限]]
 - [[Ontology/05-应用开发/OSDK 与应用开发|05 OSDK 与应用开发]]

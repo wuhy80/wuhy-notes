@@ -120,14 +120,14 @@ flowchart TB
 | A2 | 属性 Property | 基础类型覆盖字符串、布尔、整数、浮点/小数、日期与时间戳、geohash/地理形状、数组、struct、附件、媒体引用、时序、密文等；必填（required）与 mandatory control；仅编辑属性（edit-only）；值格式化（value formatting）；条件格式化（conditional formatting）；属性级元数据 | 金额精度、时区、地理、附件这些业务语义能否在类型层表达；格式化是下推到模型还是留给前端 |
 | A3 | 结构体 Struct | 嵌套结构类型，可自动映射字段、指定主字段，适合地址、金额+币种这类复合值 | 嵌套建模与拆表的取舍；嵌套后查询与权限的粒度 |
 | A4 | 值类型 Value type | 带业务语义的类型（如邮箱、币种、度量单位），支持约束（constraint）、版本、权限 | 校验放在类型层还是动作层；值类型升级如何兼容旧数据 |
-| A5 | 关系类型 Link type | 双向关系，两侧各有显示名和 API 名，可独立遍历；支持 1:1、1:N、N:M 与自关联；同一对对象类型之间可以定义多条语义不同的关系；跨 ontology 不支持，跨组织要用 shared ontology | 关系命名要表达业务含义；多跳查询性能；**Palantir 的 link 本身不带属性**，带属性的关系要建模成中间对象 |
+| A5 | 关系类型 Link type | 双向关系，两侧各有显示名和 API 名，可独立遍历；支持 1:1、1:N、N:M 与自关联；同一对对象类型之间可以定义多条语义不同的关系；跨 ontology 不支持，跨组织要用 shared ontology；支持外键、关联表、对象背书三种方式 | 关系命名要表达业务含义；多跳查询性能；普通 link 只有元数据、不承载业务属性，也没有顺序；带数据的关系用「关系对象」或 object-backed link type，详见 [[Ontology/02-资源模型/关系建模：Link、关系对象与 Object-backed Link\|关系建模]] |
 | A6 | 接口 Interface | 抽象类型，描述形状与能力：接口属性、link 约束、action 约束、元数据；可继承、可多继承；对象类型可实现多个接口；支持「接口上的动作」和「接口上的 link」 | 能否用多态替代大量重复对象类型；接口在平台各应用中的支持度并不一致，要按使用场景确认 |
 | A7 | 共享属性 Shared property | 跨对象类型复用同一属性定义与元数据，集中管理，保证口径一致 | status、owner、时间戳这类通用属性的统一治理；改共享属性时的影响面 |
 | A8 | 元数据与组织 | 类型类、渲染提示、状态、对象类型组、Marketplace 打包 ontology types | 资源规模上去后的可发现性；元数据能否驱动前端自动渲染 |
 | A9 | 设计方法论 | 官方给出 best practices、structural guidance、anti-patterns、design validation 四份设计文档 | 有没有建模评审机制；反模式清单能不能变成自研的 lint 规则 |
 
 > [!warning] 容易忽略
-> Link 没有属性。现实里的「任职关系」有开始时间、职级，「供应关系」有份额、价格，这些在 Palantir 里必须建模成独立的对象类型（关系对象），再用两条 link 连过去。这会直接影响你的图谱形状和查询方式。
+> 普通 link 只有元数据，没有业务属性，也没有顺序。现实里的「任职关系」有开始时间、职级，「供应关系」有份额、价格，「产线工位」有工序号、节拍——这些都要把关系提升为对象，再用 link 连过去。Palantir 也提供 object-backed link type，让关系对象直接背书 link，从而能在图里沿 link 看到关系属性。具体做法与选型见 [[Ontology/02-资源模型/关系建模：Link、关系对象与 Object-backed Link|关系建模：Link、关系对象与 Object-backed Link]]。
 
 ## B. 数据接入与查询能力
 

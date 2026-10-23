@@ -38,6 +38,7 @@ status: 整理中
 - [Link types overview](https://www.palantir.com/docs/foundry/object-link-types/link-types-overview)
 - [Interfaces overview](https://www.palantir.com/docs/foundry/interfaces/overview)
 - [[Ontology/02-资源模型/Ontology 资源模型|02 Ontology 资源模型]]
+- [[Ontology/02-资源模型/关系建模：Link、关系对象与 Object-backed Link|02 附：关系建模]]
 
 重点问题：
 
@@ -45,6 +46,7 @@ status: 整理中
 - Object 和 object set 分别是什么？
 - Link type 与数据库 join 有什么相似和不同？
 - Interface 解决什么建模问题？
+- 关系上的数据（数量、顺序、生效期）该放在哪？
 
 ## 第三阶段：理解动作和写回
 

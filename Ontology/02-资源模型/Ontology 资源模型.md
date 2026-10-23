@@ -87,6 +87,9 @@ Link type 是两个 object types 之间关系的 schema definition。Link 是两
 | Link type | join 关系定义 | 两类对象之间的关系 |
 | Link | join 后的一条关系 | 两个具体对象之间的连接 |
 
+> [!warning] 关系上的数据放哪
+> Link 本身只有元数据，不承载业务属性，也没有顺序。数量、工序号、生效期、角色这类「两端组合才成立」的数据，必须放进关系对象。Palantir 支持外键、关联表、对象背书三种 link 方式，具体案例与选型见 [[Ontology/02-资源模型/关系建模：Link、关系对象与 Object-backed Link|关系建模：Link、关系对象与 Object-backed Link]]。
+
 ## Interface
 
 Interface 描述一类对象应具备的共同形状和能力，用于对象类型多态。

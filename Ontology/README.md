@@ -17,6 +17,7 @@ Palantir Ontology 资料整理入口。
 - [[Palantir Ontology 资料索引]]
 - [[Palantir Ontology 核心概念]]
 - [[Ontology 资源模型]]
+- [[关系建模：Link、关系对象与 Object-backed Link]]
 - [[Actions、Functions 与写回机制]]
 - [[安全治理与权限]]
 - [[OpenFGA 与 PBAC 权限模型对比]]
