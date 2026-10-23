@@ -1962,46 +1962,55 @@ html body div#quartz-root.page .side-nav .vol .items li > a {
 // 11/11 首页形态（2026-10-23）—— 首页 = 导航页，不要左中右三栏
 //
 // body.landing 由 scripts/build-section-nav.cjs 注入：站点首页 index 与 00-index 合集页。
-// 顶栏保留（分区切换），下面就是一整块内容；分区列表渲染成两列卡片。
+// 顶栏（站名 + 分区导航）仍然保留——它就挂在左栏 DOM 里，所以这里用 display:contents
+// 让左栏盒子消失、只留固定的顶栏元素；左右栏的目录内容全部隐藏。
 // ===========================================================================
-html body.landing div#quartz-body {
+html body.landing div#quartz-root.page div#quartz-body {
   grid-template-columns: minmax(0, 1fr) !important;
 }
 
-html body.landing .sidebar.left,
-html body.landing .sidebar.right {
+html body.landing div#quartz-root.page .sidebar.left {
+  display: contents !important;
+}
+
+// 左栏里除顶栏之外的东西（搜索工具条、分区目录、探索树）都不显示
+html body.landing div#quartz-root.page .sidebar.left > :not(h2.page-title):not(.top-nav) {
   display: none !important;
 }
 
-html body.landing .center {
+html body.landing div#quartz-root.page .sidebar.right {
+  display: none !important;
+}
+
+html body.landing div#quartz-root.page .center {
   max-width: 1180px !important;
   min-width: 0 !important;
   margin: 0 auto !important;
-  padding: 48px 56px 96px !important;
+  padding: 96px 56px 96px !important;
 }
 
 // 首页不是文章：去掉日期/阅读时长、反向链接、页脚
-html body.landing .content-meta,
-html body.landing .backlinks,
-html body.landing .page-footer {
+html body.landing div#quartz-root.page .content-meta,
+html body.landing div#quartz-root.page .backlinks,
+html body.landing div#quartz-root.page .page-footer {
   display: none !important;
 }
 
 // 去掉「第 N 站」徽标、水印数字、首字下沉
-html body.landing article h2::before,
-html body.landing article h2::after {
+html body.landing div#quartz-root.page article h2::before,
+html body.landing div#quartz-root.page article h2::after {
   content: none !important;
 }
 
-html body.landing article h2 {
+html body.landing div#quartz-root.page article h2 {
   margin-top: 44px !important;
 }
 
-html body.landing article h1 {
+html body.landing div#quartz-root.page article h1 {
   font-size: 44px !important;
 }
 
-html body.landing article h2 + p::first-letter {
+html body.landing div#quartz-root.page article h2 + p::first-letter {
   font-size: inherit !important;
   font-weight: inherit !important;
   color: inherit !important;
@@ -2009,8 +2018,8 @@ html body.landing article h2 + p::first-letter {
   margin-right: 0 !important;
 }
 
-// 分区列表 → 两列卡片（只作用于正文顶层列表，不影响卡片内的嵌套列表）
-html body.landing article .markdown-preview-view > ul {
+// 分区列表 → 两列卡片（只作用于正文顶层列表）
+html body.landing div#quartz-root.page article .markdown-preview-view > ul {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 14px !important;
@@ -2019,7 +2028,7 @@ html body.landing article .markdown-preview-view > ul {
   list-style: none !important;
 }
 
-html body.landing article .markdown-preview-view > ul > li {
+html body.landing div#quartz-root.page article .markdown-preview-view > ul > li {
   margin: 0 !important;
   padding: 18px 20px 16px !important;
   background: var(--card) !important;
@@ -2031,7 +2040,7 @@ html body.landing article .markdown-preview-view > ul > li {
   color: var(--ink-soft) !important;
 }
 
-html body.landing article .markdown-preview-view > ul > li > a {
+html body.landing div#quartz-root.page article .markdown-preview-view > ul > li > a {
   display: inline !important;
   font-size: 16px !important;
   font-weight: 700 !important;
@@ -2039,15 +2048,15 @@ html body.landing article .markdown-preview-view > ul > li > a {
   text-decoration: none !important;
 }
 
-html body.landing article .markdown-preview-view > ul > li > a:hover {
+html body.landing div#quartz-root.page article .markdown-preview-view > ul > li > a:hover {
   color: var(--accent) !important;
 }
 
 @media all and (max-width: 900px) {
-  html body.landing .center {
-    padding: 24px 20px 64px !important;
+  html body.landing div#quartz-root.page .center {
+    padding: 72px 20px 64px !important;
   }
-  html body.landing article .markdown-preview-view > ul {
+  html body.landing div#quartz-root.page article .markdown-preview-view > ul {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 }
