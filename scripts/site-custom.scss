@@ -2066,3 +2066,82 @@ html body.landing div#quartz-root.page article .markdown-preview-view > ul > li 
     grid-template-columns: minmax(0, 1fr) !important;
   }
 }
+
+// ===========================================================================
+// 12/12 课程公式卡与「金句」段（2026-10-23，对齐 xuanyuancode 源站）
+//
+// 这批课程笔记是从 xuanyuancode.com 按组件翻译过来的，但导入规则只覆盖了
+// station / think / fig / lab：源站的 <div class="formula">（白卡 + 1px 暖线 +
+// 3px 黑左边条 + 等宽 16px 居中 + 赭橙高亮 + 灰注释）和那种居中衬线加粗的
+// 「金句」段被压成了普通段落，站上自然和源站对不上。
+//
+// 现在笔记里保留源站的 HTML 结构（Obsidian 里显示为普通块，不影响阅读），
+// 样式由这里补齐。笔记侧由 scripts/…（一次性迁移）还原，不参与构建。
+// ===========================================================================
+
+// 源站组件里会内联 font-family:var(--serif/--sans/--mono)，这里补上同名变量
+:root {
+  --serif: "Noto Serif SC", "Songti SC", "SimSun", serif;
+  --sans: "Noto Sans SC", -apple-system, "PingFang SC", "Microsoft YaHei",
+    sans-serif;
+  --mono: "IBM Plex Mono", "JetBrains Mono", ui-monospace, SFMono-Regular,
+    Menlo, monospace;
+}
+
+html body div#quartz-root.page article .formula {
+  margin: 30px 0 !important;
+  padding: 24px 22px !important;
+  background: var(--card) !important;
+  border: 1px solid var(--line) !important;
+  border-left: 3px solid var(--ink) !important;
+  border-radius: 0 !important;
+  font-family: $codeFontStack !important;
+  font-size: 16px !important;
+  line-height: 1.75 !important;
+  text-align: center !important;
+  color: var(--ink) !important;
+  overflow-x: auto !important;
+}
+
+html body div#quartz-root.page article .formula .f-hl {
+  color: var(--accent) !important;
+  font-weight: 700 !important;
+}
+
+html body div#quartz-root.page article .formula .f-dim {
+  color: var(--ink-faint) !important;
+}
+
+// 源站还有两种带内联样式的 formula 变体（衬线 18px、左对齐 14px）；
+// 内联样式已经写在笔记的 HTML 里，这里只保证它们不被正文 p 规则改写。
+html body div#quartz-root.page article .formula br {
+  line-height: 2 !important;
+}
+
+html body div#quartz-root.page article .lesson-punch {
+  margin: 30px 0 !important;
+  font-family: var(--serif) !important;
+  font-size: 19px !important;
+  font-weight: 700 !important;
+  line-height: 1.75 !important;
+  text-align: center !important;
+  color: var(--ink) !important;
+}
+
+html body div#quartz-root.page article .lesson-punch .hl,
+html body div#quartz-root.page article .lesson-punch span[style*="--accent"] {
+  color: var(--accent) !important;
+}
+
+@media all and (max-width: 900px) {
+  html body div#quartz-root.page article .formula {
+    margin: 18px 0 !important;
+    padding: 14px 12px !important;
+    font-size: 14px !important;
+  }
+
+  html body div#quartz-root.page article .lesson-punch {
+    margin: 22px 0 !important;
+    font-size: 17px !important;
+  }
+}

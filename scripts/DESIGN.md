@@ -342,6 +342,14 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
   padding 3×12、无圆角），`h2::after` 输出 170px 的同序号水印（`rgba(28,28,28,.055)`）；
   **h2 本身不再有左边条**；序号来自 `counter-increment: station`
 - **小节首字下沉**：`h2 + p::first-letter` = 3.2em / 900 / `accent`（对应参考站 `.dropcap-letter`）
+- **课程公式卡 `.formula`**（2026-10-23，对齐参考站同名组件）：笔记里以 HTML 块存在，
+  样式为**白卡 + 1px `line` 边框 + 3px `ink` 左边条 + 等宽 16px 居中 + 上下 30px**；
+  数字高亮用 `.f-hl`（`accent` + 700），注释用 `.f-dim`（`ink-faint`）。
+  ⚠️ 左边条是 **`ink` 不是 `accent`**——这是参考站原值，别按 callout 的习惯改成赭橙
+- **课程「金句」段 `.lesson-punch`**：`<p class="lesson-punch">`，衬线 `Noto Serif SC` 19px/700、
+  居中、上下 30px，强调词用 `.hl`（`accent`）。对应参考站那种把结论单独居中放大的写法
+- **源站组件的内联样式依赖三个变量**：笔记里的 `.formula` 变体（衬线 18px / 左对齐 14px）
+  直接内联了 `font-family:var(--serif/--sans/--mono)`，`:root` 里已补同名映射，别删
 - **右栏目录**：`li.depth-1` 前加「○/● + 编号」（等宽 0.78em、`accent`；当前小节实心 ● 并加粗转 `accent-deep`）；
   字号 12.5px（参考站 rail 是 12.5px，之前 16px 明显偏大）
 - **左栏探索树**（2026-10-22 重做）：`探索` 页头是 **11px 等宽 + 0.14em 字距 + 1px 暖线**（`ink-soft`），
@@ -415,6 +423,10 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
 - **标题瘦身只做在侧栏，别去改 frontmatter title**：树是客户端渲染的（`contentIndex.json`
   建树），纯 CSS 拿不到父文件夹名；而改内容标题会波及 H1、搜索、反向链接和站外引用。
   需要放宽规则时改 `enhance-content.cjs` 里的 `shorten()`，并在真实站点上点数（`data-ex-short`）确认
+- **课程笔记里的 `.formula` / `.lesson-punch` 保持 HTML 块**：源站这两个是自定义组件
+  （参考站 CSS：白卡 + 3px `ink` 左边条 + 等宽居中；金句是衬线 19px 居中加粗），
+  压成普通段落就会和源站对不上（2026-10-23 实测：40 个公式卡全被降级成段落）。
+  只有 `formula-tex`（LaTeX 版）例外：它在笔记里写成 `$$` 块，**不要**把 KaTeX 的 HTML 搬进来
 - **深色顶栏靠 fixed 复用 DOM**：`.page-title` 是左栏的子元素，靠 `position: fixed` 拉成
   全宽顶栏；它所在的 `.sidebar.left` 是 `sticky`（无 `transform`/`filter`），所以 fixed
   才相对视口定位。**一旦给侧栏加 `transform`/`filter`/`contain`，顶栏会缩进侧栏宽度内**
