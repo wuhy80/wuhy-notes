@@ -248,6 +248,9 @@ function walk(dir) {
 
     stats.files++
     const src = fs.readFileSync(p, 'utf8')
+    // 「首页」形态：站点首页与 00-index 这类合集落地页 —— 给 body 打标记，由 CSS 切成
+    // 单栏通栏（顶栏 + 一整块导航），不再有左中右三栏
+    const isLanding = slug === 'index' || /(^|\/)00-index$/i.test(slug)
     // 幂等：先清掉上一次生成的导航，避免重复构建时叠加
     let out = src
       .replace(/<nav class="top-nav"[\s\S]*?<\/nav>/g, '')
@@ -263,6 +266,11 @@ function walk(dir) {
       } else {
         out = out.replace(/(<h2 class="page-title">[\s\S]*?<\/h2>)/, '$1' + sideNav)
       }
+    }
+
+    if (isLanding) {
+      out = out.replace(/ class="landing"/g, '')      // 幂等：先去掉旧标记
+      out = out.replace(/<body\b/, '<body class="landing"')
     }
 
     if (out !== src) {

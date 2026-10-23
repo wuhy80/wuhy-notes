@@ -528,16 +528,14 @@ Write-Host "  已为月索引页附加当月早报直达列表"
 $dailySection = @()
 if ($recentDailies.Count -gt 0) {
   $dailySection += ''
-  $dailySection += '## 📰 最近 AI 早报'
+  $dailySection += '## 最近 AI 早报'
   $dailySection += ''
-  $dailySection += '> 来源：[橘鸦 AI 早报](https://daily.juya.uk/) · 查看完整归档：[[00-日报索引|AI 早报日报索引]]'
+  $dailySection += '> 来源：[橘鸦 AI 早报](https://daily.juya.uk/) · [完整归档](/大模型/10-新闻/日报/00-日报索引)'
   $dailySection += ''
-  $dailySection += '| 日期 | 早报期号 |'
-  $dailySection += '|---|---|'
   foreach ($df in $recentDailies) {
     $base = $df.BaseName
     $dateStr = if ($base -match '^(\d{4}-\d{2}-\d{2})') { $Matches[1] } else { '' }
-    $dailySection += "| $dateStr | [[$base]] |"
+    $dailySection += "- $dateStr — [[$base]]"
   }
 }
 
@@ -550,26 +548,25 @@ $homePageLines = @(
   '',
   '这里是我的技术学习笔记与知识库：涵盖大模型、云原生、后端架构、数据库与系统运维。',
   '',
-  '## 分区导航',
+  '## 分区',
   '',
-  '| 分区 | 内容 |',
-  '|---|---|',
-  '| [大模型与 AI 早报](/大模型/00-大模型学习导航) | 基础原理、应用开发、Agent、[AI 早报](/大模型/10-新闻/日报/00-日报索引) 与周报 |',
-  '| [技术笔记](/技术笔记/) | Kubernetes、Docker、Linux、数据库、网络、编辑器等 |',
-  '| [Ontology 知识模型](/Ontology/README) | Palantir 核心模型、概念与开发指南 |',
-  '| [Golang 编程](/golang编程/) | Go 语言、Gin、GORM、并发与性能 |',
-  '| [Rust 编程](/rust编程/) | Rust 学习笔记 |',
-  '| [编程语言](/编程语言/) | 语言特性与对比 |',
-  '| [读书笔记](/读书笔记/) | 技术书与科普书的阅读记录 |',
-  '| [网址收藏](/网址收藏/网址收藏) | 常用工具、技术社区与优质博客 |'
+  '- [大模型与 AI 早报](/大模型/00-大模型学习导航) — 基础原理、应用开发、Agent、AI 早报与周报',
+  '- [技术笔记](/技术笔记/) — Kubernetes、Docker、Linux、数据库、网络、编辑器',
+  '- [Ontology 知识模型](/Ontology/README) — Palantir 核心模型、概念与开发指南',
+  '- [Golang 编程](/golang编程/) — Go 语言、Gin、GORM、并发与性能',
+  '- [Rust 编程](/rust编程/) — Rust 学习笔记',
+  '- [编程语言](/编程语言/) — 语言特性与对比',
+  '- [数学学习](/数学学习/) — 机器学习需要的数学基础',
+  '- [英语学习](/英语学习/) — 词汇、阅读与写作练习',
+  '- [专项学习](/专项学习/) — 成体系的学习计划',
+  '- [读书笔记](/读书笔记/) — 技术书与科普书的阅读记录',
+  '- [网址收藏](/网址收藏/网址收藏) — 常用工具、技术社区与优质博客'
 ) + $dailySection + @(
   '',
-  '## 怎么用这个站',
+  '## 搜索与图谱',
   '',
-  '- 左上角 **搜索**（Ctrl+K）可全文检索',
+  '- 顶栏 **搜索**（Ctrl+K）可全文检索',
   '- 右上角 **Graph** 看笔记之间的链接关系',
-  '- 每篇笔记右侧有目录与反向链接',
-  '- 暗色/亮色可切换',
   ''
 )
 
