@@ -595,6 +595,35 @@ foreach ($f in $expFiles) {
 }
 Write-Host "  死链 $($dead.Count) 处" -ForegroundColor Green
 
+Write-Host "=== 5.5 表格内 WikiLink 管道检查 ===" -ForegroundColor Cyan
+# 表格单元格里的 | 是列分隔符：[[笔记|别名]] 会被切成两个格子，站上直接显示 "[[笔记" 与 "别名]]"。
+# Obsidian 的规范写法是 [[笔记\|别名]]。这里对导出副本做硬校验：发现未转义的就让构建失败，
+# 免得又要在站上肉眼发现「路径不对」。
+$pipeRe = '\[\[[^\[\]\r\n]*?(?<!\\)\|[^\[\]\r\n]*?\]\]'
+$pipeBad = New-Object System.Collections.Generic.List[string]
+foreach ($pf in $expFiles) {
+  $relT = $pf.FullName.Substring($Content.Length + 1)
+  $plines = @(Get-Content -LiteralPath $pf.FullName -Encoding UTF8)   # 单行文件会退化成字符串，必须包 @()
+  $inFence = $false
+  for ($pi = 0; $pi -lt $plines.Count; $pi++) {
+    $pt = $plines[$pi].TrimStart()
+    if ($pt.StartsWith('```') -or $pt.StartsWith('~~~')) { $inFence = -not $inFence; continue }
+    if ($inFence) { continue }
+    if (-not $pt.StartsWith('|')) { continue }
+    foreach ($pm in [regex]::Matches($plines[$pi], $pipeRe)) {
+      [void]$pipeBad.Add("$relT`:$($pi+1)  ->  $($pm.Value)")
+    }
+  }
+}
+if ($pipeBad.Count -gt 0) {
+  Write-Host "  发现 $($pipeBad.Count) 处未转义的表格 WikiLink（应写成 [[笔记\|别名]]）：" -ForegroundColor Red
+  $pipeBad | Select-Object -First 20 | ForEach-Object { Write-Host "    $_" -ForegroundColor Red }
+  if ($pipeBad.Count -gt 20) { Write-Host "    …… 另有 $($pipeBad.Count - 20) 处未列出" -ForegroundColor Red }
+  Write-Host "  构建中止：请把表格单元格里的 [[a|b]] 改成 [[a\|b]]" -ForegroundColor Red
+  exit 1
+}
+Write-Host "  未转义的表格 WikiLink 0 处" -ForegroundColor Green
+
 Write-Host "=== 6. 脱敏校验（以下应全部为 0）===" -ForegroundColor Cyan
 $verify = [ordered]@{
   '残留私网IP'   = $privIpRe
