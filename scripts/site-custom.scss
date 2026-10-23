@@ -2419,3 +2419,28 @@ html body div#quartz-root.page article .token.selected .token-w {
     padding: 6px 10px;
   }
 }
+
+// ===========================================================================
+// 12/12 公式框（2026-10-23）
+//
+// 参考站把 $$...$$ 渲染成带框的公式块（.formula：白底 + 1px 暖线 + 3px 左深边 +
+// 24/22 内边距 + 居中）。Quartz 只输出裸的 <span class="katex-display">，
+// 没有外框，所以同一篇笔记两边的观感完全不同。这里补上同样的容器观感。
+// ===========================================================================
+html body div#quartz-root.page article .katex-display {
+  margin: 30px 0 !important;
+  padding: 24px 22px !important;
+  background: var(--card) !important;
+  border: 1px solid var(--line) !important;
+  border-left: 3px solid var(--ink) !important;
+  border-radius: 0 !important;
+  text-align: center !important;
+  overflow-x: auto !important;
+}
+
+@media all and (max-width: 900px) {
+  html body div#quartz-root.page article .katex-display {
+    margin: 22px 0 !important;
+    padding: 16px 14px !important;
+  }
+}
