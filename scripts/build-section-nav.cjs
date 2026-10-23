@@ -234,6 +234,36 @@ function renderSideNav(currentSlug) {
     '</b><span>' + st.total + ' 篇</span></div>' + blocks.join('') + '</nav>'
 }
 
+// ── 首页卡片链接：统一指向该分区的第一篇笔记 ────────────────────────────
+// 为什么不用 <section>/index：Quartz 的目录页是构建时合成的，Markdown 里的绝对链接
+// 命不中它，会退化成「按名字模糊匹配」，把 /数学学习/index 解析到 网址收藏/数学学习。
+// 顶栏用的是 firstPageOfSection，这里跟它保持一致。
+function rewriteHomeLinks(html, currentSlug) {
+  const start = html.indexOf('<div class="markdown-preview-view')
+  if (start < 0) return html
+  const end = html.indexOf('</article>', start)
+  if (end < 0) return html
+  const seg = html.slice(start, end)
+  const fixed = seg.replace(/(<a\b[^>]*?href=")([^"]*)("[^>]*>)([\s\S]*?)(<\/a>)/g,
+    (m, p1, href, p3, inner, p5) => {
+      const text = inner.replace(/<[^>]+>/g, '').trim()
+      const sec = sectionNames.find((s) => text.startsWith(sectionLabel(s)))
+      if (!sec) return m
+      // 目录 URL（/数学学习/ 这类）在站点上是稳的；Ontology 没有目录页，退回第一篇
+      const dir = path.posix.dirname(currentSlug)
+      let newHref
+      if (sec === 'ontology') {
+        const first = firstPageOfSection(sec)
+        newHref = first ? relHref(currentSlug, first.slug) : sec + '/'
+      } else {
+        newHref = path.posix.relative(dir === '.' ? '' : dir, sec + '/') || './'
+        if (!newHref.endsWith('/')) newHref += '/'
+      }
+      return p1 + newHref + p3 + inner + p5
+    })
+  return html.slice(0, start) + fixed + html.slice(end)
+}
+
 // ── 改写页面 ────────────────────────────────────────────────────────────
 const stats = { files: 0, changed: 0, sections: 0 }
 
@@ -266,6 +296,10 @@ function walk(dir) {
       } else {
         out = out.replace(/(<h2 class="page-title">[\s\S]*?<\/h2>)/, '$1' + sideNav)
       }
+    }
+
+    if (slug === 'index') {
+      out = rewriteHomeLinks(out, slug)
     }
 
     if (isLanding) {
