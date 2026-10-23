@@ -184,15 +184,21 @@
 
     var tangent = svg("line", { class: "lab-tangent" });
     s.appendChild(tangent);
-    var tangentLabel = svg("text", { class: "lab-label" });
-    tangentLabel.textContent = "切线";
-    s.appendChild(tangentLabel);
 
     var secant = svg("line", { class: "lab-secant" });
     s.appendChild(secant);
-    var secantLabel = svg("text", { "text-anchor": "end", class: "lab-label lab-accent" });
-    secantLabel.textContent = "割线";
-    s.appendChild(secantLabel);
+
+    // 图例放右上角：切线/割线本来贴着线画，Δx 一大就会和 Q 标签、坐标轴挤在一起
+    var legend = svg("g", { class: "lab-legend", transform: "translate(392,46)" });
+    legend.appendChild(svg("line", { x1: 0, y1: 0, x2: 26, y2: 0, class: "lab-tangent" }));
+    var legendT = svg("text", { x: 34, y: 4, class: "lab-label" });
+    legendT.textContent = "切线";
+    legend.appendChild(legendT);
+    legend.appendChild(svg("line", { x1: 0, y1: 20, x2: 26, y2: 20, class: "lab-secant" }));
+    var legendS = svg("text", { x: 34, y: 24, class: "lab-label" });
+    legendS.textContent = "割线";
+    legend.appendChild(legendS);
+    s.appendChild(legend);
 
     var pDot = svg("circle", { class: "lab-dot is-nearest" });
     var qDot = svg("circle", { class: "lab-dot" });
@@ -245,16 +251,21 @@
 
       tangent.setAttribute("x1", X(0.4)); tangent.setAttribute("y1", Y(tanY(0.4)));
       tangent.setAttribute("x2", X(2.4)); tangent.setAttribute("y2", Y(tanY(2.4)));
-      tangentLabel.setAttribute("x", X(2.4) + 4); tangentLabel.setAttribute("y", Y(tanY(2.4)) + 4);
 
       secant.setAttribute("x1", X(0.4)); secant.setAttribute("y1", Y(secY(0.4)));
       secant.setAttribute("x2", X(f)); secant.setAttribute("y2", Y(secY(f)));
-      secantLabel.setAttribute("x", X(f) - 2); secantLabel.setAttribute("y", Y(secY(f)) - 8);
 
       pDot.setAttribute("cx", px0); pDot.setAttribute("cy", py0); pDot.setAttribute("r", "5.5");
       qDot.setAttribute("cx", qx); qDot.setAttribute("cy", qy); qDot.setAttribute("r", "5.5");
-      pText.setAttribute("x", px0 - 8); pText.setAttribute("y", py0 - 9);
-      qText.setAttribute("x", qx + 9); qText.setAttribute("y", qy + 14);
+      // P 标在左下、Q 标在右上：两条线都朝右上/右下走，这两个角是空的
+      pText.setAttribute("x", px0 - 10); pText.setAttribute("y", py0 + 20);
+      qText.setAttribute("x", qx + 12); qText.setAttribute("y", qy - 14);
+
+      // Δx 很小时 Q 贴着 P，三处标注会叠在一起；这时只留 P，其余淡出
+      var small = dx < 0.35;
+      qText.setAttribute("opacity", small ? "0" : "1");
+      dxText.setAttribute("opacity", small ? "0" : "1");
+      dhText.setAttribute("opacity", small ? "0" : "1");
 
       readout.innerHTML =
         "<span>Δx = <b>" + dx.toFixed(2) + "</b></span>" +

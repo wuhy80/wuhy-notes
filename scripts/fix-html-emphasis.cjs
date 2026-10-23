@@ -70,6 +70,51 @@ function fixAdjacent(html, stats) {
   })
 }
 
+/**
+ * 跨节点的强调：`**第一步 · 打分 $QK^T$。**` 这类「加粗里嵌行内公式」的写法，
+ * 渲染后 HTML 是 `**…<span class="katex">…</span>…**`，一对 `**` 被标签隔开，
+ * 上面按文本节点处理的逻辑配不上，页面上就留下字面星号。
+ * 这里只处理「同一个块里、含 katex 且 `**` 个数为偶数」的情况：把第 1、3、5… 个
+ * 换成 <strong>，第 2、4、6… 个换成 </strong>。范围刻意收窄，避免误伤普通文本里的星号。
+ */
+const BLOCK_RE = /<(p|li|td|figcaption)\b[^>]*>[\s\S]*?<\/\1>/g
+
+function fixCrossNodeEmphasis(html, stats) {
+  return html.replace(BLOCK_RE, (block) => {
+    if (!/class="katex"/.test(block)) return block
+    const parts = block.split(/(<[^>]*>)/)
+    const positions = []
+    let skip = 0
+    let offset = 0
+    for (const seg of parts) {
+      if (seg.startsWith('<')) {
+        const m = /^<\s*(\/?)\s*([a-zA-Z][\w-]*)/.exec(seg)
+        if (m) {
+          const name = m[2].toLowerCase()
+          if (SKIP_TAGS.has(name)) {
+            if (m[1] === '/') skip = Math.max(0, skip - 1)
+            else if (!/\/>$/.test(seg)) skip++
+          }
+        }
+        offset += seg.length
+        continue
+      }
+      if (!skip) {
+        let i = -1
+        while ((i = seg.indexOf('**', i + 1)) !== -1) positions.push(offset + i)
+      }
+      offset += seg.length
+    }
+    if (positions.length < 2 || positions.length % 2 !== 0) return block
+    let out = block
+    for (let k = positions.length - 1; k >= 0; k--) {
+      out = out.slice(0, positions[k]) + (k % 2 ? '</strong>' : '<strong>') + out.slice(positions[k] + 2)
+    }
+    stats.crossNode += positions.length / 2
+    return out
+  })
+}
+
 function fixHtml(html, stats) {
   const parts = html.split(/(<[^>]*>)/)
   let skipDepth = 0
@@ -91,10 +136,10 @@ function fixHtml(html, stats) {
     out += skipDepth > 0 ? seg : fixText(seg, stats)
   }
   // 最后再处理「相邻加粗」这种跨标签的形态（必须在标签切分之后整体做）
-  return fixAdjacent(out, stats)
+  return fixCrossNodeEmphasis(fixAdjacent(out, stats), stats)
 }
 
-const stats = { files: 0, changed: 0, spans: 0, ems: 0, adjacent: 0 }
+const stats = { files: 0, changed: 0, spans: 0, ems: 0, adjacent: 0, crossNode: 0 }
 const samples = []
 
 function walk(dir) {
@@ -119,5 +164,5 @@ function walk(dir) {
 }
 walk(PUB)
 
-console.log(`扫描 HTML ${stats.files} 个；改写 ${stats.changed} 个；替换字面强调 ${stats.spans} 处 + 斜体 ${stats.ems} 处 + 相邻加粗 ${stats.adjacent} 处`)
+console.log(`扫描 HTML ${stats.files} 个；改写 ${stats.changed} 个；替换字面强调 ${stats.spans} 处 + 斜体 ${stats.ems} 处 + 相邻加粗 ${stats.adjacent} 处 + 跨节点加粗 ${stats.crossNode} 处`)
 for (const [f, s] of samples) console.log('  ·', f, '::', s)

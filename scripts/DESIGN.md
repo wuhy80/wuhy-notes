@@ -437,6 +437,10 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
   SVG/JS，也不要用「请去原站体验」的占位 callout（默认折叠，读起来像没迁移）。
   新增实验时在 `lab-widgets.js` 里加一个 `mountXxx` 并在 `init()` 里注册，
   样式加在 13/13 节；颜色只用本站 token（曲线 `ink-soft`、切线 `ink`、割线 `accent`）
+- **加粗里套行内公式（`**第一步 · 打分 $QK^T$。**`）由 `fix-html-emphasis.cjs` 兜底**：
+  一对 `**` 被 `<span class="katex">` 隔开时，按文本节点配对会漏掉，产物里留字面星号
+  （2026-10-23 实测 5 处）。脚本现在多了「同块内、含 katex、`**` 为偶数」的跨节点配对，
+  只在构建产物上动手；笔记里照常写 `**…**` 即可，**不要**手动改成 `<strong>`
 - **深色顶栏靠 fixed 复用 DOM**：`.page-title` 是左栏的子元素，靠 `position: fixed` 拉成
   全宽顶栏；它所在的 `.sidebar.left` 是 `sticky`（无 `transform`/`filter`），所以 fixed
   才相对视口定位。**一旦给侧栏加 `transform`/`filter`/`contain`，顶栏会缩进侧栏宽度内**
