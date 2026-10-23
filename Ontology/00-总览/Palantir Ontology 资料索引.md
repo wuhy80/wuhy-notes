@@ -22,6 +22,8 @@ source: Palantir 官方文档
 - [[Ontology/03-动作与函数/Actions、Functions 与写回机制|03 Actions、Functions 与写回机制]]
 - [[Ontology/04-安全治理/安全治理与权限|04 安全治理与权限]]
 - [[Ontology/05-应用开发/OSDK 与应用开发|05 OSDK 与应用开发]]
+- [[Ontology/07-能力全景/Palantir Ontology 能力全景|07 Palantir Ontology 能力全景]]
+- [[Ontology/07-能力全景/Ontology 能力核对清单|07 附：Ontology 能力核对清单]]
 - [[基于 Hermes 的多用户 Ontology 分析系统评估]]
 - [[Ontology 多用户 Agent 分析平台替代方案选型]]
 - [[Palantir 实时数据分析与点位流处理]]
@@ -37,6 +39,7 @@ source: Palantir 官方文档
 - `04-安全治理/`：Ontology 权限、对象权限、动态安全、AI agent 权限边界。
 - `05-应用开发/`：OSDK、自定义应用、AIP 结合方式。
 - `06-实时流处理/`：Streams、Streaming pipelines、Automate 与工业点位事件归并。
+- `07-能力全景/`：按能力域拆解 Ontology 的全部能力，附可打分的核对清单。
 - `90-阅读路线/`：学习路径、待补主题、后续整理计划。
 
 ## 一张图理解
@@ -60,6 +63,7 @@ flowchart TD
 - AIP 把 LLM、agent、自动化能力接到 Ontology 上，使 AI 可以在业务上下文、权限和审计框架内工作。
 - OSDK 让开发者把 Foundry/Ontology 当作后端，从外部应用读取、查询和写回业务对象。
 - 安全治理不是外挂，而是 Ontology 设计的一部分：资源权限、对象/链接权限、动态安全和审计共同决定谁能看、谁能改、怎么改。
+- 能力远不止「对象 + 关系 + 动作」：从类型系统、索引查询、函数计算，到应用框架、AI 工具层、SDK 与变更治理，共十个能力域，逐项拆解见 [[Ontology/07-能力全景/Palantir Ontology 能力全景|07 Palantir Ontology 能力全景]]。
 
 ## 官方资料
 

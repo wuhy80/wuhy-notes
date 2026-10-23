@@ -101,6 +101,21 @@ status: 整理中
 - AIP agent 如何基于 Ontology 获取上下文和执行动作？
 - 如何设计 proposal-first 的 AI 应用？
 
+## 第六阶段：建立能力全景
+
+目标：从「理解概念」转到「逐项对照」，能判断哪些能力必须自建、哪些可以后置。
+
+阅读：
+
+- [[Ontology/07-能力全景/Palantir Ontology 能力全景|07 Palantir Ontology 能力全景]]
+- [[Ontology/07-能力全景/Ontology 能力核对清单|07 附：Ontology 能力核对清单]]
+
+重点问题：
+
+- 十个能力域里，哪几个是「没有就不是 Ontology」的？
+- 哪些能力 Palantir 自己也标了 Beta 或分场景支持？
+- 我们的短板在语义层、动力层还是治理层？
+
 ## 后续待补主题
 
 - [ ] Palantir Ontology 与传统知识图谱对比
