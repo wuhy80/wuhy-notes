@@ -217,6 +217,7 @@
     input.step = "0.05";
     input.value = "2.4";
     slide.appendChild(input);
+    slide.appendChild(el("span", null, "放大 →"));
     body.appendChild(slide);
 
     function paint(dx) {
