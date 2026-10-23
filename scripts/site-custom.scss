@@ -2048,6 +2048,12 @@ html body.landing div#quartz-root.page article .markdown-preview-view > ul > li 
   text-decoration: none !important;
 }
 
+
+html body.landing div#quartz-root.page article .markdown-preview-view > ul > li > a {
+  background: none !important;
+  padding: 0 !important;
+}
+
 html body.landing div#quartz-root.page article .markdown-preview-view > ul > li > a:hover {
   color: var(--accent) !important;
 }
