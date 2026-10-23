@@ -78,7 +78,9 @@ Write-Step "0/4 前置检查：脚本 BOM、常驻 watch 工作进程与并发�
 # PowerShell 脚本必须带 UTF-8 BOM：PS 5.1 在无 BOM 时按 GBK 解码，中文注释会让
 # 整个脚本解析失败（实测踩过两次）。这里先查一遍，避免带病发布/带病提交。
 $bomCheck = Join-Path $Vault 'scripts\check-bom.mjs'
-if ((Test-Path -LiteralPath $bomCheck) -and (Test-Path -LiteralPath $Node)) {
+# CI 里 NODE_EXE=node（裸命令名），Test-Path 认不出来，会让 BOM 检查悄悄跳过。
+$nodeReady = (Test-Path -LiteralPath $Node) -or [bool](Get-Command $Node -ErrorAction SilentlyContinue)
+if ((Test-Path -LiteralPath $bomCheck) -and $nodeReady) {
   $bomOut = (& $Node $bomCheck 2>&1 | Out-String)
   if ($LASTEXITCODE -ne 0) { throw "PowerShell 脚本缺少 UTF-8 BOM，请先补齐再发布：`n$bomOut" }
   ($bomOut -split "`r?`n") | Where-Object { $_.Trim() } | ForEach-Object { Write-Host "  $($_.Trim())" -ForegroundColor Green }

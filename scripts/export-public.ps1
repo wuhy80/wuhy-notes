@@ -446,7 +446,10 @@ Write-Host "  规范化 $($fmLog.Count) 处；未闭合 $($fmBad.Count) 篇" -Fo
 # 交给 Node 脚本按 flanking 规则判定，失效的那一对改写成 <strong>/<em>。
 Write-Host "=== 4.55 CJK 强调修复（**重点。**下一句 这类写法）===" -ForegroundColor Cyan
 $emphFixer = Join-Path $Vault 'scripts\fix-cjk-emphasis.cjs'
-if ((Test-Path -LiteralPath $emphFixer) -and (Test-Path -LiteralPath $Node)) {
+# CI 里 NODE_EXE=node（裸命令名），Test-Path 认不出来，会让这一步悄悄跳过——
+# 因此这里同时接受「绝对路径」和「PATH 里能解析到的命令」。
+$nodeReady = (Test-Path -LiteralPath $Node) -or [bool](Get-Command $Node -ErrorAction SilentlyContinue)
+if ((Test-Path -LiteralPath $emphFixer) -and $nodeReady) {
   $out = (& $Node $emphFixer $Content 2>&1 | Out-String)
   ($out -split "`r?`n") | Where-Object { $_ -match '扫描|Error' } | ForEach-Object { Write-Host "  $($_.Trim())" -ForegroundColor Green }
 } else {
