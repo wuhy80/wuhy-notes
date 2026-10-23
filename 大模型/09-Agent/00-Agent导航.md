@@ -59,7 +59,7 @@ aliases:
 | SDK / 编程框架       | [[OpenAI Agents SDK]]、[[LangGraph]]、[[AutoGen]]、[[Google ADK]]、[[CrewAI]]、[[PydanticAI]]、[[smolagents]]、[[LlamaIndex Agent]]                                                  | 自己写代码、自己控流程                         | 可编排、可扩展、可调试                     |       |
 | 平台 / 运行时 / 低代码方案 | [[Dify Agent]]、[[OpenClaw]]、[[Hermes]]、[[Agent Zero]]、[[AutoGPT Platform]]、[[OpenManus]]、[[Manus]]、[[Genspark]]、[[Fellou]]、[[OpenHands]]、[[Letta]]、[[Lindy]]、[[Relevance AI]] | 快速搭建内部工具、运营型 AI 应用、个人常驻 Agent       | 工作流、可视化、长期记忆                    |       |
 | Agent 工具 / 技能分发  | [[Ponytail]]                                                                                                                                                                  | 约束 AI 编程 Agent 行为、复用规则、跨工具分发 skills | YAGNI、stdlib first、skills、hooks |       |
-| 协议与生态            | [[MCP概览]]、[[大模型/02-应用开发/MCP/一些优秀的MCP服务器                                                                                                                                       | MCP Server 生态]]                     | 工具接入、资源接入、跨工具互联                 | 协议标准化 |
+| 协议与生态            | [[MCP概览]]、[[大模型/02-应用开发/MCP/一些优秀的MCP服务器                                                                                                                                       \| MCP Server 生态]]                     | 工具接入、资源接入、跨工具互联                 | 协议标准化 |
 
 ## 三、选型的核心维度
 
