@@ -165,7 +165,7 @@ components:
     borderBottom: "1px rgba(255,255,255,0.1)"
   footer:                 # 深色页脚
     backgroundColor: "{colors.ink}"
-    textColor: "color-mix(in srgb, paper 68%, transparent)"
+    textColor: "color-mix(in srgb, paper 82%, transparent)"
   quiz:                   # 测验（enhance-content.cjs 把 callout 结构化后才有）
     badgeBackgroundColor: "{colors.accent}"
     itemBackgroundColor: "{colors.card}"
@@ -279,7 +279,7 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
   `#quartz-body` 加 `padding-top: 64px` 让位，左右栏 `sticky top: 64px`
 - **深色页脚通栏横条**（2026-10-25 起）：`grid-template-areas` 把 `grid-footer` 提为独占整行
   （桌面跨三列、平板跨两列，<800px 单列天然通栏），`width:100%` 吃满整行；
-  `ink` 底 + 纸色 68% 文字，padding 26/48；版权行居左、链接列居右（`space-between`），
+  `ink` 底 + 纸色 82% 文字（14px，链接 92%），padding 26/48；版权行居左、链接列居右（`space-between`），
   链接由 `quartz.config.yaml` 的 footer 插件 `options.links` 配置（GitHub/RSS/站点地图）
 - 间距只用上面 `spacing` 里定义的值
 - <1200px 时不启用上述栅格（保持 Quartz 默认单列/抽屉），深色顶栏也不启用

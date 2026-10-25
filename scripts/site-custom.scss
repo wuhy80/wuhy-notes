@@ -1258,6 +1258,10 @@ html body div#quartz-root.page footer {
   padding: 26px 48px !important;
   background: var(--ink) !important;
   border-top: 0 !important;
+  // 关键：左右侧栏是 position:sticky + z-index:1 + height:100vh，会一直铺到页面
+  // 最底并盖住页脚行的两侧（文字随之被盖没）。页脚必须压在侧栏之上才能整条可见。
+  position: relative !important;
+  z-index: 2 !important;
   display: flex !important;
   flex-wrap: wrap !important;
   align-items: center !important;
@@ -1272,8 +1276,8 @@ html body div#quartz-root.page footer p {
 
 html body div#quartz-root.page footer p,
 html body div#quartz-root.page footer a {
-  color: color-mix(in srgb, var(--paper) 68%, transparent) !important;
-  font-size: 13px !important;
+  color: color-mix(in srgb, var(--paper) 82%, transparent) !important;
+  font-size: 14px !important;
 }
 
 html body div#quartz-root.page footer a:hover {
@@ -1282,6 +1286,8 @@ html body div#quartz-root.page footer a:hover {
 
 // 链接列（右）：footer 插件 links 配置渲染为 <ul>（quartz.config.yaml 的 footer.options.links）
 html body div#quartz-root.page footer ul {
+  color: color-mix(in srgb, var(--paper) 82%, transparent) !important;
+  font-size: 14px !important;
   display: flex !important;
   flex-wrap: wrap !important;
   align-items: center !important;
@@ -1293,7 +1299,8 @@ html body div#quartz-root.page footer ul {
 }
 
 html body div#quartz-root.page footer ul li a {
-  color: color-mix(in srgb, var(--paper) 82%, transparent) !important;
+  color: color-mix(in srgb, var(--paper) 92%, transparent) !important;
+  font-size: 14px !important;
   text-decoration: none !important;
 }
 
