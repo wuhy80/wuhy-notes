@@ -527,9 +527,33 @@ foreach ($md in $monthDirs) {
 }
 Write-Host "  已为月索引页附加当月早报直达列表"
 
-# 4. 收集最近更新（按 vault 源文件的修改日期聚合）
+# 4. 收集最近更新（按 git 最后提交时间聚合；无提交记录的回退文件 mtime）
 # 早报目录每日自动抓取，已有首页专区，不进「最近更新」；生成的 index.md/最近更新.md 不在 vault 里，天然排除
+# ⚠️ 时间源必须是 git 提交时间而非文件 mtime：CI 的 actions/checkout 不保留 mtime，
+#    检出后所有文件的 mtime 都等于本次 run 的时刻，按 mtime 聚合会让每次发布
+#    都把全库标成「刚刚更新」（2026-10-25 实际发生过）。CI 侧需 fetch-depth: 0
+#    配合（浅克隆只有一个提交，其余文件查不到映射，会退回 mtime 又踩同一个坑）。
 $recentExcludeDirs = @('大模型\10-新闻\日报\')
+$gitLastCommit = @{}
+if (Test-Path -LiteralPath (Join-Path $Vault '.git')) {
+  # 一次 git log 全量遍历（新→旧），文件首次出现的那次提交即其最后提交时间；
+  # core.quotepath=false 让中文路径原样输出（默认会转义成八进制序列）。
+  # PowerShell 5.1 按 [Console]::OutputEncoding（默认 GBK）解码原生命令输出，
+  # git 的 UTF-8 中文路径会变乱码导致映射匹配不上——取输出期间临时切到 UTF-8。
+  $prevEnc = [Console]::OutputEncoding
+  try {
+    [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+    $logLines = @(git -C $Vault -c core.quotepath=false log --name-only --format='__T__%cI' 2>$null)
+  } finally {
+    [Console]::OutputEncoding = $prevEnc
+  }
+  $curT = $null
+  foreach ($ln in $logLines) {
+    if ($ln -like '__T__*') { $curT = $ln.Substring(5); continue }
+    if ([string]::IsNullOrWhiteSpace($ln)) { continue }
+    if ($null -ne $curT -and -not $gitLastCommit.ContainsKey($ln)) { $gitLastCommit[$ln] = $curT }
+  }
+}
 $recentFiles = New-Object System.Collections.Generic.List[object]
 $fileMapNow = @{}
 foreach ($d in $PublicDirs) {
@@ -544,13 +568,22 @@ foreach ($d in $PublicDirs) {
     if ($skip) { continue }
     if ($ExcludeFileNames -contains $f.Name) { continue }
     $fileMapNow[$vaultRel] = "$($f.LastWriteTimeUtc.Ticks)"
+    # git 路径用 / 分隔；%cI 带提交者时区（本机 +08:00），日期直接取其年月日更符合直觉
+    $commitIso = $gitLastCommit[($vaultRel -replace '\\', '/')]
+    if ($commitIso) {
+      $dateStr = $commitIso.Substring(0, 10)
+      $sortTicks = [datetimeoffset]::Parse($commitIso).UtcDateTime.Ticks
+    } else {
+      $dateStr = $f.LastWriteTime.ToString('yyyy-MM-dd')
+      $sortTicks = $f.LastWriteTimeUtc.Ticks
+    }
     $recentFiles.Add([pscustomobject]@{
       Rel  = $vaultRel
       Link = (($vaultRel -replace '\\', '/') -replace '\.md$', '')
       Base = $f.BaseName
       Dir  = ((Split-Path $vaultRel -Parent) -replace '\\', '/')
-      Date = $f.LastWriteTime.ToString('yyyy-MM-dd')
-      Ticks = $f.LastWriteTimeUtc.Ticks
+      Date = $dateStr
+      Ticks = $sortTicks
     })
   }
 }
@@ -639,7 +672,7 @@ $rp += ''
 $rp += '# 最近更新'
 $rp += ''
 $rp += '> [!info] 说明'
-$rp += '> 按笔记修改日期自动聚合，每次发布时重新生成；不含每日自动抓取的 AI 早报（早报归档见 [[00-日报索引|日报索引]]）。最多保留最近 14 个有更新的日子。'
+$rp += '> 按笔记的 git 最后提交日期自动聚合（未提交的新笔记按文件修改时间），每次发布时重新生成；不含每日自动抓取的 AI 早报（早报归档见 [[00-日报索引|日报索引]]）。最多保留最近 14 个有更新的日子。'
 $rp += ''
 $dayGroups = @($recentFiles | Group-Object Date | Sort-Object Name -Descending | Select-Object -First 14)
 $dayListCap = 20   # 单日展示上限：批量整理日（全库 touch）只列最新 20 条，其余汇总

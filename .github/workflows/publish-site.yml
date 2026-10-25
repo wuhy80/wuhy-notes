@@ -157,8 +157,12 @@ jobs:
           }
           Write-Host $text
 
-      - name: 1. 检出知识库
+      # fetch-depth: 0 = 完整历史：export-public.ps1 的「最近更新」靠 git log 取每个文件
+      # 的最后提交时间（文件 mtime 在 runner 上不保留，全部等于检出时刻，不可用）
+      - name: 1. 检出知识库（完整历史，供「最近更新」取提交时间）
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: 2. 安装 Node（Quartz 要求 >=22，本机为 24）
         uses: actions/setup-node@v4
