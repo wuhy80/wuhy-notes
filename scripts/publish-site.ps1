@@ -88,10 +88,10 @@ if ((Test-Path -LiteralPath $bomCheck) -and $nodeReady) {
 
 $allBoot = @(Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
   Where-Object { $_.CommandLine -match 'bootstrap-cli\.mjs' })
-# 本脚本的常驻 worker：--watch 且指向**本次的**内容目录
-# ⚠️ 不能写死 'public-site' 字面量：worker 命令行里带的是 $Content
+# 历史遗留的 --watch 常驻进程：--watch 且指向**本次的**内容目录
+# ⚠️ 不能写死 'public-site' 字面量：watch 进程命令行里带的是 $Content
 #    （如 SITE_ROOT=D:\...\_site 时是 `_site\content`，CI 里是 `<workspace>\_site\content`），
-#    写死会导致 worker 永远检测不到、Start-Worker 白等 20 秒后抛异常，发布直接失败
+#    写死会导致残留进程永远匹配不到，既停不掉也绕不开。
 #    （2026-10-18 实测：CI 与本机 _site 路径都命中这个坑）。
 $workerProc = $allBoot | Where-Object { $_.CommandLine -match '--watch' -and $_.CommandLine -match [regex]::Escape($Content) } | Select-Object -First 1
 $others = @($allBoot | Where-Object { -not $workerProc -or $_.ProcessId -ne $workerProc.ProcessId })
@@ -99,77 +99,30 @@ if ($others.Count -gt 0) {
   $pids = ($others | ForEach-Object { $_.ProcessId }) -join ', '
   throw "检测到其它 Quartz 构建/预览进程（PID $pids）。它们会并发写入 public/ 导致产物损坏，请先停止后再发布。"
 }
-if ($workerProc) { Write-Host "  常驻 worker 运行中（PID $($workerProc.ProcessId)）" }
-else { Write-Host "  无常驻 worker（稍后将按需启动）" }
+if ($workerProc) { Write-Host "  发现残留 watch 进程（PID $($workerProc.ProcessId)），构建前会停止它" }
 
-# ── 常驻 worker 管理 ──
-$WorkerLog = Join-Path $SiteRoot 'worker.log'
+# ── 残留 watch 进程清理 ──
+# 2026-10-25 起弃用「常驻 worker + --watch 增量」构建模式，原因（探针实验两度复现）：
+#   1. chokidar 对 content 新增 .md 的 add 事件不可靠——新文件写入后 90 秒内
+#      watcher 连一次 rebuild 都不触发，新页面自然不进产物；
+#   2. 「日志出现 Done 行」≠「产物覆盖最新内容」：Done 可由其他变更触发，
+#      曾导致缺新页面的残缺产物被判定为构建完成并部署上线（2026-10-25 事故）；
+#   3. changesSinceLastBuild 只增不清，增量 rebuild 退化成全量 parse
+#      （909 文件 / 40s + emit 3-4 分钟），速度上也不再优于前台全量。
+# 因此 needBuild 时一律前台全量构建（确定性优先），watch 进程只做发现与清理。
 function Find-WorkerPid {
   # 同上面：按「本次的 $Content」匹配，不写死 'public-site'
   $w = @(Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
     Where-Object { $_.CommandLine -match '--watch' -and $_.CommandLine -match [regex]::Escape($Content) })
   return ($w | Select-Object -First 1).ProcessId
 }
-function Start-Worker {
-  if (Test-Path -LiteralPath $WorkerLog) { Remove-Item -LiteralPath $WorkerLog -Force -ErrorAction SilentlyContinue }
-  # 用 WMI 创建进程：完全脱离当前控制台，不继承任何句柄——
-  # 若用 Start-Process，worker 会继承脚本的 stdout 管道句柄，脚本输出接管道时调用方永远等不到 EOF
-  $cmdLine = "cmd.exe /c `"`"$Node`" quartz/bootstrap-cli.mjs build -d `"$Content`" --watch > `"$WorkerLog`" 2>&1`""
-  $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = $cmdLine; CurrentDirectory = $Quartz }
-  if ($r.ReturnValue -ne 0) { throw "worker 启动失败（Win32_Process.Create 返回 $($r.ReturnValue)）" }
-  # 等待 node 进程出现（cmd 只是壳）
-  for ($i = 0; $i -lt 10; $i++) {
-    Start-Sleep -Seconds 2
-    $pid2 = Find-WorkerPid
-    if ($pid2) { Write-Host "  已启动常驻 worker（PID $pid2，日志 $WorkerLog）"; return $pid2 }
-  }
-  throw "worker 启动后未检测到 node 进程，详见 $WorkerLog"
-}
 function Stop-Worker([int]$id) {
   try { Stop-Process -Id $id -Force -ErrorAction Stop } catch {}
   Start-Sleep -Seconds 1
-  Write-Host "  已停止 worker（PID $id）"
-}
-# 等待 worker 完成（增量）重建：日志里 Done 行数相对基线增加且静默 8 秒
-function Wait-WorkerSettle([int]$baselineDone, [int]$timeoutSec) {
-  $deadline = (Get-Date).AddSeconds($timeoutSec)
-  while ((Get-Date) -lt $deadline) {
-    Start-Sleep -Seconds 3
-    if (-not (Find-WorkerPid)) { Write-Host "  worker 进程已退出"; return $false }
-    $doneNow = 0
-    if (Test-Path -LiteralPath $WorkerLog) {
-      $doneNow = @((Get-Content -LiteralPath $WorkerLog -Encoding UTF8 | Where-Object { $_ -match '^Done (re)?building|^Done processing' })).Count
-    }
-    if ($doneNow -gt $baselineDone) {
-      Start-Sleep -Seconds 15   # 静默窗口：需大于单次增量重建耗时（实测约 7-10s），确认没有在途重建
-      $doneNow2 = @((Get-Content -LiteralPath $WorkerLog -Encoding UTF8 | Where-Object { $_ -match '^Done (re)?building|^Done processing' })).Count
-      if ($doneNow2 -eq $doneNow) { Write-Host "  worker 重建完成（Done $doneNow2 次）"; return $true }
-      $doneNow = $doneNow2   # 期间又有新重建完成，继续静默观察
-    }
-  }
-  Write-Host "  等待 worker 重建超时（${timeoutSec}s）" -ForegroundColor Yellow
-  return $false
-}
-function Get-LogDoneCount {
-  if (-not (Test-Path -LiteralPath $WorkerLog)) { return 0 }
-  return @((Get-Content -LiteralPath $WorkerLog -Encoding UTF8 | Where-Object { $_ -match '^Done (re)?building|^Done processing' })).Count
-}
-# public 是否已跟上 content（最大 mtime 比较）：
-# 防止把 worker 尚在重建的中间态部署上线——导出清空重写全目录时，watcher 的尾随重建
-# 可能在「静默窗口」判定之后才完成，实测曾出现本地 public 已新、线上部署的是旧版的竞态
-function Test-PublicFresh {
-  $pubDir = Join-Path $Quartz 'public'
-  if (-not (Test-Path -LiteralPath $pubDir)) { return $false }
-  $pubNew = (Get-ChildItem -LiteralPath $pubDir -Recurse -File -Force -ErrorAction SilentlyContinue |
-    Measure-Object LastWriteTimeUtc -Maximum).Maximum
-  $conNew = (Get-ChildItem -LiteralPath $Content -Recurse -File -Force -ErrorAction SilentlyContinue |
-    Measure-Object LastWriteTimeUtc -Maximum).Maximum
-  if (-not $pubNew -or -not $conNew) { return $false }
-  return ($pubNew -ge $conNew)
+  Write-Host "  已停止 watch 进程（PID $id）"
 }
 
 Write-Step "1/4 导出公开子集（脱敏 + 审查报告；内部自带增量判断）"
-$doneBaseline = Get-LogDoneCount   # worker 日志基线（导出期间 watcher 可能已触发重建）
 $contentSigBefore = Get-TreeSig $Content
 $exportArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $Vault 'scripts\export-public.ps1'))
 if ($Force) { $exportArgs += '-Force' }
@@ -178,7 +131,7 @@ $exportOut | ForEach-Object { Write-Host $_ }
 if ($LASTEXITCODE -ne 0) { throw "导出失败，中止发布" }
 $exportRan = -not ($exportOut -match '跳过导出')
 $exportSig = Get-TreeSig $Content
-# 内容相对「导出前」是否真的变了（导出被跳过 → 内容未动 → worker 无需重建）
+# 内容相对「导出前」是否真的变了（导出被跳过 → 内容未动 → 无需重建）
 $contentChanged = $exportRan -and ($contentSigBefore -ne $exportSig)
 
 Write-Step "2/4 同步站点自定义样式"
@@ -285,11 +238,12 @@ if (Test-Path -LiteralPath $checker) {
 } else {
   Write-Host "  未找到 check-yaml.cjs，跳过校验" -ForegroundColor Yellow
 }
-Write-Step "3/4 Quartz 构建（worker 常驻增量 / 冷启全量）"
+Write-Step "3/4 Quartz 构建（前台全量，确定性优先）"
 Push-Location $Quartz
 try {
   if ($Serve) {
-    if ($workerProc) { Stop-Worker $workerProc.ProcessId }
+    $wid = Find-WorkerPid
+    if ($wid) { Stop-Worker $wid }
     Write-Host "  构建后启动本地预览：http://localhost:$PreviewPort" -ForegroundColor Green
     & $Node 'quartz/bootstrap-cli.mjs' build -d $Content --serve --port $PreviewPort
     exit 0
@@ -300,52 +254,19 @@ try {
   $buildSig = if (Test-Path -LiteralPath $BuildSigPath) { (Get-Content -LiteralPath $BuildSigPath -Raw -Encoding UTF8).Trim() } else { '' }
   $publicIndex = Join-Path $Quartz 'public\index.html'
   $needBuild = $Force -or $siteSigChanged -or ($exportSig -ne $buildSig) -or (-not (Test-Path -LiteralPath $publicIndex))
-  $settled = $false
   if (-not $needBuild) {
     Write-Host "  public/ 与 content 指纹一致，跳过构建"
   } else {
-    if ($Force -or $siteSigChanged) {
-      if ($workerProc) { Stop-Worker $workerProc.ProcessId }
-      Write-Host "  $(if ($Force) { '-Force' } else { '站点外观' })触发全量重建"
-    }
-    if (-not (Find-WorkerPid)) {
-      $baseline = 0
-      $timeout = 600   # 冷启动 = 全量构建，给足 10 分钟
-      Write-Host "  启动常驻 worker（首次全量构建，预计 4 分钟左右）..."
-      [void](Start-Worker)
-    } else {
-      $baseline = Get-LogDoneCount
-      $timeout = 120
-      Write-Host "  worker 在跑，等待其增量重建（至多 ${timeout}s）..."
-    }
-    $settled = Wait-WorkerSettle $baseline $timeout
-    # settle 成功也必须验新鲜度：静默窗口之后 worker 可能还有尾随重建在跑
-    if ($settled) {
-      $freshWait = 0
-      while (-not (Test-PublicFresh) -and $freshWait -lt 90) {
-        if ($freshWait -eq 0) { Write-Host "  worker 尚有尾随重建，等待 public 追上 content..." }
-        Start-Sleep -Seconds 5
-        $freshWait += 5
-      }
-      if (Test-PublicFresh) { Write-Host "  public 新鲜度校验通过（不早于 content 最后写入）" }
-      else { $settled = $false }
-    }
-    if (-not $settled) {
-      # worker 可能早已把内容建完（如导出期间已增量重建）：用 public 新鲜度判断
-      if (Find-WorkerPid -and (Test-PublicFresh)) {
-        Write-Host "  public 修改时间晚于 content，认定已是最新（worker 早已增量建完）"
-        $settled = $true
-      }
-    }
-    if (-not $settled) {
-      # 保底：停掉失效 worker，前台一次性全量构建，绝不发布残缺产物
-      Write-Host "  worker 未能完成重建，转为前台全量构建" -ForegroundColor Yellow
-      $wid = Find-WorkerPid
-      if ($wid) { try { Stop-Process -Id $wid -Force -ErrorAction SilentlyContinue } catch {} }
-      & $Node 'quartz/bootstrap-cli.mjs' build -d $Content
-      if ($LASTEXITCODE -ne 0) { throw "构建失败，中止发布" }
-      $settled = $true
-    }
+    # 2026-10-25 起一律前台全量构建，不再走「常驻 worker + --watch 增量」：
+    # 探针实验两度复现 chokidar 对 content 新增 .md 的 add 事件不可靠（写入 90s
+    # 内不触发任何 rebuild，新页面不进产物），且 watch 增量因 changesSinceLastBuild
+    # 只增不清而退化成全量 parse（909 文件/40s + emit 3-4 分钟），速度也不再占优。
+    # 前台全量约 4 分钟，结果确定；新鲜度/尾随重建的竞态也随之消失。
+    $wid = Find-WorkerPid
+    if ($wid) { Stop-Worker $wid }
+    Write-Host "  前台全量构建（约 4 分钟）..."
+    & $Node 'quartz/bootstrap-cli.mjs' build -d $Content
+    if ($LASTEXITCODE -ne 0) { throw "构建失败，中止发布" }
     Set-Content -LiteralPath $BuildSigPath -Value $exportSig -Encoding UTF8
   }
   # 产物完整性校验：绝不允许把残缺构建部署上线
@@ -358,6 +279,30 @@ try {
     throw "构建产物仅 $($built.Count) 个文件，明显不完整，中止发布"
   }
   Write-Host "  产物校验通过：$($built.Count) 个文件 / $([math]::Round((($built | Measure-Object Length -Sum).Sum)/1MB,2)) MB"
+
+  # 覆盖校验（2026-10-25 漏页事故后新增的确定性闸门）：content 里每个 .md 都必须在
+  # public 有对应页面。slug 规则（实测与站点 URL 一致）：路径逐段小写化、空格转 '-'、
+  # 其余字符原样保留；_index.md 与「与父目录同名的 .md」产出父目录的 index.html。
+  # 缺失任何一个页面都按残缺产物中止——宁可误报（人工排查一次），不可漏报（残缺上线）。
+  $contentMd = @(Get-ChildItem -LiteralPath $Content -Recurse -File -Filter *.md -Force)
+  $missingPages = @()
+  foreach ($f in $contentMd) {
+    $rel = $f.FullName.Substring($Content.Length + 1)
+    $parts = @($rel -split '[\\/]' | ForEach-Object { $_.ToLower() -replace ' ', '-' })
+    $stem = [IO.Path]::GetFileNameWithoutExtension($parts[-1])
+    if ($parts.Count -ge 2 -and ($stem -eq '_index' -or $stem -eq $parts[-2])) {
+      $expected = Join-Path $PublicDir ((($parts[0..($parts.Count-2)]) -join '\') + '\index.html')
+    } else {
+      $parts[-1] = $stem
+      $expected = Join-Path $PublicDir ((($parts -join '\') + '.html'))
+    }
+    if (-not (Test-Path -LiteralPath $expected)) { $missingPages += $rel }
+  }
+  if ($missingPages.Count -gt 0) {
+    $sample = ($missingPages | Select-Object -First 5) -join '；'
+    throw "产物缺少 $($missingPages.Count)/$($contentMd.Count) 个页面（如 $sample），中止部署。构建不完整——请检查上方构建日志，或用 -Force 重试"
+  }
+  Write-Host "  覆盖校验通过：content 的 $($contentMd.Count) 个 .md 均有对应页面"
 
   # 强调兜底：中文标点紧贴 ** 时 CommonMark 会吐字面星号；导出层只按 flanking 判定，
   # 覆盖不到「分隔符栈 / rule of three / 与 $公式$ 交互」这类解析器层面的失效。
