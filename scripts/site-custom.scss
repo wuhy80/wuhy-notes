@@ -1203,6 +1203,11 @@ html body div#quartz-root.page .sidebar.right .graph .graph-outer {
     text-decoration: none !important;
   }
 
+  // 站名即「回首页」入口（2026-10-25 起顶栏不再放「首页」按钮），hover 给暖橙反馈
+  html body div#quartz-root.page .left.sidebar > h2.page-title a:hover {
+    color: var(--accent-warm) !important;
+  }
+
   // 工具栏（搜索 / 暗色 / 阅读模式）挪到顶栏右侧
   html body div#quartz-root.page .left.sidebar > .flex-component {
     position: fixed !important;

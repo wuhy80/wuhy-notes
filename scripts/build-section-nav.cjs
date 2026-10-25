@@ -8,7 +8,7 @@
  *   所以按现有先例，在产物 HTML 上直接生成静态导航。
  *
  * 产物里做的事：
- *   1) 在 <h2 class="page-title">…</h2> 之后插入 <nav class="top-nav">（首页 + 各一级）
+ *   1) 在 <h2 class="page-title">…</h2> 之后插入 <nav class="top-nav">（各一级；回首页点站名）
  *   2) 在 <div class="explorer …"> 之前插入 <nav class="side-nav">：
  *        卷（二级目录，罗马数字 + 名称 + 篇数）→ 条目（两位序号 + 标题）
  *        默认只展开当前页所在卷；大卷（>40 篇）只列子目录
@@ -135,13 +135,6 @@ const relHref = (fromSlug, toSlug) => {
   return rel === '' ? path.posix.basename(target) : rel
 }
 
-// 首页是 /index.html，用「退到根目录」的写法，别写 index（会被当成 /index 而 404）
-const homeHref = (fromSlug) => {
-  const dir = path.posix.dirname(fromSlug)
-  if (dir === '.') return './'
-  return '../'.repeat(dir.split('/').length)
-}
-
 // ── 生成顶栏 ────────────────────────────────────────────────────────────
 const pageBySlug = new Map(pages.map((p) => [p.slug, p]))
 
@@ -156,7 +149,9 @@ const firstPageOfSection = (sec) => {
 // ── 生成顶栏 ────────────────────────────────────────────────────────────
 function renderTopNav(currentSlug) {
   const cur = currentSlug.split('/')[0]
-  const links = ['<a' + (currentSlug === 'index' ? ' class="on"' : '') + ' href="' + esc(homeHref(currentSlug)) + '">首页</a>']
+  // 不放「首页」项：站点标题 h2.page-title 本身就是链接（各页均指向站点根），
+  // 点击站名即回首页
+  const links = []
   for (const s of sectionNames) {
     const first = firstPageOfSection(s)
     const href = first ? relHref(currentSlug, first.slug) : '#'
