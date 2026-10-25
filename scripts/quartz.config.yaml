@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=./quartz/plugins/quartz-plugins.schema.json
 configuration:
-  pageTitle: 技术笔记
+  pageTitle: 格物志
   pageTitleSuffix: ""
   enableSPA: true
   enablePopovers: true
@@ -217,8 +217,9 @@ plugins:
     enabled: true
     options:
       links:
-
-
+        GitHub: https://github.com/wuhy80
+        RSS 订阅: /index.xml
+        站点地图: /sitemap.xml
     layout:
       position: footer
       priority: 50

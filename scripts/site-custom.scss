@@ -1225,25 +1225,76 @@ html body div#quartz-root.page .sidebar.right .graph .graph-outer {
   }
 }
 
-// --- K. 深色页脚（参考站 #1C1C1C 页脚带）--------------------------------
+// --- K. 深色页脚（参考站 #1C1C1C 页脚带：横跨三列的通栏横条）--------------
+// v5 网格默认把 grid-footer 钉在中列（桌面/平板均如此），页脚只是正文末尾的一小块；
+// 2026-10-25 改为通栏：桌面三列全跨、平板两列全跨，手机单列天然通栏。
+@media all and (min-width: 1200px) {
+  html body div#quartz-root.page div#quartz-body {
+    grid-template-areas:
+      "grid-sidebar-left grid-header grid-sidebar-right"
+      "grid-sidebar-left grid-center grid-sidebar-right"
+      "grid-footer grid-footer grid-footer" !important;
+  }
+}
+
+@media all and (min-width: 800px) and (max-width: 1200px) {
+  html body div#quartz-root.page div#quartz-body {
+    grid-template-areas:
+      "grid-sidebar-left grid-header"
+      "grid-sidebar-left grid-center"
+      "grid-sidebar-left grid-sidebar-right"
+      "grid-footer grid-footer" !important;
+  }
+}
+
 html body div#quartz-root.page footer {
-  // 与正文列对齐：中列上限 908（= 正文 860 + 左右各 24 呼吸位），页脚内边距同为 24
-  // 页脚深色带与正文同宽：正文 = min(860, 中列 - 48)，所以页脚 = calc(100% - 48) 且上限 860
-  width: calc(100% - 48px) !important;
-  min-width: 0 !important; // 主题给了 min-width: calc(100% - 48px)，会压住 max-width
-  max-width: 980px !important;
+  // 通栏横条：吃满整行，版权行居左、链接列居右（space-between）
+  width: 100% !important;
+  min-width: 100% !important; // 通栏模式下 min-width 也应为 100%（限宽卡片时代的 calc 已废弃）
+  max-width: none !important;
   box-sizing: border-box !important;
-  justify-self: center !important;
-  margin: 48px auto 0 !important;
-  padding: 40px 24px !important;
+  justify-self: stretch !important;
+  margin: 48px 0 0 0 !important;
+  padding: 26px 48px !important;
   background: var(--ink) !important;
   border-top: 0 !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px 32px !important;
+}
+
+// 版权行（左）：Created with Quartz © 年份
+html body div#quartz-root.page footer p {
+  margin: 0 !important;
 }
 
 html body div#quartz-root.page footer p,
 html body div#quartz-root.page footer a {
   color: color-mix(in srgb, var(--paper) 68%, transparent) !important;
   font-size: 13px !important;
+}
+
+html body div#quartz-root.page footer a:hover {
+  color: var(--paper) !important;
+}
+
+// 链接列（右）：footer 插件 links 配置渲染为 <ul>（quartz.config.yaml 的 footer.options.links）
+html body div#quartz-root.page footer ul {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 6px 28px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+}
+
+html body div#quartz-root.page footer ul li a {
+  color: color-mix(in srgb, var(--paper) 82%, transparent) !important;
+  text-decoration: none !important;
 }
 
 // 探索树的小标题见文末「11/11 左栏探索树」。

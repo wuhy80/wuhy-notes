@@ -1,6 +1,6 @@
 ---
 version: alpha
-name: 技术笔记站（claude-paper）
+name: 格物志站（claude-paper）
 # Token 源：scripts/quartz.config.yaml 的 theme 段 + scripts/site-custom.scss
 # 改颜色/字体请改 quartz.config.yaml，改样式规则请改 site-custom.scss，
 # 本文件是二者的「契约摘要」——只描述，不承载实现。
@@ -113,7 +113,7 @@ layout:
   rail-padding: 28px 0 48px 22px
   navbar: 64px                 # 深色固定顶栏（rgba(28,28,28,.96) + 底边 1px 白 10%）
   progress-bar: 2px            # accent 色阅读进度条（纯 CSS 滚动驱动）
-  footer: 980px                # 深色页脚，与正文列同宽（含 24 内边距）
+  footer: full-width          # 深色页脚通栏横条（2026-10-25 起横跨三列，padding 26/48）
   explorer-row: 28px           # 左栏探索树行高（文件行与文件夹行统一）
   explorer-scroll: calc(100dvh - 136px)  # 探索树内滚高度 = 视口 - 顶栏 64 - 侧栏上下内边距 24/48
 components:
@@ -277,7 +277,10 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
 - **深色固定顶栏 64px**：复用左栏里的 `.page-title`（`position: fixed` 铺满宽度，
   `rgba(28,28,28,.96)` + 底边 1px 白 10%），工具栏（搜索/暗色/阅读模式）一并 fixed 到右侧；
   `#quartz-body` 加 `padding-top: 64px` 让位，左右栏 `sticky top: 64px`
-- **深色页脚 980px**（与正文列同宽，含 24 内边距；实现为 `calc(100% - 48px)` + 上限 980）：`ink` 底 + 纸色 68% 文字，padding 40/24
+- **深色页脚通栏横条**（2026-10-25 起）：`grid-template-areas` 把 `grid-footer` 提为独占整行
+  （桌面跨三列、平板跨两列，<800px 单列天然通栏），`width:100%` 吃满整行；
+  `ink` 底 + 纸色 68% 文字，padding 26/48；版权行居左、链接列居右（`space-between`），
+  链接由 `quartz.config.yaml` 的 footer 插件 `options.links` 配置（GitHub/RSS/站点地图）
 - 间距只用上面 `spacing` 里定义的值
 - <1200px 时不启用上述栅格（保持 Quartz 默认单列/抽屉），深色顶栏也不启用
 
