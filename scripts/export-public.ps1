@@ -527,7 +527,41 @@ foreach ($md in $monthDirs) {
 }
 Write-Host "  已为月索引页附加当月早报直达列表"
 
-# 4. 生成公开站首页 index.md
+# 4. 收集最近更新（按 vault 源文件的修改日期聚合）
+# 早报目录每日自动抓取，已有首页专区，不进「最近更新」；生成的 index.md/最近更新.md 不在 vault 里，天然排除
+$recentExcludeDirs = @('大模型\10-新闻\日报\')
+$recentFiles = New-Object System.Collections.Generic.List[object]
+$fileMapNow = @{}
+foreach ($d in $PublicDirs) {
+  $srcR = Join-Path $Vault $d
+  if (-not (Test-Path -LiteralPath $srcR)) { continue }
+  $preR = $srcR.Length + 1
+  foreach ($f in (Get-ChildItem -LiteralPath $srcR -Recurse -File -Filter *.md -Force -ErrorAction SilentlyContinue)) {
+    $vaultRel = "$d\$($f.FullName.Substring($preR))"
+    $skip = $false
+    foreach ($x in $ExcludeDirs) { if ($vaultRel -like "$x*") { $skip = $true; break } }
+    if (-not $skip) { foreach ($x in $recentExcludeDirs) { if ($vaultRel -like "$x*") { $skip = $true; break } } }
+    if ($skip) { continue }
+    if ($ExcludeFileNames -contains $f.Name) { continue }
+    $fileMapNow[$vaultRel] = "$($f.LastWriteTimeUtc.Ticks)"
+    $recentFiles.Add([pscustomobject]@{
+      Rel  = $vaultRel
+      Link = (($vaultRel -replace '\\', '/') -replace '\.md$', '')
+      Base = $f.BaseName
+      Dir  = ((Split-Path $vaultRel -Parent) -replace '\\', '/')
+      Date = $f.LastWriteTime.ToString('yyyy-MM-dd')
+      Ticks = $f.LastWriteTimeUtc.Ticks
+    })
+  }
+}
+# 新增判定：与上次导出的 fileMap 对比（首跑无历史时不标记，避免全库标成新增）
+$prevFileMap = @{}
+if ($prevExportState -and $prevExportState.PSObject.Properties['fileMap'] -and $prevExportState.fileMap) {
+  foreach ($p in $prevExportState.fileMap.PSObject.Properties) { $prevFileMap[$p.Name] = "$($p.Value)" }
+}
+$canMarkNew = $prevFileMap.Count -gt 0
+
+# 5. 生成公开站首页 index.md
 $dailySection = @()
 if ($recentDailies.Count -gt 0) {
   $dailySection += ''
@@ -540,6 +574,23 @@ if ($recentDailies.Count -gt 0) {
     $dateStr = if ($base -match '^(\d{4}-\d{2}-\d{2})') { $Matches[1] } else { '' }
     $dailySection += "- $dateStr — [[$base]]"
   }
+}
+
+# 最近更新区（首页展示最近 8 条；目录索引页（index/00 Index/_index）信息量低，首页过滤掉，完整流水见 [[最近更新]] 页）
+$recentSection = @()
+$topRecent = @($recentFiles | Where-Object { $_.Base -notmatch '^(index|_index|00 index)$' } | Sort-Object Ticks -Descending | Select-Object -First 8)
+if ($topRecent.Count -gt 0) {
+  $recentSection += ''
+  $recentSection += '## 最近更新'
+  $recentSection += ''
+  $recentSection += '| 日期 | 笔记 |'
+  $recentSection += '|---|---|'
+  foreach ($t in $topRecent) {
+    $disp = if ($t.Base -eq 'index') { "index（$($t.Dir)）" } else { $t.Base }
+    $recentSection += "| $($t.Date) | [[$($t.Link)\|$disp]] |"
+  }
+  $recentSection += ''
+  $recentSection += '完整更新流水（按天分段）：[[最近更新]]'
 }
 
 $homePageLines = @(
@@ -564,7 +615,7 @@ $homePageLines = @(
   '- [专项学习](/专项学习/index) — 成体系的学习计划',
   '- [读书笔记](/读书笔记/index) — 技术书与科普书的阅读记录',
   '- [网址收藏](/网址收藏/index) — 常用工具、技术社区与优质博客'
-) + $dailySection + @(
+) + $recentSection + $dailySection + @(
   '',
   '## 搜索与图谱',
   '',
@@ -576,7 +627,47 @@ $homePageLines = @(
 $homePageContent = $homePageLines -join "`n"
 $indexPath = Join-Path $Content 'index.md'
 Write-Utf8 $indexPath $homePageContent
-Write-Host "  已生成 content/index.md（含导航与最近 $($recentDailies.Count) 期早报）"
+Write-Host "  已生成 content/index.md（含导航、最近更新 $($topRecent.Count) 条与最近 $($recentDailies.Count) 期早报）"
+
+# 6. 生成「最近更新」独立页（每天一个段落，保留最近 14 个有更新的日子）
+$wdMap = @{ 'Monday' = '周一'; 'Tuesday' = '周二'; 'Wednesday' = '周三'; 'Thursday' = '周四'; 'Friday' = '周五'; 'Saturday' = '周六'; 'Sunday' = '周日' }
+$rp = @()
+$rp += '---'
+$rp += 'title: 最近更新'
+$rp += '---'
+$rp += ''
+$rp += '# 最近更新'
+$rp += ''
+$rp += '> [!info] 说明'
+$rp += '> 按笔记修改日期自动聚合，每次发布时重新生成；不含每日自动抓取的 AI 早报（早报归档见 [[00-日报索引|日报索引]]）。最多保留最近 14 个有更新的日子。'
+$rp += ''
+$dayGroups = @($recentFiles | Group-Object Date | Sort-Object Name -Descending | Select-Object -First 14)
+$dayListCap = 20   # 单日展示上限：批量整理日（全库 touch）只列最新 20 条，其余汇总
+foreach ($g in $dayGroups) {
+  $wd = ''
+  try { $wd = $wdMap[[string][datetime]::ParseExact($g.Name, 'yyyy-MM-dd', $null).DayOfWeek] } catch { $wd = '' }
+  $items = @($g.Group | Sort-Object Ticks -Descending)
+  $shown = @($items | Select-Object -First $dayListCap)
+  $newCnt = 0
+  if ($canMarkNew) { foreach ($it in $items) { if (-not $prevFileMap.ContainsKey($it.Rel)) { $newCnt++ } } }
+  $dayTitle = "$($g.Name) · $wd · $($items.Count) 篇"
+  if ($newCnt -gt 0) { $dayTitle += "（新增 $newCnt）" }
+  $rp += "## $dayTitle"
+  $rp += ''
+  foreach ($it in $shown) {
+    $disp = if ($it.Base -eq 'index') { "index（$($it.Dir)）" } else { $it.Base }
+    $mark = ''
+    if ($canMarkNew -and -not $prevFileMap.ContainsKey($it.Rel)) { $mark = ' · **新增**' }
+    $rp += "- [[$($it.Link)|$disp]] —— $($it.Dir)$mark"
+  }
+  if ($items.Count -gt $shown.Count) {
+    $rp += "- ……该日另有 $($items.Count - $shown.Count) 篇更新（多为批量整理），不逐条列出"
+  }
+  $rp += ''
+}
+$recentPagePath = Join-Path $Content '最近更新.md'
+Write-Utf8 $recentPagePath (($rp -join "`n") + "`n")
+Write-Host "  已生成 最近更新.md（$($dayGroups.Count) 个更新日，共 $(@($dayGroups | ForEach-Object { $_.Count } | Measure-Object -Sum).Sum) 条）"
 
 # 刷新 expFiles 与 nameIndex，确保新生成的 index.md 参与后续脱敏与死链校验
 $expFiles = @(Get-ChildItem -LiteralPath $Content -Recurse -File -Filter *.md -Force)
@@ -590,7 +681,8 @@ foreach ($f in $expFiles) {
   $lines = Get-Content -LiteralPath $f.FullName -Encoding UTF8
   for ($i = 0; $i -lt $lines.Count; $i++) {
     foreach ($m in [regex]::Matches($lines[$i], $linkRe)) {
-      $t = (($m.Groups[1].Value -split '\|')[0] -split '#')[0].Trim()
+      # 别名分隔符兼容 `\|`（表格里的转义写法）：切掉可选反斜杠 + 竖线，避免尾部 '\' 留在路径里造成误报
+      $t = (($m.Groups[1].Value -split '\\*\|')[0] -split '#')[0].Trim()
       if (-not $t) { continue }
       if (-not $nameIndex.ContainsKey(($t -split '/')[-1])) { [void]$dead.Add("$rel`:$($i+1)  ->  [[$t]]") }
     }
@@ -680,11 +772,11 @@ Write-Utf8 (Join-Path $Reports 'masked.md') $mk.ToString()
 
 Write-Host "  报告已写入 $Reports" -ForegroundColor Green
 
-# 记录增量状态：输入指纹 + 本次导出结果指纹（供下次运行短路）
+# 记录增量状态：输入指纹 + 本次导出结果指纹（供下次运行短路）+ 文件 mtime 快照（供「最近更新」标记新增）
 $exportSig = Get-TreeSig $Content
-@{ inputSig = $inputSig; exportSig = $exportSig; exportedAt = (Get-Date -Format 'o') } |
+@{ inputSig = $inputSig; exportSig = $exportSig; exportedAt = (Get-Date -Format 'o'); fileMap = $fileMapNow } |
   ConvertTo-Json | Set-Content -LiteralPath $ExportStatePath -Encoding UTF8
-Write-Host "  增量状态已更新（inputSig/exportSig）"
+Write-Host "  增量状态已更新（inputSig/exportSig/fileMap $($fileMapNow.Count) 项）"
 
 Write-Host ""
 Write-Host "=== 完成 ===" -ForegroundColor Green
