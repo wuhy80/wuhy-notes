@@ -154,6 +154,19 @@ function Get-LogDoneCount {
   if (-not (Test-Path -LiteralPath $WorkerLog)) { return 0 }
   return @((Get-Content -LiteralPath $WorkerLog -Encoding UTF8 | Where-Object { $_ -match '^Done (re)?building|^Done processing' })).Count
 }
+# public 是否已跟上 content（最大 mtime 比较）：
+# 防止把 worker 尚在重建的中间态部署上线——导出清空重写全目录时，watcher 的尾随重建
+# 可能在「静默窗口」判定之后才完成，实测曾出现本地 public 已新、线上部署的是旧版的竞态
+function Test-PublicFresh {
+  $pubDir = Join-Path $Quartz 'public'
+  if (-not (Test-Path -LiteralPath $pubDir)) { return $false }
+  $pubNew = (Get-ChildItem -LiteralPath $pubDir -Recurse -File -Force -ErrorAction SilentlyContinue |
+    Measure-Object LastWriteTimeUtc -Maximum).Maximum
+  $conNew = (Get-ChildItem -LiteralPath $Content -Recurse -File -Force -ErrorAction SilentlyContinue |
+    Measure-Object LastWriteTimeUtc -Maximum).Maximum
+  if (-not $pubNew -or -not $conNew) { return $false }
+  return ($pubNew -ge $conNew)
+}
 
 Write-Step "1/4 导出公开子集（脱敏 + 审查报告；内部自带增量判断）"
 $doneBaseline = Get-LogDoneCount   # worker 日志基线（导出期间 watcher 可能已触发重建）
@@ -306,18 +319,22 @@ try {
       Write-Host "  worker 在跑，等待其增量重建（至多 ${timeout}s）..."
     }
     $settled = Wait-WorkerSettle $baseline $timeout
+    # settle 成功也必须验新鲜度：静默窗口之后 worker 可能还有尾随重建在跑
+    if ($settled) {
+      $freshWait = 0
+      while (-not (Test-PublicFresh) -and $freshWait -lt 90) {
+        if ($freshWait -eq 0) { Write-Host "  worker 尚有尾随重建，等待 public 追上 content..." }
+        Start-Sleep -Seconds 5
+        $freshWait += 5
+      }
+      if (Test-PublicFresh) { Write-Host "  public 新鲜度校验通过（不早于 content 最后写入）" }
+      else { $settled = $false }
+    }
     if (-not $settled) {
       # worker 可能早已把内容建完（如导出期间已增量重建）：用 public 新鲜度判断
-      $wid = Find-WorkerPid
-      if ($wid) {
-        $pubNew = (Get-ChildItem -LiteralPath (Join-Path $Quartz 'public') -Recurse -File -Force |
-          Measure-Object LastWriteTimeUtc -Maximum).Maximum
-        $conNew = (Get-ChildItem -LiteralPath $Content -Recurse -File -Force |
-          Measure-Object LastWriteTimeUtc -Maximum).Maximum
-        if ($pubNew -ge $conNew) {
-          Write-Host "  public 修改时间晚于 content，认定已是最新（worker 早已增量建完）"
-          $settled = $true
-        }
+      if (Find-WorkerPid -and (Test-PublicFresh)) {
+        Write-Host "  public 修改时间晚于 content，认定已是最新（worker 早已增量建完）"
+        $settled = $true
       }
     }
     if (-not $settled) {
