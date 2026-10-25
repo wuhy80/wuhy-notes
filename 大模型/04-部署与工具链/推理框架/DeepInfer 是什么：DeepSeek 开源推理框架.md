@@ -61,6 +61,7 @@ aliases:
 | **本版不含** | KV Cache 系统、**VE/Prefill/Decode 分离**（引擎侧大部分已实现但未随包发布）、prefill/decode 各自的 DP 负载均衡 |
 | 致谢 | "**originally built primarily on vLLM**"，另参考了 SGLang 与 TensorRT-LLM |
 | Benchmark 环境 | prefill 用 **4 张 SM100**、decode 用 **64 张**（同一 scale-up 域） |
+| 复现与评测 | benchmark 用 `examples/sweep/run_sweep.sh` 复现；评测基准在 `eval/README.md`；构建时用 `DEEPINFER_ACCELERATOR=nvidia\|ascend` 选硬件 |
 
 ## 三、逐条核对：视频 vs 官方
 
@@ -89,7 +90,7 @@ vLLM 是通用推理引擎，强在 PagedAttention + 广覆盖；但 DeepSeek �
 - Prefill：路由专家 **EP32**、MLA 与共享专家 **DP32**，一个部署单元 4 节点，32 个冗余路由专家，每卡 9 路由 + 1 共享专家；
 - Decode：路由专家 **EP144**、MLA 与共享专家 **DP144**，一个部署单元 18 节点，每卡 2 路由 + 1 共享专家；
 - 全部 H800，矩阵与 dispatch 用 **FP8**、core-attention 与 combine 用 **BF16**；
-- 24h 实测：输入 608B token（56.3% 命中 KVCache 硬盘缓存）、输出 168B、平均 20~22 tps、prefill 每卡约 73.7k tok/s、decode 每卡约 14.8k tok/s，峰值占用 278 节点，**理论利润率 545%**。
+- 24h 实测：输入 608B token（56.3% 命中 KVCache 硬盘缓存）、输出 168B、平均 20~22 tps、prefill 吞吐约 73.7k tok/s、decode 吞吐约 14.8k tok/s（原文口径：**平均每台 H800**，即 8 卡服务器，非每卡），峰值占用 278 节点，**理论利润率 545%**。
 
 ## 五、开源版能干什么、不能干什么
 
@@ -113,7 +114,7 @@ vLLM 是通用推理引擎，强在 PagedAttention + 广覆盖；但 DeepSeek �
 
 ## 相关笔记
 
-- [[大模型/01-基础原理/推理生成/推理生成过程|推理生成过程]]
+- [[大模型/01-基础原理/推理生成过程|推理生成过程]]
 - [[大模型/04-部署与工具链/本地部署/Qwen3.8-27B 显存与 KV Cache 预算|Qwen3.8-27B 显存与 KV Cache 预算]]
 - [[大模型/05-评测与选型/性能测试/11款英伟达显卡vllm吞吐性能大测试|11 款英伟达显卡 vLLM 吞吐性能大测试]]
 - [[大模型/07-教程与课程/AI大模型原理教程-轩辕/卷四-大语言模型/26-KV 缓存、稀疏注意力与 FlashAttention|26-KV 缓存、稀疏注意力与 FlashAttention]]
@@ -130,3 +131,4 @@ vLLM 是通用推理引擎，强在 PagedAttention + 广覆盖；但 DeepSeek �
 - 「60%~85%」这个数字来自视频文案，**官方 README 无对应表述**，未核实。
 - 官方事实（模型、特性、硬件、门槛、许可证、"不含"清单、benchmark 环境）均来自 GitHub README 原文。
 - 若之后拿到完整讲稿/字幕，可回来补「逐段要点」一节。
+- **2026-10-25 复核**：通过 GitHub API 逐行核对 README（模型、特性、环境变量默认值、硬件、门槛、许可证、"不含"清单、benchmark 环境、致谢措辞）与仓库元数据（2026-10-16 创建、Apache-2.0、21.9k star / 2.5k fork），全部一致；2025-03 推理系统概览的数字（EP32/DP32、EP144/DP144、608B/168B、56.3% 命中、20~22 tps、73.7k/14.8k、278 节点、545%）经凤凰网原文逐项核对一致，**据原文修正一处单位**：吞吐为「平均每台 H800（8 卡服务器）」而非「每卡」。抖音页为反爬 JS 壳，视频互动数据无法复核，维持抓取时记录。
