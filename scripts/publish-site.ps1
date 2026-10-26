@@ -365,12 +365,18 @@ try {
 } finally { Pop-Location }
 
 # 知识库 API：把 cloudflare/_worker.js 放进产物根目录（Pages「高级模式」入口）。
-# 它在静态资源之外提供 /api/search、/api/note、/api/health，直接查 D1 里的
-# 知识库索引（绑定名 DB）。源文件不存在时跳过，未启用 D1 的部署保持纯静态。
+# 它在静态资源之外提供 /api/search、/api/semantic-search、/api/note、/api/health：
+# 前者查 D1 里的全文索引（绑定名 DB），后者载入同目录 embeddings.json 做语义搜索。
+# 源文件不存在时跳过，未启用对应能力的部署保持纯静态。
 $workerSrc = Join-Path $Vault 'cloudflare\_worker.js'
 if (Test-Path -LiteralPath $workerSrc) {
   Copy-Item -LiteralPath $workerSrc -Destination (Join-Path $PublicDir '_worker.js') -Force
   Write-Host "  已注入 _worker.js（/api/* 可用）"
+}
+$vecSrc = Join-Path $Vault 'cloudflare\embeddings.json'
+if (Test-Path -LiteralPath $vecSrc) {
+  Copy-Item -LiteralPath $vecSrc -Destination (Join-Path $PublicDir 'embeddings.json') -Force
+  Write-Host "  已注入 embeddings.json（语义搜索可用）"
 }
 
 Write-Step "4/4 部署到 Cloudflare Pages"

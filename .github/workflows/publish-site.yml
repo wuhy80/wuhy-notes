@@ -227,6 +227,30 @@ jobs:
           npm --prefix $env:WRANGLER_DIR install wrangler@4
           if ($LASTEXITCODE -ne 0) { throw "安装 wrangler 失败" }
 
+      # 语义搜索的向量索引：导出内容 → Workers AI 逐批向量化 → 写 cloudflare\embeddings.json
+      # （步骤 7 会把它连同 _worker.js 一起拷进产物）。可选功能：CI Token 需有
+      # Workers AI 权限，缺权限/失败时 continue-on-error，站点保持纯全文搜索。
+      # 本地生成同样可行：node scripts/build-embeddings.mjs --content _site\content --out cloudflare\embeddings.json
+      - name: 6b. 生成语义搜索向量索引
+        continue-on-error: true
+        shell: pwsh
+        env:
+          NODE_EXE: node
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          VAULT_DIR: ${{ github.workspace }}
+          SITE_ROOT: '${{ github.workspace }}\_site'
+        run: |
+          pwsh -NoProfile -ExecutionPolicy Bypass -File "$env:VAULT_DIR\scripts\export-public.ps1"
+          if ($LASTEXITCODE -ne 0) { throw "导出失败" }
+          $content = Join-Path $env:SITE_ROOT 'content'
+          if (-not (Test-Path -LiteralPath (Join-Path $content 'index.md'))) {
+            Write-Host "本次 run 内容未重建（增量跳过），向量索引已是最新，跳过"
+            exit 0
+          }
+          node "$env:VAULT_DIR\scripts\build-embeddings.mjs" --content $content --out "$env:VAULT_DIR\cloudflare\embeddings.json"
+          if ($LASTEXITCODE -ne 0) { throw "向量索引生成失败" }
+
       - name: 7. 导出（含脱敏）→ 套主题 → 构建 → 部署
         shell: pwsh
         env:

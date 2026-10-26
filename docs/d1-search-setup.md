@@ -56,6 +56,15 @@ Markdown（真相源） ──push──▶ publish-site.yml
 
 | 接口 | 说明 |
 |---|---|
-| `GET /api/health` | 健康检查，`db:true` 表示 D1 绑定正常 |
+| `GET /api/health` | 健康检查，`db:true` 表示 D1 绑定正常，`ai:true` 表示 Workers AI 绑定正常 |
 | `GET /api/search?q=词&limit=20` | FTS5 全文搜索，返回标题/标签/高亮摘要，limit ≤ 50 |
+| `GET /api/semantic-search?q=短句&limit=8` | 语义搜索（向量余弦），适合「意思相近」的模糊提问，limit ≤ 25 |
 | `GET /api/note?path=相对路径` | 取单篇笔记全文（含 frontmatter 字段） |
+
+## 语义搜索（/api/semantic-search）
+
+- 组件：`scripts/build-embeddings.mjs`（Workers AI `@cf/baai/bge-m3`，1024 维）+ `cloudflare/embeddings.json`（向量索引，随站点部署、isolate 内常驻内存）+ `_worker.js` 的余弦检索
+- 为什么不用 Vectorize：千篇量级暴力余弦就是毫秒级，零费用零依赖；文档过万再迁移，届时只改 `_worker.js` 的检索函数
+- CI 依赖：Token 需追加 **Workers AI → Edit** 权限；缺失时步骤 6b 自动跳过（`continue-on-error`），站点退化为只有全文搜索
+- Pages 项目需绑定 Workers AI：变量名 **`AI`**（已通过 API 配置过；手工路径：Settings → Bindings → Add → AI → 变量名 AI）
+- 验收：`curl "https://wuhy-notes.pages.dev/api/semantic-search?q=怎么发布新笔记"` → 返回最相关笔记与相似度分数
