@@ -66,19 +66,19 @@ THS has been campaigning for a public inquiry since 1988. We welcome scrutiny of
 
 > **Example Sentences:**
 > 
-> 1. "The **haemophilia** (血友病) patients required constant medical attention."
+> 1. “The **haemophilia** (血友病) patients required constant medical attention.”
 >    > 血友病患者需要持续的医疗关注。
-> 2. "The new **clotting factors** (凝血因子) revolutionized the treatment."
+> 2. “The new **clotting factors** (凝血因子) revolutionized the treatment.”
 >    > 新的凝血因子革新了治疗方法。
-> 3. "Many were unaware of their own **infection** (感染)."
+> 3. “Many were unaware of their own **infection** (感染).”
 >    > 许多人没有意识到自己的感染。
-> 4. "The **inquiry** (调查) aims to uncover the truth."
+> 4. “The **inquiry** (调查) aims to uncover the truth.”
 >    > 这项调查旨在揭示真相。
-> 5. "Their actions were **well-intentioned** (好意的) but misguided."
+> 5. “Their actions were **well-intentioned** (好意的) but misguided.”
 >    > 他们的行为是好意的，但却误导了人们。
-> 6. "Many lived in fear of **stigma** (污名) and discrimination."
+> 6. “Many lived in fear of **stigma** (污名) and discrimination.”
 >    > 许多人生活在污名和歧视的恐惧中。
-> 7. "The **recombinant** (重组的) clotting factors eliminated many risks."
+> 7. “The **recombinant** (重组的) clotting factors eliminated many risks.”
 >    > 重组凝血因子消除了许多风险。
-> 8. "An **ex-gratia** (出于善意的) payment was made to the victims."
+> 8. “An **ex-gratia** (出于善意的) payment was made to the victims.”
 >    > 受害者收到了出于善意的付款。

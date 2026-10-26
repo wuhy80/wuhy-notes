@@ -66,6 +66,6 @@ tags:
 - **关注顶会**: AI 领域的顶级会议如 NeurIPS, ICML, ICLR, CVPR, ICCV, ACL, EMNLP, AAAI, IJCAI 等是获取最新研究成果和重要论文的主要渠道。
 - **ArXiv**: 大部分 AI 论文的预印本会发布在 ArXiv (arxiv.org) 上，可以免费获取。
 
-选择哪些论文开始阅读，很大程度上取决于您的兴趣点。如果您对当前的生成式 AI 和大型语言模型感兴趣，那么 "Attention Is All You Need" 和 GPT 系列的论文会是很好的起点。如果您对计算机视觉感兴趣，AlexNet 和 ResNet 是必读的。
+选择哪些论文开始阅读，很大程度上取决于您的兴趣点。如果您对当前的生成式 AI 和大型语言模型感兴趣，那么 “Attention Is All You Need” 和 GPT 系列的论文会是很好的起点。如果您对计算机视觉感兴趣，AlexNet 和 ResNet 是必读的。
 
 祝您学习愉快！

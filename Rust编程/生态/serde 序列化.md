@@ -131,7 +131,7 @@ enum Event {
 按声明顺序**依次尝试**，第一个成功的生效。
 
 > [!warning] untagged 的两个代价
-> 1. **错误信息极差**：全部失败时只会说 "data did not match any variant"
+> 1. **错误信息极差**：全部失败时只会说 “data did not match any variant”
 > 2. **可能静默匹配错变体**：结构相似的变体容易互相吞掉
 >
 > 只在对接没有判别字段的外部接口时用，并且**一定要为它写测试**。
@@ -154,7 +154,7 @@ struct S {
 }
 ```
 
-想要"字段可以缺失，也可以是 `null`，两者都映射到 `None`"→ `Option<T>` + 不加 `default` 就够（serde 对 `Option` 默认容忍缺失）。
+想要“字段可以缺失，也可以是 `null`，两者都映射到 `None`”→ `Option<T>` + 不加 `default` 就够（serde 对 `Option` 默认容忍缺失）。
 
 ## 5. 零拷贝反序列化
 
@@ -223,7 +223,7 @@ serde_json::to_writer(std::io::BufWriter::new(out), &data)?;
 | 大整数丢精度 | JSON number 用 `f64` 中转 | 用 `String` 或 `u64`/`i128`（serde_json 支持 `arbitrary_precision` feature） |
 | 时间字段解析失败 | `chrono`/`time` 类型没有开 feature | `serde = { features = ["derive"] }` + `chrono = { features = ["serde"] }` |
 | `key must be a string` | `HashMap` 的键不是字符串类型 | 键改成 `String`，或自定义序列化为数组 |
-| 枚举报 "did not match any variant" | 用了 `untagged` | 改用 `tag = "type"`，或补测试定位 |
+| 枚举报 “did not match any variant” | 用了 `untagged` | 改用 `tag = "type"`，或补测试定位 |
 | 字段顺序变了就解析失败 | 用了 `bincode` 这类非自描述格式 | 二进制格式**必须保持字段顺序与类型不变** |
 
 > [!warning] bincode / postcard 的版本兼容
@@ -231,7 +231,7 @@ serde_json::to_writer(std::io::BufWriter::new(out), &data)?;
 
 ## 9. 兼容性策略（对接外部系统时）
 
-按"从安全到危险"排序：
+按“从安全到危险”排序：
 
 1. **加字段** → 安全，但要给 `#[serde(default)]`，否则旧数据读不出来
 2. **加别名** → 安全，`#[serde(alias = "old")]` 同时接受新旧名字

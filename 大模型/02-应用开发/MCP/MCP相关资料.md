@@ -25,7 +25,7 @@ aliases:
 > [!tip] Claude 官方 MCP 文档
 > https://modelcontextprotocol.io/introduction
 >
-> 官方的 "Get started with the Model Context Protocol (MCP)" 文档，包含完整的协议规范和入门指南
+> 官方的 “Get started with the Model Context Protocol (MCP)” 文档，包含完整的协议规范和入门指南
 
 ## 入门文章
 

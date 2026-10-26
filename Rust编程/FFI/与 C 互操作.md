@@ -12,14 +12,14 @@ status: 初稿
 # 与 C 互操作
 
 > [!summary] 一句话理解
-> FFI 的核心不是"怎么声明函数"，而是**约定所有权**：
+> FFI 的核心不是“怎么声明函数”，而是**约定所有权**：
 >
 > - 谁分配的内存，谁负责释放
 > - 跨边界不能 panic
 > - 结构体布局必须用 `#[repr(C)]` 钉住
 > - 字符串要显式转换（`CString` / `CStr`）
 >
-> 这四条搞错，就会出现"能跑但偶尔崩"的问题。
+> 这四条搞错，就会出现“能跑但偶尔崩”的问题。
 
 ## 1. 两个方向
 
@@ -143,7 +143,7 @@ unsafe fn from_c(ptr: *const c_char) -> String {
 |---|---|
 | `CString` | 拥有型、以 NUL 结尾、不含内部 NUL |
 | `CStr` | 借用的 C 字符串（**不保证 UTF-8**） |
-| `OsString` / `OsStr` | 平台上"可能非 UTF-8"的字符串（Windows 是 UTF-16） |
+| `OsString` / `OsStr` | 平台上“可能非 UTF-8”的字符串（Windows 是 UTF-16） |
 | `str::from_utf8` | 校验并转换，失败返回 `Err` |
 
 Windows 上要注意**宽字符（UTF-16）**：用 `encode_utf16` + `Vec<u16>` + 结尾 0，或直接 `windows` crate 的 `w!()` / `HSTRING`。见 [[Rust编程/FFI/调用 Windows API（windows-rs）|调用 Windows API（windows-rs）]]。
@@ -195,7 +195,7 @@ pub extern "C" fn risky() -> i32 {
 ```
 
 > [!warning] Rust 1.71 起的行为
-> 跨 `extern "C"` 边界的 panic 会**直接 abort 整个进程**。所以：**在 FFI 边界内用 `catch_unwind` 兜住**，不要指望它"传过去"给 C 处理。
+> 跨 `extern "C"` 边界的 panic 会**直接 abort 整个进程**。所以：**在 FFI 边界内用 `catch_unwind` 兜住**，不要指望它“传过去”给 C 处理。
 >
 > 需要让 panic 传播到另一个 Rust 栈帧时用 `extern "C-unwind"`。
 
@@ -209,7 +209,7 @@ pub type Callback = extern "C" fn(code: i32, user: *mut c_void);
 pub extern "C" fn set_callback(cb: Option<Callback>) { /* ... */ }
 ```
 
-`Option<extern "C" fn(...)>` 利用了**空指针优化**，大小与裸函数指针相同，这是 FFI 里表示"可空回调"的惯用法。
+`Option<extern "C" fn(...)>` 利用了**空指针优化**，大小与裸函数指针相同，这是 FFI 里表示“可空回调”的惯用法。
 
 ## 9. 验证与调试
 
@@ -231,7 +231,7 @@ pub extern "C" fn set_callback(cb: Option<Callback>) { /* ... */ }
 | 链接报 `undefined reference` | 没声明 `#[link]` / build.rs 没链接 | 检查 `cargo:rustc-link-lib` |
 | 符号找不到 | 忘了 `#[no_mangle]`，或名字被 mangle | 加属性；用 `nm` 查导出符号 |
 | C 侧读到的字段错位 | 忘了 `#[repr(C)]` | 加 `#[repr(C)]` |
-| 内存越用越多 / 崩溃 | 所有权约定不清，重复释放或泄漏 | 明确"谁分配谁释放"，配对 `into_raw`/`from_raw` |
+| 内存越用越多 / 崩溃 | 所有权约定不清，重复释放或泄漏 | 明确“谁分配谁释放”，配对 `into_raw`/`from_raw` |
 | 偶尔段错误 | C 保存了只在调用期内有效的借用 | C 侧不得长期保存借用指针 |
 | 进程直接退出无堆栈 | panic 跨边界 → abort | 边界内 `catch_unwind` |
 | 中文变乱码 | 编码假设不一致（UTF-8 vs 本地 ANSI/UTF-16） | 显式转换，Windows 用宽字符 API |

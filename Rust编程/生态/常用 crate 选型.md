@@ -197,7 +197,7 @@ fn handle(id: u64, cfg: &Config) {
 ## 2. 选型原则
 
 > [!important] 三条判断顺序
-> 1. **维护活跃度**：最近一次提交时间、是否有人接 issue、是否有安全公告。crates.io 上的"下载量高"不代表"现在还在维护"
+> 1. **维护活跃度**：最近一次提交时间、是否有人接 issue、是否有安全公告。crates.io 上的“下载量高”不代表“现在还在维护”
 > 2. **功能边界**：同一件事只留一个库。同时引入 `chrono` 和 `time`、`reqwest` 和 `hyper` 直连、两个不同的日志门面，都会让依赖树和心智负担翻倍
 > 3. **编译时间成本**：`serde` + `tokio full` + `reqwest rustls` + `clap` 四个就把小工具的编译时间推到几十秒。工具型项目可以考虑 `cargo tree -d` 查重复版本、精简 features
 
@@ -206,7 +206,7 @@ fn handle(id: u64, cfg: &Config) {
 - **不要选 `*` 版本或长期 0.x 且无人维护的库**：`0.x` 之间不保证兼容
 - **优先用标准库已有的能力**：`OnceLock`/`LazyLock`、`std::sync::mpsc`、`std::thread::scope` 已经能覆盖很多场景
 - **镜像/代理配置先做好**，否则评估依赖的体验会很差（见 [[Rust编程/工程/Cargo 工作区与依赖管理|Cargo 工作区与依赖管理]]）
-- **查文档用 [docs.rs](https://docs.rs/)，找库用 [lib.rs](https://lib.rs/)**：`lib.rs` 的分类和"最近更新"排序比 crates.io 更适合选型
+- **查文档用 [docs.rs](https://docs.rs/)，找库用 [lib.rs](https://lib.rs/)**：`lib.rs` 的分类和“最近更新”排序比 crates.io 更适合选型
 
 ## 3. 三套推荐组合
 
@@ -250,7 +250,7 @@ anyhow = "1"
 
 > [!summary] 关键判断
 > 1. Rust 标准库小是**设计选择**，生态补齐是常态
-> 2. 记住几个"默认答案"：**clap / serde / tokio / axum / reqwest / sqlx / tracing / thiserror+anyhow / rayon**
+> 2. 记住几个“默认答案”：**clap / serde / tokio / axum / reqwest / sqlx / tracing / thiserror+anyhow / rayon**
 > 3. 选型看**维护活跃度 > 功能边界 > 编译时间**，不要只看下载量
 > 4. 同一件事只留一个库；能用标准库就不加依赖
 > 5. 先把**镜像源**配好，再开始评估依赖

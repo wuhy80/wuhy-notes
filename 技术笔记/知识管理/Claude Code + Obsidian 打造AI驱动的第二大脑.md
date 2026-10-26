@@ -15,7 +15,7 @@ aliases:
 # Claude Code + Obsidian 打造AI驱动的第二大脑
 
 > [!abstract] 概述
-> 将 Claude Code 与 Obsidian 结合，让 AI 帮你管理知识库，实现真正的"第二大脑"。
+> 将 Claude Code 与 Obsidian 结合，让 AI 帮你管理知识库，实现真正的“第二大脑”。
 
 ## 为什么这个组合如此强大？
 
@@ -28,7 +28,7 @@ aliases:
 
 ### Claude Code 的解决方案
 
-> [!success] AI 不是来"辅助"的，是来"接管"的
+> [!success] AI 不是来“辅助”的，是来“接管”的
 > - 「把这篇会议记录整理好」—— 3 秒搞定
 > - 「分析我最近的学习笔记」—— 给你详细报告
 > - 「帮我把 Inbox 里的 50 篇笔记都处理了」—— 批量整理
@@ -90,9 +90,9 @@ aliases:
 
 在 Obsidian 中运行 Claude Code，指向根目录，让 Claude 访问所有笔记（约 1,500 条）。
 
-### "思考模式" vs "写作模式"
+### “思考模式” vs “写作模式”
 
-以"思考模式"开始新想法：
+以“思考模式”开始新想法：
 1. 让模型放慢速度，不急于生成文本
 2. 让 AI 提问，帮助澄清思路
 3. 设定框架后，再提供上下文材料
@@ -118,7 +118,7 @@ value to this talk."
 └── Research/       # 文章、PDF 等源材料
 ```
 
-### 重视 AI 的"阅读"能力
+### 重视 AI 的“阅读”能力
 
 > [!important] 核心观点
 > "There's entirely too much focus on AI's ability to write and not enough focus on its ability to read… I think arguably that's much more useful on a daily basis."

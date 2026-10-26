@@ -325,7 +325,7 @@ Transformer Decoder block
 ### 5.1 第一个 Multi-Head Attention
 
 > [!note] 说明
-> **Decoder block** 的第一个 Multi-Head Attention 采用了 Masked 操作，因为在翻译的过程中是顺序翻译的，即翻译完第 i 个单词，才可以翻译第 i+1 个单词。通过 Masked 操作可以防止第 i 个单词知道 i+1 个单词之后的信息。下面以 "我有一只猫" 翻译成 "I have a cat" 为例，了解一下 Masked 操作。
+> **Decoder block** 的第一个 Multi-Head Attention 采用了 Masked 操作，因为在翻译的过程中是顺序翻译的，即翻译完第 i 个单词，才可以翻译第 i+1 个单词。通过 Masked 操作可以防止第 i 个单词知道 i+1 个单词之后的信息。下面以 “我有一只猫” 翻译成 “I have a cat” 为例，了解一下 Masked 操作。
 
 * 在**Decoder** 的时候，是需要根据之前的翻译，求解当前最有可能的翻译，如下图所示。首先根据输入 "\<Begin>" 预测出第一个单词为**"I"**，然后根据输入` "<Begin> I`" 预测下一个单词 **"have"。**
 
@@ -340,7 +340,7 @@ Decoder 预测
 **第一步**：
 
 > [!note] 说明
-> 1. 是 Decoder 的输入矩阵和 Mask 矩阵，输入矩阵包含 "\<Begin> I have a cat" (0, 1, 2, 3, 4) 五个单词的表示向量，Mask 是一个 5×5 的矩阵。在 Mask 可以发现单词 0 只能使用单词 0 的信息，而单词 1 可以使用单词 0, 1 的信息，即只能使用之前的信息。
+> 1. 是 Decoder 的输入矩阵和 Mask 矩阵，输入矩阵包含 “\<Begin> I have a cat” (0, 1, 2, 3, 4) 五个单词的表示向量，Mask 是一个 5×5 的矩阵。在 Mask 可以发现单词 0 只能使用单词 0 的信息，而单词 1 可以使用单词 0, 1 的信息，即只能使用之前的信息。
 
 ![[tf-5-3.png]]
 

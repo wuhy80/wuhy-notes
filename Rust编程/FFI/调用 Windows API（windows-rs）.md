@@ -15,7 +15,7 @@ status: 初稿
 > [!summary] 一句话理解
 > `windows-rs` 是微软官方的 Rust Windows API 绑定，能调 Win32、COM、WinRT。
 >
-> 定位要摆正：**它是"系统能力层"，不是"UI 框架"**。做界面用 Tauri / egui / Slint（见 [[Rust编程/GUI/Rust 在 Windows 上的 GUI 方案选型|Rust 在 Windows 上的 GUI 方案选型]]），只在需要系统集成时用 windows-rs 补齐能力。
+> 定位要摆正：**它是“系统能力层”，不是“UI 框架”**。做界面用 Tauri / egui / Slint（见 [[Rust编程/GUI/Rust 在 Windows 上的 GUI 方案选型|Rust 在 Windows 上的 GUI 方案选型]]），只在需要系统集成时用 windows-rs 补齐能力。
 
 > [!warning] 先读这条：接口在不同版本间会变
 > `windows` crate 在 0.5x → 0.6x 之间有过好几轮调整：句柄参数在 `Option<HWND>` 与 `HWND` 之间反复、泛型 `Param<PCWSTR>` 参数被移除、部分函数从安全变为 `unsafe`。
@@ -265,7 +265,7 @@ impl Drop for OwnedHandle {
 > }
 > ```
 >
-> 这就是 [[Rust编程/性能/unsafe 的正确用法|unsafe 的正确用法]] 里讲的"安全抽象"：**`unsafe` 在内，安全接口在外**。
+> 这就是 [[Rust编程/性能/unsafe 的正确用法|unsafe 的正确用法]] 里讲的“安全抽象”：**`unsafe` 在内，安全接口在外**。
 
 ## 12. 和 GUI 怎么配合
 
@@ -276,7 +276,7 @@ UI 层    ：Tauri（Web 前端） / egui / Slint
 安全层   ：dry-run、风险分级、白名单、操作日志
 ```
 
-**不要让 windows-rs 承担整套 GUI**（Win32 手写界面成本极高）；也不要为了"纯 Rust"放弃成熟的 UI 生态。详见 [[Rust编程/GUI/Rust 在 Windows 上的 GUI 方案选型|Rust 在 Windows 上的 GUI 方案选型]]。
+**不要让 windows-rs 承担整套 GUI**（Win32 手写界面成本极高）；也不要为了“纯 Rust”放弃成熟的 UI 生态。详见 [[Rust编程/GUI/Rust 在 Windows 上的 GUI 方案选型|Rust 在 Windows 上的 GUI 方案选型]]。
 
 ## 13. 常见坑
 

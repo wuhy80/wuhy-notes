@@ -31,7 +31,7 @@ async fn fetch(url: &str) -> String { ... }
 fn fetch(url: &str) -> impl Future<Output = String> { ... }
 ```
 
-函数体被编译成一个**状态机**：每个 `.await` 是一个可能的暂停点，状态机记住"暂停在哪儿、局部变量是什么值"。
+函数体被编译成一个**状态机**：每个 `.await` 是一个可能的暂停点，状态机记住“暂停在哪儿、局部变量是什么值”。
 
 ```rust
 trait Future {
@@ -160,7 +160,7 @@ let content = tokio::fs::read_to_string("big.txt").await?;
 ```
 
 > [!warning] async 是**协作式**调度
-> 运行时不会抢占你的任务。一个阻塞调用或一个超长的纯计算循环，会把线程上排队的其他任务一起卡住。**"async 里不能有阻塞"是硬约束，不是风格建议。**
+> 运行时不会抢占你的任务。一个阻塞调用或一个超长的纯计算循环，会把线程上排队的其他任务一起卡住。**“async 里不能有阻塞”是硬约束，不是风格建议。**
 
 CPU 密集任务也不要塞给 Tokio，用 `rayon`：
 
@@ -218,7 +218,7 @@ tokio::select! {
 `select!` 会**取消**没被选中的分支——未完成的 future 直接被 drop。所以：
 
 - future 必须是**取消安全（cancel-safe）**的，否则可能丢数据
-- 循环里用 `select!` 时，注意别每次都重建一个"部分消费了数据"的 future
+- 循环里用 `select!` 时，注意别每次都重建一个“部分消费了数据”的 future
 
 ## 5. 通道与流
 
@@ -265,7 +265,7 @@ while let Some(item) = stream.next().await {
 | 文件 IO 为主 | 视情况，`spawn_blocking` 往往比 `tokio::fs` 更直接 |
 
 > [!summary] 判断标准
-> async 的收益来自**"等 IO 的时候不占线程"**。如果你的任务不是 IO 等待为主（而是算力为主），或者并发量只有几个，async 只会带来复杂度，不会带来性能。
+> async 的收益来自**“等 IO 的时候不占线程”**。如果你的任务不是 IO 等待为主（而是算力为主），或者并发量只有几个，async 只会带来复杂度，不会带来性能。
 
 ## 7. 最小可用模板
 

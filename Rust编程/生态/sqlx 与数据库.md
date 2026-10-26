@@ -119,7 +119,7 @@ cargo build
 | 适合 | 固定查询（绝大多数） | 动态筛选、报表 |
 
 > [!tip] 实用组合
-> **固定查询全用 `query!`**（把 SQL 错误挡在编译期），**动态筛选用 `QueryBuilder`**。不要因为"CI 麻烦"就放弃编译期校验——`cargo sqlx prepare` 一次配置，长期受益。
+> **固定查询全用 `query!`**（把 SQL 错误挡在编译期），**动态筛选用 `QueryBuilder`**。不要因为“CI 麻烦”就放弃编译期校验——`cargo sqlx prepare` 一次配置，长期受益。
 
 ## 5. 事务
 

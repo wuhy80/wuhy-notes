@@ -47,7 +47,7 @@
 ### 提交与推送（已取消所有自动调度）
 
 > [!important] 2026-10-03 起不再有定时备份
-> Windows 计划任务 `ObsidianVaultBackup` 与 DSH 看板卡的定时**都已停用**（用户明确要求"提交推送也不需要自动"）。
+> Windows 计划任务 `ObsidianVaultBackup` 与 DSH 看板卡的定时**都已停用**（用户明确要求“提交推送也不需要自动”）。
 > **约定：DSH 每次完成改动后顺手提交并推送**，不要指望定时任务兜底。
 
 - **脚本**：`scripts/backup-vaults.mjs`（Node 版，一次处理主库与私密库；等价于 `backup-vaults.ps1`）
@@ -366,7 +366,7 @@ dv.pages().file.etags.distinct().length // 唯一标签计数
 - 向量数据库存储嵌入以进行语义搜索
 - Smart blocks（最小 200 字符）自动嵌入
 - 排除的文件夹：`smart-chats/`
-- 文件排除："Untitled"
+- 文件排除：“Untitled”
 - 数据库以 `.ajson` 格式存储在 `.smart-env/multi/` 中
 
 ### 性能考虑

@@ -78,7 +78,7 @@ class CustomAssistantAgent(AssistantAgent):
         prompt = """
         你是一个支持工具调用的 AI。如果用户的问题需要调用外部工具，请按以下格式返回：
         ```json
-        {"function": "函数名", "arguments": {"参数1": "值1", "参数2": "值2"}}
+        {"function": “函数名”, "arguments": {“参数1”: “值1”, “参数2”: “值2”}}
         ```
         当前可用工具：
         - get_weather(location: str): 查询天气

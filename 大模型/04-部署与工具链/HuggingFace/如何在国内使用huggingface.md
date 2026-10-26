@@ -97,7 +97,7 @@ ModelScope (魔搭社区) 是阿里巴巴达摩院推出的模型社区，也提
     *   在**网络条件较好**的机器上，访问 Hugging Face 模型页面：
         [https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2/tree/main](https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2/tree/main)
         (或者通过镜像访问：`https://hf-mirror.com/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2/tree/main`)
-    *   点击 "Files and versions" 标签页。
+    *   点击 “Files and versions” 标签页。
     *   下载该目录下**所有**文件（特别是 `pytorch_model.bin`、`config.json`、`tokenizer.json`、`vocab.txt`、`modules.json`、`sentence_bert_config.json` 等）。
     *   将所有下载的文件放在目标服务器上的一个**本地文件夹**内，例如：
         `/data/models/paraphrase-multilingual-MiniLM-L12-v2`

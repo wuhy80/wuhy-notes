@@ -120,7 +120,7 @@
   - **绕过方式**：执行命令时显式带 `danger-full-access` 升级（每次需用户授权一次）。这是当前唯一可用通道。
   - **更新不能解决**：本机已是官方最新 nightly `0.2.0-rc.2`（2026-09-29），缓存安装器与官方源 SHA512 一致。
   - **`pwshPath` 补丁是承重墙**：pwsh 7 未安装，profile 补丁 `desktop\cordis.patch.yml` 把 shell 指向 `C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe`（5.1）。**删掉它会导致完全没有 shell 通道。**
-  - 相关上游报告：deepseek-harness discussions #810、#1847、#1344（均未覆盖本机的"受限令牌下多种 shell 全挂"这一形态）。
+  - 相关上游报告：deepseek-harness discussions #810、#1847、#1344（均未覆盖本机的“受限令牌下多种 shell 全挂”这一形态）。
 - 对个人信息、账户、证书、财务记录等内容保持谨慎，不在最终回复中暴露敏感细节。
 - 搜索文件时优先使用 `rg` / `rg --files`；Windows PowerShell 环境下注意中文路径编码。
 - 如果 PowerShell 输出乱码，使用 `Get-Content -Encoding UTF8` 重新读取。

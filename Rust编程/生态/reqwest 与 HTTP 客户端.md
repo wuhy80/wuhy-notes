@@ -87,7 +87,7 @@ impl ApiClient {
 | 单次请求覆盖 | `.timeout(d)` on `RequestBuilder` | 某个慢接口单独放宽 |
 
 > [!warning] 不设超时是最常见的生产事故
-> 默认情况下 reqwest 没有总超时。对端"半开连接"（收到请求但不响应）会让任务永远挂着，配合 `join_all` 直接把服务拖垮。**任何面向网络的代码都必须显式设超时。**
+> 默认情况下 reqwest 没有总超时。对端“半开连接”（收到请求但不响应）会让任务永远挂着，配合 `join_all` 直接把服务拖垮。**任何面向网络的代码都必须显式设超时。**
 
 ## 4. 常见请求形态
 
@@ -118,7 +118,7 @@ while let Some(chunk) = resp.chunk().await? {
 > [!note] body 只能读一次
 > `resp.text()`、`resp.json()`、`resp.bytes()` 都会**消耗** body。想要先看内容再按类型解析，就 `let text = resp.text().await?;` 然后自己 `serde_json::from_str(&text)`。
 >
-> 反过来，只在解析失败时才需要看到原文的场景，应该**先取 text 再解析**——否则错误信息里就只有 "expected value at line 1"。
+> 反过来，只在解析失败时才需要看到原文的场景，应该**先取 text 再解析**——否则错误信息里就只有 “expected value at line 1”。
 
 ## 5. 状态码与错误处理
 
@@ -210,7 +210,7 @@ let body = client.get(url).send()?.text()?;
 ```
 
 > [!warning] 阻塞客户端不能在 async 里用
-> `blocking` 版本内部会自己建运行时，在 Tokio 上下文里调用会 panic（"Cannot drop a runtime in a context where blocking is not allowed"）。异步环境里必须用异步 API；确实要调同步代码，用 `tokio::task::spawn_blocking`。
+> `blocking` 版本内部会自己建运行时，在 Tokio 上下文里调用会 panic（“Cannot drop a runtime in a context where blocking is not allowed”）。异步环境里必须用异步 API；确实要调同步代码，用 `tokio::task::spawn_blocking`。
 
 ## 9. 常见坑速查
 

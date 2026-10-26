@@ -33,7 +33,7 @@ aliases:
 
 | 术语 | 音标 | 释义 |
 |------|------|------|
-| **Reasoning** | /ˈriːzənɪŋ/ | 推理；指 LLM 通过"思考链"逐步解决问题的能力 |
+| **Reasoning** | /ˈriːzənɪŋ/ | 推理；指 LLM 通过“思考链”逐步解决问题的能力 |
 | **Inference-scaling** | /ˈɪnfərəns ˈskeɪlɪŋ/ | 推理扩展；通过增加推理时的计算量来提升模型性能 |
 | **RLVR** (Reinforcement Learning from Verifiable Rewards) | - | 可验证奖励强化学习；训练模型的新方法 |
 | **Agent** | /ˈeɪdʒənt/ | 智能体；能够自主使用工具完成任务的 LLM 系统 |
@@ -82,7 +82,7 @@ aliases:
 > [!important] 2025 年 LLM 领域十大要点
 
 ### 1. 推理模型成为主流 (Reasoning Models)
-- **核心变化**：从 OpenAI 的 o1 开始，"推理"成为 2025 年最重要的技术突破
+- **核心变化**：从 OpenAI 的 o1 开始，“推理”成为 2025 年最重要的技术突破
 - **工作原理**：通过 RLVR（可验证奖励强化学习）训练，模型学会将问题分解为中间步骤
 - **实际价值**：
   - AI 辅助搜索终于可用了
@@ -126,13 +126,13 @@ aliases:
 - **Ghiblification**：将照片转换为吉卜力风格成为病毒式传播
 
 ### 8. Vibe Coding 的兴起与误解
-- **原始定义**：完全依赖 AI，"忘记代码的存在"，适用于一次性项目
+- **原始定义**：完全依赖 AI，“忘记代码的存在”，适用于一次性项目
 - **被误解为**：任何使用 AI 辅助的编程
-- **作者观点**：应该保留原始定义，专业开发应叫"Vibe Engineering"
+- **作者观点**：应该保留原始定义，专业开发应叫“Vibe Engineering”
 
 ### 9. MCP 可能只是过渡方案
 - **快速崛起**：OpenAI、Anthropic、Mistral 在 8 天内都支持了 MCP
-- **潜在问题**：编程 Agent 证明 Bash 才是最好的"工具"
+- **潜在问题**：编程 Agent 证明 Bash 才是最好的“工具”
 - **替代方案**：Anthropic 的 Skills 机制更简单有效
 
 ### 10. 本地模型 vs 云端模型
@@ -718,7 +718,7 @@ As an obsessive collector of ==neologisms== (新词), here are my own favourites
 - [==Slopsquatting==](https://simonwillison.net/2025/Apr/12/andrew-nesbitt/) by Seth Larson, where an LLM ==hallucinates== (幻觉) an incorrect package name which is then maliciously registered to deliver malware.
 - [==Vibe scraping==](https://simonwillison.net/2025/Jul/17/vibe-scraping/) —another of mine that didn't really go anywhere, for scraping projects implemented by coding agents driven by prompts.
 - [==Asynchronous coding agent==](https://simonwillison.net/2025/Aug/6/asynchronous-coding-agents/) for Claude for web / Codex cloud / Google Jules
-- [==Extractive contributions==](https://simonwillison.net/2025/Oct/2/nadia-eghbal/) by Nadia Eghbal for open source contributions where "the ==marginal cost== (边际成本) of reviewing and merging that contribution is greater than the ==marginal benefit== (边际收益) to the project's producers".
+- [==Extractive contributions==](https://simonwillison.net/2025/Oct/2/nadia-eghbal/) by Nadia Eghbal for open source contributions where “the ==marginal cost== (边际成本) of reviewing and merging that contribution is greater than the ==marginal benefit== (边际收益) to the project's producers”.
 
 #### That’s a wrap for 2025
 

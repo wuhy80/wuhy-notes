@@ -22,7 +22,7 @@ source:
 
 > [!summary] 一句话
 > TileLang 是「用 Python 写 tile 级数据流、把调度交给编译器」的算子 DSL，编译器基础设施基于 TVM。它把手工调优 CUDA 的经验固化成编译器能力，并已扩展到英伟达、AMD、Apple Metal、CPU，以及华为昇腾 950 和一批国产卡。
-> **它不是 CUDA 翻译器**——没有 CUDA 前端，不解析 `.cu`，不能把现有 CUDA 代码"翻译"成昇腾。
+> **它不是 CUDA 翻译器**——没有 CUDA 前端，不解析 `.cu`，不能把现有 CUDA 代码“翻译”成昇腾。
 
 ## 一、它解决什么问题
 
@@ -54,14 +54,14 @@ TileLang 的核心主张是 **把「调度空间」从「数据流」里拆出�
 | 2025-02-12 | v0.1.0 | 第一个正式版本 |
 | 2025-04 | 论文 [arXiv:2504.17577](https://arxiv.org/abs/2504.17577)（北大 × 微软亚研） | 方法论确立：dataflow / scheduling 解耦 |
 | 2025-09-29 | [DeepSeek-V3.2-Exp](https://www.deepseek.com/news/v3-2-exp/) 发布，同时开源 TileLang 与 CUDA 两种算子实现；同日 Ascend 适配工作以独立仓库 [tilelang-ascend](https://github.com/tile-ai/tilelang-ascend) 开源 | 大模型厂背书，进入生产工作流 |
-| 2026-09-30 | 主仓库加入 **Ascend 950 后端**（官方支持级别）；媒体同日报道 DeepSeek 开源整套昇腾基础设施组件 | 从"英伟达生态里的 DSL"变成"跨芯片算子层" |
+| 2026-09-30 | 主仓库加入 **Ascend 950 后端**（官方支持级别）；媒体同日报道 DeepSeek 开源整套昇腾基础设施组件 | 从“英伟达生态里的 DSL”变成“跨芯片算子层” |
 | 据 ICLR 2026 会议页面 | 论文以 *Bridge Programmability and Performance in Modern Neural Kernels* 为题入选 oral | 学术认可 |
 
 ### 三层意义
 
-**技术层**：把"资深工程师的手感"变成可复用的编译器 pass。同一个 tile 数据流，可以让编译器去决定布局与流水线，而不是每个 kernel 重写一遍。
+**技术层**：把“资深工程师的手感”变成可复用的编译器 pass。同一个 tile 数据流，可以让编译器去决定布局与流水线，而不是每个 kernel 重写一遍。
 
-**产业层**：DeepSeek 把"双实现"范式制度化了——先用 TileLang 快速原型，**以 TileLang 版本作为精度基线**，再手写底层语言追峰值性能，两个版本一起开源。这解决了"探索速度 vs 峰值性能"的长期矛盾。
+**产业层**：DeepSeek 把“双实现”范式制度化了——先用 TileLang 快速原型，**以 TileLang 版本作为精度基线**，再手写底层语言追峰值性能，两个版本一起开源。这解决了“探索速度 vs 峰值性能”的长期矛盾。
 
 **生态层**：昇腾侧开放 Ascend C API 与 PTO ISA 底层指令体系来承接 TileLang 后端；华为为 DeepSeek 定制 SuperPoD Flex / UBL128 组网（128 卡 3.2Tbps 单层 Scale-up、256K 卡两层 Scale-out），DeepSeek 反过来把算子库开源进 CANN 社区。**分工顺序反了**：过去 DSL + ISA 是芯片厂的地盘，现在模型厂定义上层语言、芯片厂做适配。
 
@@ -69,7 +69,7 @@ TileLang 的核心主张是 **把「调度空间」从「数据流」里拆出�
 > DeepEP 实测 Dispatch **375 GB/s**、Combine **347 GB/s**；DeepSeek-V4.1-Flash 在昇腾 950 超节点上 TPOT=5ms 时每卡 **2469 tokens/s**、TPOT=10ms 时 **5102 tokens/s**。注意这些是**离线推理**模式、指定 EP32 部署、Context 128K、投机接受率 0.85 的设定，不含 Serving 调度与框架负载均衡。
 
 > [!warning] 边界
-> 昇腾 950 后端在主仓库，但 A2/A3 走的是独立仓库（`ascendc` / `pto` / `npuir` 三个 target），**不进 release wheel**，兼容节奏独立。"同一个 DSL"在这两条线之间不能直接搬代码。
+> 昇腾 950 后端在主仓库，但 A2/A3 走的是独立仓库（`ascendc` / `pto` / `npuir` 三个 target），**不进 release wheel**，兼容节奏独立。“同一个 DSL”在这两条线之间不能直接搬代码。
 
 ## 三、怎么用
 
@@ -198,7 +198,7 @@ def matmul_relu(A, B, block_M: int = 256, block_N: int = 224, block_K: int = 128
 
 - `auto` target 会自动探测 CUDA / HIP / Metal / Ascend；跨架构编译时显式指定。
 - **Ecosystem 那批不在 release wheel 里**，要各自装，兼容节奏独立。
-- 一个有意思的细节：主仓库 README 指引「移植新后端」时，让你去用 `.agents/skills/tilelang-backend/SKILL.md` —— **"给 TileLang 加一个后端"已经做成喂给 coding agent 的 skill 了**。这也解释了为何国产卡厂商愿意接这个生态。
+- 一个有意思的细节：主仓库 README 指引「移植新后端」时，让你去用 `.agents/skills/tilelang-backend/SKILL.md` —— **“给 TileLang 加一个后端”已经做成喂给 coding agent 的 skill 了**。这也解释了为何国产卡厂商愿意接这个生态。
 
 ### 3.6 昇腾的两条线（最容易踩坑）
 
@@ -218,7 +218,7 @@ def matmul_relu(A, B, block_M: int = 256, block_N: int = 224, block_K: int = 128
 
 官方 examples 已覆盖 GEMM、分组 GEMM、FP8 GEMM、反量化 GEMM、block-scaled GEMM、FlashAttention、Flash Decoding、块稀疏注意力、线性注意力、GDN、DeepSeek MLA / V3.2 / V4 / mHC、softmax、归一化、激活、sort、scan、conv、dispatch-combine。
 
-而且边界在持续外扩——这些原本"只能手写"的能力逐个被吃进来：
+而且边界在持续外扩——这些原本“只能手写”的能力逐个被吃进来：
 
 | 时间 | 补上的能力 |
 |---|---|
@@ -283,12 +283,12 @@ T.CUDASourceCodeKernel    # 2026-04 新增：整个内核直接嵌 CUDA 源码
 ## 五、关键认知
 
 > [!important] 它不是一个 CUDA 替代品，而是 CUDA 之上的一层生成器
-> TileLang 最终生成的就是 CUDA C（也有 HIP C、Ascend C、Metal、LLVM IR）。所以真正的取舍不是"用不用 CUDA"，而是：
+> TileLang 最终生成的就是 CUDA C（也有 HIP C、Ascend C、Metal、LLVM IR）。所以真正的取舍不是“用不用 CUDA”，而是：
 > **你愿不愿意把 layout inference、自动流水、自动同步、tile 调度的控制权交给编译器 pass。**
 > 交出去，换来跨平台和开发速度；不交，就得自己手写——而 TileLang 也留好了台阶：注解、原语、autotune、IR dump、pass diff、escape hatch。
 
 > [!note] 迁移是增量的，不是重写一遍
-> 现实中没人为了迁而迁：新算子用 TileLang 写、老算子在需要改动时顺手迁、性能关键的保持手写。DeepSeek 在 V3.2-Exp 上就是**每个算子同时开源 TileLang 版和 CUDA 版、TileLang 版当基准**——这本身就是对"能不能全用 TileLang 写"最诚实的回答：能写出正确且性能不错的版本，但峰值那一档仍然留给手写。
+> 现实中没人为了迁而迁：新算子用 TileLang 写、老算子在需要改动时顺手迁、性能关键的保持手写。DeepSeek 在 V3.2-Exp 上就是**每个算子同时开源 TileLang 版和 CUDA 版、TileLang 版当基准**——这本身就是对“能不能全用 TileLang 写”最诚实的回答：能写出正确且性能不错的版本，但峰值那一档仍然留给手写。
 
 ## 六、学习与上手
 
@@ -301,7 +301,7 @@ T.CUDASourceCodeKernel    # 2026-04 新增：整个内核直接嵌 CUDA 源码
 ## 附录：国内获取 GitHub 资料
 
 > [!warning] 踩过的坑
-> 直连 `github.com` 与 `raw.githubusercontent.com` 在这台机器上全部 `fetch failed`，而 `infoq.cn`、`qbitai.com`、`deepseek.com` 正常——典型的 DNS 污染或 TLS SNI 阻断，**不是"没网"**。
+> 直连 `github.com` 与 `raw.githubusercontent.com` 在这台机器上全部 `fetch failed`，而 `infoq.cn`、`qbitai.com`、`deepseek.com` 正常——典型的 DNS 污染或 TLS SNI 阻断，**不是“没网”**。
 > 诊断三连：`nslookup github.com`（解析到 127.0.0.1/0.0.0.0 即污染）、`Test-NetConnection github.com -Port 443`、`curl.exe -v https://github.com`（TLS 阶段 reset 即 SNI 阻断）。
 
 实测可用的镜像前缀（2026-09-30 验证，返回 200）：
