@@ -35,7 +35,6 @@ updated: 2026-10-15
 
 > [!note] 编程语言与专项学习
 > - [[编程语言/README|编程语言]] ｜ [[Golang编程/README|Golang]] ｜ [[Rust编程/README|Rust]]
-> - [[专项学习/机器学习学习/README|机器学习 3 个月规划]]
 > - [[专项学习/大模型学习/学习大纲-Transformer架构|Transformer 学习大纲]]
 > - [[英语学习/文章荟萃/00 Index|英语学习：文章荟萃]]
 
