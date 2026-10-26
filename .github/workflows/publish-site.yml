@@ -238,6 +238,35 @@ jobs:
           pwsh -NoProfile -ExecutionPolicy Bypass -File "$env:VAULT_DIR\scripts\publish-site.ps1"
           if ($LASTEXITCODE -ne 0) { throw "发布失败" }
 
+      # 全库灌入 D1（FTS 全文索引），供站点 /api/search 查询。可选功能：
+      # 未配置 secrets.D1_DATABASE_ID 时跳过；导出被增量判断跳过时同样跳过
+      # （内容没变，数据库已是最新）。配置步骤见 docs/d1-search-setup.md。
+      - name: 7b. 同步知识库索引到 D1
+        shell: pwsh
+        env:
+          NODE_EXE: node
+          WRANGLER_JS: '${{ github.workspace }}\_wrangler\node_modules\wrangler\bin\wrangler.js'
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}
+          VAULT_DIR: ${{ github.workspace }}
+          SITE_ROOT: '${{ github.workspace }}\_site'
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:D1_DATABASE_ID)) {
+            Write-Host "未配置 secrets.D1_DATABASE_ID，跳过 D1 同步（配置方法见 docs/d1-search-setup.md）"
+            exit 0
+          }
+          $content = Join-Path $env:SITE_ROOT 'content'
+          if (-not (Test-Path -LiteralPath (Join-Path $content 'index.md'))) {
+            Write-Host "本次 run 内容未重建（增量跳过），D1 已是最新，跳过同步"
+            exit 0
+          }
+          node "$env:VAULT_DIR\scripts\build-d1-index.mjs" --content $content --out "$env:SITE_ROOT\d1-index.sql"
+          if ($LASTEXITCODE -ne 0) { throw "索引 SQL 生成失败" }
+          node $env:WRANGLER_JS d1 execute wuhy-notes-kb --remote --file "$env:SITE_ROOT\d1-index.sql" -y
+          if ($LASTEXITCODE -ne 0) { throw "D1 同步失败" }
+          Write-Host "D1 知识库索引已更新（数据库 wuhy-notes-kb）"
+
       - name: 8. 汇总（脱敏校验必须全为 0）
         if: always()
         shell: pwsh

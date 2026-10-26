@@ -364,6 +364,15 @@ try {
   }
 } finally { Pop-Location }
 
+# 知识库 API：把 cloudflare/_worker.js 放进产物根目录（Pages「高级模式」入口）。
+# 它在静态资源之外提供 /api/search、/api/note、/api/health，直接查 D1 里的
+# 知识库索引（绑定名 DB）。源文件不存在时跳过，未启用 D1 的部署保持纯静态。
+$workerSrc = Join-Path $Vault 'cloudflare\_worker.js'
+if (Test-Path -LiteralPath $workerSrc) {
+  Copy-Item -LiteralPath $workerSrc -Destination (Join-Path $PublicDir '_worker.js') -Force
+  Write-Host "  已注入 _worker.js（/api/* 可用）"
+}
+
 Write-Step "4/4 部署到 Cloudflare Pages"
 if ($SkipDeploy) {
   Write-Host "  已跳过部署（-SkipDeploy）" -ForegroundColor Yellow
