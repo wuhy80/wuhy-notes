@@ -8,9 +8,9 @@ CONTENT_DIR="$VAULT_DIR/_site/content"
 # 发布范围
 PUBLIC_DIRS=(
   "技术笔记" "大模型" "Ontology"
-  "Golang编程" "Rust编程" "编程语言"
+  "Golang编程" "Rust编程"
   "读书笔记" "英语学习" "数学学习"
-  "网址收藏" "专项学习"
+  "网址收藏"
 )
 
 # 排除目录
@@ -87,7 +87,6 @@ title: 技术笔记
 | [技术笔记](/技术笔记/) | Kubernetes、Docker、Linux、数据库、网络、编辑器等 |
 | [Golang 编程](/golang编程/) | Go 语言、Gin、GORM、并发与性能 |
 | [读书笔记](/读书笔记/) | 技术书与科普书的阅读记录 |
-| [编程语言](/编程语言/) | 语言特性与对比 |
 | [Rust 编程](/rust编程/) | Rust 学习笔记 |
 
 ## 怎么用这个站

@@ -39,9 +39,9 @@ $Node     = Get-EnvOr 'NODE_EXE' 'C:\nvm4w\nodejs\node.exe'
 #   · Dataview 仪表盘（Home*.md，静态站不执行 Dataview，会显示成代码）
 $PublicDirs = @(
   '技术笔记', '大模型', 'Ontology',
-  'Golang编程', 'Rust编程', '编程语言',
+  'Golang编程', 'Rust编程',
   '读书笔记', '英语学习', '数学学习',
-  '网址收藏', '专项学习'
+  '网址收藏'
 )
 # 文件名级排除（任何层级）
 $ExcludeFileNames = @('CLAUDE.md', 'AGENTS.md')
@@ -642,10 +642,8 @@ $homePageLines = @(
   '- [Ontology 知识模型](/Ontology/README) — Palantir 核心模型、概念与开发指南',
   '- [Golang 编程](/golang编程/index) — Go 语言、Gin、GORM、并发与性能',
   '- [Rust 编程](/rust编程/index) — Rust 学习笔记',
-  '- [编程语言](/编程语言/index) — 语言特性与对比',
   '- [数学学习](/数学学习/index) — 机器学习需要的数学基础',
   '- [英语学习](/英语学习/index) — 词汇、阅读与写作练习',
-  '- [专项学习](/专项学习/index) — 成体系的学习计划',
   '- [读书笔记](/读书笔记/index) — 技术书与科普书的阅读记录',
   '- [网址收藏](/网址收藏/index) — 常用工具、技术社区与优质博客'
 ) + $recentSection + $dailySection + @(

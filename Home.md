@@ -13,7 +13,7 @@ updated: 2026-10-15
 > 本库是**可公开**的技术与学习知识库，只保留技术笔记、大模型研究、Ontology 与学习资料。
 > 个人任务、日记、投资、客户项目资料已迁至私密库 `E:\Obsidian\wuhy80_private`，本页不再放会指向空目录的查询。
 >
-> [[技术笔记/技术笔记|技术笔记]] · [[大模型/00-大模型学习导航|大模型]] · [[Ontology/README|Ontology]] · [[编程语言/README|编程语言]] · [[大模型/10-新闻/日报/00-日报索引|AI 早报]] · [[读书笔记/读书列表|读书]] · [[网址收藏/网址收藏|网址收藏]] · [[Home-分析面板|分析面板]]
+> [[技术笔记/技术笔记|技术笔记]] · [[大模型/00-大模型学习导航|大模型]] · [[Ontology/README|Ontology]] · [[大模型/10-新闻/日报/00-日报索引|AI 早报]] · [[读书笔记/读书列表|读书]] · [[网址收藏/网址收藏|网址收藏]] · [[Home-分析面板|分析面板]]
 
 ## 快速入口
 
@@ -34,7 +34,7 @@ updated: 2026-10-15
 > - [[Ontology/README|Ontology 总览]]：[[Ontology/00-总览/Palantir Ontology 资料索引|资料索引]] · [[Ontology/90-阅读路线/Palantir Ontology 阅读路线|阅读路线]]
 
 > [!note] 编程语言与专项学习
-> - [[编程语言/README|编程语言]] ｜ [[Golang编程/README|Golang]] ｜ [[Rust编程/README|Rust]]
+> - [[Golang编程/README|Golang]] ｜ [[Rust编程/README|Rust]]
 > - [[英语学习/文章荟萃/00 Index|英语学习：文章荟萃]]
 
 > [!abstract] 阅读与收藏
