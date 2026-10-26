@@ -242,6 +242,9 @@ jobs:
       # 未配置 secrets.D1_DATABASE_ID 时跳过；导出被增量判断跳过时同样跳过
       # （内容没变，数据库已是最新）。配置步骤见 docs/d1-search-setup.md。
       - name: 7b. 同步知识库索引到 D1
+        # continue-on-error：CI 的 CLOUDFLARE_API_TOKEN 若还没补 D1 Edit 权限，
+        # 同步会鉴权失败——发布本身在第 7 步已经成功，不该因此标红整个 run。
+        continue-on-error: true
         shell: pwsh
         env:
           NODE_EXE: node
