@@ -15,7 +15,7 @@ status: 已完成
 > - **原 PDF**：`附件/大模型/行业报告/2026重点AI报告/The Shift to Agentic AI - Evidence from Codex.pdf`（本笔记由其全文自动提取生成，作为移除原 PDF 后的存档）
 > - **提取方式**：PyMuPDF (pymupdf4llm)，共 50 页；自动转换对复杂表格与矢量图表的还原可能有失真，关键图表以嵌入 PNG 为准
 > - **公开来源**：https://openai.com/research
-> - **配图存档**：`附件/报告全文图片/codex26/`，共 36 张
+> - **配图存档**：`附件/大模型/报告全文图片/codex26/`，共 36 张
 
 # THE SHIFT TO AGENTIC AI: EVIDENCE FROM CODEX 
 
