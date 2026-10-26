@@ -121,7 +121,8 @@ function main() {
 
   const parts = [
     "-- 由 scripts/build-d1-index.mjs 生成：全量重建式导入，可直接重复执行",
-    "BEGIN TRANSACTION;",
+    "-- 注意：D1 远程执行不允许 BEGIN/COMMIT 语句，这里不用显式事务；",
+    "-- 中途失败会留下半新半旧的数据，重跑本脚本即可自愈",
     "DROP TABLE IF EXISTS notes_fts;",
     "DROP TABLE IF EXISTS notes;",
     `CREATE TABLE notes (
@@ -145,7 +146,6 @@ function main() {
     );
   }
   parts.push("INSERT INTO notes_fts(rowid,title,tags,body) SELECT id,title,tags,body FROM notes;");
-  parts.push("COMMIT;");
   const sql = parts.join("\n") + "\n";
 
   if (DRY_RUN) {
