@@ -129,7 +129,7 @@ flowchart LR
 ## 四、背后的 Yunjue Agent
 
 > [!info] 本地论文
-> ![[附件/大模型/Agent/Yunjue Agent Tech Report.pdf]]
+> 全文存档：[[云玦 Yunjue Agent Tech Report 全文提取|云玦 Tech Report 全文提取]]（原 PDF 已移除）
 
 - 论文：[Yunjue Agent Tech Report](https://arxiv.org/abs/2601.18226)
 - 代码：[YunjueTech/Yunjue-Agent](https://github.com/YunjueTech/Yunjue-Agent)

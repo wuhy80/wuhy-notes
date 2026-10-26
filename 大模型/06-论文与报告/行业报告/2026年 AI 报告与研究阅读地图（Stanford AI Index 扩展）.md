@@ -225,4 +225,4 @@ aliases:
 - [[2026 斯坦福 AI 指数报告解读]]
 - [[2026 斯坦福 AI 指数报告 5分钟速读]]
 - [[2026 五份重点AI报告与研究解读（第1批）]]
-- ![[AI Index Report 2026 - Stanford HAI.pdf]]
+- 全文存档：[[Stanford AI Index Report 2026 全文提取|AI Index 2026 全文提取]]（原 PDF 已移除）
