@@ -18,7 +18,7 @@ status: 已完成
 > - **作者**：Pedro Domingos（华盛顿大学计算机科学与工程系教授）
 > - **发表**：Communications of the ACM，2012 年 10 月，Vol. 55，No. 10，pp. 78–87
 > - **DOI**：[10.1145/2347736.2347755](https://doi.org/10.1145/2347736.2347755)
-> - **原文 PDF**：![[A Few Useful Things to Know About Machine Learning.pdf]]
+> - **原文 PDF**：[A Few Useful Things to Know About Machine Learning（作者主页原版）](https://homes.cs.washington.edu/~pedrod/papers/cacm12.pdf)
 > - **一句话总结**：把机器学习研究者与从业者积累了多年的"民间知识"（folk knowledge）整理成 12 条可操作的经验，帮你避开实践中的坑。
 > - **学习路径中的位置**：这是 [[从浅入生的推荐一系列的论文学习|从浅入深论文学习清单]] 的第 1 篇，适合在啃任何具体算法论文之前先读。
 
@@ -1093,7 +1093,6 @@ Domingos 综述了机器学习中奥卡姆剃刀问题的主要论证与证据�
 
 - 原文（作者主页 PDF）：[A Few Useful Things to Know About Machine Learning](https://homes.cs.washington.edu/~pedrod/papers/cacm12.pdf)
 - DOI：[10.1145/2347736.2347755](https://doi.org/10.1145/2347736.2347755)
-- 本库 PDF：![[A Few Useful Things to Know About Machine Learning.pdf]]
 - 学习清单：[[从浅入生的推荐一系列的论文学习]]
 
 <details>
