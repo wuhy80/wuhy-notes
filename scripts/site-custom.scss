@@ -378,6 +378,58 @@ $headingFontStack: "AlimamaShuHeiTi", "Noto Sans SC", -apple-system,
   font-display: swap;
 }
 
+// 正文西文字体：Source Sans Pro（自托管 latin 子集 woff2，发布流水线拷入
+// Quartz static/font/source-sans-pro/）。
+// ⚠️ 正文字体栈必须西文打头：中文黑体打头时，西文弯引号与撇号
+// （U+2018/2019/201C/201D）落到黑体的全角字形上，英文会出现 `world’ s`、
+// `“often make mistakes”` 式的怪空隙（2026-10-26 线上实测病灶）。
+// 选 Source Sans Pro 是因为思源黑体（Noto Sans CJK）的拉丁部分本就源自
+// Source Sans 家族，与 Noto Sans SC / 苹方 / 雅黑混排时字重与 x-height 最协调。
+// 代价（已确认接受）：中文段落里的引号、破折号、省略号也转为西文宽度。
+@font-face {
+  font-family: "Source Sans Pro";
+  src: url("/static/font/source-sans-pro/latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Source Sans Pro";
+  src: url("/static/font/source-sans-pro/latin-400-italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Source Sans Pro";
+  src: url("/static/font/source-sans-pro/latin-600-normal.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Source Sans Pro";
+  src: url("/static/font/source-sans-pro/latin-700-normal.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 // 整页铺满参考站的纸色 #F5EDDB。
 // 参考站是「一整片暖纸 + 白色卡片」两层结构（其 .ai-llm-scope 就是 --paper），
 // 而主题把 --claude-paper-surface(#faf9f5) 画在 #quartz-body、把
@@ -488,12 +540,12 @@ html body div#quartz-root.page article h3 {
   margin-bottom: 0.35em !important;
 }
 
-// 正文与界面字体：与参考站 --sans 同链（Noto Sans SC 缺省时回退苹方/雅黑），
-// 替代原 Source Sans Pro（中文实际仍落到系统字体，拉丁字形与参考站对齐）
+// 正文与界面字体：西文打头 Source Sans Pro（自托管，@font-face 与病灶说明见
+// 上方 1/6 之前的注释），中文回退 Noto Sans SC → 苹方 → 雅黑。
 html body div#quartz-root.page,
 html body div#quartz-root.page article {
-  font-family: "Noto Sans SC", -apple-system, "PingFang SC", "Microsoft YaHei",
-    "Segoe UI", sans-serif !important;
+  font-family: "Source Sans Pro", "Noto Sans SC", -apple-system, "PingFang SC",
+    "Microsoft YaHei", "Segoe UI", sans-serif !important;
 }
 
 // 正文段落的段间距：默认约 1em+，收紧一档
@@ -772,7 +824,7 @@ html body article p:has(> em:only-child) {
 
 // --- B. 正文排版：17px / 1.95 / 墨色 #1C1C1C ------------------------------
 html body div#quartz-root.page article {
-  font-family: "Noto Sans SC", -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif !important;
+  font-family: "Source Sans Pro", "Noto Sans SC", -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif !important;
   font-size: 17px !important;
   line-height: 1.95 !important;
   color: var(--ink) !important;
@@ -783,8 +835,9 @@ html body div#quartz-root.page article li,
 html body div#quartz-root.page article td,
 html body div#quartz-root.page article dl {
   // ⚠️ 不能用 font-family: inherit：p 的父级包裹层（.article-body 之类）带着主题的
-  // Source Sans Pro，继承只会把系统 UI 字体带进来（2026-10-21 实测）。
-  font-family: "Noto Sans SC", -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif !important;
+  // --bodyFont，继承只会把系统 UI 字体带进来（2026-10-21 实测）。
+  // 西文打头的原因见上方 1/6 前的注释：中文黑体打头会把西文引号/撇号拉成全角。
+  font-family: "Source Sans Pro", "Noto Sans SC", -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif !important;
   color: var(--ink) !important;
   line-height: 1.95 !important;
 }
@@ -2143,10 +2196,11 @@ html body.landing div#quartz-root.page article .markdown-preview-view > ul > li 
 // ===========================================================================
 
 // 源站组件里会内联 font-family:var(--serif/--sans/--mono)，这里补上同名变量
+// （--sans 同样西文打头，原因见上方 1/6 前的注释）
 :root {
   --serif: "Noto Serif SC", "Songti SC", "SimSun", serif;
-  --sans: "Noto Sans SC", -apple-system, "PingFang SC", "Microsoft YaHei",
-    sans-serif;
+  --sans: "Source Sans Pro", "Noto Sans SC", -apple-system, "PingFang SC",
+    "Microsoft YaHei", sans-serif;
   --mono: "IBM Plex Mono", "JetBrains Mono", ui-monospace, SFMono-Regular,
     Menlo, monospace;
 }

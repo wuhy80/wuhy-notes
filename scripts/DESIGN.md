@@ -43,8 +43,12 @@ colors:
   accent-wash-dark: "rgba(227, 139, 107, 0.15)"
 typography:
   # 2026-10-18 字体与参考站（xuanyuancode）靠齐：标题 = 阿里妈妈数黑体
-  # （自托管 woff2，发布流水线拷入 Quartz static/font/），正文 = 参考站
-  # --sans 同链（Noto Sans SC 缺省时落到苹方/雅黑，无 webfont）
+  # （自托管 woff2，发布流水线拷入 Quartz static/font/）。
+  # 2026-10-26 正文改「西文打头」：Source Sans Pro（自托管 latin 子集 ×4，
+  # 发布流水线拷入 Quartz static/font/source-sans-pro/）→ Noto Sans SC →
+  # 苹方 → 雅黑。中文黑体打头会把西文弯引号/撇号（U+2018/2019/201C/201D）
+  # 渲染成全角字形，英文出现 `world’ s` 式空隙（线上实测病灶）；
+  # Source Sans Pro 与思源黑体同源，混排最协调。
   header:
     fontFamily: AlimamaShuHeiTi
     fontWeight: 700
@@ -66,7 +70,7 @@ typography:
     fontWeight: 900
     fontSize: 17px
   body:
-    fontFamily: Noto Sans SC → 苹方 → 雅黑（参考站 --sans 同链）
+    fontFamily: Source Sans Pro（西文打头，自托管 latin 子集）→ Noto Sans SC → 苹方 → 雅黑
     fontSize: 17px
     fontWeight: 400
     lineHeight: 1.95
@@ -248,12 +252,18 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
 
 ## Typography
 
-- 标题 `AlimamaShuHeiTi`（自托管 woff2），正文 `Noto Sans SC → 苹方 → 雅黑`，代码 `IBM Plex Mono`
+- 标题 `AlimamaShuHeiTi`（自托管 woff2），正文 `Source Sans Pro（西文打头）→ Noto Sans SC → 苹方 → 雅黑`，代码 `IBM Plex Mono`
 - **正文 17px / 行高 1.95 / 颜色 `ink`（#1c1c1c）**——2026-10-21 起与参考站逐值一致；
   段间距 20px。旧的 16px/1.75 + `ink-soft` 是"读起来发灰又挤"的根因
 - ⚠️ 主题把段落的 `font-family` 单独设成了界面字体（实测 `p` 计算值是 `ui-sans-serif`，
   既不是 Noto Sans SC 也不是 Source Sans Pro）。因此**必须对 `article p/li/td` 显式
-  设 `font-family: inherit` 并把 `article` 的字体压在 `Noto Sans SC`**，否则中文正文会落到系统 UI 字体
+  设正文字体栈**，否则中文正文会落到系统 UI 字体
+- ⚠️ **正文字体栈必须西文打头（2026-10-26）**：中文黑体打头时，西文弯引号与撇号
+  （U+2018/2019/201C/201D）落到黑体的全角字形上，英文出现 `world’ s` 式空隙。
+  正文西文 = Source Sans Pro（latin 子集 ×4 自托管，发布流水线拷入
+  `static/font/source-sans-pro/`，哈希计入发布增量信号）。代价（已确认接受）：
+  中文段落里的引号、破折号、省略号也转为西文宽度。
+  标题栈（数黑体打头）与衬线组件（`--serif`、想一想卡）不在此列，保持中文优先
 - 代码块 0.875rem / 行高 1.75，`tab-size: 4`
 - 标题层级最多到 `h3`，不再往下分；h1 48/900、h2 25/900、h3 17/900
 

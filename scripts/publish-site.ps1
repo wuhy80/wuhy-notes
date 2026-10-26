@@ -165,6 +165,26 @@ if (Test-Path -LiteralPath $fontSrc) {
   Write-Host "  未找到站点字体文件，标题将回退到系统字体" -ForegroundColor Yellow
 }
 
+# 站点自托管正文西文字体（Source Sans Pro latin 子集，site-custom.scss 的
+# @font-face 按 static/font/source-sans-pro/<文件名> 引用）→ Quartz static
+$sspSrcDir = Join-Path $Vault 'scripts\site-assets\source-sans-pro'
+$sspDstDir = Join-Path $Quartz 'quartz\static\font\source-sans-pro'
+if (Test-Path -LiteralPath $sspSrcDir) {
+  New-Item -ItemType Directory -Force -Path $sspDstDir | Out-Null
+  $sspCopied = $false
+  foreach ($f in (Get-ChildItem -LiteralPath $sspSrcDir -Filter '*.woff2' -File)) {
+    $dst = Join-Path $sspDstDir $f.Name
+    if (-not (Test-Path -LiteralPath $dst) -or (Get-FileHash -LiteralPath $dst).Hash -ne (Get-FileHash -LiteralPath $f.FullName).Hash) {
+      Copy-Item -LiteralPath $f.FullName -Destination $dst -Force
+      $sspCopied = $true
+    }
+  }
+  if ($sspCopied) { Write-Host "  已部署正文西文字体 Source Sans Pro（latin 子集 ×4）" }
+  else { Write-Host "  Source Sans Pro 字体无变化，跳过覆盖" }
+} else {
+  Write-Host "  未找到 source-sans-pro 字体目录，正文西文将回退系统字体" -ForegroundColor Yellow
+}
+
 Write-Step "2.2/4 应用站点主题"
 $ThemeName = 'claude-paper'    # 站点主题（@quartz-themes/core 的 theme 选项）
 $CfgPath = Join-Path $Quartz 'quartz.config.yaml'
@@ -205,6 +225,12 @@ if ($hasEnabled -and $hasTheme -and $hasFonts) {
 # ── 增量判断：导出内容与站点外观相对上次成功部署均无变化 → 跳过构建与部署 ──
 # 注意：config 用仓库权威副本（scripts/quartz.config.yaml）而非站点上的活文件——
 # Quartz 构建时 @quartz-themes 插件会回写活文件，若用它做信号，每次构建后哈希都变，永远无法命中增量
+# 正文西文字体按目录聚合指纹（4 个 latin 子集 woff2，与 AlimamaShuHeiTi 同理要进信号）
+$sspSig = ''
+if (Test-Path -LiteralPath (Join-Path $Vault 'scripts\site-assets\source-sans-pro')) {
+  $sspSig = ((Get-ChildItem -LiteralPath (Join-Path $Vault 'scripts\site-assets\source-sans-pro') -Filter '*.woff2' -File |
+    Sort-Object Name | ForEach-Object { Get-FileSig $_.FullName }) -join ',')
+}
 $siteSig = Get-StringHash (@(
   (Get-FileSig (Join-Path $Vault 'scripts\site-custom.scss')),
   # 构建后改写脚本也会改变产物：不进指纹的话「只改脚本」会被增量判断当成无变化
@@ -212,6 +238,7 @@ $siteSig = Get-StringHash (@(
   (Get-FileSig (Join-Path $Vault 'scripts\enhance-content.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\fix-html-emphasis.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\site-assets\AlimamaShuHeiTi-Bold.woff2')),
+  $sspSig,
   (Get-FileSig (Join-Path $Vault 'scripts\quartz.config.yaml')),
   $ThemeName
 ) -join '|')
