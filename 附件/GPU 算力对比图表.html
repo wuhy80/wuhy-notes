@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>数据中心 AI 加速卡算力对比（2022–2026）</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<style>
+  body { margin: 0; padding: 16px; font-family: system-ui, "Microsoft YaHei", sans-serif;
+         background: #f6f7f9; color: #24292f; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0d1117; color: #e6edf3; }
+  }
+  #chart { width: 100%; height: 980px; }
+  .src { font-size: 12px; opacity: 0.65; margin-top: 8px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div id="chart"></div>
+<div class="src">数据为厂商峰值稠密口径（稀疏值约为表中数值的 2 倍，未列入）；昇腾/摩尔线程等国产卡数字来自第三方拆解与媒体报道。Vera Rubin（288GB HBM4，NVFP4 ≈50 PFLOPS）、AMD MI400/MI455X（432GB HBM4）、Intel Crescent Island（最高 480GB LPDDR5X）为 2026 年新一代，官方未公布与传统口径对齐的算力，故未入图。</div>
+<script>
+(function () {
+  var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var fg = dark ? '#e6edf3' : '#24292f';
+  var muted = dark ? '#8b949e' : '#57606a';
+  var border = dark ? '#30363d' : '#d0d7de';
+  var cBf16 = '#4a86e8', cFp8 = '#e69138', cMem = '#6aa84f', cBw = '#a64d79';
+
+  var cards = [
+    { n: 'MI355X\nAMD',      bf16: 2352, fp8: 4608, mem: 288, bw: 8.0 },
+    { n: 'MI350X\nAMD',      bf16: 2300, fp8: 4600, mem: 288, bw: 8.0 },
+    { n: 'B200\nNVIDIA',     bf16: 2250, fp8: 4500, mem: 192, bw: 8.0 },
+    { n: 'MI325X\nAMD',      bf16: 1307, fp8: 2615, mem: 256, bw: 5.3 },
+    { n: 'MI300X\nAMD',      bf16: 1307, fp8: 2615, mem: 192, bw: 5.3 },
+    { n: 'Gaudi 3\nIntel',   bf16: 1835, fp8: 1835, mem: 128, bw: 3.7 },
+    { n: 'H100 SXM\nNVIDIA', bf16: 989,  fp8: 1979, mem: 80,  bw: 3.35 },
+    { n: 'H200\nNVIDIA',     bf16: 989,  fp8: 1979, mem: 141, bw: 4.8 },
+    { n: 'H800\nNVIDIA',     bf16: 989,  fp8: 1979, mem: 80,  bw: 3.35 },
+    { n: '910C\n华为',        bf16: 780,  fp8: null, mem: 128, bw: 3.2 },
+    { n: 'Gaudi 2\nIntel',   bf16: 432,  fp8: 803,  mem: 96,  bw: 2.45 },
+    { n: '910B\n华为',        bf16: 376,  fp8: null, mem: 64,  bw: 1.6 },
+    { n: '思元590\n寒武纪',    bf16: 345,  fp8: null, mem: 96,  bw: null },
+    { n: 'H20\nNVIDIA',      bf16: 148,  fp8: 296,  mem: 96,  bw: 4.0 }
+  ];
+
+  var chart = echarts.init(document.getElementById('chart'));
+  chart.setOption({
+    animation: false,
+    textStyle: { color: fg },
+    title: {
+      text: '数据中心 AI 加速卡算力与显存对比（稠密口径）',
+      subtext: 'BF16/FP8 为厂商峰值稠密值；拖动下方滑块缩放范围，悬停查看数值',
+      left: 'center',
+      textStyle: { color: fg, fontSize: 16, fontWeight: 500 },
+      subtextStyle: { color: muted, fontSize: 12 }
+    },
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    legend: { top: 56, textStyle: { color: fg, fontSize: 12 } },
+    grid: [
+      { left: 60, right: 30, top: 100, height: 400 },
+      { left: 60, right: 30, top: 610, height: 260 }
+    ],
+    xAxis: [
+      { gridIndex: 0, type: 'category', data: cards.map(function (d) { return d.n; }),
+        axisLabel: { color: muted, fontSize: 11, interval: 0, rotate: 32 }, axisLine: { lineStyle: { color: border } }, axisTick: { show: false } },
+      { gridIndex: 1, type: 'category', data: cards.map(function (d) { return d.n; }),
+        axisLabel: { color: muted, fontSize: 11, interval: 0, rotate: 32 }, axisLine: { lineStyle: { color: border } }, axisTick: { show: false } }
+    ],
+    yAxis: [
+      { gridIndex: 0, name: 'TFLOPS', nameTextStyle: { color: muted }, type: 'value', axisLabel: { color: muted }, splitLine: { lineStyle: { color: border, opacity: 0.4 } } },
+      { gridIndex: 1, name: 'GB', nameTextStyle: { color: muted }, type: 'value', max: 320, axisLabel: { color: muted }, splitLine: { show: false } },
+      { gridIndex: 1, name: 'TB/s', nameTextStyle: { color: muted }, type: 'value', max: 10, position: 'right', axisLabel: { color: muted }, splitLine: { lineStyle: { color: border, opacity: 0.4 } } }
+    ],
+    dataZoom: [
+      { type: 'inside', xAxisIndex: [0, 1] },
+      { type: 'slider', xAxisIndex: [0, 1], bottom: 8, height: 18, borderColor: border, textStyle: { color: muted } }
+    ],
+    series: [
+      { name: 'BF16/FP16 稠密', type: 'bar', xAxisIndex: 0, yAxisIndex: 0,
+        data: cards.map(function (d) { return d.bf16; }), itemStyle: { color: cBf16 }, barGap: '20%' },
+      { name: 'FP8 稠密', type: 'bar', xAxisIndex: 0, yAxisIndex: 0,
+        data: cards.map(function (d) { return d.fp8; }), itemStyle: { color: cFp8 } },
+      { name: '显存 (GB)', type: 'bar', xAxisIndex: 1, yAxisIndex: 1,
+        data: cards.map(function (d) { return d.mem; }),
+        itemStyle: { color: cMem, opacity: 0.85 }, barWidth: '45%' },
+      { name: '带宽 (TB/s)', type: 'line', xAxisIndex: 1, yAxisIndex: 2,
+        data: cards.map(function (d) { return d.bw; }),
+        lineStyle: { color: cBw, width: 2 }, itemStyle: { color: cBw }, symbolSize: 6 }
+    ]
+  });
+  window.addEventListener('resize', function () { chart.resize(); });
+})();
+</script>
+</body>
+</html>
