@@ -49,8 +49,47 @@ lesson: 11
 
 有一个函数对所有实数输出都是正数，而且不需要知道其他项是多少——就是指数函数 $e^{x}$。 先看它长什么样：
 
-> [!note]- 交互演示｜图 11-1指数函数 $y=e^{x}$：不管输入是正、是负、还是零，输出**永远在 0 以上**（曲线始终不碰横轴）。而且输入越大、输出涨得越快——这两条性质正是 Softmax 看中它的原因。
-> 此处原站是一个可操作的交互演示，请到 [原站](https://www.xuanyuancode.com/ai-llm/lessons/nn-04-softmax) 体验。
+<figure class="fig" style="margin:1.2em 0">
+  <div class="fig-frame" style="background:#FFFDF8;border:1px solid #DCD2BF;border-radius:8px;padding:8px">
+    <div id="kx-fig-11-1" style="width:100%;height:320px"></div>
+  </div>
+  <figcaption style="margin:6px 4px 0;font-size:.85em;color:#5C6B79;line-height:1.6">
+    <span style="color:#C0481E;font-weight:600;margin-right:6px">图 11-1</span>指数函数 y = e^x：不管输入是正、是负、还是零，输出永远在 0 以上（曲线始终不碰横轴）。而且输入越大、输出涨得越快——这两条性质正是 Softmax 看中它的原因。（悬停查看坐标）
+  </figcaption>
+</figure>
+<script>
+(function () {
+  function draw() {
+    var xs = [], ys = [];
+    for (var i = 0; i <= 110; i++) {
+      var x = -2.2 + i / 110 * 4.5;
+      xs.push(Number(x.toFixed(2)));
+      ys.push(Number(Math.exp(x).toFixed(3)));
+    }
+    Plotly.newPlot('kx-fig-11-1', [
+      { x: xs, y: ys, type: 'scatter', mode: 'lines', line: { color: '#C0481E', width: 3 }, name: 'y = eˣ', hoverinfo: 'skip' },
+      { x: [-0.5, 1.8, 2.1], y: [0.61, 6.05, 8.17], type: 'scatter', mode: 'markers',
+        marker: { color: ['#C9A227', '#3E8F5A', '#C0481E'], size: 9 }, name: '本课三个 logit' }
+    ], {
+      paper_bgcolor: '#FFFDF8', plot_bgcolor: '#FFFDF8',
+      font: { family: 'Noto Sans SC, sans-serif', size: 12, color: '#5C6B79' },
+      margin: { l: 48, r: 18, t: 16, b: 40 }, height: 320,
+      showlegend: true, legend: { orientation: 'h', y: 1.12, font: { size: 11, color: '#5C6B79' } },
+      xaxis: { title: { text: 'x', font: { size: 12, color: '#5C6B79' } }, range: [-2.3, 2.4], gridcolor: '#DCD2BF', zerolinecolor: '#93A0AC', tickfont: { family: 'JetBrains Mono, monospace', size: 10, color: '#93A0AC' } },
+      yaxis: { title: { text: 'y', font: { size: 12, color: '#5C6B79' } }, range: [0, 10.5], gridcolor: '#DCD2BF', zerolinecolor: '#93A0AC', tickfont: { family: 'JetBrains Mono, monospace', size: 10, color: '#93A0AC' } },
+      shapes: [{ type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: 0, y1: 0, line: { color: '#93A0AC', width: 1, dash: 'dot' } }],
+      annotations: [{ x: -1.2, y: 1.5, xref: 'x', yref: 'y', text: '负数也落在 0 以上', showarrow: false, font: { family: 'Noto Sans SC, sans-serif', size: 11, color: '#5C6B79' } }]
+    }, { displayModeBar: false, responsive: true });
+  }
+  if (window.Plotly) { draw(); }
+  else {
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.2/plotly.min.js';
+    s.onload = draw;
+    document.head.appendChild(s);
+  }
+})();
+</script>
 
 把三个 logit（苹果 2.1、香蕉 −0.5、西瓜 1.8）分别代进去，负数也变成了正数：
 
@@ -73,8 +112,50 @@ $$
 
 这正是第 7 课见过的那台机器的**输出层**——当时只说「softmax 把分数挤成概率」，现在你知道它在里面具体做了什么了。 下面把那台四种水果的机器再搬出来：转旋钮改变四个神经元的**分数**，看 softmax 如何把它们实时换算成一组加起来 = 100% 的概率：
 
-> [!note]- 交互演示｜互动 11-Asoftmax 在四个水果神经元上的现场演算：每个分数先取 $e^{z}$（消除负数），再整体归一化。把旋钮调到「大 + 多汁」，看西瓜的分数和概率一起被推高。
-> 此处原站是一个可操作的交互演示，请到 [原站](https://www.xuanyuancode.com/ai-llm/lessons/nn-04-softmax) 体验。
+<figure class="fig" style="margin:1.2em 0">
+  <div class="fig-frame" style="background:#FFFDF8;border:1px solid #DCD2BF;border-radius:8px;padding:8px">
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center;margin:6px 0;font-size:13px;color:#1E2B38">
+      <span>苹果 z₁<input id="kx-11a-apple" type="range" min="-2" max="4" step="0.1" value="2.1" style="width:110px;vertical-align:middle" aria-label="苹果的分数"></span>
+      <span>香蕉 z₂<input id="kx-11a-banana" type="range" min="-2" max="4" step="0.1" value="-0.5" style="width:110px;vertical-align:middle" aria-label="香蕉的分数"></span>
+      <span>西瓜 z₃<input id="kx-11a-melon" type="range" min="-2" max="4" step="0.1" value="1.8" style="width:110px;vertical-align:middle" aria-label="西瓜的分数"></span>
+    </div>
+    <div id="kx-fig-11a" style="width:100%;height:280px"></div>
+  </div>
+  <figcaption style="margin:6px 4px 0;font-size:.85em;color:#5C6B79;line-height:1.6">
+    <span style="color:#C0481E;font-weight:600;margin-right:6px">互动 11-A</span>softmax 在水果神经元上的现场演算：每个分数先取 e^z（消除负数），再整体归一化。拖动旋钮调分数，看对应水果的 e^z 和概率一起被推高。<a href="https://www.xuanyuancode.com/ai-llm/lessons/nn-04-softmax" style="margin-left:6px">原站交互版</a>
+  </figcaption>
+</figure>
+<script>
+(function () {
+  var knobs = { 苹果: document.getElementById('kx-11a-apple'), 香蕉: document.getElementById('kx-11a-banana'), 西瓜: document.getElementById('kx-11a-melon') };
+  var fruits = ['苹果', '香蕉', '西瓜'];
+  function draw() {
+    var logits = fruits.map(function (f) { return parseFloat(knobs[f].value); });
+    var exps = logits.map(function (z) { return Math.exp(z); });
+    var sum = exps.reduce(function (a, b) { return a + b; }, 0);
+    var probs = exps.map(function (e) { return e / sum; });
+    var data = fruits.map(function (f, i) {
+      return { x: [f], y: [probs[i]], type: 'bar', name: f + '（e^z=' + exps[i].toFixed(2) + '）',
+        marker: { color: ['#C0481E', '#C9A227', '#3E8F5A'][i] }, text: [(probs[i] * 100).toFixed(1) + '%'],
+        textposition: 'outside', textfont: { family: 'JetBrains Mono, monospace', size: 12, color: '#1E2B38' }, hoverinfo: 'skip' };
+    });
+    Plotly.newPlot('kx-fig-11a', data, {
+      paper_bgcolor: '#FFFDF8', plot_bgcolor: '#FFFDF8', barmode: 'group',
+      font: { family: 'Noto Sans SC, sans-serif', size: 12, color: '#5C6B79' },
+      margin: { l: 48, r: 18, t: 10, b: 30 }, height: 280, showlegend: false, bargap: 0.3,
+      yaxis: { title: { text: '概率', font: { size: 12, color: '#5C6B79' } }, range: [0, 1], gridcolor: '#DCD2BF', tickfont: { family: 'JetBrains Mono, monospace', size: 10, color: '#93A0AC' } }
+    }, { displayModeBar: false, responsive: true });
+  }
+  Object.keys(knobs).forEach(function (k) { knobs[k].addEventListener('input', draw); });
+  if (window.Plotly) { draw(); }
+  else {
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.2/plotly.min.js';
+    s.onload = draw;
+    document.head.appendChild(s);
+  }
+})();
+</script>
 
 ## 一个意外的发现：温度参数
 
@@ -86,8 +167,39 @@ $$
 Softmax(\frac{z_{i}}{T})
 $$
 
-> [!note]- 交互演示｜图 11-3同一组 logits，三种温度下的概率分布。$T=0.5$ 时模型极度自信（几乎全押苹果）；$T=2$ 时分布趋于均匀（更多随机性）。这就是 ChatGPT 里 temperature 参数的数学来源。
-> 此处原站是一个可操作的交互演示，请到 [原站](https://www.xuanyuancode.com/ai-llm/lessons/nn-04-softmax) 体验。
+<figure class="fig" style="margin:1.2em 0">
+  <div class="fig-frame" style="background:#FFFDF8;border:1px solid #DCD2BF;border-radius:8px;padding:8px">
+    <div id="kx-fig-11-3" style="width:100%;height:330px"></div>
+    <div style="text-align:center;font-family:'JetBrains Mono, monospace',monospace;font-size:11px;color:#93A0AC">三种温度下三者之和均为 1.000 ✓</div>
+  </div>
+  <figcaption style="margin:6px 4px 0;font-size:.85em;color:#5C6B79;line-height:1.6">
+    <span style="color:#C0481E;font-weight:600;margin-right:6px">图 11-3</span>同一组 logits，三种温度下的概率分布。T=0.5 时模型极度自信（几乎全押苹果）；T=2 时分布趋于均匀（更多随机性）。这就是 ChatGPT 里 temperature 参数的数学来源。（悬停查看数值）
+  </figcaption>
+</figure>
+<script>
+(function () {
+  function draw() {
+    Plotly.newPlot('kx-fig-11-3', [
+      { x: ['苹果', '香蕉', '西瓜'], y: [0.85, 0.01, 0.14], type: 'bar', name: 'T=0.5 低温·果断', marker: { color: '#C0481E' }, hoverinfo: 'skip' },
+      { x: ['苹果', '香蕉', '西瓜'], y: [0.55, 0.04, 0.41], type: 'bar', name: 'T=1 标准', marker: { color: '#3E6B8F' }, hoverinfo: 'skip' },
+      { x: ['苹果', '香蕉', '西瓜'], y: [0.38, 0.16, 0.46], type: 'bar', name: 'T=2 高温·随机', marker: { color: '#8a7d63' }, hoverinfo: 'skip' }
+    ], {
+      paper_bgcolor: '#FFFDF8', plot_bgcolor: '#FFFDF8', barmode: 'group',
+      font: { family: 'Noto Sans SC, sans-serif', size: 12, color: '#5C6B79' },
+      margin: { l: 48, r: 18, t: 16, b: 30 }, height: 330,
+      showlegend: true, legend: { orientation: 'h', y: 1.12, font: { size: 11, color: '#5C6B79' } }, bargap: 0.3,
+      yaxis: { title: { text: '概率', font: { size: 12, color: '#5C6B79' } }, range: [0, 1], gridcolor: '#DCD2BF', zerolinecolor: '#93A0AC', tickfont: { family: 'JetBrains Mono, monospace', size: 10, color: '#93A0AC' } }
+    }, { displayModeBar: false, responsive: true });
+  }
+  if (window.Plotly) { draw(); }
+  else {
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.2/plotly.min.js';
+    s.onload = draw;
+    document.head.appendChild(s);
+  }
+})();
+</script>
 
 这就是你使用 ChatGPT 时看到的「temperature」旋钮： 低温（如 0.2）让输出更确定、更保守——适合写代码、做数学； 高温（如 0.8~1.0）让输出更多样、更有创意——适合写故事、头脑风暴。
 
