@@ -72,8 +72,95 @@ LSTM（长短期记忆网络，1997 年提出）的第一招，是**把记忆拆
 
 关键就在第②步往后：忘记阀 ≈ 0.99 意味着**旧记忆几乎原样带过去**，写入阀 ≈ 0.04 意味着无关词**几乎挤不进来**。 于是 9 个词读下来，长期记忆只从 0.855 掉到 0.851——**还剩 99%**。 把这台 LSTM 和一台 RNN 喂同一句话，并排看它俩的记忆：
 
-> [!note]- 交互演示｜互动 18-A上条绿色是 LSTM 的长期记忆 C，下条蓝色是同一句话喂给 RNN 的记忆 h。每点「读下一个词」走一步：LSTM 靠忘记阀≈0.99 把「害怕」几乎原样守到最后，RNN 每步 ×0.6，没几步就塌到地板。
-> 此处原站是一个可操作的交互演示，请到 [原站](https://www.xuanyuancode.com/ai-llm/lessons/nlp-05-lstm) 体验。
+<figure class="fig" style="margin:1.2em 0">
+  <div class="fig-frame" style="background:#FFFDF8;border:1px solid #DCD2BF;border-radius:8px;padding:14px;font-family:'Noto Sans SC, sans-serif'">
+    <div style="display:flex;gap:16px;justify-content:center;font-size:12px;color:#5C6B79;margin-bottom:8px">
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3E8F5A;margin-right:4px"></span>LSTM 长期记忆 C（上）</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3E6B8F;margin-right:4px"></span>RNN 记忆 h（下）</span>
+    </div>
+    <div style="overflow-x:auto;padding-bottom:4px">
+      <div id="demo-18a-words" style="display:flex;gap:6px;justify-content:center;align-items:flex-end;min-width:540px;margin-bottom:8px"></div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin-bottom:8px;font-size:13px;color:#5C6B79">
+      <button id="demo-18a-prev" type="button" style="padding:6px 14px;border-radius:8px;border:1.5px solid #DCD2BF;background:#FFFDF8;color:#5C6B79;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px">← 上一词</button>
+      <button id="demo-18a-next" type="button" style="padding:6px 14px;border-radius:8px;border:1.5px solid #C0481E;background:#C0481E;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px">读下一个词 →</button>
+      <button id="demo-18a-reset" type="button" style="padding:6px 14px;border-radius:8px;border:1.5px solid #DCD2BF;background:#FFFDF8;color:#5C6B79;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px">↺ 重置</button>
+      <span id="demo-18a-prog" style="font-family:'JetBrains Mono, monospace',monospace"></span>
+    </div>
+    <div id="demo-18a-lstm" style="text-align:center;font-family:'JetBrains Mono, monospace',monospace;font-size:12.5px;color:#1E2B38;min-height:20px"></div>
+    <div id="demo-18a-rnn" style="text-align:center;font-family:'JetBrains Mono, monospace',monospace;font-size:12.5px;color:#1E2B38;min-height:20px"></div>
+    <div id="demo-18a-note" style="text-align:center;font-size:12.5px;color:#C0481E;font-weight:600;margin-top:6px;min-height:18px"></div>
+  </div>
+  <figcaption style="margin:6px 4px 0;font-size:.85em;color:#5C6B79;line-height:1.6">
+    <span style="color:#C0481E;font-weight:600;margin-right:6px">互动 18-A</span>上条绿色是 LSTM 的长期记忆 C，下条蓝色是同一句话喂给 RNN 的记忆 h。每点「读下一个词」走一步：LSTM 靠忘记阀 ≈0.99 把「害怕」几乎原样守到最后，RNN 每步 ×0.6，没几步就塌到地板——读到「地下室」时一个还剩约 99%、一个不到 2%。<a href="https://www.xuanyuancode.com/ai-llm/lessons/nlp-05-lstm" style="margin-left:6px">原站交互版</a>
+  </figcaption>
+</figure>
+<script>
+(function () {
+  var words = [
+    { w: '害怕黑暗', tag: '重要', f: 0.90, i: 0.90, g: 0.95, x: 1.5 },
+    { w: '主角', tag: '', f: 0.99, i: 0.04, g: 0.2, x: 0 },
+    { w: '吃了', tag: '', f: 0.99, i: 0.04, g: 0.2, x: 0 },
+    { w: '早饭', tag: '', f: 0.99, i: 0.04, g: 0.2, x: 0 },
+    { w: '走出房间', tag: '', f: 0.99, i: 0.04, g: 0.2, x: 0 },
+    { w: '下楼', tag: '', f: 0.99, i: 0.04, g: 0.2, x: 0 },
+    { w: '楼梯', tag: '', f: 0.99, i: 0.04, g: 0.2, x: 0 },
+    { w: '走进', tag: '', f: 0.99, i: 0.04, g: 0.2, x: 0 },
+    { w: '地下室', tag: '关键回忆点', f: 0.99, i: 0.04, g: 0.2, x: 0 }
+  ];
+  var pos = 0;
+  var wordsEl = document.getElementById('demo-18a-words');
+  var progEl = document.getElementById('demo-18a-prog');
+  var lstmEl = document.getElementById('demo-18a-lstm');
+  var rnnEl = document.getElementById('demo-18a-rnn');
+  var noteEl = document.getElementById('demo-18a-note');
+  function tanh(x) { return Math.tanh(x); }
+  function series() {
+    var Cs = [0], hs = [0];
+    for (var i = 0; i < pos; i++) {
+      Cs.push(words[i].f * Cs[i] + words[i].i * words[i].g);
+      hs.push(tanh(0.6 * hs[i] + words[i].x));
+    }
+    return { Cs: Cs, hs: hs };
+  }
+  function draw() {
+    var s = series();
+    wordsEl.innerHTML = '';
+    for (var i = 0; i < words.length; i++) {
+      var read = i < pos, isNext = i === pos;
+      var c = read ? s.Cs[i + 1] : 0, h = read ? s.hs[i + 1] : 0;
+      var col = document.createElement('div');
+      col.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0';
+      var tag = words[i].tag ? '<span style="font-size:9px;color:' + (words[i].tag === '重要' ? '#C0481E' : '#9A7B2E') + '">' + (words[i].tag === '重要' ? '⭐ 重要' : '🎯 回忆点') + '</span>' : '<span style="font-size:9px;visibility:hidden">·</span>';
+      col.innerHTML = tag +
+        '<div style="width:34px;height:64px;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;background:#FAF6EE;border-radius:6px;border:1px solid #EFE6CC;padding:3px 4px">' +
+        '<div style="width:100%;height:' + (c * 56).toFixed(1) + 'px;border-radius:3px;background:#3E8F5A;opacity:' + (read ? 1 : 0.15) + ';transition:height .25s"></div>' +
+        '<div style="width:100%;height:' + (h * 56).toFixed(1) + 'px;border-radius:3px;background:#3E6B8F;opacity:' + (read ? 1 : 0.15) + ';transition:height .25s"></div></div>' +
+        '<div style="width:56px;padding:4px 0;text-align:center;border-radius:8px;font-size:12px;font-weight:700;border:1.5px solid ' + (isNext ? '#C0481E' : read ? '#3E6B8F' : '#DCD2BF') + ';background:' + (isNext ? '#C0481E' : read ? '#EAF3F8' : '#FFFDF8') + ';color:' + (isNext ? '#fff' : read ? '#1E2B38' : '#93A0AC') + '">' + words[i].w + '</div>';
+      wordsEl.appendChild(col);
+    }
+    progEl.textContent = pos === 0 ? '还没开始读' : '读到第 ' + pos + ' / 9 个词';
+    if (pos === 0) {
+      lstmEl.innerHTML = 'C₀ = 0，h₀ = 0，等着第一个词进来';
+      rnnEl.innerHTML = '';
+      noteEl.textContent = '点「读下一个词」——开头那个重要词会点亮两台机器，之后就看谁守得住';
+    } else {
+      var wd = words[pos - 1];
+      lstmEl.innerHTML = '「' + wd.w + '」LSTM：C = f·C + i·g = ' + wd.f + '×' + s.Cs[pos - 1].toFixed(3) + ' + ' + wd.i + '×' + wd.g + ' = <strong style="color:#3E8F5A">' + s.Cs[pos].toFixed(3) + '</strong>　（f=' + wd.f + '，i=' + wd.i + '）';
+      rnnEl.innerHTML = '「' + wd.w + '」RNN　：h = tanh(0.6×' + s.hs[pos - 1].toFixed(3) + ' + ' + wd.x + ') = <strong style="color:#3E6B8F">' + s.hs[pos].toFixed(3) + '</strong>';
+      noteEl.textContent = pos >= 9
+        ? '读完了：LSTM 的 C ≈ ' + s.Cs[9].toFixed(2) + '（还剩约 ' + (s.Cs[9] / 0.855 * 100).toFixed(1) + '%），RNN 的 h ≈ ' + s.hs[9].toFixed(3) + '（不到 2%）——「害怕」在一个记忆里活着，在另一个里没了'
+        : 'LSTM 的绿条几乎不动，RNN 的蓝条每步 ×0.6';
+    }
+    document.getElementById('demo-18a-prev').disabled = pos === 0;
+    document.getElementById('demo-18a-next').disabled = pos >= 9;
+  }
+  document.getElementById('demo-18a-prev').addEventListener('click', function () { if (pos > 0) { pos -= 1; draw(); } });
+  document.getElementById('demo-18a-next').addEventListener('click', function () { if (pos < 9) { pos += 1; draw(); } });
+  document.getElementById('demo-18a-reset').addEventListener('click', function () { pos = 0; draw(); });
+  draw();
+})();
+</script>
 
 对照得很扎心：读到「地下室」时，LSTM 的长期记忆还剩约 **99%**， 而 RNN 的记忆只剩不到 **2%**——「害怕」早被冲没了。同一句话，一个记得住、一个记不住，差别全在那几个阀门。
 

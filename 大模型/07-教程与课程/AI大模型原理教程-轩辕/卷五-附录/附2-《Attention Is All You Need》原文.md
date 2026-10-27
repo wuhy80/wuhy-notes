@@ -70,8 +70,101 @@ Transformer 共同作者，之后转向去中心化计算与 AI 基础设施。
 
 Transformer 遵循这种整体架构，并且在编码器和解码器中都使用堆叠的自注意力层和逐点全连接层。图 1 的左半部分和右半部分 分别展示了编码器和解码器。
 
-> [!note]- 交互演示｜图 1Transformer 的模型架构。
-> 此处原站是一个可操作的交互演示，请到 [原站](https://www.xuanyuancode.com/ai-llm/lessons/appendix-attention-paper) 体验。
+<figure class="fig" style="margin:1.2em 0">
+  <div class="fig-frame" style="background:#FFFDF8;border:1px solid #DCD2BF;border-radius:8px;padding:14px;font-family:'Noto Sans SC, sans-serif'">
+    <svg id="demo-att-fig1" viewBox="0 0 760 660" style="width:100%;max-width:680px;display:block;margin:0 auto"></svg>
+    <div style="text-align:center;font-size:12px;color:#93A0AC">Transformer 架构（按原论文 Figure 1 重绘）：左为编码器，右为解码器；每个子层外都有残差连接与 Add &amp; Norm。</div>
+  </div>
+  <figcaption style="margin:6px 4px 0;font-size:.85em;color:#5C6B79;line-height:1.6">
+    <span style="color:#C0481E;font-weight:600;margin-right:6px">图 1</span>Transformer 的模型架构。<a href="https://www.xuanyuancode.com/ai-llm/lessons/appendix-attention-paper" style="margin-left:6px">原站交互版</a>
+  </figcaption>
+</figure>
+<script>
+(function () {
+  var P = [];
+  function rect(x, y, w, h, fill, stroke, dash) {
+    P.push('<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="7" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.5"' + (dash ? ' stroke-dasharray="7 5"' : '') + '/>');
+  }
+  function t(x, y, s, size, color, w, anchor) {
+    P.push('<text x="' + x + '" y="' + y + '" font-size="' + size + '" fill="' + color + '" font-weight="' + (w || 400) + '" text-anchor="' + (anchor || 'middle') + '" font-family="Noto Sans SC, sans-serif">' + s + '</text>');
+  }
+  function a(x1, y1, x2, y2) {
+    P.push('<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#93A0AC" stroke-width="1.4"/>');
+    P.push('<path d="M' + x2 + ' ' + y2 + ' l-3.5 -6.5 l7 0 z" fill="#93A0AC"/>');
+  }
+  function resi(x1, y1, xm, y2, xe) {
+    P.push('<path d="M' + x1 + ' ' + y1 + ' L' + xm + ' ' + y1 + ' L' + xm + ' ' + y2 + ' L' + xe + ' ' + y2 + '" fill="none" stroke="#C9A227" stroke-width="1.4" stroke-linejoin="round"/>');
+    P.push('<path d="M' + xe + ' ' + y2 + ' l6 -3.5 l0 7 z" fill="#C9A227"/>');
+  }
+  function plus(x, y) {
+    P.push('<circle cx="' + x + '" cy="' + y + '" r="11" fill="#FFF" stroke="#5C6B79" stroke-width="1.5"/>');
+    P.push('<line x1="' + (x - 6) + '" y1="' + y + '" x2="' + (x + 6) + '" y2="' + y + '" stroke="#5C6B79" stroke-width="1.5"/><line x1="' + x + '" y1="' + (y - 6) + '" x2="' + x + '" y2="' + (y + 6) + '" stroke="#5C6B79" stroke-width="1.5"/>');
+  }
+  function wave(x1, x2, y) {
+    var d = 'M' + x2 + ' ' + y, x = x2, up = true;
+    while (x > x1) { var nx = Math.max(x - 24, x1); d += ' q ' + (-(x - nx) / 2) + ' ' + (up ? -7 : 7) + ' ' + (-(x - nx)) + ' 0'; x = nx; up = !up; }
+    P.push('<path d="' + d + '" fill="none" stroke="#C9A227" stroke-width="1.4"/>');
+  }
+  var ATT = ['#EAF3F8', '#3E6B8F'], FF = ['#EAF5EE', '#3E8F5A'], AN = ['#FBEDE8', '#C0481E'], EM = ['#FBF6EA', '#C9A227'], LN = ['#FFF', '#5C6B79'];
+  function module(x, y, w, h, label, scheme) {
+    rect(x, y, w, h, scheme[0], scheme[1]);
+    t(x + w / 2, y + h / 2 + 4.5, label, 12, '#1E2B38', 600);
+  }
+  rect(88, 262, 204, 244, 'none', '#5C6B79', true);
+  t(190, 254, '编码器 N×', 12.5, '#5C6B79', 700);
+  module(120, 444, 140, 34, '多头注意力', ATT);
+  module(120, 392, 140, 28, 'Add & Norm', AN);
+  module(120, 330, 140, 34, '前馈网络 FFN', FF);
+  module(120, 276, 140, 28, 'Add & Norm', AN);
+  a(190, 519, 190, 510);
+  a(190, 444, 190, 424);
+  a(190, 392, 190, 368);
+  a(190, 330, 190, 308);
+  resi(178, 517, 106, 406, 116);
+  resi(178, 517, 98, 290, 116);
+  plus(190, 530);
+  module(325, 514, 120, 32, '位置编码', EM);
+  wave(445, 547, 530);
+  wave(203, 325, 530);
+  module(125, 566, 130, 34, '输入嵌入', EM);
+  t(190, 626, '输入 Inputs', 12.5, '#5C6B79', 600);
+  a(190, 612, 190, 604);
+  a(190, 566, 190, 545);
+  rect(443, 118, 204, 388, 'none', '#5C6B79', true);
+  t(437, 130, '解码器 N×', 12.5, '#5C6B79', 700, 'end');
+  module(475, 420, 140, 34, '带掩码多头注意力', ATT);
+  module(475, 368, 140, 28, 'Add & Norm', AN);
+  module(475, 296, 140, 34, '多头注意力', ATT);
+  module(475, 244, 140, 28, 'Add & Norm', AN);
+  module(475, 182, 140, 34, '前馈网络 FFN', FF);
+  module(475, 130, 140, 28, 'Add & Norm', AN);
+  a(545, 519, 545, 458);
+  a(545, 420, 545, 400);
+  a(545, 368, 545, 334);
+  a(545, 296, 545, 276);
+  a(545, 244, 545, 220);
+  a(545, 182, 545, 162);
+  resi(533, 517, 461, 382, 471);
+  resi(533, 517, 453, 258, 471);
+  resi(533, 517, 445, 144, 471);
+  plus(545, 530);
+  module(480, 566, 130, 34, '输出嵌入', EM);
+  t(545, 626, '输出 Outputs（右移一位）', 12.5, '#5C6B79', 600);
+  a(545, 612, 545, 604);
+  a(545, 566, 545, 545);
+  module(480, 80, 130, 28, '线性层 Linear', LN);
+  module(480, 36, 130, 28, 'softmax', LN);
+  a(545, 130, 545, 112);
+  a(545, 80, 545, 68);
+  a(545, 36, 545, 26);
+  t(545, 18, '下一个词的概率', 12.5, '#C0481E', 700);
+  P.push('<path d="M190 262 L190 236 L652 236 L652 313 L619 313" fill="none" stroke="#3E6B8F" stroke-width="1.5"/>');
+  P.push('<path d="M619 313 l7 -3.5 l0 7 z" fill="#3E6B8F"/>');
+  t(632, 250, 'K、V', 10.5, '#3E6B8F', 600);
+  t(648, 264, '（编码器输出）', 10, '#93A0AC');
+  document.getElementById('demo-att-fig1').innerHTML = P.join('');
+})();
+</script>
 
 **编码器：**编码器由 N = 6 个相同层堆叠而成。每一层有两个子层。第一个是多头自注意力机制； 第二个是一个简单的、逐位置全连接前馈网络。我们在两个子层外都使用残差连接，然后接层归一化。也就是说，每个子层的输出是：
 
@@ -89,8 +182,99 @@ $$
 
 我们把自己使用的这种特定注意力称为「缩放点积注意力」（Scaled Dot-Product Attention）。输入由维度为 d_k 的查询和键、 以及维度为 d_v 的值组成。我们计算查询与所有键的点积，把每个点积都除以 sqrt(d_k)，然后应用 softmax 函数来得到值上的权重。
 
-> [!note]- 交互演示｜图 2左图为缩放点积注意力；右图为多头注意力，它由若干并行运行的注意力层组成。
-> 此处原站是一个可操作的交互演示，请到 [原站](https://www.xuanyuancode.com/ai-llm/lessons/appendix-attention-paper) 体验。
+<figure class="fig" style="margin:1.2em 0">
+  <div class="fig-frame" style="background:#FFFDF8;border:1px solid #DCD2BF;border-radius:8px;padding:14px;font-family:'Noto Sans SC, sans-serif'">
+    <svg id="demo-att-fig2" viewBox="0 0 760 380" style="width:100%;max-width:680px;display:block;margin:0 auto"></svg>
+    <div style="text-align:center;font-size:12px;color:#93A0AC">左：缩放点积注意力（按原论文 Figure 2 左重绘）；右：多头注意力——若干并行运行的注意力层组成。</div>
+  </div>
+  <figcaption style="margin:6px 4px 0;font-size:.85em;color:#5C6B79;line-height:1.6">
+    <span style="color:#C0481E;font-weight:600;margin-right:6px">图 2</span>左图为缩放点积注意力；右图为多头注意力，它由若干并行运行的注意力层组成。<a href="https://www.xuanyuancode.com/ai-llm/lessons/appendix-attention-paper" style="margin-left:6px">原站交互版</a>
+  </figcaption>
+</figure>
+<script>
+(function () {
+  var P = [];
+  function rect(x, y, w, h, fill, stroke, dash) {
+    P.push('<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="7" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.5"' + (dash ? ' stroke-dasharray="6 4"' : '') + '/>');
+  }
+  function t(x, y, s, size, color, w, anchor) {
+    P.push('<text x="' + x + '" y="' + y + '" font-size="' + size + '" fill="' + color + '" font-weight="' + (w || 400) + '" text-anchor="' + (anchor || 'middle') + '" font-family="Noto Sans SC, sans-serif">' + s + '</text>');
+  }
+  function a(x1, y1, x2, y2, c) {
+    var col = c || '#93A0AC';
+    P.push('<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + col + '" stroke-width="1.4"/>');
+    P.push('<path d="M' + x2 + ' ' + y2 + ' l-3.5 -6.5 l7 0 z" fill="' + col + '"/>');
+  }
+  function hline(x1, y, x2, c) {
+    P.push('<line x1="' + x1 + '" y1="' + y + '" x2="' + x2 + '" y2="' + y + '" stroke="' + (c || '#93A0AC') + '" stroke-width="1.4"/>');
+  }
+  function vline(x, y1, y2, c) {
+    P.push('<line x1="' + x + '" y1="' + y1 + '" x2="' + x + '" y2="' + y2 + '" stroke="' + (c || '#93A0AC') + '" stroke-width="1.4"/>');
+  }
+  var ATTB = ['#EAF3F8', '#3E6B8F'], MDBLUE = ['#D6E4F0', '#2F5A7D'], YELLOW = ['#FBF0D3', '#C9A227'];
+  function module(x, y, w, h, label, scheme, fs) {
+    rect(x, y, w, h, scheme[0], scheme[1]);
+    t(x + w / 2, y + h / 2 + 4, label, fs || 12, '#1E2B38', 600);
+  }
+  function bars(x0, y, w, h, gap, labels) {
+    var out = [];
+    for (var i = 0; i < labels.length; i++) {
+      var x = x0 + i * (w + gap);
+      rect(x, y, w, h, i === 2 ? '#FBEDE8' : MDBLUE[0], i === 2 ? '#C0481E' : MDBLUE[1]);
+      t(x + w / 2, y + h / 2 + 4, labels[i], 12, '#1E2B38', 700);
+      out.push(x + w / 2);
+    }
+    return out;
+  }
+  t(160, 24, '缩放点积注意力', 13.5, '#5C6B79', 700);
+  var c1 = bars(64, 40, 28, 84, 10, ['V', 'K', 'Q']);
+  module(96, 164, 88, 34, 'MatMul', ATTB);
+  hline(c1[0], 124, c1[0], '#3E6B8F'); vline(c1[0], 124, 148, '#3E6B8F'); hline(c1[0], 148, 110, '#3E6B8F'); vline(110, 148, 160, '#3E6B8F');
+  vline(c1[1], 124, 160, '#3E6B8F');
+  module(96, 208, 88, 30, '÷ √dₖ 缩放', YELLOW);
+  a(140, 198, 140, 204);
+  P.push('<path d="M' + c1[2] + ' 124 L' + c1[2] + ' 138 L310 138 L310 223 L188 223" fill="none" stroke="#C0481E" stroke-width="1.4"/>');
+  P.push('<path d="M188 223 l7 -3.5 l0 7 z" fill="#C0481E"/>');
+  t(318, 134, 'Q', 11, '#C0481E', 700);
+  module(96, 248, 88, 30, 'softmax', YELLOW);
+  a(140, 238, 140, 244);
+  module(96, 288, 88, 34, 'MatMul', ATTB);
+  a(140, 278, 140, 284);
+  vline(c1[0], 124, 305, '#3E6B8F');
+  hline(c1[0], 305, 88, '#3E6B8F');
+  P.push('<path d="M92 305 l-7 -3.5 l0 7 z" fill="#3E6B8F"/>');
+  t(30, 218, 'V', 11, '#3E6B8F', 700);
+  a(140, 322, 140, 340);
+  t(140, 358, '输出', 12, '#5C6B79', 700);
+  t(560, 24, '多头注意力', 13.5, '#5C6B79', 700);
+  var c2 = bars(408, 292, 28, 64, 10, ['V', 'K', 'Q']);
+  for (var i = 0; i < 3; i++) {
+    module(404 + i * 58, 236, 44, 26, 'Linear', ATTB, 10.5);
+    a(c2[i], 292, c2[i], 266);
+  }
+  var heads = [404, 462, 520];
+  for (var i = 0; i < 3; i++) {
+    rect(heads[i], 128, 48, 72, '#FFF', ATTB[1], true);
+    t(heads[i] + 24, 154, '缩放点积', 9.5, '#3E6B8F', 600);
+    t(heads[i] + 24, 170, '注意力', 9.5, '#3E6B8F', 600);
+    t(heads[i] + 24, 190, '×h 份', 9, '#93A0AC');
+    P.push('<path d="M' + (heads[i] + 24) + ' 236 L' + (heads[i] + 24) + ' 204" stroke="#93A0AC" stroke-width="1.4" fill="none"/><path d="M' + (heads[i] + 24) + ' 200 l-3.5 6.5 l7 0 z" fill="#93A0AC"/>');
+  }
+  t(592, 170, '…', 18, '#93A0AC', 700);
+  t(592, 190, '共 h 份并行', 10, '#93A0AC');
+  module(430, 74, 112, 26, 'Concat 拼接', YELLOW);
+  for (var i = 0; i < 3; i++) {
+    P.push('<path d="M' + (heads[i] + 24) + ' 128 L' + (heads[i] + 24) + ' 112 L' + (i === 0 ? 452 : i === 1 ? 486 : 520) + ' 112 L' + (i === 0 ? 452 : i === 1 ? 486 : 520) + ' 104" fill="none" stroke="#93A0AC" stroke-width="1.4"/>');
+    P.push('<path d="M' + (i === 0 ? 452 : i === 1 ? 486 : 520) + ' 100 l-3.5 6.5 l7 0 z" fill="#93A0AC"/>');
+  }
+  module(430, 30, 112, 26, 'Linear', ATTB);
+  a(486, 74, 486, 60);
+  a(486, 30, 486, 16);
+  t(486, 10, '输出', 12, '#5C6B79', 700);
+  vline(370, 30, 360, '#DCD2BF');
+  document.getElementById('demo-att-fig2').innerHTML = P.join('');
+})();
+</script>
 
 在实践中，我们会同时在一组查询上计算注意力函数，并把这些查询打包成矩阵 Q。键和值也分别被打包成矩阵 K 和 V。 我们按下面的方式计算输出矩阵：
 

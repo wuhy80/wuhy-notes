@@ -61,8 +61,78 @@ $$
 
 看这串数：0.90 → 0.50 → 0.29 → 0.17 → 0.10。每读一个无关的词，「小猫」的信号都先乘 0.6、再被 tanh 压一下， 一步步矮下去。到第 5 个词「因为」，它只剩峰值的约 **11%**——好在 5 个词还撑得住， 预测「它」时记忆里多少还残着点猫味。下面这台机器，按「读下一个词」就走一步，自己看这个过程：
 
-> [!note]- 交互演示｜互动 17-A一维记忆的现场演算：每点「读下一个词」就执行一次 $h\leftarrow \mathrm{tanh}(0.6h+x)$。蓝条的高度就是当前记忆 h，越往右越矮——「小猫」的信号正被一步步稀释。
-> 此处原站是一个可操作的交互演示，请到 [原站](https://www.xuanyuancode.com/ai-llm/lessons/nlp-04-rnn) 体验。
+<figure class="fig" style="margin:1.2em 0">
+  <div class="fig-frame" style="background:#FFFDF8;border:1px solid #DCD2BF;border-radius:8px;padding:14px;font-family:'Noto Sans SC, sans-serif'">
+    <div id="demo-17a-words" style="display:flex;gap:8px;justify-content:center;align-items:flex-end;margin-bottom:6px"></div>
+    <div style="display:flex;gap:6px;justify-content:center;margin-bottom:10px;font-size:10px;color:#93A0AC;font-family:'JetBrains Mono, monospace',monospace" id="demo-17a-hs"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin-bottom:8px;font-size:13px;color:#5C6B79">
+      <button id="demo-17a-prev" type="button" style="padding:6px 14px;border-radius:8px;border:1.5px solid #DCD2BF;background:#FFFDF8;color:#5C6B79;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px">← 上一词</button>
+      <button id="demo-17a-next" type="button" style="padding:6px 14px;border-radius:8px;border:1.5px solid #C0481E;background:#C0481E;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px">读下一个词 →</button>
+      <button id="demo-17a-reset" type="button" style="padding:6px 14px;border-radius:8px;border:1.5px solid #DCD2BF;background:#FFFDF8;color:#5C6B79;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px">↺ 重置</button>
+      <span id="demo-17a-prog" style="font-family:'JetBrains Mono, monospace',monospace"></span>
+    </div>
+    <div id="demo-17a-formula" style="text-align:center;font-family:'JetBrains Mono, monospace',monospace;font-size:13px;color:#1E2B38;min-height:22px"></div>
+    <div id="demo-17a-note" style="text-align:center;font-size:12.5px;color:#C0481E;font-weight:600;margin-top:6px;min-height:18px"></div>
+  </div>
+  <figcaption style="margin:6px 4px 0;font-size:.85em;color:#5C6B79;line-height:1.6">
+    <span style="color:#C0481E;font-weight:600;margin-right:6px">互动 17-A</span>一维记忆的现场演算：每点「读下一个词」就执行一次 h ← tanh(0.6·h + x)。蓝条的高度就是当前记忆 h，越往右越矮——「小猫」的信号正被一步步稀释。读完全句，想想：到句尾要预测「它」时，记忆里还剩多少猫味？<a href="https://www.xuanyuancode.com/ai-llm/lessons/nlp-04-rnn" style="margin-left:6px">原站交互版</a>
+  </figcaption>
+</figure>
+<script>
+(function () {
+  var words = ['小猫', '没有', '过', '马路', '因为', '它'];
+  var SIG = [1.5, 0, 0, 0, 0, 0];
+  var pos = 0;
+  var wordsEl = document.getElementById('demo-17a-words');
+  var hsEl = document.getElementById('demo-17a-hs');
+  var progEl = document.getElementById('demo-17a-prog');
+  var formulaEl = document.getElementById('demo-17a-formula');
+  var noteEl = document.getElementById('demo-17a-note');
+  function tanh(x) { return Math.tanh(x); }
+  function hist() {
+    var hs = [0];
+    for (var i = 0; i < pos; i++) hs.push(tanh(0.6 * hs[i] + SIG[i]));
+    return hs;
+  }
+  function draw() {
+    var hs = hist();
+    wordsEl.innerHTML = '';
+    hsEl.innerHTML = '';
+    for (var i = 0; i < words.length; i++) {
+      var read = i < pos, isNext = i === pos;
+      var col = document.createElement('div');
+      col.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:4px';
+      var hNow = i < pos ? hs[i + 1] : 0;
+      var barBox = '<div style="width:44px;height:86px;display:flex;align-items:flex-end;justify-content:center;background:#FAF6EE;border-radius:6px;border:1px solid #EFE6CC">' +
+        '<div style="width:30px;height:' + (hNow * 82).toFixed(1) + 'px;border-radius:5px;background:#3E6B8F;opacity:' + (i < pos ? 1 : 0.15) + ';transition:height .25s"></div></div>';
+      var chip = '<div style="padding:5px 0;width:46px;text-align:center;border-radius:8px;font-size:13px;font-weight:700;border:1.5px solid ' + (isNext ? '#C0481E' : read ? '#3E6B8F' : '#DCD2BF') + ';background:' + (isNext ? '#C0481E' : read ? '#EAF3F8' : '#FFFDF8') + ';color:' + (isNext ? '#fff' : read ? '#1E2B38' : '#93A0AC') + '">' + words[i] + '</div>';
+      col.innerHTML = barBox + chip;
+      wordsEl.appendChild(col);
+      var hcell = document.createElement('span');
+      hcell.style.cssText = 'width:50px;text-align:center';
+      hcell.textContent = i < pos ? 'h=' + hs[i + 1].toFixed(2) : '·';
+      hsEl.appendChild(hcell);
+    }
+    progEl.textContent = pos === 0 ? '还没开始读' : '读到第 ' + pos + ' / 5 个词';
+    if (pos === 0) {
+      formulaEl.innerHTML = 'h₀ = 0，等着第一个词进来';
+      noteEl.textContent = '点「读下一个词」，看「小猫」的信号怎样被一步步稀释';
+    } else {
+      var prev = hs[pos - 1], x = SIG[pos - 1], h = hs[pos];
+      formulaEl.innerHTML = words[pos - 1] + '：h = tanh(0.6 × ' + prev.toFixed(2) + ' + ' + x + ') = tanh(' + (0.6 * prev + x).toFixed(2) + ') = <strong style="color:#3E6B8F">' + h.toFixed(2) + '</strong>';
+      noteEl.textContent = pos >= 5
+        ? '句子读完。句尾的「它」指的就是开头的「小猫」——可记忆只剩峰值的一成左右，隔 20 个词更是 0.6²⁰ ≈ 0.00004，几乎归零'
+        : '「小猫」的信号 ×0.6 又矮了一截';
+    }
+    document.getElementById('demo-17a-prev').disabled = pos === 0;
+    document.getElementById('demo-17a-next').disabled = pos >= 5;
+  }
+  document.getElementById('demo-17a-prev').addEventListener('click', function () { if (pos > 0) { pos -= 1; draw(); } });
+  document.getElementById('demo-17a-next').addEventListener('click', function () { if (pos < 5) { pos += 1; draw(); } });
+  document.getElementById('demo-17a-reset').addEventListener('click', function () { pos = 0; draw(); });
+  draw();
+})();
+</script>
 
 ## 局限：记忆随距离消退
 

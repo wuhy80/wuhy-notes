@@ -140,8 +140,123 @@ $$
 - **多层堆叠**负责把这件事反复做深。
 - **末尾线性层 + softmax**负责把最后一个位置变成“下一个词的概率表”。
 
-> [!note]- 交互演示｜图 21-6这节课的简化版 Transformer 总览图：token 先变成词向量，再叠加位置信息，经过多层「注意力 + FFN」的 block，最后只拿末位置的表示去预测下一个词。
-> 此处原站是一个可操作的交互演示，请到 [原站](https://www.xuanyuancode.com/ai-llm/lessons/tf-transformer) 体验。
+<figure class="fig" style="margin:1.2em 0">
+  <div class="fig-frame" style="background:#FFFDF8;border:1px solid #DCD2BF;border-radius:8px;padding:14px;font-family:'Noto Sans SC, sans-serif'">
+    <svg id="demo-216-svg" viewBox="0 0 640 780" style="width:100%;max-width:560px;display:block;margin:0 auto"></svg>
+    <div id="demo-216-tip" style="text-align:center;font-size:12.5px;color:#5C6B79;min-height:20px;margin-top:6px">把鼠标移到图中任意模块上，看它负责什么。</div>
+  </div>
+  <figcaption style="margin:6px 4px 0;font-size:.85em;color:#5C6B79;line-height:1.6">
+    <span style="color:#C0481E;font-weight:600;margin-right:6px">图 21-6</span>这节课的简化版 Transformer 总览图：token 先变成词向量，再叠加位置信息，经过多层「注意力 + FFN」的 block，最后只拿末位置的表示去预测下一个词。（鼠标悬停可看每个模块的职责）<a href="https://www.xuanyuancode.com/ai-llm/lessons/tf-transformer" style="margin-left:6px">原站交互版</a>
+  </figcaption>
+</figure>
+<script>
+(function () {
+  var parts = [];
+  var svg = document.getElementById('demo-216-svg');
+  var tip = document.getElementById('demo-216-tip');
+  function txt(x, y, s, size, color, weight, anchor) {
+    parts.push('<text x="' + x + '" y="' + y + '" font-size="' + size + '" fill="' + color + '" font-weight="' + (weight || 400) + '" text-anchor="' + (anchor || 'middle') + '" font-family="Noto Sans SC, sans-serif">' + s + '</text>');
+  }
+  function arrow(x1, y1, x2, y2) {
+    parts.push('<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#93A0AC" stroke-width="1.6"/><path d="M' + x2 + ' ' + y2 + ' l-4 -7 l8 0 z" fill="#93A0AC"/>');
+  }
+  var CX = 320;
+  var tokens = ['我', '是', '一只', '小'];
+  var tw = [56, 56, 76, 56];
+  var gap = 14;
+  var total = tw.reduce(function (a, b) { return a + b; }, 0) + gap * 3;
+  var x0 = CX - total / 2;
+  parts.push('<g data-k="token">');
+  for (var i = 0; i < 4; i++) {
+    var tx = x0;
+    for (var j = 0; j < i; j++) tx += tw[j] + gap;
+    parts.push('<rect x="' + tx + '" y="16" width="' + tw[i] + '" height="34" rx="7" fill="#FBEDE8" stroke="#C0481E" stroke-width="1.6"/>');
+    txt(tx + tw[i] / 2, 38, tokens[i], 14, '#1E2B38', 700);
+  }
+  parts.push('</g>');
+  arrow(CX, 54, CX, 80);
+  parts.push('<g data-k="embed">');
+  for (var i = 0; i < 4; i++) {
+    var tx = x0;
+    for (var j = 0; j < i; j++) tx += tw[j] + gap;
+    parts.push('<rect x="' + tx + '" y="86" width="' + tw[i] + '" height="16" rx="4" fill="#EAF3F8" stroke="#3E6B8F" stroke-width="1.4"/>');
+  }
+  txt(CX, 122, '词向量：每个 token 查词表变成一串数', 12, '#5C6B79');
+  parts.push('</g>');
+  arrow(CX, 128, CX, 152);
+  parts.push('<g data-k="pos">');
+  for (var i = 0; i < 4; i++) {
+    var tx = x0;
+    for (var j = 0; j < i; j++) tx += tw[j] + gap;
+    parts.push('<rect x="' + tx + '" y="156" width="' + tw[i] + '" height="16" rx="4" fill="none" stroke="#C9A227" stroke-width="1.4" stroke-dasharray="4 3"/>');
+    parts.push('<text x="' + (tx + tw[i] / 2) + '" y="168" font-size="10" fill="#9A7B2E" text-anchor="middle" font-family="JetBrains Mono, monospace">＋pos</text>');
+  }
+  txt(CX, 192, '叠加位置信息：告诉模型「它排第几」', 12, '#5C6B79');
+  parts.push('</g>');
+  arrow(CX, 198, CX, 224);
+  parts.push('<g data-k="block">');
+  parts.push('<rect x="112" y="228" width="416" height="196" rx="12" fill="none" stroke="#C0481E" stroke-width="1.6" stroke-dasharray="7 5"/>');
+  parts.push('<rect x="196" y="220" width="248" height="18" fill="#FFFDF8"/>');
+  txt(CX, 234, 'Block（一个加工层）', 13, '#C0481E', 700);
+  parts.push('<rect x="150" y="252" width="340" height="62" rx="9" fill="#EAF3F8" stroke="#3E6B8F" stroke-width="1.6"/>');
+  txt(CX, 278, '注意力', 14, '#1E2B38', 700);
+  txt(CX, 298, 'token 与 token 之间横向通信', 11.5, '#3E6B8F');
+  parts.push('<rect x="150" y="338" width="340" height="62" rx="9" fill="#EAF5EE" stroke="#3E8F5A" stroke-width="1.6"/>');
+  txt(CX, 364, 'FFN', 14, '#1E2B38', 700);
+  txt(CX, 384, '每个 token 拿到信息后自己再纵向加工一遍', 11.5, '#3E8F5A');
+  arrow(CX, 314, CX, 334);
+  parts.push('</g>');
+  parts.push('<g data-k="stack">');
+  parts.push('<rect x="540" y="252" width="52" height="148" rx="9" fill="#FFF" stroke="#C0481E" stroke-width="1.2" transform="translate(8,6)"/>');
+  parts.push('<rect x="540" y="252" width="52" height="148" rx="9" fill="#FFF" stroke="#C0481E" stroke-width="1.2" transform="translate(4,3)"/>');
+  parts.push('<rect x="540" y="252" width="52" height="148" rx="9" fill="#FFFDF8" stroke="#C0481E" stroke-width="1.6"/>');
+  txt(566, 320, '×3', 16, '#C0481E', 700);
+  txt(566, 340, '同样的', 10.5, '#5C6B79');
+  txt(566, 354, 'block 堆 3 层', 10.5, '#5C6B79');
+  parts.push('</g>');
+  arrow(CX, 428, CX, 456);
+  parts.push('<g data-k="last">');
+  parts.push('<rect x="170" y="460" width="300" height="46" rx="9" fill="#FBF6EA" stroke="#C9A227" stroke-width="1.6"/>');
+  txt(CX, 480, '只拿末位置的表示', 13.5, '#1E2B38', 700);
+  txt(CX, 498, '前面都白算了吗？没有——它们都被末位置「看过」了', 11, '#9A7B2E');
+  parts.push('</g>');
+  arrow(CX, 510, CX, 538);
+  parts.push('<g data-k="head">');
+  parts.push('<rect x="222" y="542" width="196" height="42" rx="9" fill="#FFF" stroke="#5C6B79" stroke-width="1.6"/>');
+  txt(CX, 568, '线性层 + softmax', 13.5, '#1E2B38', 700);
+  parts.push('</g>');
+  arrow(CX, 588, CX, 616);
+  parts.push('<g data-k="probs">');
+  var bars = [['猫', 0.31, '#C0481E'], ['狗', 0.22, '#3E6B8F'], ['鸟', 0.12, '#6aa84f'], ['其他', 0.35, '#93A0AC']];
+  for (var i = 0; i < bars.length; i++) {
+    var bx = 150 + i * 90;
+    var bh = bars[i][1] * 90;
+    parts.push('<rect x="' + bx + '" y="' + (740 - bh) + '" width="46" height="' + bh + '" rx="4" fill="' + bars[i][2] + '" opacity="0.85"/>');
+    txt(bx + 23, 736 - bh - 6, Math.round(bars[i][1] * 100) + '%', 11.5, '#1E2B38', 700);
+    txt(bx + 23, 758, bars[i][0], 12, '#5C6B79');
+  }
+  txt(CX, 776, '下一个词的概率表', 12, '#93A0AC');
+  parts.push('</g>');
+  svg.innerHTML = parts.join('');
+  var tips = {
+    token: '输入句先被切成一个个 token（这里按词切）。',
+    embed: '每个 token 查词表，变成一个高维词向量。',
+    pos: '叠加位置信息（位置编码）：同一批 token 一起算，得靠它知道谁在前谁在后。',
+    block: 'Block 是 Transformer 的标准加工层：先横向、再纵向。',
+    stack: '同一个 block 原样堆 3 层（真实 GPT 是几十层），一层比一层抽象。',
+    last: '预测下一个词时只取末位置的表示：因果注意力让末位置恰好「看遍」全句。',
+    head: '线性层把表示映到词表大小，softmax 挤成概率分布。',
+    probs: '输出就是下一个词的概率表：猫 31%、狗 22%、鸟 12%……采样或取最大，得到续写。'
+  };
+  svg.addEventListener('mousemove', function (e) {
+    var g = e.target.closest('[data-k]');
+    tip.textContent = g && tips[g.getAttribute('data-k')] ? tips[g.getAttribute('data-k')] : '把鼠标移到图中任意模块上，看它负责什么。';
+  });
+  svg.addEventListener('mouseleave', function () {
+    tip.textContent = '把鼠标移到图中任意模块上，看它负责什么。';
+  });
+})();
+</script>
 
 这已经是一台能跑的 Transformer 主干了。它能并行、能堆深、能做“预测下一个词”这种任务， 这正是后来 GPT 一路做大的出发点。
 
