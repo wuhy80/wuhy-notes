@@ -373,6 +373,13 @@ if (Test-Path -LiteralPath $workerSrc) {
   Copy-Item -LiteralPath $workerSrc -Destination (Join-Path $PublicDir '_worker.js') -Force
   Write-Host "  已注入 _worker.js（/api/* 可用）"
 }
+# plotly.min.js：交互演示的自托管依赖（同源加载，国内网络可靠），由笔记里的
+# 演示脚本按需加载；不存在时演示退化为空白框，不影响站点其余部分。
+$plotlySrc = Join-Path $Vault 'cloudflare\plotly.min.js'
+if (Test-Path -LiteralPath $plotlySrc) {
+  Copy-Item -LiteralPath $plotlySrc -Destination (Join-Path $PublicDir 'plotly.min.js') -Force
+  Write-Host "  已注入 plotly.min.js（交互演示依赖）"
+}
 $vecSrc = Join-Path $Vault 'cloudflare\embeddings.json'
 if (Test-Path -LiteralPath $vecSrc) {
   Copy-Item -LiteralPath $vecSrc -Destination (Join-Path $PublicDir 'embeddings.json') -Force

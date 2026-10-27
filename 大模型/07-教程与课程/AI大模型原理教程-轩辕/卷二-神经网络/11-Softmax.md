@@ -84,7 +84,7 @@ lesson: 11
   if (window.Plotly) { draw(); }
   else {
     var s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.2/plotly.min.js';
+    s.src = '/plotly.min.js';
     s.onload = draw;
     document.head.appendChild(s);
   }
@@ -150,7 +150,7 @@ $$
   if (window.Plotly) { draw(); }
   else {
     var s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.2/plotly.min.js';
+    s.src = '/plotly.min.js';
     s.onload = draw;
     document.head.appendChild(s);
   }
@@ -194,7 +194,7 @@ $$
   if (window.Plotly) { draw(); }
   else {
     var s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.2/plotly.min.js';
+    s.src = '/plotly.min.js';
     s.onload = draw;
     document.head.appendChild(s);
   }
