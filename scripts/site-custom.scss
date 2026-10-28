@@ -364,8 +364,6 @@ html body article figure[data-rehype-pretty-code-figure] > pre::-webkit-scrollba
   --accent-warm: #e38b6b;
   --accent-wash: rgba(227, 139, 107, 0.15);
   --inline-code: rgba(227, 139, 107, 0.12);
-  // 纸墨皮肤的暗色档 chrome（其余皮肤在各自的 [data-gz-skin] 块里声明）
-  --gz-chrome-bg: rgba(36, 23, 16, 0.96);
 }
 
 // 标题字体：阿里妈妈数黑体（与参考站同款），回退链与参考站 --sans 一致。
@@ -779,7 +777,7 @@ html body article p:has(> em:only-child) {
 //   h1 48/900；h2 25/900（无左边条，靠「第 N 站」徽标 + 170px 水印数字 + 首字下沉）
 //   图卡：白底 + 1px #D8CEB6 + padding 26×22 + 圆角 0，图注 13px 在卡内
 //   强调：全站单一赭橙 #C2410C（测验选项 1px 线 + 6px 圆角、提交按钮 5px 圆角）
-//   外壳：64px 深色固定顶栏 + 深色页脚 + 阅读进度条
+//   外壳：64px 纸色固定顶栏 + 纸色页脚 + 阅读进度条
 // 本段全部为覆盖规则，集中在此便于回退（删掉本段即回到上一版观感）。
 // ===========================================================================
 
@@ -1235,7 +1233,9 @@ html body div#quartz-root.page .sidebar.right .graph .graph-outer {
   height: 150px !important;
 }
 
-// --- J. 深色固定顶栏（复用左栏里的站点标题 + 工具栏，DOM 不动）------------
+// --- J. 纸色固定顶栏（复用左栏里的站点标题 + 工具栏，DOM 不动）--------------
+// 2026-10-28 二次改版：不再用深色墨面，顶栏直接取 --paper（随皮肤与明暗走），
+// 文字用 --ink，当前分区/悬停用 --accent 系——四皮肤 × 明暗 8 种组合自动跟随主题。
 @media all and (min-width: 1200px) {
   html body div#quartz-root.page .left.sidebar > h2.page-title {
     position: fixed !important;
@@ -1246,24 +1246,24 @@ html body div#quartz-root.page .sidebar.right .graph .graph-outer {
     height: 64px !important;
     margin: 0 !important;
     padding: 0 24px !important;
-    background: var(--gz-chrome-bg) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--paper) !important;
+    border-bottom: 1px solid var(--line) !important;
   }
 
   html body div#quartz-root.page .left.sidebar > h2.page-title a {
-    color: var(--paper) !important;
+    color: var(--ink) !important;
     font-size: 18px !important;
     font-weight: 900 !important;
     letter-spacing: 0.03em;
     text-decoration: none !important;
   }
 
-  // 站名即「回首页」入口（2026-10-25 起顶栏不再放「首页」按钮），hover 给暖橙反馈
+  // 站名即「回首页」入口（2026-10-25 起顶栏不再放「首页」按钮），hover 给 accent 反馈
   html body div#quartz-root.page .left.sidebar > h2.page-title a:hover {
-    color: var(--accent-warm) !important;
+    color: var(--accent) !important;
   }
 
-  // 工具栏（搜索 / 暗色 / 阅读模式）挪到顶栏右侧
+  // 工具栏（搜索 / 暗色 / 阅读模式 / 皮肤切换器）挪到顶栏右侧
   html body div#quartz-root.page .left.sidebar > .flex-component {
     position: fixed !important;
     top: 14px !important;
@@ -1275,17 +1275,17 @@ html body div#quartz-root.page .sidebar.right .graph .graph-outer {
 
   html body div#quartz-root.page .left.sidebar > .flex-component .darkmode,
   html body div#quartz-root.page .left.sidebar > .flex-component .readermode {
-    color: rgba(255, 255, 255, 0.66) !important;
+    color: var(--ink-soft) !important;
   }
 
   html body div#quartz-root.page .left.sidebar > .flex-component .search-button {
-    background: rgba(255, 255, 255, 0.08) !important;
-    border-color: rgba(255, 255, 255, 0.18) !important;
-    color: rgba(255, 255, 255, 0.8) !important;
+    background: var(--paper-deep) !important;
+    border-color: var(--line) !important;
+    color: var(--ink-soft) !important;
   }
 }
 
-// --- K. 深色页脚（参考站 #1C1C1C 页脚带：横跨三列的通栏横条）--------------
+// --- K. 纸色页脚（与顶栏同一套主题 token：深一档纸色横条，横跨三列的通栏）---
 // v5 网格默认把 grid-footer 钉在中列（桌面/平板均如此），页脚只是正文末尾的一小块；
 // 2026-10-25 改为通栏：桌面三列全跨、平板两列全跨，手机单列天然通栏。
 @media all and (min-width: 1200px) {
@@ -1316,8 +1316,8 @@ html body div#quartz-root.page footer {
   justify-self: stretch !important;
   margin: 48px 0 0 0 !important;
   padding: 26px 48px !important;
-  background: var(--gz-chrome-bg) !important;
-  border-top: 0 !important;
+  background: var(--paper-deep) !important;
+  border-top: 1px solid var(--line) !important;
   // 关键：左右侧栏是 position:sticky + z-index:1 + height:100vh，会一直铺到页面
   // 最底并盖住页脚行的两侧（文字随之被盖没）。页脚必须压在侧栏之上才能整条可见。
   position: relative !important;
@@ -1334,22 +1334,21 @@ html body div#quartz-root.page footer p {
   margin: 0 !important;
 }
 
-// 页脚与顶栏同吃一张深色墨面（--gz-chrome-bg，随皮肤染色），文字基色因此
-// 不能用 var(--paper)——暗色模式下它是深色，会掉进深底里；改用
-// --gz-chrome-fg（各皮肤浅色档的纸色调，明暗两档同值）。
+// 页脚与顶栏同吃主题纸色 token（页脚 = 深一档 --paper-deep），文字用 --ink-soft、
+// 悬停转 --accent——四皮肤 × 明暗自动跟随，不再需要任何逐皮肤覆盖。
 html body div#quartz-root.page footer p,
 html body div#quartz-root.page footer a {
-  color: color-mix(in srgb, var(--gz-chrome-fg) 82%, transparent) !important;
+  color: var(--ink-soft) !important;
   font-size: 14px !important;
 }
 
 html body div#quartz-root.page footer a:hover {
-  color: var(--gz-chrome-fg) !important;
+  color: var(--accent) !important;
 }
 
 // 链接列（右）：footer 插件 links 配置渲染为 <ul>（quartz.config.yaml 的 footer.options.links）
 html body div#quartz-root.page footer ul {
-  color: color-mix(in srgb, var(--gz-chrome-fg) 82%, transparent) !important;
+  color: var(--ink-soft) !important;
   font-size: 14px !important;
   display: flex !important;
   flex-wrap: wrap !important;
@@ -1362,7 +1361,7 @@ html body div#quartz-root.page footer ul {
 }
 
 html body div#quartz-root.page footer ul li a {
-  color: color-mix(in srgb, var(--gz-chrome-fg) 92%, transparent) !important;
+  color: var(--ink-soft) !important;
   font-size: 14px !important;
   text-decoration: none !important;
 }
@@ -1696,7 +1695,7 @@ html body div#quartz-root.page .explorer > button.title-button:hover .fold {
 
 // --- 11.2 树本体：独立滚动（展开后不再顶出视口，也不把整页顶下去）---------
 // 桌面端侧栏是 sticky，树比视口高时底部条目永远够不到，因此必须有内滚。
-// 高度 = 视口 - 深色顶栏 64 - 侧栏上下内边距 24/48。
+// 高度 = 视口 - 固定顶栏 64 - 侧栏上下内边距 24/48。
 @media all and (min-width: 1200px) {
   html body div#quartz-root.page .explorer-content {
     max-height: calc(100vh - 136px);
@@ -1912,7 +1911,7 @@ html body div#quartz-root.page .left.sidebar .explorer {
   display: none !important;
 }
 
-// --- 顶栏分区导航：贴在深色固定栏里，站名右侧 ---
+// --- 顶栏分区导航：贴在纸色固定栏里，站名右侧 ---
 @media all and (min-width: 1200px) {
   html body div#quartz-root.page .left.sidebar > .top-nav {
     position: fixed !important;
@@ -1932,19 +1931,20 @@ html body div#quartz-root.page .top-nav a {
   border-radius: 3px;
   font-size: 13.5px;
   line-height: 1.2;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--ink-soft);
   text-decoration: none !important;
   white-space: nowrap;
 }
 
 html body div#quartz-root.page .top-nav a:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink);
+  background: var(--paper-deep);
 }
 
+// 当前分区 = 左栏条目同款的「accent-wash 洗色 + accent-deep 文字」小标签
 html body div#quartz-root.page .top-nav a.on {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.14);
+  color: var(--accent-deep);
+  background: var(--accent-wash);
 }
 
 @media all and (max-width: 1199px) {
@@ -2594,20 +2594,18 @@ html body div#quartz-root.page .page-footer .edit-page-link:hover {
 // ===========================================================================
 // 原理：0/6 调色板已把全站组件收敛到 --paper/--ink/--accent 这组变量上，
 // 皮肤只需按 <html data-gz-skin>（由 skin-switcher.cjs 注入的脚本写入）重声明
-// 同一组变量，所有组件自动跟随；标题字体与顶栏底色也走 --gz-* 令牌。
+// 同一组变量，所有组件自动跟随（含顶栏/页脚：底色直接吃 --paper/--paper-deep）；
+// 标题字体走 --gz-font-heading 令牌。
 // 四套皮肤：paper 纸墨·现版（即上面的默认调色板，不在此重复声明）、
 // xuanmo 玄墨书卷、yaoye 曜夜终端、cibai 瓷白编辑部。
 // 首访默认：系统深色 → yaoye，系统浅色 → cibai；选择存 localStorage('gz-skin')。
 
 :root {
-  // 标题字体（= 纸墨 · 现版的数黑体；下面各皮肤按需覆盖）
+  // 标题字体（= 纸墨 · 现版的数黑体；下面各皮肤按需覆盖）。
+  // 注：顶栏/页脚底色不设专门令牌——直接吃 --paper/--paper-deep，
+  // 随皮肤与明暗自动跟随（2026-10-28 起，见 J/K 两节）。
   --gz-font-heading: "AlimamaShuHeiTi", "Noto Sans SC", -apple-system,
     "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
-  // 「墨面」chrome 底色：深色固定顶栏与页脚通栏共用一张皮，随皮肤强调色相
-  // 染色（纸墨=暖赭墨）；不再是无差别的纯黑
-  --gz-chrome-bg: rgba(46, 26, 16, 0.96);
-  // chrome 上的文字基色 = 该皮肤浅色档的纸色调（明暗两档同值：chrome 恒为深色）
-  --gz-chrome-fg: #f5eddb;
 }
 
 // --- 玄墨书卷：宣纸白 + 墨色 + 朱砂，宋体标题 ------------------------------
@@ -2658,8 +2656,6 @@ html body div#quartz-root.page .page-footer .edit-page-link:hover {
   --code-background: var(--card) !important;
   --gz-font-heading: "Noto Serif SC", "Source Han Serif SC", "Songti SC",
     "STZhongsong", "SimSun", serif;
-  --gz-chrome-bg: rgba(48, 22, 17, 0.96);
-  --gz-chrome-fg: #f6ede0;
 }
 :root[data-gz-skin="xuanmo"][saved-theme="dark"] {
   --paper: #171613;
@@ -2708,8 +2704,6 @@ html body div#quartz-root.page .page-footer .edit-page-link:hover {
   --code-background: var(--card) !important;
   --gz-font-heading: "Noto Serif SC", "Source Han Serif SC", "Songti SC",
     "STZhongsong", "SimSun", serif;
-  --gz-chrome-bg: rgba(30, 16, 13, 0.96);
-  --gz-chrome-fg: #f6ede0;
 }
 
 // --- 曜夜终端：深色青荧光（浅色档为青瓷纸面），标题黑体 ----------------------
@@ -2760,8 +2754,6 @@ html body div#quartz-root.page .page-footer .edit-page-link:hover {
   --code-background: var(--card) !important;
   --gz-font-heading: "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
     -apple-system, sans-serif;
-  --gz-chrome-bg: rgba(8, 34, 31, 0.96);
-  --gz-chrome-fg: #eaf3f0;
 }
 :root[data-gz-skin="yaoye"][saved-theme="dark"] {
   --paper: #0e141b;
@@ -2810,8 +2802,6 @@ html body div#quartz-root.page .page-footer .edit-page-link:hover {
   --code-background: var(--card) !important;
   --gz-font-heading: "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
     -apple-system, sans-serif;
-  --gz-chrome-bg: rgba(6, 28, 30, 0.96);
-  --gz-chrome-fg: #eaf3f0;
 }
 
 // --- 瓷白编辑部：纯白 + 靛蓝，特黑标题 --------------------------------------
@@ -2862,8 +2852,6 @@ html body div#quartz-root.page .page-footer .edit-page-link:hover {
   --code-background: var(--card) !important;
   --gz-font-heading: "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
     -apple-system, sans-serif;
-  --gz-chrome-bg: rgba(15, 22, 46, 0.96);
-  --gz-chrome-fg: #eef1fa;
 }
 :root[data-gz-skin="cibai"][saved-theme="dark"] {
   --paper: #121419;
@@ -2912,12 +2900,10 @@ html body div#quartz-root.page .page-footer .edit-page-link:hover {
   --code-background: var(--card) !important;
   --gz-font-heading: "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
     -apple-system, sans-serif;
-  --gz-chrome-bg: rgba(12, 16, 33, 0.96);
-  --gz-chrome-fg: #eef1fa;
 }
 
 // --- 皮肤切换器（.gz-skin-dd，由 skin-switcher.cjs 注入）--------------------
-// 图标钮与 darkmode 同款视觉：侧栏里随纸色，顶栏里随墨色玻璃条。
+// 图标钮与 darkmode 同款视觉：侧栏与顶栏里都随纸色（顶栏 2026-10-28 起同为纸色底）。
 .gz-skin-dd {
   position: relative;
 }
@@ -3032,14 +3018,10 @@ html body div#quartz-root.page .page-footer .edit-page-link:hover {
 .gz-skin-menu button[aria-checked="true"] .gz-skin-tick {
   opacity: 1;
 }
-// 顶栏（深色固定栏）里：图标钮亮色玻璃态，与 darkmode 一致
+// 顶栏里与侧栏同一套视觉（顶栏已是纸色底，无需再挂亮色玻璃态）
 @media all and (min-width: 1200px) {
-  html body div#quartz-root.page .left.sidebar > .flex-component .gz-skin-dd summary {
-    color: rgba(255, 255, 255, 0.66);
-  }
   html body div#quartz-root.page .left.sidebar > .flex-component .gz-skin-dd summary:hover,
   html body div#quartz-root.page .left.sidebar > .flex-component .gz-skin-dd[open] summary {
-    color: var(--accent);
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--accent-wash);
   }
 }

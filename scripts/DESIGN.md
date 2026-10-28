@@ -115,9 +115,9 @@ layout:
   sidebar-left: 500px          # 下限 240（26vw 回缩；刻意比右栏宽，用户要求「尤其左边栏」）
   sidebar-right: 390px         # 下限 200（20.3vw 回缩）
   rail-padding: 28px 0 48px 22px
-  navbar: 64px                 # 深色固定顶栏（--gz-chrome-bg 随皮肤染色 + 底边 1px 白 10%）
+  navbar: 64px                 # 纸色固定顶栏（--paper 底 + 1px --line 底边，随皮肤与明暗走）
   progress-bar: 2px            # accent 色阅读进度条（纯 CSS 滚动驱动）
-  footer: full-width          # 页脚通栏横条（与顶栏同一张 --gz-chrome-bg 墨面，padding 26/48）
+  footer: full-width          # 页脚通栏横条（--paper-deep 底 + 1px --line 上边，随皮肤与明暗走）
   explorer-row: 28px           # 左栏探索树行高（文件行与文件夹行统一）
   explorer-scroll: calc(100dvh - 136px)  # 探索树内滚高度 = 视口 - 顶栏 64 - 侧栏上下内边距 24/48
 components:
@@ -163,13 +163,16 @@ components:
     textColor: "{colors.accent}"
   toc-marker:             # 右栏目录的圆点标记（未激活 ○ / 激活 ●）+ 编号
     textColor: "{colors.accent}"
-  navbar:                 # 深色固定顶栏（复用左栏的 .page-title，fixed 定位）
-    backgroundColor: "var(--gz-chrome-bg)"   # 皮肤 chrome 墨面：每套皮肤用强调色相染的深色（纸墨=暖赭墨 rgba(46,26,16,.96)、玄墨=朱砂墨、曜夜=青墨、瓷白=靛墨），明暗两档各有一份
-    textColor: "{colors.paper}"
-    borderBottom: "1px rgba(255,255,255,0.1)"
-  footer:                 # 页脚通栏横条：与顶栏共用同一张皮肤 chrome 墨面
-    backgroundColor: "var(--gz-chrome-bg)"
-    textColor: "color-mix(in srgb, var(--gz-chrome-fg) 82%, transparent)"   # chrome-fg = 各皮肤浅色档纸色调（恒为浅色，不随明暗翻转）
+  navbar:                 # 纸色固定顶栏（复用左栏的 .page-title，fixed 定位）
+    backgroundColor: "{colors.paper}"        # 2026-10-28 起：顶栏不再是深色墨面，直接随主题纸色
+    textColor: "{colors.ink}"
+    activeItem: "accent-wash 底 + accent-deep 文字的小标签（当前一级分区）"
+    borderBottom: "1px {colors.line}"
+  footer:                 # 页脚通栏横条：主题纸色的深一档
+    backgroundColor: "{colors.paper-deep}"
+    textColor: "{colors.ink-soft}"
+    linkHoverColor: "{colors.accent}"
+    borderTop: "1px {colors.line}"
   quiz:                   # 测验（enhance-content.cjs 把 callout 结构化后才有）
     badgeBackgroundColor: "{colors.accent}"
     itemBackgroundColor: "{colors.card}"
@@ -284,18 +287,20 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
     `min-width:100%`，只设 `max-width` 会被它压住（2026-10-21 实测：`#quartz-body`
     与 `footer` 都踩过这个坑，`footer` 还有主题自带的 `min-width: calc(100% - 48px)`）
 - 左右栏各以 1px 边线（`border`）与正文分隔（右栏 border-left、左栏 border-right），不用底色分区
-- **深色固定顶栏 64px**：复用左栏里的 `.page-title`（`position: fixed` 铺满宽度，
-  `var(--gz-chrome-bg)` + 底边 1px 白 10%），工具栏（搜索/暗色/阅读模式/皮肤切换器）一并 fixed 到右侧；
-  `#quartz-body` 加 `padding-top: 64px` 让位，左右栏 `sticky top: 64px`
+- **纸色固定顶栏 64px**：复用左栏里的 `.page-title`（`position: fixed` 铺满宽度，
+  `--paper` 底 + 1px `--line` 底边），工具栏（搜索/暗色/阅读模式/皮肤切换器）一并 fixed 到右侧；
+  `#quartz-body` 加 `padding-top: 64px` 让位，左右栏 `sticky top: 64px`。
+  2026-10-28 二次改版：不再用深色墨面（先前的 rgba(28,28,28,.96) 与随皮肤染色的
+  `--gz-chrome-bg` 都已废弃）——顶栏直接随主题纸色，文字 `--ink`，导航项 `--ink-soft`，
+  当前一级分区 = 左栏条目同款 `accent-wash` 小标签；顶栏里不允许再出现白色系硬编码
 - **页脚通栏横条**（2026-10-25 起）：`grid-template-areas` 把 `grid-footer` 提为独占整行
   （桌面跨三列、平板跨两列，<800px 单列天然通栏），`width:100%` 吃满整行；
-  2026-10-28 起与顶栏**共用同一张皮肤 chrome 墨面**（`--gz-chrome-bg`，随皮肤强调色相染色，
-  明暗两档均为深色）+ `--gz-chrome-fg` 82% 文字（14px，链接 92%；chrome-fg 恒为浅色，
-  不随明暗翻转——暗色模式下 `--paper` 是深色，不能再用它当页脚文字基色），
+  2026-10-28 起与顶栏同一套主题 token：`--paper-deep` 底 + 1px `--line` 上边 +
+  `--ink-soft` 文字（14px，悬停转 `--accent`），随皮肤与明暗自动跟随，
   padding 26/48；版权行居左、链接列居右（`space-between`），
   链接由 `quartz.config.yaml` 的 footer 插件 `options.links` 配置（GitHub/RSS/站点地图）
 - 间距只用上面 `spacing` 里定义的值
-- <1200px 时不启用上述栅格（保持 Quartz 默认单列/抽屉），深色顶栏也不启用
+- <1200px 时不启用上述栅格（保持 Quartz 默认单列/抽屉），固定顶栏也不启用
 
 ## Elevation & Depth
 
@@ -457,7 +462,7 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
   一对 `**` 被 `<span class="katex">` 隔开时，按文本节点配对会漏掉，产物里留字面星号
   （2026-10-23 实测 5 处）。脚本现在多了「同块内、含 katex、`**` 为偶数」的跨节点配对，
   只在构建产物上动手；笔记里照常写 `**…**` 即可，**不要**手动改成 `<strong>`
-- **深色顶栏靠 fixed 复用 DOM**：`.page-title` 是左栏的子元素，靠 `position: fixed` 拉成
+- **固定顶栏靠 fixed 复用 DOM**：`.page-title` 是左栏的子元素，靠 `position: fixed` 拉成
   全宽顶栏；它所在的 `.sidebar.left` 是 `sticky`（无 `transform`/`filter`），所以 fixed
   才相对视口定位。**一旦给侧栏加 `transform`/`filter`/`contain`，顶栏会缩进侧栏宽度内**
 - **callout 只用一种强调色**：改 `--color` 到 `accent` 即可同时改变左边条与图标；
