@@ -237,6 +237,7 @@ $siteSig = Get-StringHash (@(
   (Get-FileSig (Join-Path $Vault 'scripts\build-section-nav.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\enhance-content.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\fix-html-emphasis.cjs')),
+  (Get-FileSig (Join-Path $Vault 'scripts\skin-switcher.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\site-assets\AlimamaShuHeiTi-Bold.woff2')),
   $sspSig,
   (Get-FileSig (Join-Path $Vault 'scripts\quartz.config.yaml')),
@@ -372,6 +373,17 @@ try {
     ($o -split "`r?`n") | Where-Object { $_ -match 'edit-link|Error' } | ForEach-Object { Write-Host "  $($_.Trim())" }
   } else {
     Write-Host "  未找到 add-edit-links.cjs，跳过编辑链接注入" -ForegroundColor Yellow
+  }
+
+  # 皮肤切换器：顶栏工具栏注入「皮肤」下拉（四主题可选，localStorage 记忆，
+  # 首访按系统明暗给默认：浅色→瓷白，深色→曜夜）。皮肤取值与调色板见
+  # site-custom.scss 末尾「12/12 皮肤系统」。同样在产物上注入，不动 Quartz 组件。
+  $skinSwitcher = Join-Path $Vault 'scripts\skin-switcher.cjs'
+  if (Test-Path -LiteralPath $skinSwitcher) {
+    $o = (& $Node $skinSwitcher $PublicDir 2>&1 | Out-String)
+    ($o -split "`r?`n") | Where-Object { $_ -match 'skin-switcher|Error' } | ForEach-Object { Write-Host "  $($_.Trim())" }
+  } else {
+    Write-Host "  未找到 skin-switcher.cjs，跳过皮肤切换器注入" -ForegroundColor Yellow
   }
 } finally { Pop-Location }
 

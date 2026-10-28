@@ -455,7 +455,7 @@ html[data-theme="dark"] body div#quartz-root.page {
 // --- 1/6 站点标题：左栏页题用数黑体（与文章标题同款） --------------------
 // 此版本 Quartz 无顶部 navbar，站点标题位于左栏 h2.page-title。
 html body div#quartz-root.page .left.sidebar h2.page-title a {
-  font-family: $headingFontStack;
+  font-family: var(--gz-font-heading);
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -498,7 +498,7 @@ html body div#quartz-root.page .sidebar.right .graph h3 {
 // $headingFontStack 与 @font-face 定义见本区块开头的 1/6 之前。
 
 html body div#quartz-root.page h1.article-title {
-  font-family: $headingFontStack !important;
+  font-family: var(--gz-font-heading) !important;
   font-size: clamp(30px, 3.4vw, 46px) !important;
   font-weight: 700 !important;
   line-height: 1.22 !important;
@@ -525,7 +525,7 @@ html body div#quartz-root.page .content-meta {
 // --- 4/6 h2/h3：数黑体 + 左侧橙色强调条（参考站「第 N 站」小节的气质）----
 // 纵向节奏（2026-10-18 收紧）：标题与正文的间距偏大，统一压小。
 html body div#quartz-root.page article h2 {
-  font-family: $headingFontStack !important;
+  font-family: var(--gz-font-heading) !important;
   font-weight: 700 !important;
   border-left: 3px solid var(--tertiary) !important;
   padding-left: 0.55em;
@@ -534,7 +534,7 @@ html body div#quartz-root.page article h2 {
 }
 
 html body div#quartz-root.page article h3 {
-  font-family: $headingFontStack;
+  font-family: var(--gz-font-heading);
   font-weight: 700;
   margin-top: 1.1em !important;
   margin-bottom: 0.35em !important;
@@ -852,7 +852,7 @@ html body div#quartz-root.page article li {
 
 // --- C. 标题：h1 48/900，h2 25/900 且去掉左边条 ---------------------------
 html body div#quartz-root.page h1.article-title {
-  font-family: $headingFontStack !important;
+  font-family: var(--gz-font-heading) !important;
   font-size: 48px !important;
   font-weight: 900 !important;
   line-height: 1.22 !important;
@@ -863,7 +863,7 @@ html body div#quartz-root.page h1.article-title {
 }
 
 html body div#quartz-root.page article h2 {
-  font-family: $headingFontStack !important;
+  font-family: var(--gz-font-heading) !important;
   font-size: 25px !important;
   font-weight: 900 !important;
   line-height: 1.3 !important;
@@ -875,7 +875,7 @@ html body div#quartz-root.page article h2 {
 }
 
 html body div#quartz-root.page article h3 {
-  font-family: $headingFontStack !important;
+  font-family: var(--gz-font-heading) !important;
   font-size: 17px !important;
   font-weight: 900 !important;
   line-height: 1.35 !important;
@@ -907,7 +907,7 @@ html body div#quartz-root.page article h2::after {
   position: absolute;
   right: -4px;
   top: -0.45em;
-  font-family: $headingFontStack;
+  font-family: var(--gz-font-heading);
   font-size: 170px;
   font-weight: 900;
   line-height: 1;
@@ -1244,7 +1244,7 @@ html body div#quartz-root.page .sidebar.right .graph .graph-outer {
     height: 64px !important;
     margin: 0 !important;
     padding: 0 24px !important;
-    background: rgba(28, 28, 28, 0.96) !important;
+    background: var(--gz-topbar-bg) !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
 
@@ -1965,7 +1965,7 @@ html body div#quartz-root.page .side-nav-head {
 }
 
 html body div#quartz-root.page .side-nav-head b {
-  font-family: $headingFontStack;
+  font-family: var(--gz-font-heading);
   font-size: 17px;
   font-weight: 900;
   letter-spacing: 0;
@@ -2582,4 +2582,417 @@ html body div#quartz-root.page .page-footer .edit-page-link {
 html body div#quartz-root.page .page-footer .edit-page-link:hover {
   color: var(--secondary) !important;
   text-decoration: underline !important;
+}
+
+// ===========================================================================
+// 12/12 皮肤系统：四套可选主题 + 访客切换器（2026-10-28）
+// ===========================================================================
+// 原理：0/6 调色板已把全站组件收敛到 --paper/--ink/--accent 这组变量上，
+// 皮肤只需按 <html data-gz-skin>（由 skin-switcher.cjs 注入的脚本写入）重声明
+// 同一组变量，所有组件自动跟随；标题字体与顶栏底色也走 --gz-* 令牌。
+// 四套皮肤：paper 纸墨·现版（即上面的默认调色板，不在此重复声明）、
+// xuanmo 玄墨书卷、yaoye 曜夜终端、cibai 瓷白编辑部。
+// 首访默认：系统深色 → yaoye，系统浅色 → cibai；选择存 localStorage('gz-skin')。
+
+:root {
+  // 标题字体（= 纸墨 · 现版的数黑体；下面各皮肤按需覆盖）
+  --gz-font-heading: "AlimamaShuHeiTi", "Noto Sans SC", -apple-system,
+    "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  // 顶栏（深色固定栏）底色：默认墨色；深色模式下随皮肤微调
+  --gz-topbar-bg: rgba(28, 28, 28, 0.96);
+}
+
+// --- 玄墨书卷：宣纸白 + 墨色 + 朱砂，宋体标题 ------------------------------
+:root[data-gz-skin="xuanmo"][saved-theme="light"] {
+  --paper: #faf9f5;
+  --paper-deep: #f1ede2;
+  --card: #fffef9;
+  --ink: #211f19;
+  --ink-soft: #57523f;
+  --ink-faint: #8b846e;
+  --line: #e3ddcd;
+  --accent: #a63b2a;
+  --accent-deep: #7f2b1e;
+  --accent-warm: #c05a3c;
+  --accent-wash: #f6ede0;
+  --inline-code: rgba(166, 59, 42, 0.08);
+  --light: var(--paper) !important;
+  --lightgray: var(--line) !important;
+  --gray: var(--ink-faint) !important;
+  --darkgray: var(--ink-soft) !important;
+  --dark: var(--ink) !important;
+  --secondary: var(--accent) !important;
+  --tertiary: var(--accent-warm) !important;
+  --highlight: var(--accent-wash) !important;
+  --claude-paper-surface: var(--paper) !important;
+  --claude-paper-surface-alt: var(--paper) !important;
+  --claude-paper-surface-secondary: var(--paper) !important;
+  --claude-paper-surface-tertiary: var(--paper-deep) !important;
+  --claude-paper-surface-raised: var(--card) !important;
+  --claude-paper-surface-code: var(--paper-deep) !important;
+  --claude-paper-ink: var(--ink) !important;
+  --claude-paper-ink-secondary: var(--ink-soft) !important;
+  --claude-paper-ink-tertiary: var(--ink-faint) !important;
+  --claude-paper-border: var(--line) !important;
+  --claude-paper-border-strong: var(--line) !important;
+  --claude-paper-accent: var(--accent) !important;
+  --claude-paper-accent-hover: var(--accent-warm) !important;
+  --claude-paper-accent-soft: rgba(166, 59, 42, 0.12) !important;
+  --claude-paper-accent-softer: rgba(166, 59, 42, 0.07) !important;
+  --claude-paper-accent-text: var(--accent-deep) !important;
+  --claude-paper-accent-rgb: 166, 59, 42 !important;
+  --claude-paper-highlight: rgba(166, 59, 42, 0.1) !important;
+  --claude-paper-selection: rgba(166, 59, 42, 0.18) !important;
+  --background-modifier-hover: rgba(166, 59, 42, 0.06) !important;
+  --background-modifier-active-hover: var(--accent-wash) !important;
+  --nav-item-background-active: var(--accent-wash) !important;
+  --nav-item-color-active: var(--accent-deep) !important;
+  --code-background: var(--card) !important;
+  --gz-font-heading: "Noto Serif SC", "Source Han Serif SC", "Songti SC",
+    "STZhongsong", "SimSun", serif;
+  --gz-topbar-bg: rgba(33, 31, 25, 0.96);
+}
+:root[data-gz-skin="xuanmo"][saved-theme="dark"] {
+  --paper: #171613;
+  --paper-deep: #131210;
+  --card: #1d1b16;
+  --ink: #f0ebdd;
+  --ink-soft: #c9c2b0;
+  --ink-faint: #97907b;
+  --line: #2e2b23;
+  --accent: #ce6a50;
+  --accent-deep: #e08a70;
+  --accent-warm: #b85a42;
+  --accent-wash: #2a211b;
+  --inline-code: rgba(206, 106, 80, 0.12);
+  --light: var(--paper) !important;
+  --lightgray: var(--line) !important;
+  --gray: var(--ink-faint) !important;
+  --darkgray: var(--ink-soft) !important;
+  --dark: var(--ink) !important;
+  --secondary: var(--accent) !important;
+  --tertiary: var(--accent-warm) !important;
+  --highlight: var(--accent-wash) !important;
+  --claude-paper-surface: var(--paper) !important;
+  --claude-paper-surface-alt: var(--paper) !important;
+  --claude-paper-surface-secondary: var(--paper) !important;
+  --claude-paper-surface-tertiary: var(--paper-deep) !important;
+  --claude-paper-surface-raised: var(--card) !important;
+  --claude-paper-surface-code: var(--paper-deep) !important;
+  --claude-paper-ink: var(--ink) !important;
+  --claude-paper-ink-secondary: var(--ink-soft) !important;
+  --claude-paper-ink-tertiary: var(--ink-faint) !important;
+  --claude-paper-border: var(--line) !important;
+  --claude-paper-border-strong: var(--line) !important;
+  --claude-paper-accent: var(--accent) !important;
+  --claude-paper-accent-hover: var(--accent-warm) !important;
+  --claude-paper-accent-soft: rgba(206, 106, 80, 0.14) !important;
+  --claude-paper-accent-softer: rgba(206, 106, 80, 0.08) !important;
+  --claude-paper-accent-text: var(--accent-deep) !important;
+  --claude-paper-accent-rgb: 206, 106, 80 !important;
+  --claude-paper-highlight: rgba(206, 106, 80, 0.12) !important;
+  --claude-paper-selection: rgba(206, 106, 80, 0.2) !important;
+  --background-modifier-hover: rgba(206, 106, 80, 0.07) !important;
+  --background-modifier-active-hover: var(--accent-wash) !important;
+  --nav-item-background-active: var(--accent-wash) !important;
+  --nav-item-color-active: var(--accent-deep) !important;
+  --code-background: var(--card) !important;
+  --gz-font-heading: "Noto Serif SC", "Source Han Serif SC", "Songti SC",
+    "STZhongsong", "SimSun", serif;
+  --gz-topbar-bg: rgba(23, 22, 19, 0.96);
+}
+
+// --- 曜夜终端：深色青荧光（浅色档为青瓷纸面），标题黑体 ----------------------
+:root[data-gz-skin="yaoye"][saved-theme="light"] {
+  --paper: #f3f5f4;
+  --paper-deep: #e9eeec;
+  --card: #ffffff;
+  --ink: #10181c;
+  --ink-soft: #33403c;
+  --ink-faint: #64736f;
+  --line: #d5dedb;
+  --accent: #0c8a7b;
+  --accent-deep: #086659;
+  --accent-warm: #0c8a7b;
+  --accent-wash: #e1f2ef;
+  --inline-code: rgba(12, 138, 123, 0.08);
+  --light: var(--paper) !important;
+  --lightgray: var(--line) !important;
+  --gray: var(--ink-faint) !important;
+  --darkgray: var(--ink-soft) !important;
+  --dark: var(--ink) !important;
+  --secondary: var(--accent) !important;
+  --tertiary: var(--accent-warm) !important;
+  --highlight: var(--accent-wash) !important;
+  --claude-paper-surface: var(--paper) !important;
+  --claude-paper-surface-alt: var(--paper) !important;
+  --claude-paper-surface-secondary: var(--paper) !important;
+  --claude-paper-surface-tertiary: var(--paper-deep) !important;
+  --claude-paper-surface-raised: var(--card) !important;
+  --claude-paper-surface-code: var(--paper-deep) !important;
+  --claude-paper-ink: var(--ink) !important;
+  --claude-paper-ink-secondary: var(--ink-soft) !important;
+  --claude-paper-ink-tertiary: var(--ink-faint) !important;
+  --claude-paper-border: var(--line) !important;
+  --claude-paper-border-strong: var(--line) !important;
+  --claude-paper-accent: var(--accent) !important;
+  --claude-paper-accent-hover: var(--accent-warm) !important;
+  --claude-paper-accent-soft: rgba(12, 138, 123, 0.12) !important;
+  --claude-paper-accent-softer: rgba(12, 138, 123, 0.07) !important;
+  --claude-paper-accent-text: var(--accent-deep) !important;
+  --claude-paper-accent-rgb: 12, 138, 123 !important;
+  --claude-paper-highlight: rgba(12, 138, 123, 0.1) !important;
+  --claude-paper-selection: rgba(12, 138, 123, 0.18) !important;
+  --background-modifier-hover: rgba(12, 138, 123, 0.06) !important;
+  --background-modifier-active-hover: var(--accent-wash) !important;
+  --nav-item-background-active: var(--accent-wash) !important;
+  --nav-item-color-active: var(--accent-deep) !important;
+  --code-background: var(--card) !important;
+  --gz-font-heading: "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
+    -apple-system, sans-serif;
+  --gz-topbar-bg: rgba(16, 24, 28, 0.96);
+}
+:root[data-gz-skin="yaoye"][saved-theme="dark"] {
+  --paper: #0e141b;
+  --paper-deep: #0b1118;
+  --card: #101923;
+  --ink: #edf3f9;
+  --ink-soft: #b9c7d4;
+  --ink-faint: #7c8b9a;
+  --line: #1e2833;
+  --accent: #38d9c0;
+  --accent-deep: #7fe8d6;
+  --accent-warm: #e5b567;
+  --accent-wash: rgba(56, 217, 192, 0.1);
+  --inline-code: rgba(56, 217, 192, 0.1);
+  --light: var(--paper) !important;
+  --lightgray: var(--line) !important;
+  --gray: var(--ink-faint) !important;
+  --darkgray: var(--ink-soft) !important;
+  --dark: var(--ink) !important;
+  --secondary: var(--accent) !important;
+  --tertiary: var(--accent-warm) !important;
+  --highlight: var(--accent-wash) !important;
+  --claude-paper-surface: var(--paper) !important;
+  --claude-paper-surface-alt: var(--paper) !important;
+  --claude-paper-surface-secondary: var(--paper) !important;
+  --claude-paper-surface-tertiary: var(--paper-deep) !important;
+  --claude-paper-surface-raised: var(--card) !important;
+  --claude-paper-surface-code: var(--paper-deep) !important;
+  --claude-paper-ink: var(--ink) !important;
+  --claude-paper-ink-secondary: var(--ink-soft) !important;
+  --claude-paper-ink-tertiary: var(--ink-faint) !important;
+  --claude-paper-border: var(--line) !important;
+  --claude-paper-border-strong: var(--line) !important;
+  --claude-paper-accent: var(--accent) !important;
+  --claude-paper-accent-hover: var(--accent-warm) !important;
+  --claude-paper-accent-soft: rgba(56, 217, 192, 0.14) !important;
+  --claude-paper-accent-softer: rgba(56, 217, 192, 0.08) !important;
+  --claude-paper-accent-text: var(--accent-deep) !important;
+  --claude-paper-accent-rgb: 56, 217, 192 !important;
+  --claude-paper-highlight: rgba(56, 217, 192, 0.12) !important;
+  --claude-paper-selection: rgba(56, 217, 192, 0.2) !important;
+  --background-modifier-hover: rgba(56, 217, 192, 0.07) !important;
+  --background-modifier-active-hover: var(--accent-wash) !important;
+  --nav-item-background-active: var(--accent-wash) !important;
+  --nav-item-color-active: var(--accent-deep) !important;
+  --code-background: var(--card) !important;
+  --gz-font-heading: "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
+    -apple-system, sans-serif;
+  --gz-topbar-bg: rgba(10, 15, 21, 0.96);
+}
+
+// --- 瓷白编辑部：纯白 + 靛蓝，特黑标题 --------------------------------------
+:root[data-gz-skin="cibai"][saved-theme="light"] {
+  --paper: #ffffff;
+  --paper-deep: #f4f6fa;
+  --card: #ffffff;
+  --ink: #171b22;
+  --ink-soft: #3d4450;
+  --ink-faint: #79828f;
+  --line: #e7e9ed;
+  --accent: #2749d8;
+  --accent-deep: #1d3ab8;
+  --accent-warm: #8fa6ff;
+  --accent-wash: #eef1fe;
+  --inline-code: rgba(39, 73, 216, 0.07);
+  --light: var(--paper) !important;
+  --lightgray: var(--line) !important;
+  --gray: var(--ink-faint) !important;
+  --darkgray: var(--ink-soft) !important;
+  --dark: var(--ink) !important;
+  --secondary: var(--accent) !important;
+  --tertiary: var(--accent-warm) !important;
+  --highlight: var(--accent-wash) !important;
+  --claude-paper-surface: var(--paper) !important;
+  --claude-paper-surface-alt: var(--paper) !important;
+  --claude-paper-surface-secondary: var(--paper) !important;
+  --claude-paper-surface-tertiary: var(--paper-deep) !important;
+  --claude-paper-surface-raised: var(--card) !important;
+  --claude-paper-surface-code: var(--paper-deep) !important;
+  --claude-paper-ink: var(--ink) !important;
+  --claude-paper-ink-secondary: var(--ink-soft) !important;
+  --claude-paper-ink-tertiary: var(--ink-faint) !important;
+  --claude-paper-border: var(--line) !important;
+  --claude-paper-border-strong: var(--line) !important;
+  --claude-paper-accent: var(--accent) !important;
+  --claude-paper-accent-hover: var(--accent-warm) !important;
+  --claude-paper-accent-soft: rgba(39, 73, 216, 0.12) !important;
+  --claude-paper-accent-softer: rgba(39, 73, 216, 0.07) !important;
+  --claude-paper-accent-text: var(--accent-deep) !important;
+  --claude-paper-accent-rgb: 39, 73, 216 !important;
+  --claude-paper-highlight: rgba(39, 73, 216, 0.1) !important;
+  --claude-paper-selection: rgba(39, 73, 216, 0.18) !important;
+  --background-modifier-hover: rgba(39, 73, 216, 0.06) !important;
+  --background-modifier-active-hover: var(--accent-wash) !important;
+  --nav-item-background-active: var(--accent-wash) !important;
+  --nav-item-color-active: var(--accent-deep) !important;
+  --code-background: var(--card) !important;
+  --gz-font-heading: "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
+    -apple-system, sans-serif;
+  --gz-topbar-bg: rgba(23, 27, 34, 0.96);
+}
+:root[data-gz-skin="cibai"][saved-theme="dark"] {
+  --paper: #121419;
+  --paper-deep: #191c23;
+  --card: #191c23;
+  --ink: #f2f4f8;
+  --ink-soft: #c3c9d4;
+  --ink-faint: #8a93a1;
+  --line: #2e333e;
+  --accent: #8fa6ff;
+  --accent-deep: #b0c2ff;
+  --accent-warm: #8fa6ff;
+  --accent-wash: rgba(143, 166, 255, 0.12);
+  --inline-code: rgba(143, 166, 255, 0.1);
+  --light: var(--paper) !important;
+  --lightgray: var(--line) !important;
+  --gray: var(--ink-faint) !important;
+  --darkgray: var(--ink-soft) !important;
+  --dark: var(--ink) !important;
+  --secondary: var(--accent) !important;
+  --tertiary: var(--accent-warm) !important;
+  --highlight: var(--accent-wash) !important;
+  --claude-paper-surface: var(--paper) !important;
+  --claude-paper-surface-alt: var(--paper) !important;
+  --claude-paper-surface-secondary: var(--paper) !important;
+  --claude-paper-surface-tertiary: var(--paper-deep) !important;
+  --claude-paper-surface-raised: var(--card) !important;
+  --claude-paper-surface-code: var(--paper-deep) !important;
+  --claude-paper-ink: var(--ink) !important;
+  --claude-paper-ink-secondary: var(--ink-soft) !important;
+  --claude-paper-ink-tertiary: var(--ink-faint) !important;
+  --claude-paper-border: var(--line) !important;
+  --claude-paper-border-strong: var(--line) !important;
+  --claude-paper-accent: var(--accent) !important;
+  --claude-paper-accent-hover: var(--accent-warm) !important;
+  --claude-paper-accent-soft: rgba(143, 166, 255, 0.14) !important;
+  --claude-paper-accent-softer: rgba(143, 166, 255, 0.08) !important;
+  --claude-paper-accent-text: var(--accent-deep) !important;
+  --claude-paper-accent-rgb: 143, 166, 255 !important;
+  --claude-paper-highlight: rgba(143, 166, 255, 0.12) !important;
+  --claude-paper-selection: rgba(143, 166, 255, 0.2) !important;
+  --background-modifier-hover: rgba(143, 166, 255, 0.07) !important;
+  --background-modifier-active-hover: var(--accent-wash) !important;
+  --nav-item-background-active: var(--accent-wash) !important;
+  --nav-item-color-active: var(--accent-deep) !important;
+  --code-background: var(--card) !important;
+  --gz-font-heading: "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
+    -apple-system, sans-serif;
+  --gz-topbar-bg: rgba(16, 18, 23, 0.96);
+}
+
+// --- 皮肤切换器（.gz-skin-dd，由 skin-switcher.cjs 注入）--------------------
+// 图标钮与 darkmode 同款视觉：侧栏里随纸色，顶栏里随墨色玻璃条。
+.gz-skin-dd {
+  position: relative;
+}
+.gz-skin-dd summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 7px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  list-style: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.gz-skin-dd summary::-webkit-details-marker {
+  display: none;
+}
+.gz-skin-dd summary:hover {
+  background: var(--background-modifier-hover);
+  color: var(--accent);
+}
+.gz-skin-dd[open] summary {
+  color: var(--accent);
+  background: var(--accent-wash);
+}
+.gz-skin-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 90;
+  min-width: 168px;
+  padding: 6px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+.gz-skin-menu button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+.gz-skin-menu button:hover {
+  background: var(--accent-wash);
+  color: var(--accent-deep);
+}
+.gz-skin-menu button[aria-checked="true"] {
+  color: var(--accent-deep);
+  font-weight: 600;
+  background: var(--accent-wash);
+}
+.gz-skin-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.gz-skin-dot-paper { background: #c2410c; }
+.gz-skin-dot-xuanmo { background: #a63b2a; }
+.gz-skin-dot-yaoye { background: #38d9c0; }
+.gz-skin-dot-cibai { background: #2749d8; }
+.gz-skin-tick {
+  margin-left: auto;
+  font-size: 11px;
+  opacity: 0;
+}
+.gz-skin-menu button[aria-checked="true"] .gz-skin-tick {
+  opacity: 1;
+}
+// 顶栏（深色固定栏）里：图标钮亮色玻璃态，与 darkmode 一致
+@media all and (min-width: 1200px) {
+  html body div#quartz-root.page .left.sidebar > .flex-component .gz-skin-dd summary {
+    color: rgba(255, 255, 255, 0.66);
+  }
+  html body div#quartz-root.page .left.sidebar > .flex-component .gz-skin-dd summary:hover,
+  html body div#quartz-root.page .left.sidebar > .flex-component .gz-skin-dd[open] summary {
+    color: var(--accent);
+    background: rgba(255, 255, 255, 0.08);
+  }
 }
