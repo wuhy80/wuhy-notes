@@ -2561,3 +2561,25 @@ html body div#quartz-root.page article .katex-display {
     padding: 16px 14px !important;
   }
 }
+
+// ===========================================================================
+// 「✎ 编辑此页」（scripts/add-edit-links.cjs 注入 .page-footer 空槽的小链接）：
+// 引导读者在 GitHub 网页上直接修订小错——保存 commit 后 CI 自动重新发布。
+// 弱化小字与全站页脚同调（ink-faint），悬停点亮链接色（accent）。
+// ===========================================================================
+html body div#quartz-root.page .page-footer {
+  margin: 2.5rem 0 0 !important;
+  text-align: center !important;
+}
+
+html body div#quartz-root.page .page-footer .edit-page-link {
+  font-size: 0.82rem !important;
+  color: var(--gray) !important;
+  text-decoration: none !important;
+  transition: color 0.15s ease !important;
+}
+
+html body div#quartz-root.page .page-footer .edit-page-link:hover {
+  color: var(--secondary) !important;
+  text-decoration: underline !important;
+}

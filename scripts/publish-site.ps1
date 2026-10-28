@@ -362,6 +362,17 @@ try {
   } else {
     Write-Host "  未找到 build-section-nav.cjs，跳过分区导航" -ForegroundColor Yellow
   }
+
+  # 「✎ 编辑此页」：往每页 page-footer 空槽注入 GitHub 编辑链接（网页上直接改、
+  # commit 即自动重发布）。校验用 vault 原件：导出生成的 index/最近更新 等没有
+  # 源文件，注入会指向「新建文件」，所以跳过。
+  $editLinks = Join-Path $Vault 'scripts\add-edit-links.cjs'
+  if (Test-Path -LiteralPath $editLinks) {
+    $o = (& $Node $editLinks $PublicDir $Vault 2>&1 | Out-String)
+    ($o -split "`r?`n") | Where-Object { $_ -match 'edit-link|Error' } | ForEach-Object { Write-Host "  $($_.Trim())" }
+  } else {
+    Write-Host "  未找到 add-edit-links.cjs，跳过编辑链接注入" -ForegroundColor Yellow
+  }
 } finally { Pop-Location }
 
 # 知识库 API：把 cloudflare/_worker.js 放进产物根目录（Pages「高级模式」入口）。
