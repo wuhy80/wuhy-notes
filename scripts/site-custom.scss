@@ -364,6 +364,8 @@ html body article figure[data-rehype-pretty-code-figure] > pre::-webkit-scrollba
   --accent-warm: #e38b6b;
   --accent-wash: rgba(227, 139, 107, 0.15);
   --inline-code: rgba(227, 139, 107, 0.12);
+  // 纸墨皮肤的暗色档 chrome（其余皮肤在各自的 [data-gz-skin] 块里声明）
+  --gz-chrome-bg: rgba(36, 23, 16, 0.96);
 }
 
 // 标题字体：阿里妈妈数黑体（与参考站同款），回退链与参考站 --sans 一致。
@@ -1244,7 +1246,7 @@ html body div#quartz-root.page .sidebar.right .graph .graph-outer {
     height: 64px !important;
     margin: 0 !important;
     padding: 0 24px !important;
-    background: var(--gz-topbar-bg) !important;
+    background: var(--gz-chrome-bg) !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
 
@@ -1314,7 +1316,7 @@ html body div#quartz-root.page footer {
   justify-self: stretch !important;
   margin: 48px 0 0 0 !important;
   padding: 26px 48px !important;
-  background: var(--ink) !important;
+  background: var(--gz-chrome-bg) !important;
   border-top: 0 !important;
   // 关键：左右侧栏是 position:sticky + z-index:1 + height:100vh，会一直铺到页面
   // 最底并盖住页脚行的两侧（文字随之被盖没）。页脚必须压在侧栏之上才能整条可见。
@@ -1332,19 +1334,22 @@ html body div#quartz-root.page footer p {
   margin: 0 !important;
 }
 
+// 页脚与顶栏同吃一张深色墨面（--gz-chrome-bg，随皮肤染色），文字基色因此
+// 不能用 var(--paper)——暗色模式下它是深色，会掉进深底里；改用
+// --gz-chrome-fg（各皮肤浅色档的纸色调，明暗两档同值）。
 html body div#quartz-root.page footer p,
 html body div#quartz-root.page footer a {
-  color: color-mix(in srgb, var(--paper) 82%, transparent) !important;
+  color: color-mix(in srgb, var(--gz-chrome-fg) 82%, transparent) !important;
   font-size: 14px !important;
 }
 
 html body div#quartz-root.page footer a:hover {
-  color: var(--paper) !important;
+  color: var(--gz-chrome-fg) !important;
 }
 
 // 链接列（右）：footer 插件 links 配置渲染为 <ul>（quartz.config.yaml 的 footer.options.links）
 html body div#quartz-root.page footer ul {
-  color: color-mix(in srgb, var(--paper) 82%, transparent) !important;
+  color: color-mix(in srgb, var(--gz-chrome-fg) 82%, transparent) !important;
   font-size: 14px !important;
   display: flex !important;
   flex-wrap: wrap !important;
@@ -1357,7 +1362,7 @@ html body div#quartz-root.page footer ul {
 }
 
 html body div#quartz-root.page footer ul li a {
-  color: color-mix(in srgb, var(--paper) 92%, transparent) !important;
+  color: color-mix(in srgb, var(--gz-chrome-fg) 92%, transparent) !important;
   font-size: 14px !important;
   text-decoration: none !important;
 }
@@ -2598,8 +2603,11 @@ html body div#quartz-root.page .page-footer .edit-page-link:hover {
   // 标题字体（= 纸墨 · 现版的数黑体；下面各皮肤按需覆盖）
   --gz-font-heading: "AlimamaShuHeiTi", "Noto Sans SC", -apple-system,
     "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
-  // 顶栏（深色固定栏）底色：默认墨色；深色模式下随皮肤微调
-  --gz-topbar-bg: rgba(28, 28, 28, 0.96);
+  // 「墨面」chrome 底色：深色固定顶栏与页脚通栏共用一张皮，随皮肤强调色相
+  // 染色（纸墨=暖赭墨）；不再是无差别的纯黑
+  --gz-chrome-bg: rgba(46, 26, 16, 0.96);
+  // chrome 上的文字基色 = 该皮肤浅色档的纸色调（明暗两档同值：chrome 恒为深色）
+  --gz-chrome-fg: #f5eddb;
 }
 
 // --- 玄墨书卷：宣纸白 + 墨色 + 朱砂，宋体标题 ------------------------------
@@ -2650,7 +2658,8 @@ html body div#quartz-root.page .page-footer .edit-page-link:hover {
   --code-background: var(--card) !important;
   --gz-font-heading: "Noto Serif SC", "Source Han Serif SC", "Songti SC",
     "STZhongsong", "SimSun", serif;
-  --gz-topbar-bg: rgba(33, 31, 25, 0.96);
+  --gz-chrome-bg: rgba(48, 22, 17, 0.96);
+  --gz-chrome-fg: #f6ede0;
 }
 :root[data-gz-skin="xuanmo"][saved-theme="dark"] {
   --paper: #171613;
@@ -2699,7 +2708,8 @@ html body div#quartz-root.page .page-footer .edit-page-link:hover {
   --code-background: var(--card) !important;
   --gz-font-heading: "Noto Serif SC", "Source Han Serif SC", "Songti SC",
     "STZhongsong", "SimSun", serif;
-  --gz-topbar-bg: rgba(23, 22, 19, 0.96);
+  --gz-chrome-bg: rgba(30, 16, 13, 0.96);
+  --gz-chrome-fg: #f6ede0;
 }
 
 // --- 曜夜终端：深色青荧光（浅色档为青瓷纸面），标题黑体 ----------------------
@@ -2750,7 +2760,8 @@ html body div#quartz-root.page .page-footer .edit-page-link:hover {
   --code-background: var(--card) !important;
   --gz-font-heading: "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
     -apple-system, sans-serif;
-  --gz-topbar-bg: rgba(16, 24, 28, 0.96);
+  --gz-chrome-bg: rgba(8, 34, 31, 0.96);
+  --gz-chrome-fg: #eaf3f0;
 }
 :root[data-gz-skin="yaoye"][saved-theme="dark"] {
   --paper: #0e141b;
@@ -2799,7 +2810,8 @@ html body div#quartz-root.page .page-footer .edit-page-link:hover {
   --code-background: var(--card) !important;
   --gz-font-heading: "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
     -apple-system, sans-serif;
-  --gz-topbar-bg: rgba(10, 15, 21, 0.96);
+  --gz-chrome-bg: rgba(6, 28, 30, 0.96);
+  --gz-chrome-fg: #eaf3f0;
 }
 
 // --- 瓷白编辑部：纯白 + 靛蓝，特黑标题 --------------------------------------
@@ -2850,7 +2862,8 @@ html body div#quartz-root.page .page-footer .edit-page-link:hover {
   --code-background: var(--card) !important;
   --gz-font-heading: "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
     -apple-system, sans-serif;
-  --gz-topbar-bg: rgba(23, 27, 34, 0.96);
+  --gz-chrome-bg: rgba(15, 22, 46, 0.96);
+  --gz-chrome-fg: #eef1fa;
 }
 :root[data-gz-skin="cibai"][saved-theme="dark"] {
   --paper: #121419;
@@ -2899,7 +2912,8 @@ html body div#quartz-root.page .page-footer .edit-page-link:hover {
   --code-background: var(--card) !important;
   --gz-font-heading: "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
     -apple-system, sans-serif;
-  --gz-topbar-bg: rgba(16, 18, 23, 0.96);
+  --gz-chrome-bg: rgba(12, 16, 33, 0.96);
+  --gz-chrome-fg: #eef1fa;
 }
 
 // --- 皮肤切换器（.gz-skin-dd，由 skin-switcher.cjs 注入）--------------------
