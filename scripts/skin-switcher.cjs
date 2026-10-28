@@ -46,26 +46,48 @@ apply();
 if(!window.__gzSkinBoot){window.__gzSkinBoot=1;
 var PALETTE='<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>';
 var SKINS=[["paper","纸墨 · 现版"],["xuanmo","玄墨书卷"],["yaoye","曜夜终端"],["cibai","瓷白编辑部"]];
+var MODES=[["light","浅色"],["dark","深色"],["auto","跟随系统"]];
+function curMode(){var m=null;try{m=localStorage.getItem("theme")}catch(e){}
+return (m==="light"||m==="dark")?m:"auto"}
+function applyMode(){var m=curMode();if(m==="auto"){return}
+document.documentElement.setAttribute("saved-theme",m);
+document.body&&(document.body.classList.remove("theme-dark","theme-light"),document.body.classList.add("theme-"+m));
+document.dispatchEvent(new CustomEvent("themechange",{detail:{theme:m}}))}
 function place(){
 if(document.querySelector(".gz-skin-dd"))return;
 var dm=document.querySelector(".darkmode");if(!dm)return;
 var fc=dm.closest(".flex-component");if(!fc||!fc.parentNode)return;
 var d=document.createElement("details");d.className="gz-skin-dd";
-var sum=document.createElement("summary");sum.setAttribute("aria-label","切换皮肤");sum.title="切换皮肤";sum.innerHTML=PALETTE;d.appendChild(sum);
-var menu=document.createElement("div");menu.className="gz-skin-menu";menu.setAttribute("role","menu");menu.setAttribute("aria-label","皮肤模板");
+var sum=document.createElement("summary");sum.setAttribute("aria-label","切换皮肤与明暗");sum.title="切换皮肤与明暗";sum.innerHTML=PALETTE;d.appendChild(sum);
+var menu=document.createElement("div");menu.className="gz-skin-menu";menu.setAttribute("role","menu");menu.setAttribute("aria-label","皮肤与明暗");
+var g1=document.createElement("div");g1.className="gz-skin-group";g1.textContent="皮肤";menu.appendChild(g1);
 SKINS.forEach(function(s){var b=document.createElement("button");b.type="button";b.setAttribute("role","menuitemradio");b.setAttribute("aria-checked","false");b.setAttribute("data-gz-skin",s[0]);
 b.innerHTML='<span class="gz-skin-dot gz-skin-dot-'+s[0]+'" aria-hidden="true"></span>'+s[1]+'<span class="gz-skin-tick" aria-hidden="true">✓</span>';
+menu.appendChild(b)});
+var g2=document.createElement("div");g2.className="gz-skin-group";g2.textContent="明暗";menu.appendChild(g2);
+MODES.forEach(function(m){var b=document.createElement("button");b.type="button";b.setAttribute("role","menuitemradio");b.setAttribute("aria-checked","false");b.setAttribute("data-gz-mode",m[0]);
+b.innerHTML='<span class="gz-mode-ic gz-mode-'+m[0]+'" aria-hidden="true"></span>'+m[1]+'<span class="gz-skin-tick" aria-hidden="true">✓</span>';
 menu.appendChild(b)});
 d.appendChild(menu);
 // 插进工具栏行（.flex-component）内部作为第一项：顶栏把这一整行 fixed 到右上，
 // 插在行外会留在侧栏文档流里被顶栏挡住
 fc.insertBefore(d, fc.firstChild)}
-function sync(m){var c=cur();Array.prototype.forEach.call(m.querySelectorAll("[data-gz-skin]"),function(x){x.setAttribute("aria-checked",x.getAttribute("data-gz-skin")===c?"true":"false")})}
+function sync(m){
+var c=cur(), mo=curMode();
+Array.prototype.forEach.call(m.querySelectorAll("button[data-gz-skin]"),function(x){x.setAttribute("aria-checked",x.getAttribute("data-gz-skin")===c?"true":"false")});
+Array.prototype.forEach.call(m.querySelectorAll("button[data-gz-mode]"),function(x){x.setAttribute("aria-checked",x.getAttribute("data-gz-mode")===mo?"true":"false")})}
 document.addEventListener("click",function(ev){
 if(!ev.target||!ev.target.closest)return;
-var b=ev.target.closest("[data-gz-skin]");
+// ⚠️ 必须限定 button：<html> 自身带 data-gz-skin，用裸属性选择器会把明暗按钮
+// 误判成皮肤按钮（closest 一路匹配到 html），明暗切换于是静默失效
+var b=ev.target.closest("button[data-gz-skin]");
 if(b){try{localStorage.setItem("gz-skin",b.getAttribute("data-gz-skin"))}catch(e){}
 apply();sync(b.parentNode);var dd=b.closest(".gz-skin-dd");if(dd)dd.removeAttribute("open");return}
+var mb=ev.target.closest("button[data-gz-mode]");
+if(mb){var m=mb.getAttribute("data-gz-mode");
+try{if(m==="auto"){localStorage.removeItem("theme")}else{localStorage.setItem("theme",m)}}catch(e){}
+if(m==="auto"){try{document.documentElement.setAttribute("saved-theme",matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){}}
+applyMode();sync(mb.parentNode);var dd2=mb.closest(".gz-skin-dd");if(dd2)dd2.removeAttribute("open");return}
 Array.prototype.forEach.call(document.querySelectorAll("details.gz-skin-dd[open]"),function(d){
 if(!d.contains(ev.target))d.removeAttribute("open")})});
 document.addEventListener("toggle",function(ev){

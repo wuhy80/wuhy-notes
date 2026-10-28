@@ -2977,6 +2977,39 @@ html body div#quartz-root.page .page-footer .edit-page-link:hover {
 .gz-skin-dot-xuanmo { background: #a63b2a; }
 .gz-skin-dot-yaoye { background: #38d9c0; }
 .gz-skin-dot-cibai { background: #2749d8; }
+// 菜单分组标题（皮肤 / 明暗）
+.gz-skin-group {
+  padding: 7px 10px 3px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+.gz-skin-group:not(:first-child) {
+  margin-top: 3px;
+  border-top: 1px solid var(--line);
+}
+// 明暗三档的小图标：空心=浅色、实心=深色、半圆=跟随系统
+.gz-mode-ic {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+.gz-mode-light {
+  border: 2px solid currentColor;
+  opacity: 0.75;
+}
+.gz-mode-dark {
+  background: currentColor;
+  opacity: 0.75;
+}
+.gz-mode-auto {
+  background: linear-gradient(90deg, currentColor 0 50%, transparent 50% 100%);
+  border: 2px solid currentColor;
+  opacity: 0.75;
+}
 .gz-skin-tick {
   margin-left: auto;
   font-size: 11px;
