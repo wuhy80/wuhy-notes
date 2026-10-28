@@ -1263,7 +1263,7 @@ html body div#quartz-root.page .sidebar.right .graph .graph-outer {
     color: var(--accent) !important;
   }
 
-  // 工具栏（搜索 / 暗色 / 阅读模式 / 皮肤切换器）挪到顶栏右侧
+  // 工具栏（搜索 / 阅读模式 / 皮肤切换器）挪到顶栏右侧；darkmode 按钮已随插件停用
   html body div#quartz-root.page .left.sidebar > .flex-component {
     position: fixed !important;
     top: 14px !important;
@@ -1273,7 +1273,6 @@ html body div#quartz-root.page .sidebar.right .graph .graph-outer {
     justify-content: flex-end !important;
   }
 
-  html body div#quartz-root.page .left.sidebar > .flex-component .darkmode,
   html body div#quartz-root.page .left.sidebar > .flex-component .readermode {
     color: var(--ink-soft) !important;
   }

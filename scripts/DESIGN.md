@@ -288,7 +288,7 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
     与 `footer` 都踩过这个坑，`footer` 还有主题自带的 `min-width: calc(100% - 48px)`）
 - 左右栏各以 1px 边线（`border`）与正文分隔（右栏 border-left、左栏 border-right），不用底色分区
 - **纸色固定顶栏 64px**：复用左栏里的 `.page-title`（`position: fixed` 铺满宽度，
-  `--paper` 底 + 1px `--line` 底边），工具栏（搜索/暗色/阅读模式/皮肤切换器）一并 fixed 到右侧；
+  `--paper` 底 + 1px `--line` 底边），工具栏（搜索/阅读模式/皮肤切换器）一并 fixed 到右侧；
   `#quartz-body` 加 `padding-top: 64px` 让位，左右栏 `sticky top: 64px`。
   2026-10-28 二次改版：不再用深色墨面（先前的 rgba(28,28,28,.96) 与随皮肤染色的
   `--gz-chrome-bg` 都已废弃）——顶栏直接随主题纸色，文字 `--ink`，导航项 `--ink-soft`，
@@ -464,7 +464,9 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
   只在构建产物上动手；笔记里照常写 `**…**` 即可，**不要**手动改成 `<strong>`
 - **固定顶栏靠 fixed 复用 DOM**：`.page-title` 是左栏的子元素，靠 `position: fixed` 拉成
   全宽顶栏；它所在的 `.sidebar.left` 是 `sticky`（无 `transform`/`filter`），所以 fixed
-  才相对视口定位。**一旦给侧栏加 `transform`/`filter`/`contain`，顶栏会缩进侧栏宽度内**
+  才相对视口定位。**一旦给侧栏加 `transform`/`filter`/`contain`，顶栏会缩进侧栏宽度内**。
+  顶栏明暗切换不在工具栏放独立按钮（2026-10-28 起 darkmode 插件停用）——
+  皮肤切换器下拉里的「明暗」分组是唯一入口，「跟随系统」的解析由 skin-switcher.cjs 负责
 - **callout 只用一种强调色**：改 `--color` 到 `accent` 即可同时改变左边条与图标；
   不要按类型再上色，参考站全站只有赭橙一种强调色
 - **构建后两个改写器的顺序不能颠倒**：先 `fix-html-emphasis.cjs`（兜住字面 `**`），

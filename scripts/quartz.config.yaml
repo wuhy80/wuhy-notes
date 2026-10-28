@@ -188,7 +188,10 @@ plugins:
       position: left
       priority: 10
   - source: "@quartz-community/darkmode"
-    enabled: true
+    # 2026-10-28 停用：顶栏 ☀️ 按钮与皮肤切换器下拉里的「明暗」分组重复。
+    # 明暗解析（含「跟随系统」的初始档位与实时跟随）由 scripts/skin-switcher.cjs 接管，
+    # localStorage.theme 键不变
+    enabled: false
     layout:
       position: left
       priority: 30

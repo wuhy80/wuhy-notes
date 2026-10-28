@@ -11,11 +11,14 @@
  *     ① 读 localStorage('gz-skin') 应用 <html data-gz-skin>；没有保存过则按
  *        系统明暗给默认（浅色→瓷白，深色→曜夜）。放最前是为了在 CSS 取变量
  *        前定好皮肤，避免换肤闪一下。
- *     ② place()：在真实 DOM 里找到 .darkmode 按钮，把它所在 .flex-component
- *        的前面插一份 .gz-skin-dd 下拉。DOM 查询天然不会命中 head 里内联的
- *        序列化字符串（那是字符串手术踩过的坑）。顶栏（深色固定栏）复用的
- *        就是左栏这套工具栏 DOM，一份注入两处可见。
- *   · SPA 导航后监听 Quartz 的 nav 事件重新 place + 重申皮肤属性
+ *     ② place()：在真实 DOM 里找到工具栏行（.flex-component，锚在 .search-button 上，
+ *        兼容 .readermode/.darkmode），把 .gz-skin-dd 下拉插为行内第一项。DOM 查询
+ *        天然不会命中 head 里内联的序列化字符串（那是字符串手术踩过的坑）。
+ *        顶栏复用的就是左栏这套工具栏 DOM，一份注入两处可见。
+ *     ③ 明暗档（浅色/深色/跟随系统）复用 Quartz 的 localStorage.theme 键；
+ *        2026-10-28 起 darkmode 插件已停用（顶栏 ☀️ 按钮与下拉里的「明暗」分组重复），
+ *        saved-theme 的初始解析、SPA 切页重申与系统明暗实时跟随都由本脚本负责。
+ *   · SPA 导航后监听 Quartz 的 nav 事件重新 place + 重申皮肤/明暗属性
  *     （micromorph 可能重置 <html> 属性），保证切页后不丢。
  *
  * 皮肤取值与含义（CSS 端见 site-custom.scss 末尾「12/12 皮肤系统」）：
@@ -44,19 +47,25 @@ return s}
 function apply(){document.documentElement.setAttribute("data-gz-skin",cur())}
 apply();
 if(!window.__gzSkinBoot){window.__gzSkinBoot=1;
+applyMode();
+try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",function(){if(curMode()==="auto")applyMode()})}catch(e){}
 var PALETTE='<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>';
 var SKINS=[["paper","纸墨 · 现版"],["xuanmo","玄墨书卷"],["yaoye","曜夜终端"],["cibai","瓷白编辑部"]];
 var MODES=[["light","浅色"],["dark","深色"],["auto","跟随系统"]];
 function curMode(){var m=null;try{m=localStorage.getItem("theme")}catch(e){}
 return (m==="light"||m==="dark")?m:"auto"}
-function applyMode(){var m=curMode();if(m==="auto"){return}
+function applyMode(){var m=curMode();
+// 「跟随系统」就地解析成具体档位（原 darkmode 插件职责，2026-10-28 起并入本脚本）
+if(m==="auto"){try{m=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}catch(e){m="light"}}
 document.documentElement.setAttribute("saved-theme",m);
 document.body&&(document.body.classList.remove("theme-dark","theme-light"),document.body.classList.add("theme-"+m));
 document.dispatchEvent(new CustomEvent("themechange",{detail:{theme:m}}))}
 function place(){
 if(document.querySelector(".gz-skin-dd"))return;
-var dm=document.querySelector(".darkmode");if(!dm)return;
-var fc=dm.closest(".flex-component");if(!fc||!fc.parentNode)return;
+// 锚点：darkmode 插件已停用（按钮没了），改锚在工具栏行里仍存在的成员上
+var anchor=document.querySelector(".search-button")||document.querySelector(".readermode")||document.querySelector(".darkmode");
+if(!anchor)return;
+var fc=anchor.closest(".flex-component");if(!fc||!fc.parentNode)return;
 var d=document.createElement("details");d.className="gz-skin-dd";
 var sum=document.createElement("summary");sum.setAttribute("aria-label","切换皮肤与明暗");sum.title="切换皮肤与明暗";sum.innerHTML=PALETTE;d.appendChild(sum);
 var menu=document.createElement("div");menu.className="gz-skin-menu";menu.setAttribute("role","menu");menu.setAttribute("aria-label","皮肤与明暗");
@@ -86,15 +95,15 @@ apply();sync(b.parentNode);var dd=b.closest(".gz-skin-dd");if(dd)dd.removeAttrib
 var mb=ev.target.closest("button[data-gz-mode]");
 if(mb){var m=mb.getAttribute("data-gz-mode");
 try{if(m==="auto"){localStorage.removeItem("theme")}else{localStorage.setItem("theme",m)}}catch(e){}
-if(m==="auto"){try{document.documentElement.setAttribute("saved-theme",matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){}}
 applyMode();sync(mb.parentNode);var dd2=mb.closest(".gz-skin-dd");if(dd2)dd2.removeAttribute("open");return}
 Array.prototype.forEach.call(document.querySelectorAll("details.gz-skin-dd[open]"),function(d){
 if(!d.contains(ev.target))d.removeAttribute("open")})});
 document.addEventListener("toggle",function(ev){
 if(ev.target&&ev.target.classList&&ev.target.classList.contains("gz-skin-dd")&&ev.target.hasAttribute("open"))
 sync(ev.target)},true);
-document.addEventListener("nav",function(){apply();place()});
-function boot(){place()}
+document.addEventListener("nav",function(){apply();applyMode();place()});
+// DOM 就绪后补上 body 上的 theme-* 类（head 阶段 body 尚不存在，applyMode 里那段跳过了）
+function boot(){document.body&&(document.body.classList.remove("theme-dark","theme-light"),document.body.classList.add("theme-"+document.documentElement.getAttribute("saved-theme")));place()}
 if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",boot)}else{boot()}
 }})()</script>`
 
