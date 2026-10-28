@@ -113,47 +113,122 @@ $$
 这正是第 7 课见过的那台机器的**输出层**——当时只说「softmax 把分数挤成概率」，现在你知道它在里面具体做了什么了。 下面把那台四种水果的机器再搬出来：转旋钮改变四个神经元的**分数**，看 softmax 如何把它们实时换算成一组加起来 = 100% 的概率：
 
 <figure class="fig" style="margin:1.2em 0">
-  <div class="fig-frame" style="background:#FFFDF8;border:1px solid #DCD2BF;border-radius:8px;padding:8px">
-    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center;margin:6px 0;font-size:13px;color:#1E2B38">
-      <span>苹果 z₁<input id="kx-11a-apple" type="range" min="-2" max="4" step="0.1" value="2.1" style="width:110px;vertical-align:middle" aria-label="苹果的分数"></span>
-      <span>香蕉 z₂<input id="kx-11a-banana" type="range" min="-2" max="4" step="0.1" value="-0.5" style="width:110px;vertical-align:middle" aria-label="香蕉的分数"></span>
-      <span>西瓜 z₃<input id="kx-11a-melon" type="range" min="-2" max="4" step="0.1" value="1.8" style="width:110px;vertical-align:middle" aria-label="西瓜的分数"></span>
+  <div class="fig-frame" style="background:#FFFDF8;border:1px solid #DCD2BF;border-radius:8px;padding:18px 20px;font-family:'Noto Sans SC, sans-serif'">
+    <div style="display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start">
+      <div id="demo-11a-knobs" style="flex:0 0 230px;display:flex;flex-direction:column;gap:15px"></div>
+      <div style="flex:1 1 300px">
+        <div id="demo-11a-svg"></div>
+        <div id="demo-11a-winner" style="font-size:14px;color:#5C6B79;margin-top:6px">机器觉得最像：<b id="demo-11a-winner-name" style="color:#C0481E;font-size:15px"></b></div>
+        <div id="demo-11a-probs" style="margin-top:6px;display:flex;flex-direction:column;gap:9px"></div>
+        <div style="margin-top:10px;font-size:12.5px;line-height:1.65;color:#93A0AC;border-top:1px dashed #DCD2BF;padding-top:10px">四个神经元各给一种水果打分（圆圈旁的数字），softmax 把四个分数挤成一组加起来 = 100% 的概率。试试把旋钮调到「大 + 多汁」，看西瓜怎么后来居上。</div>
+      </div>
     </div>
-    <div id="kx-fig-11a" style="width:100%;height:280px"></div>
   </div>
   <figcaption style="margin:6px 4px 0;font-size:.85em;color:#5C6B79;line-height:1.6">
-    <span style="color:#C0481E;font-weight:600;margin-right:6px">互动 11-A</span>softmax 在水果神经元上的现场演算：每个分数先取 e^z（消除负数），再整体归一化。拖动旋钮调分数，看对应水果的 e^z 和概率一起被推高。<a href="https://www.xuanyuancode.com/ai-llm/lessons/nn-04-softmax" style="margin-left:6px">原站交互版</a>
+    <span style="color:#C0481E;font-weight:600;margin-right:6px">互动 11-A</span>softmax 在四个水果神经元上的现场演算：每个分数先取 e^z（消除负数），再整体归一化。把旋钮调到「大 + 多汁」，看西瓜的分数和概率一起被推高。<a href="https://www.xuanyuancode.com/ai-llm/lessons/nn-01-neuron" style="margin-left:6px">原站交互版</a>
   </figcaption>
 </figure>
 <script>
 (function () {
-  var knobs = { 苹果: document.getElementById('kx-11a-apple'), 香蕉: document.getElementById('kx-11a-banana'), 西瓜: document.getElementById('kx-11a-melon') };
-  var fruits = ['苹果', '香蕉', '西瓜'];
+  var feats = [
+    { k: 'size', n: '尺寸大小', lo: '小', hi: '大' },
+    { k: 'red', n: '颜色', lo: '偏绿', hi: '偏红' },
+    { k: 'sweet', n: '酸甜度', lo: '酸', hi: '甜' },
+    { k: 'water', n: '水分', lo: '干', hi: '多汁' }
+  ];
+  var fruits = [
+    { key: 'apple', name: '苹果', emoji: '🍎', color: '#C0481E', p: [0.5, 0.9, 0.65, 0.55] },
+    { key: 'banana', name: '香蕉', emoji: '🍌', color: '#C9A227', p: [0.55, 0.1, 0.8, 0.35] },
+    { key: 'melon', name: '西瓜', emoji: '🍉', color: '#3E8F5A', p: [0.95, 0.2, 0.7, 0.95] },
+    { key: 'lemon', name: '柠檬', emoji: '🍋', color: '#B8A21E', p: [0.35, 0.15, 0.1, 0.6] }
+  ];
+  var x = { size: 0.5, red: 0.5, sweet: 0.5, water: 0.5 };
+  var rows = [34, 92, 150, 208];
+  var MONO = "'JetBrains Mono, monospace',monospace";
+  var SANS = "'Noto Sans SC, sans-serif',sans-serif";
+  var knobsEl = document.getElementById('demo-11a-knobs');
+  var root = knobsEl.closest('.fig-frame');
+  var svgEl = document.getElementById('demo-11a-svg');
+  var probsEl = document.getElementById('demo-11a-probs');
+  var title = document.createElement('div');
+  title.style.cssText = 'font-size:12.5px;font-weight:700;color:#5C6B79;margin-bottom:4px';
+  title.textContent = '🎛 四个旋钮 = 四个输入特征';
+  knobsEl.appendChild(title);
+  feats.forEach(function (f) {
+    var row = document.createElement('div');
+    row.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;font-size:13px">' +
+        '<span style="font-weight:700;color:#1E2B38">' + f.n + '</span>' +
+        '<span style="font-family:' + MONO + ';color:#C0481E;font-size:12px" data-v="' + f.k + '">0.50</span>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-top:5px">' +
+        '<span style="font-size:11px;color:#93A0AC;min-width:28px;text-align:center;flex-shrink:0">' + f.lo + '</span>' +
+        '<input type="range" min="0" max="1" step="0.01" value="0.5" data-k="' + f.k + '" aria-label="' + f.n + '" style="flex:1;accent-color:#C0481E;cursor:pointer">' +
+        '<span style="font-size:11px;color:#93A0AC;min-width:28px;text-align:center;flex-shrink:0">' + f.hi + '</span>' +
+      '</div>';
+    knobsEl.appendChild(row);
+  });
+  var svg = '<svg viewBox="0 0 380 250" role="img" aria-label="四个神经元加 softmax 的结构图，分数随旋钮实时变化" style="display:block;width:100%;height:auto">';
+  rows.forEach(function (y1) { rows.forEach(function (y2) { svg += '<line x1="78" y1="' + y1 + '" x2="176" y2="' + y2 + '" stroke="#E6DECD" stroke-width="1"/>'; }); });
+  feats.forEach(function (f, n) {
+    svg += '<rect x="6" y="' + (rows[n] - 15) + '" width="72" height="30" rx="5" fill="#EBF2F8" stroke="#3E6B8F" stroke-width="1.3"/>' +
+      '<text x="14" y="' + (rows[n] - 2) + '" font-family="' + SANS + '" font-size="9.5" fill="#3E6B8F">' + f.n + '</text>' +
+      '<text x="14" y="' + (rows[n] + 11) + '" font-family="' + MONO + '" font-size="11" font-weight="700" fill="#C0481E" data-fv="' + f.k + '">0.50</text>';
+  });
+  fruits.forEach(function (f, t) {
+    svg += '<line x1="216" y1="' + rows[t] + '" x2="300" y2="125" stroke="#DCD2BF" stroke-width="1"/>' +
+      '<circle cx="196" cy="' + rows[t] + '" r="20" fill="#FDF6EC" stroke="' + f.color + '" stroke-width="2"/>' +
+      '<text x="196" y="' + (rows[t] + 6) + '" text-anchor="middle" font-size="16">' + f.emoji + '</text>' +
+      '<text x="223" y="' + (rows[t] + 4) + '" font-family="' + MONO + '" font-size="11" font-weight="700" fill="' + f.color + '" data-z="' + t + '">0.0</text>';
+  });
+  svg += '<rect x="300" y="72" width="66" height="106" rx="8" fill="#F5F0E8" stroke="#5C6B79" stroke-width="1.6"/>' +
+    '<text x="333" y="122" text-anchor="middle" font-family="' + MONO + '" font-size="12" fill="#5C6B79">softmax</text>' +
+    '<text x="333" y="140" text-anchor="middle" font-family="' + SANS + '" font-size="9" fill="#93A0AC">分数→概率</text>' +
+    '<text x="196" y="244" text-anchor="middle" font-family="' + SANS + '" font-size="9.5" fill="#93A0AC">每个神经元给一种水果打分</text></svg>';
+  svgEl.innerHTML = svg;
+  var probRows = [];
+  fruits.forEach(function (f, t) {
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;font-size:13px;color:#5C6B79';
+    row.innerHTML = '<span style="width:78px;flex-shrink:0">' + f.emoji + ' ' + f.name + '</span>' +
+      '<span style="flex:1;height:14px;background:#FAF6EE;border:1px solid #DCD2BF;border-radius:7px;overflow:hidden">' +
+        '<span style="display:block;height:100%;width:25%;background:' + f.color + ';transition:width .12s ease" data-pb="' + t + '"></span>' +
+      '</span>' +
+      '<span style="width:44px;text-align:right;font-family:' + MONO + '" data-pc="' + t + '">25%</span>';
+    probsEl.appendChild(row);
+    probRows.push(row);
+  });
+  function score(f) {
+    var dot = 0, norm = 0;
+    feats.forEach(function (ft, j) { dot += f.p[j] * x[ft.k]; norm += f.p[j] * f.p[j]; });
+    return 3 * (2 * dot - norm);
+  }
   function draw() {
-    var logits = fruits.map(function (f) { return parseFloat(knobs[f].value); });
-    var exps = logits.map(function (z) { return Math.exp(z); });
-    var sum = exps.reduce(function (a, b) { return a + b; }, 0);
-    var probs = exps.map(function (e) { return e / sum; });
-    var data = fruits.map(function (f, i) {
-      return { x: [f], y: [probs[i]], type: 'bar', name: f + '（e^z=' + exps[i].toFixed(2) + '）',
-        marker: { color: ['#C0481E', '#C9A227', '#3E8F5A'][i] }, text: [(probs[i] * 100).toFixed(1) + '%'],
-        textposition: 'outside', textfont: { family: 'JetBrains Mono, monospace', size: 12, color: '#1E2B38' }, hoverinfo: 'skip' };
+    feats.forEach(function (f) {
+      var v = x[f.k].toFixed(2);
+      root.querySelector('[data-v="' + f.k + '"]').textContent = v;
+      root.querySelector('[data-fv="' + f.k + '"]').textContent = v;
     });
-    Plotly.newPlot('kx-fig-11a', data, {
-      paper_bgcolor: '#FFFDF8', plot_bgcolor: '#FFFDF8', barmode: 'group',
-      font: { family: 'Noto Sans SC, sans-serif', size: 12, color: '#5C6B79' },
-      margin: { l: 48, r: 18, t: 10, b: 30 }, height: 280, showlegend: false, bargap: 0.3,
-      yaxis: { title: { text: '概率', font: { size: 12, color: '#5C6B79' } }, range: [0, 1], gridcolor: '#DCD2BF', tickfont: { family: 'JetBrains Mono, monospace', size: 10, color: '#93A0AC' } }
-    }, { displayModeBar: false, responsive: true });
+    var zs = fruits.map(score);
+    var max = Math.max.apply(null, zs);
+    var exps = zs.map(function (z) { return Math.exp(z - max); });
+    var sum = exps.reduce(function (a, c) { return a + c; }, 0);
+    var probs = exps.map(function (e) { return e / sum; });
+    var best = 0;
+    probs.forEach(function (p, i) { if (p > probs[best]) best = i; });
+    zs.forEach(function (z, t) {
+      root.querySelector('[data-z="' + t + '"]').textContent = z.toFixed(1);
+      root.querySelector('[data-pb="' + t + '"]').style.width = Math.round(100 * probs[t]) + '%';
+      root.querySelector('[data-pc="' + t + '"]').textContent = Math.round(100 * probs[t]) + '%';
+      probRows[t].style.color = t === best ? '#1E2B38' : '#5C6B79';
+      probRows[t].style.fontWeight = t === best ? '700' : '400';
+    });
+    document.getElementById('demo-11a-winner-name').textContent = fruits[best].emoji + ' ' + fruits[best].name;
   }
-  Object.keys(knobs).forEach(function (k) { knobs[k].addEventListener('input', draw); });
-  if (window.Plotly) { draw(); }
-  else {
-    var s = document.createElement('script');
-    s.src = '/plotly.min.js';
-    s.onload = draw;
-    document.head.appendChild(s);
-  }
+  Array.prototype.forEach.call(knobsEl.querySelectorAll('input[type=range]'), function (input) {
+    input.addEventListener('input', function () { x[input.getAttribute('data-k')] = parseFloat(input.value); draw(); });
+  });
+  draw();
 })();
 </script>
 

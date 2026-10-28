@@ -113,7 +113,7 @@ $$
       hcell.textContent = i < pos ? 'h=' + hs[i + 1].toFixed(2) : '·';
       hsEl.appendChild(hcell);
     }
-    progEl.textContent = pos === 0 ? '还没开始读' : '读到第 ' + pos + ' / 5 个词';
+    progEl.textContent = pos === 0 ? '还没开始读' : '读到第 ' + pos + ' / 6 个词';
     if (pos === 0) {
       formulaEl.innerHTML = 'h₀ = 0，等着第一个词进来';
       noteEl.textContent = '点「读下一个词」，看「小猫」的信号怎样被一步步稀释';
@@ -122,7 +122,7 @@ $$
       formulaEl.innerHTML = words[pos - 1] + '：h = tanh(0.6 × ' + prev.toFixed(2) + ' + ' + x + ') = tanh(' + (0.6 * prev + x).toFixed(2) + ') = <strong style="color:#3E6B8F">' + h.toFixed(2) + '</strong>';
       noteEl.textContent = pos >= 5
         ? '句子读完。句尾的「它」指的就是开头的「小猫」——可记忆只剩峰值的一成左右，隔 20 个词更是 0.6²⁰ ≈ 0.00004，几乎归零'
-        : '「小猫」的信号 ×0.6 又矮了一截';
+        : pos === 1 ? '第 1 步读到「小猫」，记忆一下冲到峰值——稀释从下一个无关词才开始' : '「小猫」的信号 ×0.6 又矮了一截';
     }
     document.getElementById('demo-17a-prev').disabled = pos === 0;
     document.getElementById('demo-17a-next').disabled = pos >= 5;
@@ -130,7 +130,7 @@ $$
   document.getElementById('demo-17a-prev').addEventListener('click', function () { if (pos > 0) { pos -= 1; draw(); } });
   document.getElementById('demo-17a-next').addEventListener('click', function () { if (pos < 5) { pos += 1; draw(); } });
   document.getElementById('demo-17a-reset').addEventListener('click', function () { pos = 0; draw(); });
-  draw();
+  pos = 1;  draw();
 })();
 </script>
 

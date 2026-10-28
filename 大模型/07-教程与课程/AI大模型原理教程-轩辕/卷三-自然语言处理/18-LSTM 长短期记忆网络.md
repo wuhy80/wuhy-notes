@@ -158,7 +158,7 @@ LSTM（长短期记忆网络，1997 年提出）的第一招，是**把记忆拆
   document.getElementById('demo-18a-prev').addEventListener('click', function () { if (pos > 0) { pos -= 1; draw(); } });
   document.getElementById('demo-18a-next').addEventListener('click', function () { if (pos < 9) { pos += 1; draw(); } });
   document.getElementById('demo-18a-reset').addEventListener('click', function () { pos = 0; draw(); });
-  draw();
+  pos = 1;  draw();
 })();
 </script>
 
