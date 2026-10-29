@@ -485,6 +485,7 @@ function main() {
   const article = parseArticle(chapter);
 
   if (args.command === 'text') {
+    if (args.json) { console.log(JSON.stringify(article, null, 2)); return; }
     console.log(`# ${article.title}\n${article.section}\n${article.deck}\n${article.date}\nURL: ${article.url}\n`);
     article.body.forEach((p, i) => console.log(`[${i + 1}] ${p}\n`));
     return;
