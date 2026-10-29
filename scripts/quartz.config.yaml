@@ -3,7 +3,8 @@ configuration:
   pageTitle: 格物志
   pageTitleSuffix: ""
   enableSPA: true
-  enablePopovers: true
+  # 2026-10-29 停用：关闭鼠标悬停在内部链接上时弹出的预览卡片（Quartz popover preview）
+  enablePopovers: false
   analytics:
 
   locale: zh-CN
