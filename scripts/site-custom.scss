@@ -3024,3 +3024,73 @@ html body div#quartz-root.page .page-footer .edit-page-link:hover {
     background: var(--accent-wash);
   }
 }
+
+// ===========================================================================
+// 13 搜索弹层：墨色压底 + 白卡面板（2026-10-29）
+// ===========================================================================
+// 原生（@quartz-community/search + 核心 CSS）只有 backdrop-filter:blur(4px)、
+// 没有遮罩底色，页面内容几乎原样透出；且面板底色 var(--light) 与页面纸色同色，
+// 整层「浮不住」（用户反馈「半透明效果不好」）。DESIGN.md 本就禁 backdrop-filter。
+// 改为：磨砂禁用 + 墨色压底 + 白卡语汇（card 底 + line 边 + 10px 圆角），
+// 全部走现有 token，四皮肤 × 明暗自动跟随。2026-10-29 线上注入预览
+// （瓷白亮 / 纸墨亮 / 暗）逐态验证。
+html body div#quartz-root.page .search > .search-container {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: rgba(28, 28, 27, 0.45) !important;
+}
+// ⚠️ 暗色选择器必须写 html[saved-theme="dark"]（:root 就是 html，
+// 写成 `:root[saved-theme="dark"] html …` 是永远匹配不到的死选择器）
+html[saved-theme="dark"] body div#quartz-root.page .search > .search-container {
+  background: rgba(0, 0, 0, 0.55) !important;
+}
+// 输入框 / 结果面板 / 标签候选下拉统一换白卡；与输入框的间隙 2em 收成 10px
+html body div#quartz-root.page
+  .search
+  > .search-container
+  > .search-space
+  > :not(.ghost-text):not(.tag-suggestions) {
+  background: var(--card) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px !important;
+  margin-bottom: 10px !important;
+  // 弹层投影是全站唯一的阴影例外（浮层语义，DESIGN.md 已同步）
+  box-shadow: 0 14px 50px rgba(27, 33, 48, 0.14), 0 10px 30px rgba(27, 33, 48, 0.18) !important;
+}
+html body div#quartz-root.page .search > .search-container > .search-space > input {
+  background: var(--card) !important;
+  color: var(--ink) !important;
+  border-color: var(--line) !important;
+}
+html body div#quartz-root.page .search > .search-container > .search-space > input:focus {
+  border-color: var(--accent) !important;
+}
+html body div#quartz-root.page
+  .search
+  > .search-container
+  > .search-space
+  > .search-layout {
+  border-color: var(--line) !important;
+}
+html body div#quartz-root.page
+  .search
+  > .search-container
+  > .search-space
+  > .tag-suggestions {
+  background: var(--card) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px !important;
+}
+// 结果行悬停/选中：灰底改 accent-wash（全站当前态语汇）
+html body div#quartz-root.page .search .results-container .result-card:hover,
+html body div#quartz-root.page .search .results-container .result-card:focus,
+html body div#quartz-root.page .search .results-container .result-card.focus {
+  background: var(--accent-wash) !important;
+}
+// 结果区滚动条：6px line 细条（与左栏探索树一致）
+html body div#quartz-root.page .search .results-container::-webkit-scrollbar {
+  width: 6px !important;
+}
+html body div#quartz-root.page .search .results-container::-webkit-scrollbar-thumb {
+  background: var(--line) !important;
+}

@@ -185,6 +185,15 @@ components:
     cardBorderColor: "{colors.line}"
     labelTypography: IBM Plex Mono 11px / 字距 0.16em
     emptyBorderStyle: dashed
+  search-overlay:         # 搜索弹层（2026-10-29 重做：墨色压底 + 白卡面板）
+    overlayColor: "rgba(28,28,27,0.45)；暗色 rgba(0,0,0,0.55)（禁 backdrop-filter）"
+    panelBackgroundColor: "{colors.card}"
+    panelBorderColor: "{colors.line}"
+    panelRounded: "{rounded.md}"
+    panelGap: 10px
+    activeResultBackgroundColor: "{colors.accent-wash}"
+    scrollbar: 6px / "{colors.line}"
+    shadow: "0 14px 50px rgba(27,33,48,.14), 0 10px 30px rgba(27,33,48,.18)（全站唯一投影例外）"
   code-line-number:
     textColor: "{colors.ink-faint}"
     typography: "{typography.code}"
@@ -304,9 +313,13 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
 
 ## Elevation & Depth
 
-- 全站**只有一种阴影**：代码块卡片的 `0 1px 2px rgba(20,20,19,0.06)`
-- 除代码块外，**任何元素都不使用投影**；层次靠边框与底色区分
+- 全站**只有两种阴影**：代码块卡片的 `0 1px 2px rgba(20,20,19,0.06)` 与
+  搜索弹层的 `0 14px 50px rgba(27,33,48,.14), 0 10px 30px rgba(27,33,48,.18)`
+  （弹层是浮层语义，2026-10-29 起为唯一投影例外）
+- 除这两个元素外，**任何元素都不使用投影**；层次靠边框与底色区分
 - 不使用玻璃拟态（backdrop-filter）、不使用渐变背景
+  ——搜索弹层的遮罩也不许磨砂，用墨色压底（亮 `rgba(28,28,27,.45)` /
+  暗 `rgba(0,0,0,.55)`，2026-10-29 起）
 
 ## Shapes
 
@@ -425,6 +438,15 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
   （所属卷/上一课/下一课/课程总览）改写成 `<nav class="lesson-nav">` 两张箭头卡
   + 一行「所属卷 · 总览」小字；该 h2 加 `.lesson-nav-heading` 类以跳过站号徽标与水印。
   卡片直接复用原 `<a>` 的 `href`（相对路径，已由 Quartz 解析）+ `internal` 类保留 SPA 跳转
+- **搜索弹层**（2026-10-29 重做，样式在 `site-custom.scss`「13 搜索弹层」）：
+  遮罩禁磨砂、改墨色压底（见 Elevation）；输入框、结果面板、标签候选下拉统一
+  白卡（`card` + 1px `line` + `rounded.md`），与输入框间隙 2em 收成 10px；
+  结果行悬停/选中 `accent-wash`（替换原生的 `--lightgray` 灰底）；
+  结果区滚动条 6px `line`。原生病根：`.search-container` 只有
+  `backdrop-filter: blur(4px)` 无底色、面板底 `var(--light)` 与页面纸色同色，
+  整层「浮不住」（用户反馈「半透明效果不好」）
+  - ⚠️ 暗色遮罩选择器必须写 `html[saved-theme="dark"] body …`——
+    `:root[saved-theme="dark"] html …` 因 `:root` 就是 `html`，是永远匹配不到的死选择器
 
 ## Do's and Don'ts
 
