@@ -48,7 +48,12 @@
     backdrop.addEventListener('click', close);
 
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') close();
+      if (e.key !== 'Escape') return;
+      // 搜索弹层开着时，Esc 交给站点自己关搜索，别把抽屉一起关掉
+      var sc = document.querySelector('.search-container');
+      var searchOpen = sc && sc.getBoundingClientRect().height > 0 && getComputedStyle(sc).display !== 'none';
+      if (searchOpen) return;
+      close();
     });
 
     // 点了目录里的链接就收起抽屉（等链接先跳转）
