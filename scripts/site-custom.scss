@@ -3509,3 +3509,188 @@ html.bil-page body div#quartz-root.page article .bil-vocab-src {
 html.bil-pending div#quartz-root.page article table {
   opacity: 0 !important;
 }
+
+// ── 14/14 移动端：侧栏抽屉 + 阅读排版 ──────────────────────────────────────
+// 现状：<1200px 时 Quartz 默认把 .sidebar.left 按整块纵向堆在正文上方
+// （宽 390 / 高 600+），手机上一屏全是目录，正文被挤到第二屏以后。
+// 这里改成：左栏 = 左侧抽屉（默认收起，点左上角「目录」滑出，遮罩可点关闭），
+// 右栏在手机上隐藏；正文单列，标题/字号/留白按手机重排。
+// 行为由 scripts/site-assets/mobile-nav.cjs 提供（构建后注入所有页面）。
+
+@media all and (max-width: 1199px) {
+  html body div#quartz-root.page div#quartz-body {
+    grid-template-columns: minmax(0, 1fr) !important;
+    padding-top: 12px !important;
+    max-width: 100% !important;
+  }
+
+  // 左栏：抽屉
+  // Quartz 在左栏塞了一个 mobile-only 的 .spacer（高 230px）把工具栏顶下去，
+  // 抽屉里这块空白没有意义，直接去掉
+  html body div#quartz-root.page div#quartz-body > .sidebar.left .spacer {
+    display: none !important;
+  }
+
+  html body div#quartz-root.page div#quartz-body > .sidebar.left {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: min(86vw, 360px) !important;
+    max-width: 360px !important;
+    height: 100dvh !important;
+    margin: 0 !important;
+    // 顶部留出「目录」按钮的高度，侧栏内容不被按钮压住
+    padding: calc(54px + env(safe-area-inset-top)) 0 calc(40px + env(safe-area-inset-bottom)) !important;
+    background: var(--paper) !important;
+    border-right: 1px solid var(--line);
+    box-shadow: 18px 0 44px color-mix(in srgb, var(--ink) 18%, transparent);
+    transform: translateX(-104%);
+    transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    z-index: 940;
+    display: flex !important;
+    flex-direction: column;
+  }
+
+  html.gz-nav-open body div#quartz-root.page div#quartz-body > .sidebar.left {
+    transform: none;
+  }
+
+  // 右栏（关系图谱 / 目录 / 反向链接）在手机上隐藏：TOC 用正文标题代替
+  html body div#quartz-root.page div#quartz-body > .sidebar.right {
+    display: none !important;
+  }
+
+  // 首页形态（body.landing）：左栏本来就 display:contents（只借它挂顶栏），
+  // 不能被抽屉规则复活
+  html body.landing div#quartz-root.page div#quartz-body > .sidebar.left {
+    display: contents !important;
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    transform: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  html body.landing div#quartz-root.page div#quartz-body .center {
+    padding-top: 72px !important;
+  }
+
+  html body div#quartz-root.page div#quartz-body .center {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding-inline: 18px !important;
+    // 给左上角「目录」按钮留出高度，免得盖住面包屑
+    padding-top: 54px !important;
+  }
+
+  html body div#quartz-root.page .page-header {
+    padding-top: 0 !important;
+  }
+
+  // 站点原规则是 `... div#quartz-root.page h1.article-title{font-size:48px!important}`，
+  // 同权重、写在后面才能压住
+  html body div#quartz-root.page h1.article-title {
+    font-size: 30px !important;
+    line-height: 1.3 !important;
+    margin-top: 0.2rem !important;
+  }
+
+  html body div#quartz-root.page article {
+    padding-top: 4px !important;
+  }
+
+  html body div#quartz-root.page article p,
+  html body div#quartz-root.page article li {
+    line-height: 1.85 !important;
+  }
+}
+
+// 抽屉开关（按钮 + 遮罩由 mobile-nav.cjs 注入）
+html .gz-nav-toggle {
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top));
+  left: 12px;
+  z-index: 960;
+  display: none;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  color: var(--ink);
+  font-family: "Source Sans Pro", "Noto Sans SC", -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+html .gz-nav-toggle:active {
+  transform: scale(0.97);
+}
+
+html .gz-nav-toggle .bars {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 14px;
+  height: 10px;
+}
+
+html .gz-nav-toggle .bars i {
+  display: block;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+html.gz-nav-open .gz-nav-toggle {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--paper);
+}
+
+@media all and (max-width: 1199px) {
+  html .gz-nav-toggle {
+    display: inline-flex;
+  }
+  // 首页形态（landing）本来就是导航页，不需要抽屉按钮
+  html body.landing .gz-nav-toggle {
+    display: none !important;
+  }
+}
+
+html .gz-nav-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 930;
+  background: color-mix(in srgb, var(--ink) 42%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.24s ease;
+}
+
+html.gz-nav-open .gz-nav-backdrop {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+// 抽屉内滚动条按站点细条风格
+@media all and (max-width: 1199px) {
+  html body div#quartz-root.page div#quartz-body > .sidebar.left::-webkit-scrollbar {
+    width: 5px;
+  }
+  html body div#quartz-root.page div#quartz-body > .sidebar.left::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--line) 80%, transparent);
+    border-radius: 3px;
+  }
+}
+

@@ -202,6 +202,22 @@ if (Test-Path -LiteralPath $bilSrc) {
   Write-Host "  未找到 bilingual-reader.js，精读页将保持表格版式" -ForegroundColor Yellow
 }
 
+# 移动端抽屉脚本：所有页面都用，源码 .cjs（.js 会被本机文档加密驱动加密）
+$mnavSrc = Join-Path $Vault 'scripts\site-assets\mobile-nav.cjs'
+if (Test-Path -LiteralPath $mnavSrc) {
+  $mnavDstDir = Join-Path $Quartz 'quartz\static'
+  New-Item -ItemType Directory -Force -Path $mnavDstDir | Out-Null
+  $mnavDst = Join-Path $mnavDstDir 'mobile-nav.js'
+  if (-not (Test-Path -LiteralPath $mnavDst) -or (Get-FileHash -LiteralPath $mnavSrc).Hash -ne (Get-FileHash -LiteralPath $mnavDst).Hash) {
+    Copy-Item -LiteralPath $mnavSrc -Destination $mnavDst -Force
+    Write-Host "  已部署移动端抽屉脚本 mobile-nav.js"
+  } else {
+    Write-Host "  移动端抽屉脚本无变化，跳过覆盖"
+  }
+} else {
+  Write-Host "  未找到 mobile-nav.cjs，移动端侧栏保持原样" -ForegroundColor Yellow
+}
+
 Write-Step "2.2/4 应用站点主题"
 $ThemeName = 'claude-paper'    # 站点主题（@quartz-themes/core 的 theme 选项）
 $CfgPath = Join-Path $Quartz 'quartz.config.yaml'
@@ -257,6 +273,8 @@ $siteSig = Get-StringHash (@(
   (Get-FileSig (Join-Path $Vault 'scripts\skin-switcher.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\site-assets\bilingual-reader.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\inject-reader.cjs')),
+  (Get-FileSig (Join-Path $Vault 'scripts\site-assets\mobile-nav.cjs')),
+  (Get-FileSig (Join-Path $Vault 'scripts\inject-mobile-nav.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\site-assets\AlimamaShuHeiTi-Bold.woff2')),
   $sspSig,
   (Get-FileSig (Join-Path $Vault 'scripts\quartz.config.yaml')),
@@ -381,6 +399,15 @@ try {
     ($o -split "`r?`n") | Where-Object { $_ -match 'inject-reader|Error' } | ForEach-Object { Write-Host "  $($_.Trim())" }
   } else {
     Write-Host "  未找到 inject-reader.cjs，精读页将保持表格版式" -ForegroundColor Yellow
+  }
+
+  # 移动端抽屉：站点级脚本，注入所有页面
+  $mnavInjector = Join-Path $Vault 'scripts\inject-mobile-nav.cjs'
+  if (Test-Path -LiteralPath $mnavInjector) {
+    $o = (& $Node $mnavInjector $PublicDir 2>&1 | Out-String)
+    ($o -split "`r?`n") | Where-Object { $_ -match 'inject-mobile-nav|Error' } | ForEach-Object { Write-Host "  $($_.Trim())" }
+  } else {
+    Write-Host "  未找到 inject-mobile-nav.cjs，移动端侧栏保持原样" -ForegroundColor Yellow
   }
 
   # 分区导航：顶栏放一级目录，左栏只显示当前一级的「卷 + 条目」。

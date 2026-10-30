@@ -60,6 +60,7 @@ on:
       - "scripts/skin-switcher.cjs"
       - "scripts/fix-html-emphasis.cjs"
       - "scripts/inject-reader.cjs"
+      - "scripts/inject-mobile-nav.cjs"
       - "scripts/export-public.ps1"
       - "scripts/publish-site.ps1"
       - "scripts/site-assets/**"
