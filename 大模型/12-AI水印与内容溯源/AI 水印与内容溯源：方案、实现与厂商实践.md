@@ -379,7 +379,178 @@ z = (|s|_G − γ·T) / sqrt(T·γ·(1−γ))
 
 ---
 
-## 8. 选型与落地建议
+## 8. 检测实战：怎么查、谁能查
+
+> [!important] 检测的本质
+> 水印检测不是「识别有没有特征」，而是**用密钥/公钥/解码器重放生成规则，再做统计或密码学验证**。没有验证器，再强的模型也判不出来。
+
+### 8.1 三个前提
+
+| 前提 | 说明 | 缺失后果 |
+|---|---|---|
+| **验证凭据** | 对称密钥 / 公钥 / 训练好的解码器 | 完全无法检测 |
+| **对齐** | tokenizer、分词边界、上下文宽度、采样实现 | 统计量退化成噪声 |
+| **判据** | 检验统计量 + 阈值 + 目标误报率（FPR） | 结果无法解释、无法作为证据 |
+
+### 8.2 文本：自己实现 KGW 检测器
+
+前提：**生成端用的就是你这份实现**（自建水印）。下面这段可以直接跑：
+
+```python
+import hashlib
+import numpy as np
+from scipy.stats import norm
+from transformers import AutoTokenizer
+
+TOK = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-7B-Instruct")
+VOCAB = len(TOK)
+GAMMA = 0.25          # 必须与生成端一致
+KEY = "my-secret-key" # 必须与生成端一致
+
+def _seed(prev_id: int, key: str = KEY) -> int:
+    d = hashlib.blake2b(f"{key}:{prev_id}".encode(), digest_size=8).digest()
+    return int.from_bytes(d, "little")
+
+def green_mask(prev_id: int) -> np.ndarray:
+    """用 (key, 前一个 token) 决定这一步的绿名单；生成端必须逐字节复现同一过程。"""
+    rng = np.random.default_rng(_seed(prev_id))
+    return rng.random(VOCAB) < GAMMA
+
+def kgw_test(text: str, min_tokens: int = 25):
+    ids = TOK(text, add_special_tokens=False)["input_ids"]
+    T = len(ids) - 1
+    if T < min_tokens:
+        return None                      # 样本太短，不做判断
+    hits = sum(1 for i in range(1, len(ids)) if green_mask(ids[i - 1])[ids[i]])
+    z = (hits - GAMMA * T) / (T * GAMMA * (1 - GAMMA)) ** 0.5
+    return {"T": T, "green": hits, "z": z, "p": float(norm.sf(z))}
+
+print(kgw_test(open("suspicious.txt", encoding="utf-8").read()))
+```
+
+判读：`z > 4` 约等于单侧 `p < 3e-5`；`z` 在 0 附近波动才是「无信号」的正常形态。
+
+> [!warning] 五个会让结果归零的对齐错误
+> 1. **换了 tokenizer**（或模型版本）——哪怕只差一个合并规则，绿名单全错；
+> 2. **特殊 token 没排除**（BOS/EOS/pad 参与了计数）；
+> 3. **空白/换行规范化不同**（全角半角、NBSP、NFKC）；
+> 4. **上下文宽度不一致**（生成用 h=1，检测用 h=4）；
+> 5. **生成端用的不是同一套 PRNG**（`torch.Generator` 与 `numpy.default_rng` 结果不同）。
+
+**要检测厂商的水印，光有算法没用**——你没有他们的密钥，而且他们的实现细节不公开。这就是为什么「检测 OpenAI 文本」只能走官方检测器。
+
+### 8.3 文本：公钥与厂商接口
+
+| 路径 | 需要什么 | 现实可得性 |
+|---|---|---|
+| 公钥可验证水印（如 [2310.18491](https://arxiv.org/abs/2310.18491)） | 公钥 + 方案实现 | 仅研究原型，无商用部署 |
+| OpenAI textGrain | 官方检测器 | 仅审核通过的研究者/机构，需申请 |
+| Anthropic Claude 检测器 | 官方接口 | 私有预览（监管/媒体/事实核查/研究者） |
+| Google SynthID-Text | 官方检测器 | 随 Gemini/Cloud 生态，未完全开放 |
+| **自建** | 自己的 key | ✅ 唯一完全可控的路径 |
+
+### 8.4 图像：先查元数据，再查像素
+
+**元数据（C2PA）——成本最低**
+
+```bash
+pip install c2pa-python
+```
+```python
+from c2pa import Reader
+
+try:
+    with Reader("photo.jpg") as reader:
+        print(reader.json())      # 打印 C2PA 清单（签名、生成工具、编辑历史）
+except Exception as e:
+    print("没有可读的 Content Credentials：", e)
+```
+
+也可以直接用官方 CLI `c2patool`（Rust 实现，独立仓库），或在线校验 [claude.com/check-content](https://claude.com/check-content)。
+
+> [!note] 元数据不是水印
+> C2PA 能被轻易剥离（转存、截图、转码都会掉），但**保留下来的部分是可验签的**——它的价值是「可验证的出处声明」，不是「抗篡改的像素信号」。
+
+**像素水印**
+
+- 通用提取：`invisible-watermark`（`decode`）、Stable Signature 的提取器；
+- 商用检测：AWS Bedrock 的 `DetectGeneratedContent`、Google Cloud 的图像水印校验样例；
+- 注意：**重绘/再生成一次即可证明性移除**（[2306.01953](https://arxiv.org/abs/2306.01953)），所以图像水印的检测结论必须带「是否经过后处理」的前提。
+
+### 8.5 音频 / 视频：用官方开源模型检测
+
+**AudioSeal**（MIT 许可，商用可用）
+
+```python
+import torch, torchaudio
+from audioseal import AudioSeal
+
+detector = AudioSeal.load_detector("audioseal_detector_16bits")
+wav, sr = torchaudio.load("clip.wav")                  # (channels, samples)
+if sr != 16000:
+    wav = torchaudio.functional.resample(wav, sr, 16000)
+
+prob, msg = detector.detect_watermark(wav)             # 整段：水印概率 + 16bit 消息
+print(float(prob), msg)
+
+frame_scores = detector(wav)[0][:, 1, :]               # 逐帧概率，可定位水印片段
+```
+
+**VideoSeal**（MIT 许可；注意依赖较重：Python 3.10 + torch 2.4）
+
+```python
+import torchvision, videoseal
+
+model = videoseal.load("videoseal")                    # 256-bit 稳定版
+video, _, _ = torchvision.io.read_video("clip.mp4")
+video = video.permute(0, 3, 1, 2).float() / 255.0
+
+out = model.detect(video, is_video=True)               # 视频检测同样传 is_video=True
+print(out["preds"].shape)                              # 逐帧预测，聚合后再下结论
+```
+
+### 8.6 谁有权限检测什么（当前现实）
+
+| 载体 | 方案 | 检测需要 | 谁能做 |
+|---|---|---|---|
+| 文本 | KGW / Unigram / ITS | 密钥 + tokenizer | 生成方（自建可闭环） |
+| 文本 | SynthID-Text | 模型内部 + 密钥 | Google |
+| 文本 | textGrain | 官方检测器 | OpenAI + 审核机构 |
+| 文本 | Claude 水印 | 官方检测器 | Anthropic + 合规机构 |
+| 文本 | 公钥水印 | 公钥 | 理论上任何人（尚无产品） |
+| 图像 | C2PA | 解析器 + 证书链 | ✅ 任何人 |
+| 图像 | Stable Signature 系 | 解码器 | 持模型者 |
+| 图像 | SynthID-Image / AWS | 厂商 API | 走厂商 |
+| 音频 | AudioSeal | 开源探测器 | ✅ 任何人 |
+| 视频 | VideoSeal | 开源探测器 | ✅ 任何人 |
+
+### 8.7 「用模型检测」到底行不行
+
+| 场景 | 能否 | 原因 |
+|---|---|---|
+| 通用 LLM 读一段文本判断有无水印 | ❌ | 没有密钥；信号是 token 与密钥的统计关系，语义层面不可见；逐 token 哈希计数也不是 LLM 擅长的运算 |
+| LLM 做「AI 文本检测」（DetectGPT/GPTZero 类） | ⚠️ 有限 | 判的是「像不像机器写的」，本质是困惑度/分类器；误报高、改写即失效，**与水印检测是两件事** |
+| 训练分类器检测某种水印 | ✅ 可行但鸡肋 | 本质是学一个已知的检验统计量，需要方案细节 + 大量样本；直接写 20 行脚本更稳 |
+| 深度水印解码器 | ✅ 本来就是模型 | 图像/音频/视频水印的提取器就是神经网络（AudioSeal/VideoSeal） |
+| 攻击者用模型估计水印规则 | ✅ 可行 | 水印窃取：大量查询反推绿名单，<$50 预算、>80% 成功率 |
+
+**结论**：模型可以**辅助**检测（当解码器、当攻击者的探针），但替代不了验证器。**门槛在密钥和算法，不在模型能力。**
+
+### 8.8 结论怎么写才不算误导
+
+一个可复核的检测结论至少要有：
+
+1. 用的什么方案、什么版本、什么密钥管理方式；
+2. 样本长度（token 数 / 帧数 / 采样率）、是否经过编辑；
+3. 统计量（z / p / 逐帧概率）与**目标 FPR**；
+4. 明确的限定语：**「检出」= 可能经过该模型处理**，不代表原创性、不度量人类贡献；**「未检出」不构成反证**。
+
+> [!warning] 三条不能写的结论
+> - 「没检出 → 是人写的」（错，见上）；
+> - 「检出 → 100% AI 生成」（错，可能只是润色/翻译）；
+> - 单条短文（< 25 token）就给判断（统计上无意义）。
+
+## 9. 选型与落地建议
 
 | 你的角色 | 建议组合 |
 |---|---|
@@ -397,7 +568,7 @@ z = (|s|_G − γ·T) / sqrt(T·γ·(1−γ))
 
 ---
 
-## 9. 争议与结论
+## 10. 争议与结论
 
 > [!warning] 五个必须写进认知的前提
 > 1. **水印 ≠ AI 检测器**：它只能证明「用了这份密钥对应的模型」，第三方模型、人类文本一律检不出。
@@ -414,7 +585,7 @@ z = (|s|_G − γ·T) / sqrt(T·γ·(1−γ))
 
 ---
 
-## 10. 参考资料
+## 11. 参考资料
 
 **论文**
 
@@ -460,3 +631,7 @@ z = (|s|_G − γ·T) / sqrt(T·γ·(1−γ))
 - [MarkLLM](https://github.com/THU-BPM/MarkLLM)：文本水印统一工具箱与评测
 - [synthid-text](https://github.com/google-deepmind/synthid-text)：Google 开源实现
 - [lm-watermarking](https://github.com/jwkirchenbauer/lm-watermarking)：KGW 官方实现
+- [audioseal](https://github.com/facebookresearch/audioseal)：音频水印生成 + **检测**（MIT，可商用）
+- [videoseal](https://github.com/facebookresearch/videoseal)：图像/视频水印生成 + **检测**（MIT）
+- [c2pa-python](https://github.com/contentauth/c2pa-python) / [c2patool](https://github.com/contentauth/c2patool)：C2PA 清单读取与校验
+- [invisible-watermark](https://github.com/ShieldMnt/invisible-watermark)：经典图像水印编解码
