@@ -9,7 +9,7 @@
  * 注入内容（<head> 末尾）：
  *   · 一段 boot 脚本：先给 <html> 加 bil-pending，CSS 里让对照表先隐形，
  *     避免「表格闪一下再变段落」；1.5s 兜底移除（脚本没跑起来也能看原文）。
- *   · <script defer src="/bilingual-reader.js">
+ *   · <script defer src="/static/bilingual-reader.js">
  *
  * 幂等：已包含 bilingual-reader.js 的页面跳过；--dry 只统计不写。
  *
@@ -25,7 +25,7 @@ const DRY = process.argv.includes('--dry')
 
 const BOOT = '<script>(function(){var h=document.documentElement;h.classList.add("bil-pending");'
   + 'setTimeout(function(){h.classList.remove("bil-pending")},1500)})();</script>'
-const TAG = '<script defer src="/bilingual-reader.js"></script>'
+const TAG = '<script defer src="/static/bilingual-reader.js"></script>'
 
 function walk(dir, out) {
   for (const name of fs.readdirSync(dir)) {
