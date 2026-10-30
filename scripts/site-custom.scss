@@ -3573,6 +3573,27 @@ html.bil-pending div#quartz-root.page article table {
     transform: none;
   }
 
+  // 抽屉里的搜索：窄屏收成图标按钮（搜索弹层本身不变），
+  // 与皮肤/阅读模式两个图标并排
+  html body div#quartz-root.page div#quartz-body > .sidebar.left .flex-component .search-button {
+    width: 32px !important;
+    min-width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    justify-content: center !important;
+    border-radius: 9px !important;
+  }
+
+  html body div#quartz-root.page div#quartz-body > .sidebar.left .flex-component .search-button > p {
+    display: none !important;
+  }
+
+  html body div#quartz-root.page div#quartz-body > .sidebar.left .flex-component .search-button svg {
+    width: 17px !important;
+    height: 17px !important;
+    margin: 0 !important;
+  }
+
   // 右栏（关系图谱 / 目录 / 反向链接）在手机上隐藏：TOC 用正文标题代替
   html body div#quartz-root.page div#quartz-body > .sidebar.right {
     display: none !important;
