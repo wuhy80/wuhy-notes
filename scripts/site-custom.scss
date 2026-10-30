@@ -3100,7 +3100,7 @@ html body div#quartz-root.page .search .results-container::-webkit-scrollbar-thu
 // 浏览器里重排成「一段英文 + 一段中文」。所有配色走 --paper/--card/--line/--accent
 // 这一套 token，四皮肤 × 明暗自动跟随，不写第二种色值。
 
-html body.bil-page div#quartz-root.page article {
+html.bil-page body div#quartz-root.page article {
   // 章节编号改成 01/02 小徽标，去掉 170px 水印（长中文标题会和它压字）
   h2::after {
     display: none !important;
@@ -3124,16 +3124,16 @@ html body.bil-page div#quartz-root.page article {
   }
 }
 
-html body.bil-page div#quartz-root.page article .bil {
+html.bil-page body div#quartz-root.page article .bil {
   margin: 6px 0 8px;
 }
 
-html body.bil-page div#quartz-root.page article .bil-pair {
+html.bil-page body div#quartz-root.page article .bil-pair {
   position: relative;
   margin: 0 0 34px;
 }
 
-html body.bil-page div#quartz-root.page article .bil-en {
+html.bil-page body div#quartz-root.page article .bil-en {
   max-width: 72ch;
   margin: 0 0 12px;
   font-size: calc(19px * var(--bil-scale, 1));
@@ -3142,7 +3142,7 @@ html body.bil-page div#quartz-root.page article .bil-en {
   letter-spacing: 0.002em;
 }
 
-html body.bil-page div#quartz-root.page article .bil-zh {
+html.bil-page body div#quartz-root.page article .bil-zh {
   max-width: 72ch;
   margin: 0;
   padding-left: 14px;
@@ -3153,17 +3153,17 @@ html body.bil-page div#quartz-root.page article .bil-zh {
 }
 
 // 三档显示：对照 / 原文 / 译文
-html body.bil-mode-en div#quartz-root.page article .bil-zh,
-html body.bil-mode-zh div#quartz-root.page article .bil-en {
+html.bil-mode-en body div#quartz-root.page article .bil-zh,
+html.bil-mode-zh body div#quartz-root.page article .bil-en {
   display: none !important;
 }
-html body.bil-mode-zh div#quartz-root.page article .bil-zh {
+html.bil-mode-zh body div#quartz-root.page article .bil-zh {
   border-left-color: var(--accent);
   color: var(--ink);
 }
 
 // 行内词：暖色虚线 + 悬停洗色
-html body.bil-page div#quartz-root.page article .bil-w {
+html.bil-page body div#quartz-root.page article .bil-w {
   position: relative;
   color: inherit;
   cursor: pointer;
@@ -3173,13 +3173,13 @@ html body.bil-page div#quartz-root.page article .bil-w {
   transition: background-color 0.15s ease, color 0.15s ease;
   outline: none;
 }
-html body.bil-page div#quartz-root.page article .bil-w:hover,
-html body.bil-page div#quartz-root.page article .bil-w:focus-visible,
-html body.bil-page div#quartz-root.page article .bil-w.is-open {
+html.bil-page body div#quartz-root.page article .bil-w:hover,
+html.bil-page body div#quartz-root.page article .bil-w:focus-visible,
+html.bil-page body div#quartz-root.page article .bil-w.is-open {
   background: var(--accent-wash);
   color: var(--accent-deep);
 }
-html body.bil-page div#quartz-root.page article .bil-w.is-flash {
+html.bil-page body div#quartz-root.page article .bil-w.is-flash {
   animation: bil-flash 1.3s ease;
 }
 @keyframes bil-flash {
@@ -3188,14 +3188,14 @@ html body.bil-page div#quartz-root.page article .bil-w.is-flash {
 }
 
 // 词汇提示关掉时，词只保留普通文本外观
-html body.bil-page.bil-vocab-off div#quartz-root.page article .bil-w {
+html.bil-page.bil-vocab-off body div#quartz-root.page article .bil-w {
   border-bottom: 0;
   background: none;
   cursor: auto;
 }
 
 // 段落朗读按钮：悬停才出现，不抢视线
-html body.bil-page div#quartz-root.page article .bil-play {
+html.bil-page body div#quartz-root.page article .bil-play {
   position: absolute;
   top: 0;
   right: 0;
@@ -3213,18 +3213,18 @@ html body.bil-page div#quartz-root.page article .bil-play {
   transform: translateY(-2px);
   transition: opacity 0.15s ease;
 }
-html body.bil-page div#quartz-root.page article .bil-pair:hover .bil-play,
-html body.bil-page div#quartz-root.page article .bil-play:focus-visible {
+html.bil-page body div#quartz-root.page article .bil-pair:hover .bil-play,
+html.bil-page body div#quartz-root.page article .bil-play:focus-visible {
   opacity: 1;
 }
-html body.bil-page div#quartz-root.page article .bil-pair.is-speaking .bil-en {
+html.bil-page body div#quartz-root.page article .bil-pair.is-speaking .bil-en {
   background: color-mix(in srgb, var(--accent-wash) 55%, transparent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-wash) 55%, transparent);
   border-radius: 3px;
 }
 
 // 工具栏
-html body.bil-page div#quartz-root.page article .bil-toolbar {
+html.bil-page body div#quartz-root.page article .bil-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -3234,14 +3234,14 @@ html body.bil-page div#quartz-root.page article .bil-toolbar {
   padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
 }
-html body.bil-page div#quartz-root.page article .bil-seg {
+html.bil-page body div#quartz-root.page article .bil-seg {
   display: inline-flex;
   padding: 3px;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--card);
 }
-html body.bil-page div#quartz-root.page article .bil-seg button {
+html.bil-page body div#quartz-root.page article .bil-seg button {
   padding: 6px 14px;
   border: 0;
   border-radius: 7px;
@@ -3251,20 +3251,20 @@ html body.bil-page div#quartz-root.page article .bil-seg button {
   font-size: 13px;
   cursor: pointer;
 }
-html body.bil-page div#quartz-root.page article .bil-seg button[aria-pressed="true"] {
+html.bil-page body div#quartz-root.page article .bil-seg button[aria-pressed="true"] {
   background: var(--accent);
   color: var(--paper);
   font-weight: 600;
   box-shadow: 0 1px 2px color-mix(in srgb, var(--ink) 16%, transparent);
 }
-html body.bil-page div#quartz-root.page article .bil-tools {
+html.bil-page body div#quartz-root.page article .bil-tools {
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 12.5px;
   color: var(--ink-faint);
 }
-html body.bil-page div#quartz-root.page article .bil-tools button {
+html.bil-page body div#quartz-root.page article .bil-tools button {
   padding: 4px 9px;
   border: 1px solid var(--line);
   border-radius: 7px;
@@ -3274,17 +3274,17 @@ html body.bil-page div#quartz-root.page article .bil-tools button {
   font-size: 12.5px;
   cursor: pointer;
 }
-html body.bil-page div#quartz-root.page article .bil-tools button:hover {
+html.bil-page body div#quartz-root.page article .bil-tools button:hover {
   border-color: var(--accent);
   color: var(--accent-deep);
 }
-html body.bil-page div#quartz-root.page article .bil-vocab-btn[aria-pressed="false"] {
+html.bil-page body div#quartz-root.page article .bil-vocab-btn[aria-pressed="false"] {
   color: var(--ink-faint);
   border-style: dashed;
 }
 
 // 词卡弹层
-html body.bil-page .bil-pop {
+html.bil-page body .bil-pop {
   position: fixed;
   z-index: 9999;
   padding: 14px 16px 12px;
@@ -3296,30 +3296,30 @@ html body.bil-page .bil-pop {
   line-height: 1.7;
   color: var(--ink);
 }
-html body.bil-page .bil-pop-h {
+html.bil-page body .bil-pop-h {
   display: flex;
   align-items: baseline;
   gap: 8px;
 }
-html body.bil-page .bil-pop-h b {
+html.bil-page body .bil-pop-h b {
   font-family: var(--gz-font-heading);
   font-size: 19px;
   color: var(--ink);
 }
-html body.bil-page .bil-pop-h span {
+html.bil-page body .bil-pop-h span {
   font-size: 12px;
   color: var(--ink-faint);
   letter-spacing: 0.02em;
 }
-html body.bil-page .bil-pop-d {
+html.bil-page body .bil-pop-d {
   margin: 8px 0 10px;
   color: var(--ink);
 }
-html body.bil-page .bil-pop-a {
+html.bil-page body .bil-pop-a {
   display: flex;
   gap: 8px;
 }
-html body.bil-page .bil-pop-a button {
+html.bil-page body .bil-pop-a button {
   flex: 1;
   padding: 5px 10px;
   border: 1px solid var(--line);
@@ -3330,23 +3330,23 @@ html body.bil-page .bil-pop-a button {
   font-size: 12px;
   cursor: pointer;
 }
-html body.bil-page .bil-pop-a button:hover {
+html.bil-page body .bil-pop-a button:hover {
   border-color: var(--accent);
   color: var(--accent-deep);
 }
-html body.bil-page .bil-pop-a button[aria-pressed="true"] {
+html.bil-page body .bil-pop-a button[aria-pressed="true"] {
   border-color: var(--accent);
   background: var(--accent-wash);
   color: var(--accent-deep);
 }
 
 // 右侧生词栏
-html body.bil-page div#quartz-root.page .right.sidebar .bil-rail {
+html.bil-page body div#quartz-root.page .right.sidebar .bil-rail {
   margin: 0 0 22px;
   padding: 0 0 18px;
   border-bottom: 1px solid var(--line);
 }
-html body.bil-page div#quartz-root.page .right.sidebar .bil-rail h3 {
+html.bil-page body div#quartz-root.page .right.sidebar .bil-rail h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -3356,19 +3356,19 @@ html body.bil-page div#quartz-root.page .right.sidebar .bil-rail h3 {
   font-weight: 900;
   color: var(--ink);
 }
-html body.bil-page div#quartz-root.page .right.sidebar .bil-rail h3 span {
+html.bil-page body div#quartz-root.page .right.sidebar .bil-rail h3 span {
   font-family: inherit;
   font-size: 11px;
   font-weight: 400;
   letter-spacing: 0.08em;
   color: var(--ink-faint);
 }
-html body.bil-page div#quartz-root.page .right.sidebar .bil-rail-list {
+html.bil-page body div#quartz-root.page .right.sidebar .bil-rail-list {
   max-height: 300px;
   overflow: auto;
   padding-right: 4px;
 }
-html body.bil-page div#quartz-root.page .right.sidebar .bil-rail-item {
+html.bil-page body div#quartz-root.page .right.sidebar .bil-rail-item {
   display: grid;
   grid-template-columns: 8px 1fr auto;
   grid-template-areas:
@@ -3384,11 +3384,11 @@ html body.bil-page div#quartz-root.page .right.sidebar .bil-rail-item {
   text-align: left;
   cursor: pointer;
 }
-html body.bil-page div#quartz-root.page .right.sidebar .bil-rail-item:hover {
+html.bil-page body div#quartz-root.page .right.sidebar .bil-rail-item:hover {
   border-color: var(--line);
   background: var(--card);
 }
-html body.bil-page div#quartz-root.page .right.sidebar .bil-rail-item .dot {
+html.bil-page body div#quartz-root.page .right.sidebar .bil-rail-item .dot {
   grid-area: dot;
   align-self: center;
   width: 7px;
@@ -3397,23 +3397,23 @@ html body.bil-page div#quartz-root.page .right.sidebar .bil-rail-item .dot {
   border-radius: 50%;
   background: var(--accent);
 }
-html body.bil-page div#quartz-root.page .right.sidebar .bil-rail-item .dot.known {
+html.bil-page body div#quartz-root.page .right.sidebar .bil-rail-item .dot.known {
   background: var(--line);
 }
-html body.bil-page div#quartz-root.page .right.sidebar .bil-rail-item b {
+html.bil-page body div#quartz-root.page .right.sidebar .bil-rail-item b {
   grid-area: word;
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
   color: var(--ink);
 }
-html body.bil-page div#quartz-root.page .right.sidebar .bil-rail-item em {
+html.bil-page body div#quartz-root.page .right.sidebar .bil-rail-item em {
   grid-area: ipa;
   font-size: 11px;
   font-style: normal;
   color: var(--ink-faint);
 }
-html body.bil-page div#quartz-root.page .right.sidebar .bil-rail-item span {
+html.bil-page body div#quartz-root.page .right.sidebar .bil-rail-item span {
   grid-area: mean;
   font-size: 12px;
   line-height: 1.5;
@@ -3425,40 +3425,40 @@ html body.bil-page div#quartz-root.page .right.sidebar .bil-rail-item span {
 }
 
 // 文末总词汇表 → 卡片
-html body.bil-page div#quartz-root.page article .bil-cards {
+html.bil-page body div#quartz-root.page article .bil-cards {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   margin: 10px 0 8px;
 }
-html body.bil-page div#quartz-root.page article .bil-card {
+html.bil-page body div#quartz-root.page article .bil-card {
   padding: 13px 14px 12px;
   border: 1px solid var(--line);
   border-radius: 11px;
   background: var(--card);
 }
-html body.bil-page div#quartz-root.page article .bil-card-h {
+html.bil-page body div#quartz-root.page article .bil-card-h {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
   gap: 6px;
 }
-html body.bil-page div#quartz-root.page article .bil-card-h b {
+html.bil-page body div#quartz-root.page article .bil-card-h b {
   font-family: var(--gz-font-heading);
   font-size: 16px;
   color: var(--ink);
 }
-html body.bil-page div#quartz-root.page article .bil-card-h span {
+html.bil-page body div#quartz-root.page article .bil-card-h span {
   font-size: 11px;
   color: var(--ink-faint);
 }
-html body.bil-page div#quartz-root.page article .bil-card-d {
+html.bil-page body div#quartz-root.page article .bil-card-d {
   margin-top: 6px;
   font-size: 13px;
   line-height: 1.6;
   color: var(--ink);
 }
-html body.bil-page div#quartz-root.page article .bil-card-c {
+html.bil-page body div#quartz-root.page article .bil-card-c {
   margin-top: 8px;
   padding-top: 7px;
   border-top: 1px dashed var(--line);
@@ -3468,37 +3468,37 @@ html body.bil-page div#quartz-root.page article .bil-card-c {
 }
 
 // 词汇注释 callout 已被行内词卡替代
-html body.bil-page div#quartz-root.page article .bil-vocab-src {
+html.bil-page body div#quartz-root.page article .bil-vocab-src {
   display: none !important;
 }
 
 @media all and (max-width: 1000px) {
-  html body.bil-page div#quartz-root.page article .bil-en {
+  html.bil-page body div#quartz-root.page article .bil-en {
     font-size: calc(17.5px * var(--bil-scale, 1));
   }
-  html body.bil-page div#quartz-root.page article .bil-zh {
+  html.bil-page body div#quartz-root.page article .bil-zh {
     font-size: calc(14.5px * var(--bil-scale, 1));
   }
-  html body.bil-page div#quartz-root.page article .bil-cards {
+  html.bil-page body div#quartz-root.page article .bil-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  html body.bil-page div#quartz-root.page article .bil-play {
+  html.bil-page body div#quartz-root.page article .bil-play {
     opacity: 0.8;
   }
 }
 
 @media all and (max-width: 640px) {
-  html body.bil-page div#quartz-root.page article .bil-cards {
+  html.bil-page body div#quartz-root.page article .bil-cards {
     grid-template-columns: 1fr;
   }
-  html body.bil-page div#quartz-root.page article .bil-toolbar {
+  html.bil-page body div#quartz-root.page article .bil-toolbar {
     gap: 8px;
   }
-  html body.bil-page div#quartz-root.page article .bil-tools {
+  html.bil-page body div#quartz-root.page article .bil-tools {
     width: 100%;
     justify-content: flex-start;
   }
-  html body.bil-page .bil-pop {
+  html.bil-page body .bil-pop {
     max-width: calc(100vw - 24px) !important;
   }
 }

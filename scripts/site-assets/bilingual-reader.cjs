@@ -262,8 +262,8 @@
     ac = new AbortController();
     var signal = ac.signal;
 
-    document.body.classList.remove('bil-page', 'bil-mode-pair', 'bil-mode-en', 'bil-mode-zh', 'bil-vocab-off');
-    document.documentElement.classList.remove('bil-pending');
+    var doc = document.documentElement;   // 主题脚本会重写 body.className，状态一律挂 <html>
+    doc.classList.remove('bil-page', 'bil-mode-pair', 'bil-mode-en', 'bil-mode-zh', 'bil-vocab-off', 'bil-pending');
     // SPA 切页后上一轮的弹层/生词栏可能还在，先清掉
     [].slice.call(document.querySelectorAll('.bil-pop, .bil-rail')).forEach(function (n) { n.remove(); });
 
@@ -277,7 +277,7 @@
     });
     if (!pairTables.length) return;   // 非精读页 / 已经重排过
 
-    document.body.classList.add('bil-page');
+    doc.classList.add('bil-page');
 
     var collected = collectVocab(root);
     var vocab = collected.vocab;
@@ -370,8 +370,8 @@
     function applyMode(mode) {
       if (['pair', 'en', 'zh'].indexOf(mode) < 0) mode = 'pair';
       prefs.mode = mode;
-      document.body.classList.remove('bil-mode-pair', 'bil-mode-en', 'bil-mode-zh');
-      document.body.classList.add('bil-mode-' + mode);
+      doc.classList.remove('bil-mode-pair', 'bil-mode-en', 'bil-mode-zh');
+      doc.classList.add('bil-mode-' + mode);
       [].slice.call(bar.querySelectorAll('[data-mode]')).forEach(function (b) {
         b.setAttribute('aria-pressed', b.dataset.mode === mode ? 'true' : 'false');
       });
@@ -384,7 +384,7 @@
     }
     function applyVocab(on) {
       prefs.vocab = !!on;
-      document.body.classList.toggle('bil-vocab-off', !prefs.vocab);
+      doc.classList.toggle('bil-vocab-off', !prefs.vocab);
       var btn = bar.querySelector('.bil-vocab-btn');
       if (btn) {
         btn.setAttribute('aria-pressed', prefs.vocab ? 'true' : 'false');
