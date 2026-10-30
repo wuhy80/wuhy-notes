@@ -59,6 +59,7 @@ on:
       - "scripts/add-edit-links.cjs"
       - "scripts/skin-switcher.cjs"
       - "scripts/fix-html-emphasis.cjs"
+      - "scripts/inject-reader.cjs"
       - "scripts/export-public.ps1"
       - "scripts/publish-site.ps1"
       - "scripts/site-assets/**"

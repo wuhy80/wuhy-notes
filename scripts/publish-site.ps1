@@ -185,6 +185,23 @@ if (Test-Path -LiteralPath $sspSrcDir) {
   Write-Host "  未找到 source-sans-pro 字体目录，正文西文将回退系统字体" -ForegroundColor Yellow
 }
 
+# 双语精读阅读器（表格重排 / 行内词卡 / 生词栏 / 朗读）→ Quartz static，
+# 构建后由 scripts/inject-reader.cjs 注入 <script>，不改组件、不碰正文
+$bilSrc = Join-Path $Vault 'scripts\site-assets\bilingual-reader.js'
+$bilDstDir = Join-Path $Quartz 'quartz\static'
+if (Test-Path -LiteralPath $bilSrc) {
+  New-Item -ItemType Directory -Force -Path $bilDstDir | Out-Null
+  $bilDst = Join-Path $bilDstDir 'bilingual-reader.js'
+  if (-not (Test-Path -LiteralPath $bilDst) -or (Get-FileHash -LiteralPath $bilSrc).Hash -ne (Get-FileHash -LiteralPath $bilDst).Hash) {
+    Copy-Item -LiteralPath $bilSrc -Destination $bilDst -Force
+    Write-Host "  已部署双语精读阅读器脚本 bilingual-reader.js（内容有变化）"
+  } else {
+    Write-Host "  阅读器脚本无变化，跳过覆盖"
+  }
+} else {
+  Write-Host "  未找到 bilingual-reader.js，精读页将保持表格版式" -ForegroundColor Yellow
+}
+
 Write-Step "2.2/4 应用站点主题"
 $ThemeName = 'claude-paper'    # 站点主题（@quartz-themes/core 的 theme 选项）
 $CfgPath = Join-Path $Quartz 'quartz.config.yaml'
@@ -238,6 +255,8 @@ $siteSig = Get-StringHash (@(
   (Get-FileSig (Join-Path $Vault 'scripts\enhance-content.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\fix-html-emphasis.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\skin-switcher.cjs')),
+  (Get-FileSig (Join-Path $Vault 'scripts\site-assets\bilingual-reader.js')),
+  (Get-FileSig (Join-Path $Vault 'scripts\inject-reader.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\site-assets\AlimamaShuHeiTi-Bold.woff2')),
   $sspSig,
   (Get-FileSig (Join-Path $Vault 'scripts\quartz.config.yaml')),
@@ -352,6 +371,16 @@ try {
     ($o -split "`r?`n") | Where-Object { $_ -match 'enhance|Error' } | ForEach-Object { Write-Host "  $($_.Trim())" }
   } else {
     Write-Host "  未找到 enhance-content.cjs，跳过内容增强" -ForegroundColor Yellow
+  }
+
+  # 双语精读阅读器：只给「原文 | 译文」表格页注入脚本（表格重排、行内词卡、
+  # 生词栏、朗读、对照/字号切换都在客户端完成，笔记侧不用改结构）。
+  $readerInjector = Join-Path $Vault 'scripts\inject-reader.cjs'
+  if (Test-Path -LiteralPath $readerInjector) {
+    $o = (& $Node $readerInjector $PublicDir 2>&1 | Out-String)
+    ($o -split "`r?`n") | Where-Object { $_ -match 'inject-reader|Error' } | ForEach-Object { Write-Host "  $($_.Trim())" }
+  } else {
+    Write-Host "  未找到 inject-reader.cjs，精读页将保持表格版式" -ForegroundColor Yellow
   }
 
   # 分区导航：顶栏放一级目录，左栏只显示当前一级的「卷 + 条目」。
