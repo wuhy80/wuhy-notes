@@ -258,10 +258,6 @@
 
   // ── 每轮初始化 ──────────────────────────────────────────────────────────
   function init() {
-    if (ac) ac.abort();
-    ac = new AbortController();
-    var signal = ac.signal;
-
     var doc = document.documentElement;   // 主题脚本会重写 body.className，状态一律挂 <html>
     doc.classList.remove('bil-pending');
 
@@ -280,6 +276,12 @@
       doc.classList.remove('bil-page', 'bil-mode-pair', 'bil-mode-en', 'bil-mode-zh', 'bil-vocab-off');
       return;
     }
+
+    // 只有真的要重排时才换监听器；同一页的重复 init 在上面就 return 了，
+    // 否则会把上一轮挂好的 click/keydown 监听 abort 掉，词卡点了没反应。
+    if (ac) ac.abort();
+    ac = new AbortController();
+    var signal = ac.signal;
 
     // SPA 切页后上一轮的弹层/生词栏可能还在，先清掉
     [].slice.call(document.querySelectorAll('.bil-pop, .bil-rail')).forEach(function (n) { n.remove(); });
