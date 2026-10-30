@@ -187,7 +187,7 @@ if (Test-Path -LiteralPath $sspSrcDir) {
 
 # 双语精读阅读器（表格重排 / 行内词卡 / 生词栏 / 朗读）→ Quartz static，
 # 构建后由 scripts/inject-reader.cjs 注入 <script>，不改组件、不碰正文
-$bilSrc = Join-Path $Vault 'scripts\site-assets\bilingual-reader.js'
+$bilSrc = Join-Path $Vault 'scripts\site-assets\bilingual-reader.cjs'
 $bilDstDir = Join-Path $Quartz 'quartz\static'
 if (Test-Path -LiteralPath $bilSrc) {
   New-Item -ItemType Directory -Force -Path $bilDstDir | Out-Null
@@ -255,7 +255,7 @@ $siteSig = Get-StringHash (@(
   (Get-FileSig (Join-Path $Vault 'scripts\enhance-content.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\fix-html-emphasis.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\skin-switcher.cjs')),
-  (Get-FileSig (Join-Path $Vault 'scripts\site-assets\bilingual-reader.js')),
+  (Get-FileSig (Join-Path $Vault 'scripts\site-assets\bilingual-reader.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\inject-reader.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\site-assets\AlimamaShuHeiTi-Bold.woff2')),
   $sspSig,
