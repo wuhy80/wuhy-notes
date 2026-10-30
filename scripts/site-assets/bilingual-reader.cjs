@@ -47,6 +47,24 @@
   var active = null;  // 当前打开弹层的词
 
   // ── 词汇收集 ────────────────────────────────────────────────────────────
+  // ── 未闭合行内标签兜底 ──────────────────────────────────────────────
+  // 行内格式标签（u/em/strong 等）里不该出现块级子元素。笔记里若混入未闭合的
+  // 行内标签（例如 callout 里写字面量 <u>），经本脚本的重构后可能被放大成
+  // 包住整个内容区的巨型标签：text-decoration 不是继承属性但会沿盒树向下
+  // 「绘制」，于是整页每行都带下划线。这里把「含块级子元素的行内标签」
+  // 原地拆开（保留子节点），词级小标签不受影响。幂等，可多次调用。
+  function sanitizeInlineWrappers(root) {
+    var INLINE = 'u,em,strong,b,i,s,mark,small,sub,sup';
+    var BLOCK = 'div,p,table,thead,tbody,tr,td,th,ul,ol,li,h1,h2,h3,h4,h5,h6,section,article,blockquote,pre,figure,hr,dl,dt,dd';
+    [].slice.call(root.querySelectorAll(INLINE)).forEach(function (el) {
+      if (!el.querySelector(BLOCK)) return;
+      var parent = el.parentNode;
+      if (!parent) return;
+      while (el.firstChild) parent.insertBefore(el.firstChild, el);
+      parent.removeChild(el);
+    });
+  }
+
   function collectVocab(root) {
     var vocab = {};
     var order = 0;
@@ -265,6 +283,7 @@
     var article = document.querySelector('article');
     if (!article) return;
     var root = article.querySelector('.markdown-preview-view') || article;
+    sanitizeInlineWrappers(root); // 重构前先拆一次：笔记侧混入的未闭合行内标签不能留到后面
 
     var pairTables = [].slice.call(root.querySelectorAll('table')).filter(function (t) {
       var th = [].slice.call(t.querySelectorAll('thead th')).map(function (x) { return x.textContent.trim(); });
@@ -295,6 +314,7 @@
     transformGlossary(collected.glossary);
 
     var words = annotateAll(root, vocab);
+    sanitizeInlineWrappers(root); // 重构后再兜一次底
 
     // 工具栏
     var first = root.querySelector('.bil');
