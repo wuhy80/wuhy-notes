@@ -263,9 +263,7 @@
     var signal = ac.signal;
 
     var doc = document.documentElement;   // 主题脚本会重写 body.className，状态一律挂 <html>
-    doc.classList.remove('bil-page', 'bil-mode-pair', 'bil-mode-en', 'bil-mode-zh', 'bil-vocab-off', 'bil-pending');
-    // SPA 切页后上一轮的弹层/生词栏可能还在，先清掉
-    [].slice.call(document.querySelectorAll('.bil-pop, .bil-rail')).forEach(function (n) { n.remove(); });
+    doc.classList.remove('bil-pending');
 
     var article = document.querySelector('article');
     if (!article) return;
@@ -275,8 +273,16 @@
       var th = [].slice.call(t.querySelectorAll('thead th')).map(function (x) { return x.textContent.trim(); });
       return th.length === 2 && th[0] === '原文' && th[1] === '译文';
     });
-    if (!pairTables.length) return;   // 非精读页 / 已经重排过
 
+    if (!pairTables.length) {
+      // 同一页被重复初始化（首次加载后 Quartz 还会再发一次 nav）：保持现状，别把类名和生词栏清掉
+      if (root.querySelector('.bil')) return;
+      doc.classList.remove('bil-page', 'bil-mode-pair', 'bil-mode-en', 'bil-mode-zh', 'bil-vocab-off');
+      return;
+    }
+
+    // SPA 切页后上一轮的弹层/生词栏可能还在，先清掉
+    [].slice.call(document.querySelectorAll('.bil-pop, .bil-rail')).forEach(function (n) { n.remove(); });
     doc.classList.add('bil-page');
 
     var collected = collectVocab(root);
