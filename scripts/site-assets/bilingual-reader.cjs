@@ -116,6 +116,7 @@
         play.className = 'bil-play';
         play.setAttribute('aria-label', '朗读本段');
         play.title = '朗读本段';
+        play.textContent = '▶';
         pair.appendChild(en);
         pair.appendChild(zh);
         pair.appendChild(play);
