@@ -3483,8 +3483,23 @@ html.bil-page body div#quartz-root.page article .bil-vocab-src {
   html.bil-page body div#quartz-root.page article .bil-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  // 手机上不做浮层：改成译文下方的小胶囊，免得压住第一行正文
   html.bil-page body div#quartz-root.page article .bil-play {
-    opacity: 0.8;
+    position: static;
+    width: auto;
+    height: 26px;
+    margin-top: 4px;
+    padding: 0 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: 999px;
+    font-size: 11px;
+    opacity: 1;
+    transform: none;
+  }
+  html.bil-page body div#quartz-root.page article .bil-play::after {
+    content: "朗读";
   }
 }
 
@@ -3635,6 +3650,17 @@ html .gz-nav-toggle {
 
 html .gz-nav-toggle:active {
   transform: scale(0.97);
+}
+
+// 下滑阅读时收起按钮（mobile-nav.cjs 维护 gz-nav-hidden）
+html .gz-nav-toggle {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+html.gz-nav-hidden .gz-nav-toggle {
+  transform: translateY(-160%);
+  opacity: 0;
+  pointer-events: none;
 }
 
 html .gz-nav-toggle .bars {
