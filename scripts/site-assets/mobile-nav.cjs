@@ -59,6 +59,18 @@
 
     // SPA 切页后收起
     document.addEventListener('nav', close);
+
+    // 向下滚动时把按钮收起来（浮在正文上挡字），向上滚/回到顶部再出现
+    var lastY = window.scrollY || 0;
+    window.addEventListener('scroll', function () {
+      var y = window.scrollY || 0;
+      if (y > 140 && y > lastY + 2) {
+        DOC.classList.add('gz-nav-hidden');
+      } else if (y < lastY - 2 || y <= 140) {
+        DOC.classList.remove('gz-nav-hidden');
+      }
+      lastY = y;
+    }, { passive: true });
   }
 
   function init() { ensure(); close(); }
