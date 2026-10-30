@@ -3149,7 +3149,8 @@ html.bil-page body div#quartz-root.page article .bil-zh {
   border-left: 2px solid var(--accent-wash);
   font-size: calc(15px * var(--bil-scale, 1));
   line-height: 1.95;
-  color: var(--ink-soft);
+  // 站点 `article p { color: var(--ink) !important }` 会压过来，译文要显式加重
+  color: var(--ink-soft) !important;
 }
 
 // 三档显示：对照 / 原文 / 译文
@@ -3159,7 +3160,7 @@ html.bil-mode-zh body div#quartz-root.page article .bil-en {
 }
 html.bil-mode-zh body div#quartz-root.page article .bil-zh {
   border-left-color: var(--accent);
-  color: var(--ink);
+  color: var(--ink) !important;
 }
 
 // 行内词：暖色虚线 + 悬停洗色
