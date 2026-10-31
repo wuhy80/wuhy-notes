@@ -5,6 +5,9 @@
 tags: 
 url: https://raid-calculator.bchrt.com/
 ---
+> [!warning] 站点状态
+> 原站 `raid-calculator.bchrt.com` 于 2026-10-31 检测已无法访问（域名可解析但连接失败，疑似停运）。以下截图留存当时界面，可按图中参数自行换算。
+
 ![image.png](https://wuhy-1258420163.cos.ap-shanghai.myqcloud.com/obsidian/images/2024/group_2/202408261014214.png)
 
 ## 常用容量公式

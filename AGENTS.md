@@ -130,7 +130,7 @@
 ## 维护模式变化（2026-10-26 起：Obsidian 退役，ZCode 是唯一编辑器）
 
 - 本库不再通过 Obsidian 应用编辑。内容的唯一真相源是本 git 仓库，由 ZCode/DSH 直接增改并提交；发布由 `publish-site.yml` 的 push 触发自动完成，不需要也不应该手动等定时。
-- **新内容不再使用 Dataview / Charts 等 Obsidian 插件代码块**（站点上是死代码，本地也没了宿主）。需要索引/汇总页时，用脚本生成纯 Markdown 列表（范例：`大模型/10-新闻` 的日报与周报索引）。存量 Dataview 页面碰到时顺手转换，不要求一次清完。
+- **新内容不再使用 Dataview / Charts 等 Obsidian 插件代码块**（站点上是死代码，本地也没了宿主）。需要索引/汇总页时，用脚本生成纯 Markdown 列表（`大模型/10-新闻` 的日报与周报索引仍是存量 Dataview，待按此方式转换）。存量 Dataview 页面碰到时顺手转换，不要求一次清完。
 - `template/`（Templater 模板）进入退役状态：不再新增模板、不再按模板建笔记；新笔记直接写正文 + frontmatter。
 - frontmatter 约定升级为「入库元数据」：`tags / created / updated / source / status / type` 字段名保持英文小写——发布时全库会灌入 Cloudflare D1（`scripts/build-d1-index.mjs`），字段缺失或类型混乱会直接降低 `/api/search` 的质量。
 - 上一节里关于 Dataview、Templater、Callout、WikiLink 的「保护性条款」对存量内容继续有效（改旧文件时不要弄坏），只是不再约束新增内容。

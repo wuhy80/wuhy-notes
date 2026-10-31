@@ -26,16 +26,18 @@ Chrome 插件列表，尤其是无忧行
 
 ## 插件离线包
 ### 无忧行
-![[JegoCloudV1.3.9.crx]]
+
+`JegoCloudV1.3.9.crx`（离线包附件未入库，需自行下载）
 
 
 ### WeTab
 
-![[wetab-ai新标签页.crx]]
+`wetab-ai新标签页.crx`（离线包附件未入库，需自行下载）
 
 
 ### AD-Block
-![[ad_block.crx]]
+
+`ad_block.crx`（离线包附件未入库，需自行下载）
 
 ### 沉浸式翻译
 沉浸式翻译	

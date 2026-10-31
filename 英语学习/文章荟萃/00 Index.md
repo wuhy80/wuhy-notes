@@ -1,8 +1,12 @@
 ---
-🌻日期🌻: 2024-05-23
-🌙星期🌙: 星期四
-⌚️时间⌚️: 09:10:53
 title: 文章荟萃
-tags: 
+tags:
+  - 英语学习
+  - 外刊阅读
+type: index
+created: 2024-05-23
+updated: 2026-10-31
 ---
-[[The contaminated blood scandal]]
+
+- [[The contaminated blood scandal]]
+- [[SMIC and Huawei defy US Sanctions in semiconductor push]]

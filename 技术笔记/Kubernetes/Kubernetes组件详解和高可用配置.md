@@ -129,7 +129,7 @@ kube-proxy 是网络代理，负责处理集群内部或外部的网络通信：
 
 **相关文档**:
 - [[Docker/02 如何搭建私有镜像服务器|搭建私有镜像服务器]]
-- [[Longhorn/如何直接读取longho文件|Longhorn 存储]]
+- [[技术笔记/Kubernetes/Longhorn/如何直接读取longhorn的文件|Longhorn 存储]]
 
 ---
 
