@@ -218,6 +218,24 @@ if (Test-Path -LiteralPath $mnavSrc) {
   Write-Host "  未找到 mobile-nav.cjs，移动端侧栏保持原样" -ForegroundColor Yellow
 }
 
+# Dataview 站点端渲染器：笔记里的 ```dataview/dataviewjs/tagcloud 代码块在浏览器里
+# 现场渲染，元数据由 build-vault-meta.mjs 从导出内容生成（见 2.4 步），构建后由
+# scripts/inject-dataview.cjs 注入 <script>。源码 .cjs（.js 会被本机文档加密驱动加密）
+$dvlSrc = Join-Path $Vault 'scripts\site-assets\dataview-lite.cjs'
+if (Test-Path -LiteralPath $dvlSrc) {
+  $dvlDstDir = Join-Path $Quartz 'quartz\static'
+  New-Item -ItemType Directory -Force -Path $dvlDstDir | Out-Null
+  $dvlDst = Join-Path $dvlDstDir 'dataview-lite.js'
+  if (-not (Test-Path -LiteralPath $dvlDst) -or (Get-FileHash -LiteralPath $dvlSrc).Hash -ne (Get-FileHash -LiteralPath $dvlDst).Hash) {
+    Copy-Item -LiteralPath $dvlSrc -Destination $dvlDst -Force
+    Write-Host "  已部署 Dataview 站点端渲染器 dataview-lite.js"
+  } else {
+    Write-Host "  Dataview 渲染器脚本无变化，跳过覆盖"
+  }
+} else {
+  Write-Host "  未找到 dataview-lite.cjs，Dataview 代码块将保持原始查询显示" -ForegroundColor Yellow
+}
+
 Write-Step "2.2/4 应用站点主题"
 $ThemeName = 'claude-paper'    # 站点主题（@quartz-themes/core 的 theme 选项）
 $CfgPath = Join-Path $Quartz 'quartz.config.yaml'
@@ -269,12 +287,16 @@ $siteSig = Get-StringHash (@(
   # 构建后改写脚本也会改变产物：不进指纹的话「只改脚本」会被增量判断当成无变化
   (Get-FileSig (Join-Path $Vault 'scripts\build-section-nav.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\enhance-content.cjs')),
+  (Get-FileSig (Join-Path $Vault 'scripts\add-edit-links.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\fix-html-emphasis.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\skin-switcher.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\site-assets\bilingual-reader.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\inject-reader.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\site-assets\mobile-nav.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\inject-mobile-nav.cjs')),
+  (Get-FileSig (Join-Path $Vault 'scripts\site-assets\dataview-lite.cjs')),
+  (Get-FileSig (Join-Path $Vault 'scripts\inject-dataview.cjs')),
+  (Get-FileSig (Join-Path $Vault 'scripts\build-vault-meta.mjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\site-assets\AlimamaShuHeiTi-Bold.woff2')),
   $sspSig,
   (Get-FileSig (Join-Path $Vault 'scripts\quartz.config.yaml')),
@@ -292,6 +314,27 @@ if (-not $Force -and -not $Serve) {
     Write-Host "   如需强制重新发布，请加 -Force"
     exit 0
   }
+}
+
+Write-Step "2.4/4 生成 Dataview 元数据（导出内容 → /static/vault-meta.json）"
+# 从导出内容（与站点同口径）生成全库元数据，供浏览器端 dataview-lite.js 渲染
+# ```dataview/dataviewjs 块。内容有变化时 JSON 随之更新；只在继续构建时才跑到这里。
+$dvlMeta = Join-Path $Vault 'scripts\build-vault-meta.mjs'
+$dvlMetaDst = Join-Path $Quartz 'quartz\static\vault-meta.json'
+if ((Test-Path -LiteralPath $dvlMeta) -and (Test-Path -LiteralPath $dvlSrc)) {
+  $tmpMeta = Join-Path $env:TEMP ('vault-meta.' + [guid]::NewGuid().ToString('N') + '.json')
+  & $Node $dvlMeta $Content $tmpMeta
+  if ($LASTEXITCODE -ne 0) { Remove-Item -LiteralPath $tmpMeta -Force -ErrorAction SilentlyContinue; throw "vault-meta 生成失败，中止发布" }
+  New-Item -ItemType Directory -Force -Path (Split-Path $dvlMetaDst) | Out-Null
+  if ((-not (Test-Path -LiteralPath $dvlMetaDst)) -or (Get-FileHash -LiteralPath $tmpMeta).Hash -ne (Get-FileHash -LiteralPath $dvlMetaDst).Hash) {
+    Move-Item -LiteralPath $tmpMeta -Destination $dvlMetaDst -Force
+    Write-Host "  已更新 vault-meta.json（内容有变化）"
+  } else {
+    Remove-Item -LiteralPath $tmpMeta -Force
+    Write-Host "  vault-meta.json 无变化，跳过覆盖"
+  }
+} else {
+  Write-Host "  未找到 build-vault-meta.mjs 或 dataview-lite.cjs，跳过元数据生成" -ForegroundColor Yellow
 }
 
 Write-Step "2.5/4 校验 frontmatter（YAML 不合法会让构建整体失败）"
@@ -408,6 +451,16 @@ try {
     ($o -split "`r?`n") | Where-Object { $_ -match 'inject-mobile-nav|Error' } | ForEach-Object { Write-Host "  $($_.Trim())" }
   } else {
     Write-Host "  未找到 inject-mobile-nav.cjs，移动端侧栏保持原样" -ForegroundColor Yellow
+  }
+
+  # Dataview 站点端渲染器：站点级脚本，注入所有页面（SPA 导航安全），
+  # 含查询块的页面在浏览器里由 dataview-lite.js 现场渲染
+  $dvlInjector = Join-Path $Vault 'scripts\inject-dataview.cjs'
+  if (Test-Path -LiteralPath $dvlInjector) {
+    $o = (& $Node $dvlInjector $PublicDir 2>&1 | Out-String)
+    ($o -split "`r?`n") | Where-Object { $_ -match 'inject-dataview|Error' } | ForEach-Object { Write-Host "  $($_.Trim())" }
+  } else {
+    Write-Host "  未找到 inject-dataview.cjs，Dataview 代码块保持原始查询显示" -ForegroundColor Yellow
   }
 
   # 分区导航：顶栏放一级目录，左栏只显示当前一级的「卷 + 条目」。
