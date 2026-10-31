@@ -673,7 +673,7 @@ $rp += '> [!info] 说明'
 $rp += '> 按笔记的 git 最后提交日期自动聚合（未提交的新笔记按文件修改时间），每次发布时重新生成；不含每日自动抓取的 AI 早报（早报归档见 [[00-日报索引|日报索引]]）。最多保留最近 14 个有更新的日子。'
 $rp += ''
 $dayGroups = @($recentFiles | Group-Object Date | Sort-Object Name -Descending | Select-Object -First 14)
-$dayListCap = 20   # 单日展示上限：批量整理日（全库 touch）只列最新 20 条，其余汇总
+$dayListCap = 200  # 单日展示上限：几十条的日常更新应逐条列出；只有超过 200 条的批量整理日（全库 touch）才折叠汇总
 foreach ($g in $dayGroups) {
   $wd = ''
   try { $wd = $wdMap[[string][datetime]::ParseExact($g.Name, 'yyyy-MM-dd', $null).DayOfWeek] } catch { $wd = '' }
