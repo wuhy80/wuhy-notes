@@ -44,6 +44,29 @@ function editUrl(slug) {
   return EDIT_BASE + (slug + '.md').split('/').map(encodeURIComponent).join('/')
 }
 
+// Quartz 的 slug 会把 ASCII 字母转成小写（机器学习-谦行AIing → 谦行aiing），而 GitHub
+// 路径大小写敏感，直接拿 slug 拼编辑地址会 404。发布机是 Windows（文件系统大小写
+// 不敏感），existsSync 也拦不住这种偏差，所以对 vault 建一张「全小写相对路径 →
+// 真实路径」索引，编辑链接一律用 vault 里的真实大小写。
+const vaultFiles = new Map()
+function indexVault(dir, rel = '') {
+  for (const name of fs.readdirSync(dir)) {
+    const p = path.join(dir, name)
+    const relName = rel ? rel + '/' + name : name
+    if (fs.statSync(p).isDirectory()) indexVault(p, relName)
+    else if (name.endsWith('.md')) vaultFiles.set(relName.toLowerCase(), relName)
+  }
+}
+indexVault(path.resolve(VAULT))
+
+/** slug → vault 真实相对路径（.md 结尾，/ 分隔）；找不到返回 null */
+function resolveRealPath(slug) {
+  const hit = vaultFiles.get(slug.toLowerCase() + '.md')
+  if (hit) return hit
+  if (vaultFiles.has(slug + '.md')) return slug + '.md'
+  return null
+}
+
 const files = walk(PUB, [])
 let injected = 0
 let noSource = 0
@@ -53,11 +76,12 @@ for (const file of files) {
   if (html.includes('edit-page-link')) continue
   const sm = html.match(/<body data-slug="([^"]*)"/)
   if (!sm) { noSlot++; continue }
-  const slug = sm[1]
-  if (!fs.existsSync(path.join(VAULT, slug + '.md'))) { noSource++; continue }
+  const realPath = resolveRealPath(sm[1])
+  if (!realPath) { noSource++; continue }
+  const realSlug = realPath.replace(/\.md$/i, '')
   if (!html.includes(SLOT)) { noSlot++; continue }
   const link = SLOT.replace('></div>',
-    `><a class="edit-page-link" href="${editUrl(slug)}" target="_blank" rel="noopener"` +
+    `><a class="edit-page-link" href="${editUrl(realSlug)}" target="_blank" rel="noopener"` +
     ' title="在 GitHub 上编辑这一页：保存提交后站点会自动重新发布">✎ 编辑此页</a></div>')
   if (!DRY) fs.writeFileSync(file, html.replace(SLOT, link), 'utf8')
   injected++
