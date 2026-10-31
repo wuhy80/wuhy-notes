@@ -3741,3 +3741,74 @@ html.gz-nav-open .gz-nav-backdrop {
   }
 }
 
+
+// 14 Dataview 站点端渲染（2026-10-31）—— 笔记里的 ```dataview/dataviewjs/tagcloud
+// 代码块由 scripts/site-assets/dataview-lite.cjs 在浏览器里渲染成结果
+// （元数据 /static/vault-meta.json，构建期由 build-vault-meta.mjs 生成）。
+// 表格天然继承 `html body article table` 的白卡样式，这里只补块外距、
+// 任务列表、标签云与空态。
+html body div#quartz-root.page article .dvl-block {
+  margin: 1.2em 0;
+  overflow-x: auto;
+}
+
+// callout 里的结果表：首尾外距归零，避免与 callout 内边距叠加
+html body div#quartz-root.page article .callout .dvl-block {
+  margin: 0.4em 0;
+}
+
+// TASK 查询结果：去列表圆点，复选框用强调色
+html body div#quartz-root.page article ul.dvl-tasks {
+  list-style: none;
+  padding-left: 0.4em;
+  li {
+    margin: 0.35em 0;
+    input[type='checkbox'] {
+      accent-color: var(--accent, #b3551d);
+      margin-right: 0.45em;
+      vertical-align: -0.08em;
+    }
+    .dvl-task-src {
+      font-size: 0.85em;
+      margin-left: 0.35em;
+      opacity: 0.6;
+      text-decoration: none;
+    }
+  }
+}
+
+// LIST 查询结果：保持正文列表缩进
+html body div#quartz-root.page article ul.dvl-list {
+  li a {
+    text-decoration: none;
+  }
+  li a:hover {
+    text-decoration: underline;
+  }
+}
+
+// 标签云（原 tagcloud 插件块的替代）：按频次给定字号，无链接语义
+html body div#quartz-root.page article p.dvl-tagcloud {
+  line-height: 2;
+  .dvl-tag {
+    display: inline-block;
+    margin: 0 0.45em;
+    color: var(--ink, #1c1c1b);
+    cursor: default;
+    text-decoration: none;
+  }
+  .dvl-tag:hover {
+    color: var(--accent, #b3551d);
+  }
+}
+
+// 空态与段落
+html body div#quartz-root.page article .dvl-empty {
+  color: var(--ink-faint, rgba(28, 28, 27, 0.45));
+  font-size: 0.88em;
+  margin: 0.4em 0;
+}
+html body div#quartz-root.page article .dvl-para {
+  margin: 0.4em 0;
+  line-height: 1.9;
+}

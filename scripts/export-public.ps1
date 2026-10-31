@@ -286,20 +286,11 @@ foreach ($f in $expFiles) {
       $rewrote = $true
     }
   }
-  # 纯索引页（文件名以 00- 开头，约定为目录/导航页）里的 Dataview 查询在静态站点上
-  # 只会显示成代码；换成一句说明，避免读者看到一坨查询语法（教学笔记不在此列）。
-  if ($f.Name -match '^00-') {
-    $dvPattern = '(?ms)^```dataview(?:js)?[ \t]*\r?\n.*?\r?\n```[ \t]*\r?\n'
-    if ($txt -match $dvPattern) {
-      $notice = "> [!info] 此页是知识库内的动态索引`n" +
-                "> Dataview 查询不会在静态站点执行；完整列表请回到 Obsidian 知识库查看。`n`n"
-      # 一页可能有多段查询：第一段换成提示，其余直接删掉，免得同一句提示刷三遍
-      $dvRx = [regex]::new($dvPattern)
-      $txt = $dvRx.Replace($txt, $notice, 1)
-      $txt = $dvRx.Replace($txt, '')
-      $rewrote = $true
-    }
-  }
+  # 纯索引页（文件名以 00- 开头，约定为目录/导航页）里的 Dataview 查询块现在
+  # **原样保留**：站点端由 /static/dataview-lite.js（元数据 /static/vault-meta.json）
+  # 在浏览器里现场渲染成结果表/列表（2026-10-31 起）。此前会剥掉换成一句
+  # 「动态索引」提示，让索引页在站上失去列表内容；渲染器就位后不再需要。
+  # 教学笔记（技术笔记/编辑器/Obsidian/）的查询块由渲染器豁免，同样保留原文。
   if ($rewrote) {
     # 图注编号单独着色：把行首的 `*图 3-1…` 里的「图 3-1」包成 <span class="fig-no">，
     # 与参考站一致（等宽字体 + 赭橙）。只处理斜体图注（`*图 …*`），不影响正文里的「图 3-1」。

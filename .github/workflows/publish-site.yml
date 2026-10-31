@@ -127,7 +127,7 @@ jobs:
             default { $out.Add("- 事件：$($env:GITHUB_EVENT_NAME)（手动触发）") }
           }
           if ($changed.Count -gt 0) {
-            $stylePat = '^(scripts/site-custom\.scss|scripts/quartz\.config\.yaml|scripts/site-assets/|scripts/enhance-content\.cjs|scripts/build-section-nav\.cjs|scripts/add-edit-links\.cjs|scripts/skin-switcher\.cjs|scripts/fix-html-emphasis\.cjs|scripts/export-public\.ps1|scripts/publish-site\.ps1|\.github/)'
+            $stylePat = '^(scripts/site-custom\.scss|scripts/quartz\.config\.yaml|scripts/site-assets/|scripts/enhance-content\.cjs|scripts/build-section-nav\.cjs|scripts/add-edit-links\.cjs|scripts/skin-switcher\.cjs|scripts/fix-html-emphasis\.cjs|scripts/export-public\.ps1|scripts/publish-site\.ps1|scripts/build-vault-meta\.mjs|scripts/inject-dataview\.cjs|\.github/)'
             $contentPat = '^(大模型|Ontology|技术笔记|读书笔记|网址收藏|编程语言|Golang编程|Rust编程|数学学习|英语学习|专项学习|附件|template)/'
             $style = @($changed | Where-Object { $_ -match $stylePat })
             $content = @($changed | Where-Object { $_ -notmatch $stylePat -and $_ -match $contentPat })

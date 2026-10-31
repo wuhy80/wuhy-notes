@@ -130,7 +130,7 @@
 ## 维护模式变化（2026-10-26 起：Obsidian 退役，ZCode 是唯一编辑器）
 
 - 本库不再通过 Obsidian 应用编辑。内容的唯一真相源是本 git 仓库，由 ZCode/DSH 直接增改并提交；发布由 `publish-site.yml` 的 push 触发自动完成，不需要也不应该手动等定时。
-- **新内容不再使用 Dataview / Charts 等 Obsidian 插件代码块**（站点上是死代码，本地也没了宿主）。需要索引/汇总页时，用脚本生成纯 Markdown 列表（`大模型/10-新闻` 的日报与周报索引仍是存量 Dataview，待按此方式转换）。存量 Dataview 页面碰到时顺手转换，不要求一次清完。
+- **Dataview 块在站点上由渲染器现场渲染**（2026-10-31 起）：`scripts/site-assets/dataview-lite.cjs` 在浏览器里执行 ```dataview / ```dataviewjs / ```tagcloud 代码块，元数据来自构建期生成的 `/static/vault-meta.json`（`scripts/build-vault-meta.mjs`），导出脚本不再剥离 `00-*` 索引页的查询块。渲染器只支持本库现有的查询方言（TABLE/LIST/TASK + FROM/WHERE/GROUP BY/SORT/LIMIT + dateformat/date/length/max/min，dataviewjs 支持 pages/where/sort/groupBy/table/paragraph/header）；**新增查询前先确认方言在渲染器支持范围内**（单测：`node scripts/test-dataview-lite.mjs`），能用脚本生成纯 Markdown 列表仍优先脚本。Obsidian 教学笔记（`技术笔记/编辑器/Obsidian/`）的查询块豁免渲染、保留原文。
 - `template/`（Templater 模板）进入退役状态：不再新增模板、不再按模板建笔记；新笔记直接写正文 + frontmatter。
 - frontmatter 约定升级为「入库元数据」：`tags / created / updated / source / status / type` 字段名保持英文小写——发布时全库会灌入 Cloudflare D1（`scripts/build-d1-index.mjs`），字段缺失或类型混乱会直接降低 `/api/search` 的质量。
 - 上一节里关于 Dataview、Templater、Callout、WikiLink 的「保护性条款」对存量内容继续有效（改旧文件时不要弄坏），只是不再约束新增内容。

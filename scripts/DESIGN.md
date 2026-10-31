@@ -447,6 +447,11 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
   整层「浮不住」（用户反馈「半透明效果不好」）
   - ⚠️ 暗色遮罩选择器必须写 `html[saved-theme="dark"] body …`——
     `:root[saved-theme="dark"] html …` 因 `:root` 就是 `html`，是永远匹配不到的死选择器
+- **Dataview 结果块**（2026-10-31，`site-custom.scss`「14 Dataview 站点端渲染」）：
+  笔记里的 ```dataview/dataviewjs/tagcloud 代码块由 `/static/dataview-lite.js`
+  在浏览器里替换成 `<div class="dvl-block">` 结果（表格继承正文表格的白卡语汇，
+  块自身只带外距与横向滚动；TASK 用强调色复选框、标签云按频次定字号、空态
+  `ink-faint`）。Obsidian 教学目录的查询块豁免渲染，保持代码示例原样
 
 ## Do's and Don'ts
 
