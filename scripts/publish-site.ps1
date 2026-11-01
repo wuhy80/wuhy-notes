@@ -297,6 +297,8 @@ $siteSig = Get-StringHash (@(
   (Get-FileSig (Join-Path $Vault 'scripts\site-assets\dataview-lite.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\inject-dataview.cjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\build-vault-meta.mjs')),
+  (Get-FileSig (Join-Path $Vault 'scripts\build-vocab.mjs')),
+  (Get-FileSig (Join-Path $Vault 'scripts\check-bilingual.mjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\site-assets\AlimamaShuHeiTi-Bold.woff2')),
   $sspSig,
   (Get-FileSig (Join-Path $Vault 'scripts\quartz.config.yaml')),
@@ -337,6 +339,26 @@ if ((Test-Path -LiteralPath $dvlMeta) -and (Test-Path -LiteralPath $dvlSrc)) {
   Write-Host "  未找到 build-vault-meta.mjs 或 dataview-lite.cjs，跳过元数据生成" -ForegroundColor Yellow
 }
 
+Write-Step "2.4b/4 聚合生词本（导出内容 → /static/vocab.json）"
+# 聚合全部双语精读的词汇注释，供 dataview-lite 的「我的生词本」页面渲染与导出
+$vocabBuilder = Join-Path $Vault 'scripts\build-vocab.mjs'
+$vocabDst = Join-Path $Quartz 'quartz\static\vocab.json'
+if ((Test-Path -LiteralPath $vocabBuilder) -and (Test-Path -LiteralPath $dvlSrc)) {
+  $tmpVocab = Join-Path $env:TEMP ('vocab.' + [guid]::NewGuid().ToString('N') + '.json')
+  & $Node $vocabBuilder $Content $tmpVocab
+  if ($LASTEXITCODE -ne 0) { Remove-Item -LiteralPath $tmpVocab -Force -ErrorAction SilentlyContinue; throw "vocab.json 生成失败，中止发布" }
+  New-Item -ItemType Directory -Force -Path (Split-Path $vocabDst) | Out-Null
+  if ((-not (Test-Path -LiteralPath $vocabDst)) -or (Get-FileHash -LiteralPath $tmpVocab).Hash -ne (Get-FileHash -LiteralPath $vocabDst).Hash) {
+    Move-Item -LiteralPath $tmpVocab -Destination $vocabDst -Force
+    Write-Host "  已更新 vocab.json（精读词汇有变化）"
+  } else {
+    Remove-Item -LiteralPath $tmpVocab -Force
+    Write-Host "  vocab.json 无变化，跳过覆盖"
+  }
+} else {
+  Write-Host "  未找到 build-vocab.mjs 或 dataview-lite.cjs，跳过生词本聚合" -ForegroundColor Yellow
+}
+
 Write-Step "2.5/4 校验 frontmatter（YAML 不合法会让构建整体失败）"
 $checker = Join-Path $Vault 'scripts\check-yaml.cjs'
 if (Test-Path -LiteralPath $checker) {
@@ -345,6 +367,15 @@ if (Test-Path -LiteralPath $checker) {
   if ($out -match 'frontmatter 出错\s*=\s*[1-9]') { throw "导出内容存在 frontmatter 错误，中止构建" }
 } else {
   Write-Host "  未找到 check-yaml.cjs，跳过校验" -ForegroundColor Yellow
+}
+Write-Step "2.6/4 校验双语精读格式（对照表/词汇注释，错误中止）"
+$bilingualChecker = Join-Path $Vault 'scripts\check-bilingual.mjs'
+if (Test-Path -LiteralPath $bilingualChecker) {
+  $out = (& $Node $bilingualChecker (Join-Path $Vault '英语学习') 2>&1 | Out-String)
+  ($out -split "`r?`n") | Where-Object { $_ -match '✗|硬错误' } | ForEach-Object { Write-Host "  $($_.Trim())" }
+  if ($LASTEXITCODE -ne 0) { throw "双语精读格式校验未通过（见上方 ✗ 明细），中止构建" }
+} else {
+  Write-Host "  未找到 check-bilingual.mjs，跳过校验" -ForegroundColor Yellow
 }
 Write-Step "3/4 Quartz 构建（前台全量，确定性优先）"
 Push-Location $Quartz

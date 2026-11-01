@@ -223,7 +223,8 @@
       + '<div class="bil-pop-a">'
       + '<button type="button" data-say>朗读</button>'
       + '<button type="button" data-know aria-pressed="' + (known[key] ? 'true' : 'false') + '">'
-      + (known[key] ? '已掌握' : '标为已掌握') + '</button></div>';
+      + (known[key] ? '已掌握' : '标为已掌握') + '</button>'
+      + '<a class="bil-pop-yg" href="https://youglish.com/pronounce/' + encodeURIComponent(v.word) + '/english" target="_blank" rel="noopener" title="在 YouGlish 听母语者的真实用法">YouGlish ↗</a></div>';
     pop.hidden = false;
     var r = el.getBoundingClientRect();
     var w = Math.min(320, window.innerWidth - 24);

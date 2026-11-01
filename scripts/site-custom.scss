@@ -3812,3 +3812,123 @@ html body div#quartz-root.page article .dvl-para {
   margin: 0.4em 0;
   line-height: 1.9;
 }
+
+// 15 生词本（2026-11-01）—— dataview-lite 的 vocab-notebook 块渲染
+// （数据 /static/vocab.json，构建期 build-vocab.mjs 聚合全部精读词汇注释）
+html body div#quartz-root.page article .dvl-vocab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5em;
+  margin: 0.8em 0;
+  .dvl-vocab-q {
+    flex: 1 1 180px;
+    min-width: 140px;
+    padding: 0.35em 0.7em;
+    border: 1px solid var(--line, rgba(28, 28, 27, 0.16));
+    border-radius: 6px;
+    background: var(--card, #fff);
+    font-size: 0.92em;
+  }
+  .dvl-vocab-f {
+    padding: 0.3em 0.5em;
+    border: 1px solid var(--line, rgba(28, 28, 27, 0.16));
+    border-radius: 6px;
+    background: var(--card, #fff);
+    font-size: 0.88em;
+  }
+  .dvl-vocab-c {
+    font-size: 0.82em;
+    color: var(--ink-faint, rgba(28, 28, 27, 0.45));
+  }
+  .dvl-vocab-x {
+    padding: 0.3em 0.8em;
+    border: 1px solid var(--line, rgba(28, 28, 27, 0.16));
+    border-radius: 6px;
+    background: var(--card, #fff);
+    font-size: 0.85em;
+    cursor: pointer;
+  }
+  .dvl-vocab-x:hover {
+    border-color: var(--accent, #b3551d);
+    color: var(--accent, #b3551d);
+  }
+}
+
+html body div#quartz-root.page article .dvl-vocab-row {
+  display: grid;
+  grid-template-columns: auto auto auto 1fr;
+  gap: 0.15em 0.7em;
+  align-items: baseline;
+  padding: 0.55em 0.2em;
+  border-bottom: 1px solid color-mix(in srgb, var(--line, rgba(28, 28, 27, 0.16)) 65%, transparent);
+  .dvl-vocab-dot {
+    grid-row: span 2;
+    width: 13px;
+    height: 13px;
+    padding: 0;
+    border: 1.5px solid var(--line, rgba(28, 28, 27, 0.3));
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    align-self: center;
+  }
+  &.is-known .dvl-vocab-dot {
+    background: var(--accent, #b3551d);
+    border-color: var(--accent, #b3551d);
+  }
+  &.is-known .dvl-vocab-w,
+  &.is-known .dvl-vocab-ipa,
+  &.is-known .dvl-vocab-def {
+    opacity: 0.55;
+  }
+  .dvl-vocab-w {
+    padding: 0;
+    border: none;
+    background: none;
+    font-weight: 600;
+    color: var(--ink, #1c1c1b);
+    cursor: pointer;
+    text-align: left;
+  }
+  .dvl-vocab-w:hover {
+    color: var(--accent, #b3551d);
+  }
+  .dvl-vocab-ipa {
+    font-family: var(--mono, monospace);
+    font-size: 0.82em;
+    color: var(--ink-faint, rgba(28, 28, 27, 0.45));
+  }
+  .dvl-vocab-def {
+    grid-column: 2 / -1;
+    font-size: 0.92em;
+    color: var(--ink-soft, rgba(28, 28, 27, 0.7));
+    line-height: 1.75;
+  }
+  .dvl-vocab-src {
+    grid-column: 2 / -1;
+    font-size: 0.78em;
+    a {
+      color: var(--ink-faint, rgba(28, 28, 27, 0.45));
+      text-decoration: none;
+      margin-right: 0.6em;
+    }
+    a:hover {
+      color: var(--accent, #b3551d);
+    }
+  }
+}
+
+@media all and (max-width: 640px) {
+  html body div#quartz-root.page article .dvl-vocab-row {
+    grid-template-columns: auto 1fr;
+    .dvl-vocab-def,
+    .dvl-vocab-src {
+      grid-column: 2;
+    }
+    .dvl-vocab-ipa {
+      grid-column: 2;
+      justify-self: start;
+    }
+  }
+}

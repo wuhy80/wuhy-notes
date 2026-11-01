@@ -534,6 +534,168 @@
     container.appendChild(span)
   }
 
+  // ---------- 生词本（vocab-notebook）----------
+  // 数据：/static/vocab.json（构建期由 scripts/build-vocab.mjs 聚合全部精读词汇注释）。
+  // 「已掌握」与双语阅读器共享同一个 localStorage 键（gzb-bil-known），两边互通。
+  var VOCAB_KEY = 'gzb-bil-known'
+  var vocabPromise = null
+  var vocabData = null
+  function ensureVocab() {
+    if (!vocabPromise) {
+      vocabPromise = fetch('/static/vocab.json')
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json() })
+        .then(function (d) { vocabData = d; return d })
+        .catch(function (e) { console.warn('[dataview-lite] vocab.json 加载失败:', e); vocabPromise = null; return null })
+    }
+    return vocabPromise
+  }
+  function knownList() {
+    try { var v = JSON.parse(localStorage.getItem(VOCAB_KEY)); return Array.isArray(v) ? v : [] } catch (e) { return [] }
+  }
+  function writeKnown(list) {
+    try { localStorage.setItem(VOCAB_KEY, JSON.stringify(list)) } catch (e) {}
+  }
+  function speakWord(text) {
+    if (!('speechSynthesis' in window)) return
+    window.speechSynthesis.cancel()
+    var u = new SpeechSynthesisUtterance(text)
+    u.lang = 'en-US'
+    u.rate = 0.9
+    window.speechSynthesis.speak(u)
+  }
+  function downloadFile(name, text, mime) {
+    var blob = new Blob(['\ufeff' + text], { type: mime + ';charset=utf-8' })
+    var a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = name
+    document.body.appendChild(a)
+    a.click()
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove() }, 400)
+  }
+  function csvCell(s) { return '"' + String(s == null ? '' : s).replace(/"/g, '""') + '"' }
+
+  function renderVocabNotebook(container) {
+    container.className = 'dvl-block dvl-vocab'
+    var note = document.createElement('p')
+    note.className = 'dvl-empty'
+    note.textContent = '正在加载生词数据……'
+    container.appendChild(note)
+    ensureVocab().then(function (data) {
+      if (!data) { note.textContent = '生词数据加载失败'; return }
+      note.remove()
+      // 聚合：跨篇合并同词（IPA 取先出现的、释义取最长的），记录来源篇目
+      var byWord = {}
+      var words = []
+      data.pages.forEach(function (p) {
+        p.entries.forEach(function (e) {
+          var k = e.w.toLowerCase()
+          if (!byWord[k]) { byWord[k] = { w: e.w, ipa: e.ipa, def: e.def, pages: [] }; words.push(k) }
+          var v = byWord[k]
+          if (e.ipa && !v.ipa) v.ipa = e.ipa
+          if ((e.def || '').length > (v.def || '').length) v.def = e.def
+          v.pages.push({ p: p.p, t: p.t })
+        })
+      })
+      words.sort()
+
+      var bar = document.createElement('div')
+      bar.className = 'dvl-vocab-bar'
+      bar.innerHTML =
+        '<input type="search" class="dvl-vocab-q" placeholder="搜索单词 / 释义…" aria-label="搜索单词">' +
+        '<select class="dvl-vocab-f" aria-label="筛选"><option value="all">全部</option><option value="todo">未掌握</option><option value="done">已掌握</option></select>' +
+        '<span class="dvl-vocab-c"></span>' +
+        '<button type="button" class="dvl-vocab-x" data-x="csv">导出 CSV</button>' +
+        '<button type="button" class="dvl-vocab-x" data-x="anki">导出 Anki</button>'
+      container.appendChild(bar)
+      var listEl = document.createElement('div')
+      listEl.className = 'dvl-vocab-list'
+      container.appendChild(listEl)
+
+      var q = '', filter = 'all'
+      function currentList() {
+        var knownSet = {}
+        knownList().forEach(function (k) { knownSet[k] = 1 })
+        return words.filter(function (k) {
+          var v = byWord[k]
+          if (filter === 'todo' && knownSet[k]) return false
+          if (filter === 'done' && !knownSet[k]) return false
+          if (q && (v.w + ' ' + v.def + ' ' + v.pages.map(function (p) { return p.t }).join(' ')).toLowerCase().indexOf(q) < 0) return false
+          return true
+        })
+      }
+      function render() {
+        var knownSet = {}
+        knownList().forEach(function (k) { knownSet[k] = 1 })
+        var list = currentList()
+        bar.querySelector('.dvl-vocab-c').textContent = '共 ' + list.length + ' / ' + words.length + ' 词（已掌握 ' + knownList().length + '）'
+        listEl.innerHTML = ''
+        if (!list.length) {
+          var p0 = document.createElement('p')
+          p0.className = 'dvl-empty'
+          p0.textContent = '（无匹配词条）'
+          listEl.appendChild(p0)
+          return
+        }
+        list.forEach(function (k) {
+          var v = byWord[k]
+          var row = document.createElement('div')
+          row.className = 'dvl-vocab-row' + (knownSet[k] ? ' is-known' : '')
+          var srcs = v.pages.map(function (p) {
+            return '<a href="' + esc(pathToUrl(p.p)) + '">' + esc(p.t) + '</a>'
+          }).join('、')
+          row.innerHTML =
+            '<button type="button" class="dvl-vocab-dot" title="标记已掌握"></button>' +
+            '<button type="button" class="dvl-vocab-w">' + esc(v.w) + '</button>' +
+            '<span class="dvl-vocab-ipa">' + esc(v.ipa || '') + '</span>' +
+            '<span class="dvl-vocab-def">' + renderInlineMd(v.def || '—') + '</span>' +
+            '<span class="dvl-vocab-src">' + srcs + '</span>'
+          listEl.appendChild(row)
+        })
+      }
+      bar.addEventListener('input', function (e) {
+        if (e.target.classList.contains('dvl-vocab-q')) { q = e.target.value.trim().toLowerCase(); render() }
+      })
+      bar.addEventListener('change', function (e) {
+        if (e.target.classList.contains('dvl-vocab-f')) { filter = e.target.value; render() }
+      })
+      bar.addEventListener('click', function (e) {
+        var x = e.target.closest && e.target.closest('.dvl-vocab-x')
+        if (!x) return
+        var list = currentList()
+        var srcOf = function (k) { return byWord[k].pages.map(function (p) { return p.t }).join('；') }
+        if (x.dataset.x === 'csv') {
+          var csv = ['词汇,音标,释义,来源篇目'].concat(list.map(function (k) {
+            var v = byWord[k]
+            return [csvCell(v.w), csvCell(v.ipa), csvCell(v.def), csvCell(srcOf(k))].join(',')
+          })).join('\r\n')
+          downloadFile('生词本.csv', csv, 'text/csv')
+        } else {
+          var tsv = list.map(function (k) {
+            var v = byWord[k]
+            var back = esc(v.ipa) + '<br>' + esc(v.def) + '<br><small>来源：' + esc(srcOf(k)) + '</small>'
+            return v.w + '\t' + back + '\teng-vocab'
+          }).join('\n')
+          downloadFile('生词本-anki.txt', tsv, 'text/tab-separated-values')
+        }
+      })
+      listEl.addEventListener('click', function (e) {
+        var dot = e.target.closest && e.target.closest('.dvl-vocab-dot')
+        var wbtn = e.target.closest && e.target.closest('.dvl-vocab-w')
+        if (dot) {
+          var k = dot.parentElement.querySelector('.dvl-vocab-w').textContent.toLowerCase()
+          var set = knownList()
+          var idx = set.indexOf(k)
+          if (idx >= 0) set.splice(idx, 1); else set.push(k)
+          writeKnown(set)
+          render()
+          return
+        }
+        if (wbtn) speakWord(wbtn.textContent)
+      })
+      render()
+    })
+  }
+
   // ---------- 主流程 ----------
   function ensureMeta() {
     if (!metaPromise) {
@@ -554,7 +716,7 @@
     //   > <pre data-language="dataview"> <code data-language="dataview">
     // data-language 恒存在；language-* class 只在命中高亮语言时才有，两者都认
     var blocks = document.querySelectorAll(
-      'pre[data-language="dataview"], pre[data-language="dataviewjs"], pre[data-language="tagcloud"], ' +
+      'pre[data-language="dataview"], pre[data-language="dataviewjs"], pre[data-language="tagcloud"], pre[data-language="vocab-notebook"], ' +
       'pre > code[class*="language-dataview"], pre > code[class*="language-tagcloud"]'
     )
     if (!blocks.length) return
@@ -570,7 +732,7 @@
           var cls = codeEl0 ? codeEl0.className : pre.className
           lang = /language-(\w+)/.test(cls) ? RegExp.$1.toLowerCase() : ''
         }
-        if (lang !== 'dataview' && lang !== 'dataviewjs' && lang !== 'tagcloud') return
+        if (lang !== 'dataview' && lang !== 'dataviewjs' && lang !== 'tagcloud' && lang !== 'vocab-notebook') return
         var codeEl = pre.querySelector('code') || pre
         var src = codeEl.textContent
         var container = document.createElement('div')
@@ -578,6 +740,7 @@
         try {
           if (lang === 'dataviewjs') { new Function('dv', src)(makeDv(container)) }
           else if (lang === 'tagcloud') { renderTagcloud(src, container) }
+          else if (lang === 'vocab-notebook') { renderVocabNotebook(container) }
           else { renderDql(src, container) }
           pre.dataset.dvl = 'done'
           // rehype-pretty-code 的 figure 卡壳一并替换，避免留下空白卡

@@ -131,6 +131,7 @@
 
 - 本库不再通过 Obsidian 应用编辑。内容的唯一真相源是本 git 仓库，由 ZCode/DSH 直接增改并提交；发布由 `publish-site.yml` 的 push 触发自动完成，不需要也不应该手动等定时。
 - **Dataview 块在站点上由渲染器现场渲染**（2026-10-31 起）：`scripts/site-assets/dataview-lite.cjs` 在浏览器里执行 ```dataview / ```dataviewjs / ```tagcloud 代码块，元数据来自构建期生成的 `/static/vault-meta.json`（`scripts/build-vault-meta.mjs`），导出脚本不再剥离 `00-*` 索引页的查询块。渲染器只支持本库现有的查询方言（TABLE/LIST/TASK + FROM/WHERE/GROUP BY/SORT/LIMIT + dateformat/date/length/max/min，dataviewjs 支持 pages/where/sort/groupBy/table/paragraph/header）；**新增查询前先确认方言在渲染器支持范围内**（单测：`node scripts/test-dataview-lite.mjs`），能用脚本生成纯 Markdown 列表仍优先脚本。Obsidian 教学笔记（`技术笔记/编辑器/Obsidian/`）的查询块豁免渲染、保留原文。
+- **双语精读有格式校验与生成模板**（2026-11-01 起）：新精读笔记按 `scripts/templates/bilingual-prompt.md` 的提示词生成，发布前 `scripts/check-bilingual.mjs` 自动校验（对照表两列必须成对、词汇注释 callout 三种合法形态：`**词条** /IPA/ —— 释义`、`*短语* —— 说明`、纯中文说明行；单词条目缺 IPA 计警告）。全站生词聚合页为 `英语学习/我的生词本.md`（构建期 `scripts/build-vocab.mjs` 生成 `/static/vocab.json`，站点端由 dataview-lite 渲染；「已掌握」标记与精读页词卡共享 localStorage 键 `gzb-bil-known`，支持导出 CSV / Anki）。
 - `template/`（Templater 模板）进入退役状态：不再新增模板、不再按模板建笔记；新笔记直接写正文 + frontmatter。
 - frontmatter 约定升级为「入库元数据」：`tags / created / updated / source / status / type` 字段名保持英文小写——发布时全库会灌入 Cloudflare D1（`scripts/build-d1-index.mjs`），字段缺失或类型混乱会直接降低 `/api/search` 的质量。
 - 上一节里关于 Dataview、Templater、Callout、WikiLink 的「保护性条款」对存量内容继续有效（改旧文件时不要弄坏），只是不再约束新增内容。
