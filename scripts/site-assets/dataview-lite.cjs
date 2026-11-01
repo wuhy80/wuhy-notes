@@ -589,7 +589,7 @@
       data.pages.forEach(function (p) {
         p.entries.forEach(function (e) {
           var k = e.w.toLowerCase()
-          if (!byWord[k]) { byWord[k] = { w: e.w, ipa: e.ipa, def: e.def, pages: [] }; words.push(k) }
+          if (!byWord[k]) { byWord[k] = { w: e.w, band: e.band, ipa: e.ipa, def: e.def, pages: [] }; words.push(k) }
           var v = byWord[k]
           if (e.ipa && !v.ipa) v.ipa = e.ipa
           if ((e.def || '').length > (v.def || '').length) v.def = e.def
@@ -611,12 +611,61 @@
       listEl.className = 'dvl-vocab-list'
       container.appendChild(listEl)
 
-      var q = '', filter = 'all'
+      var q = '', filter = 'all', bandFilter = null
+      var BAND_LABEL = ['短语', '前1000', '1001–3000', '3001–6000', '6001–10000', '表外低频']
+      var bandCounts = {}
+      words.forEach(function (k) { var b = byWord[k].band; bandCounts[b] = (bandCounts[b] || 0) + 1 })
+      // 覆盖率条：精读生词在词频表里的分布（band 0=短语 不计入覆盖率）
+      var covTotal = words.length || 1
+      var covRow = document.createElement('div')
+      covRow.className = 'dvl-vocab-cov'
+      var seg = document.createElement('div')
+      seg.className = 'dvl-vocab-covbar'
+      var covText = []
+      for (var b = 1; b <= 5; b++) {
+        if (!bandCounts[b]) continue
+        var s = document.createElement('i')
+        s.className = 'cov-b' + b
+        s.style.width = ((bandCounts[b] / covTotal) * 100).toFixed(2) + '%'
+        s.title = BAND_LABEL[b] + ' ×' + bandCounts[b]
+        seg.appendChild(s)
+        covText.push(BAND_LABEL[b] + ' ×' + bandCounts[b])
+      }
+      if (bandCounts[0]) covText.push('短语 ×' + bandCounts[0])
+      covRow.appendChild(seg)
+      var legend = document.createElement('span')
+      legend.className = 'dvl-vocab-covlegend'
+      legend.textContent = covText.join(' · ')
+      covRow.appendChild(legend)
+      container.appendChild(covRow)
+      // 频段筛选 chips
+      var bandRow = document.createElement('div')
+      bandRow.className = 'dvl-vocab-bands'
+      var bandChips = [] // { el, band }
+      var mkChip = function (label, band) {
+        var c = document.createElement('button')
+        c.type = 'button'
+        c.className = 'dvl-band-chip'
+        c.textContent = label
+        bandChips.push({ el: c, band: band })
+        c.addEventListener('click', function () {
+          bandFilter = bandFilter === band ? null : band
+          bandChips.forEach(function (x) {
+            x.el.classList.toggle('is-on', bandFilter !== null && x.band === bandFilter)
+          })
+          render()
+        })
+        return c
+      }
+      bandRow.appendChild(mkChip('全部', null))
+      ;[1, 2, 3, 4, 5, 0].forEach(function (b) { if (bandCounts[b]) bandRow.appendChild(mkChip(BAND_LABEL[b], b)) })
+      container.appendChild(bandRow)
       function currentList() {
         var knownSet = {}
         knownList().forEach(function (k) { knownSet[k] = 1 })
         return words.filter(function (k) {
           var v = byWord[k]
+          if (bandFilter !== null && v.band !== bandFilter) return false
           if (filter === 'todo' && knownSet[k]) return false
           if (filter === 'done' && !knownSet[k]) return false
           if (q && (v.w + ' ' + v.def + ' ' + v.pages.map(function (p) { return p.t }).join(' ')).toLowerCase().indexOf(q) < 0) return false
@@ -646,6 +695,7 @@
           row.innerHTML =
             '<button type="button" class="dvl-vocab-dot" title="标记已掌握"></button>' +
             '<button type="button" class="dvl-vocab-w">' + esc(v.w) + '</button>' +
+            '<i class="dvl-band b' + v.band + '" title="词频段">' + (BAND_LABEL[v.band] || '') + '</i>' +
             '<span class="dvl-vocab-ipa">' + esc(v.ipa || '') + '</span>' +
             '<span class="dvl-vocab-def">' + renderInlineMd(v.def || '—') + '</span>' +
             '<span class="dvl-vocab-src">' + srcs + '</span>'

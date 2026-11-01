@@ -3990,3 +3990,120 @@ html body div#quartz-root.page article .bil-pop .bil-pop-yg {
   text-decoration: none;
   margin-left: 0.4em;
 }
+
+// 17 难词提示 + 影子跟读（2026-11-01）—— bilingual-reader 注入
+// 难词提示：不在高频词表（top 10000）内的纯小写词，虚线下划线轻标注
+html body div#quartz-root.page article .bil-nlf {
+  border-bottom: 1px dashed color-mix(in srgb, var(--accent, #b3551d) 55%, transparent);
+  cursor: pointer;
+}
+html.bil-nlf-hide div#quartz-root.page .bil-nlf {
+  border-bottom-color: transparent; // 关闭提示时保留词、只去样式
+}
+
+// 影子跟读：每段的 🎤 按钮（录音只存内存，不上传）
+html body div#quartz-root.page article .bil-shadow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-left: 6px;
+  padding: 0;
+  border: 1px solid var(--line, rgba(28, 28, 27, 0.16));
+  border-radius: 50%;
+  background: var(--card, #fff);
+  font-size: 11px;
+  cursor: pointer;
+}
+html body div#quartz-root.page article .bil-shadow:hover {
+  border-color: var(--accent, #b3551d);
+}
+html body div#quartz-root.page article .bil-shadow.is-rec {
+  border-color: #c62828;
+  color: #c62828;
+  animation: bil-rec-pulse 1s ease-in-out infinite;
+}
+html body div#quartz-root.page article .bil-shadow.is-broken {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+@keyframes bil-rec-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, #c62828 40%, transparent); }
+  50% { box-shadow: 0 0 0 6px transparent; }
+}
+html body div#quartz-root.page article .bil-shadow-ctl {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 6px;
+  button {
+    padding: 0.15em 0.6em;
+    border: 1px solid var(--line, rgba(28, 28, 27, 0.16));
+    border-radius: 4px;
+    background: var(--card, #fff);
+    font-size: 0.78em;
+    cursor: pointer;
+  }
+  button:hover {
+    border-color: var(--accent, #b3551d);
+    color: var(--accent, #b3551d);
+  }
+}
+
+// 18 生词本：词频覆盖率条 + 频段筛选（2026-11-01）
+html body div#quartz-root.page article .dvl-vocab-cov {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  margin: 0.5em 0 0.2em;
+  .dvl-vocab-covbar {
+    flex: 1 1 160px;
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--line, rgba(28, 28, 27, 0.16)) 40%, transparent);
+    i {
+      display: block;
+      height: 100%;
+    }
+    .cov-b1 { background: #2e7d32; }
+    .cov-b2 { background: #7cb342; }
+    .cov-b3 { background: #ffca28; }
+    .cov-b4 { background: #ff8f5e; }
+    .cov-b5 { background: #c62828; }
+  }
+  .dvl-vocab-covlegend {
+    font-size: 0.76em;
+    color: var(--ink-faint, rgba(28, 28, 27, 0.45));
+  }
+}
+html body div#quartz-root.page article .dvl-vocab-bands {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35em;
+  margin: 0.3em 0 0.5em;
+  .dvl-band-chip {
+    padding: 0.12em 0.6em;
+    border: 1px solid var(--line, rgba(28, 28, 27, 0.16));
+    border-radius: 999px;
+    background: var(--card, #fff);
+    font-size: 0.76em;
+    cursor: pointer;
+  }
+  .dvl-band-chip.is-on {
+    background: var(--accent, #b3551d);
+    border-color: var(--accent, #b3551d);
+    color: #fff;
+  }
+}
+html body div#quartz-root.page article .dvl-vocab-row .dvl-band {
+  font-style: normal;
+  font-size: 0.68em;
+  padding: 0.08em 0.4em;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--line, rgba(28, 28, 27, 0.16)) 45%, transparent);
+  color: var(--ink-soft, rgba(28, 28, 27, 0.7));
+  white-space: nowrap;
+  align-self: center;
+}

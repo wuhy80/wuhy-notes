@@ -26,7 +26,7 @@
   var PREF = 'gzb-bil-prefs';
   var KNOWN = 'gzb-bil-known';
   var OUT = 'gzb-bil-out';
-  var DEFAULTS = { mode: 'pair', scale: 1, vocab: true, rate: 0.95 };
+  var DEFAULTS = { mode: 'pair', scale: 1, vocab: true, rate: 0.95, nlf: false };
   var RATES = [0.95, 0.7, 0.55];       // 常速 / 慢速 / 更慢（跟读用）
   var RATE_LABEL = ['常速', '慢速', '更慢'];
 
@@ -138,9 +138,15 @@
         play.setAttribute('aria-label', '朗读本段');
         play.title = '朗读本段';
         play.textContent = '▶';
+        var shadow = document.createElement('button');
+        shadow.type = 'button';
+        shadow.className = 'bil-shadow';
+        shadow.title = '影子跟读：播放原声并录下你的跟读（录音只存在本机）';
+        shadow.textContent = '🎤';
         pair.appendChild(en);
         pair.appendChild(zh);
         pair.appendChild(play);
+        pair.appendChild(shadow);
         box.appendChild(pair);
       });
       host.replaceWith(box);
@@ -225,8 +231,8 @@
       + '<div class="bil-pop-d">' + (v.def || '（暂无释义）') + '</div>'
       + '<div class="bil-pop-a">'
       + '<button type="button" data-say>朗读</button>'
-      + '<button type="button" data-know aria-pressed="' + (known[key] ? 'true' : 'false') + '">'
-      + (known[key] ? '已掌握' : '标为已掌握') + '</button>'
+      + (v.auto ? '' : '<button type="button" data-know aria-pressed="' + (known[key] ? 'true' : 'false') + '">'
+        + (known[key] ? '已掌握' : '标为已掌握') + '</button>')
       + '<a class="bil-pop-yg" href="https://youglish.com/pronounce/' + encodeURIComponent(v.word) + '/english" target="_blank" rel="noopener" title="在 YouGlish 听母语者的真实用法">YouGlish ↗</a></div>';
     pop.hidden = false;
     var r = el.getBoundingClientRect();
@@ -320,6 +326,105 @@
     };
     window.speechSynthesis.speak(u);
   }
+  // ── 影子跟读：先播原声并录音，再回放对比（录音只存内存，不上传）──────────
+  function handleShadow(pair, btn) {
+    var st = pair._shadow;
+    if (st && st.recording) { st.rec.stop(); return; } // onstop 里收尾
+    if (st && st.blob) delete pair._shadow;            // 重录：丢弃旧录音
+    if (!navigator.mediaDevices || !window.MediaRecorder) {
+      btn.title = '此环境不支持录音';
+      btn.classList.add('is-broken');
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      var rec = new MediaRecorder(stream);
+      var chunks = [];
+      rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+      rec.onstop = function () {
+        stream.getTracks().forEach(function (t) { t.stop(); });
+        var blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
+        pair._shadow = { blob: blob, url: URL.createObjectURL(blob), recording: false };
+        btn.textContent = '🎤';
+        btn.classList.remove('is-rec');
+        var ctl = document.createElement('span');
+        ctl.className = 'bil-shadow-ctl';
+        ctl.innerHTML = '<button type="button" class="bil-shadow-mine" title="播放你的跟读">▶ 我的</button>' +
+          '<button type="button" class="bil-shadow-del" title="删除录音">✕</button>';
+        pair.appendChild(ctl);
+      };
+      pair._shadow = { rec: rec, recording: true };
+      rec.start();
+      btn.textContent = '■ 录制中';
+      btn.classList.add('is-rec');
+      speakPair(pair); // 先播原声，跟着说出来（录音会一并收进去）
+    }).catch(function (e) {
+      btn.title = '无法访问麦克风：' + (e && e.message ? e.message : e);
+      btn.classList.add('is-broken');
+    });
+  }
+  function playMine(mine) {
+    var pair = mine.closest('.bil-pair');
+    var st = pair && pair._shadow;
+    if (!st || !st.url) return;
+    if (pair._audio && !pair._audio.paused) { pair._audio.pause(); return; }
+    var audio = new Audio(st.url);
+    pair._audio = audio;
+    audio.play();
+  }
+  function delShadow(del) {
+    var pair = del.closest('.bil-pair');
+    if (!pair || !pair._shadow) return;
+    if (pair._audio) pair._audio.pause();
+    if (pair._shadow.url) URL.revokeObjectURL(pair._shadow.url);
+    delete pair._shadow;
+    var ctl = pair.querySelector('.bil-shadow-ctl');
+    if (ctl) ctl.remove();
+  }
+
+  // ── 难词提示：把不在高频词表（top 10000）里的词轻量标注出来 ─────────────
+  // 数据来自 /static/vocab.json 的 top 字段（构建期随生词本一起生成）。
+  // 只标注纯小写、长度 ≥4、不在高频表且尚无词卡的词；专名（含大写）一律跳过。
+  function annotateLowFreq(root, freqSet, vocab) {
+    [].slice.call(root.querySelectorAll('.bil-en')).forEach(function (p) {
+      var walker = document.createTreeWalker(p, NodeFilter.SHOW_TEXT, {
+        acceptNode: function (n) {
+          if (!n.nodeValue || n.nodeValue.length < 4) return NodeFilter.FILTER_REJECT;
+          var pe = n.parentElement;
+          if (pe && pe.closest('.bil-w, .bil-nlf')) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        },
+      });
+      var nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach(function (node) {
+        var text = node.nodeValue;
+        var frag = document.createDocumentFragment();
+        var pos = 0, changed = false;
+        var re = /[A-Za-z][A-Za-z'’-]{3,}/g, m;
+        while ((m = re.exec(text))) {
+          var tok = m[0];
+          if (tok !== tok.toLowerCase()) continue;       // 专名跳过
+          if (/['’]/.test(tok)) continue;                // 缩写（isn't/didn't）跳过
+          var k = tok.toLowerCase();
+          if (freqSet.has(k) || vocab[k]) continue;      // 高频词/已有词卡跳过
+          if (m.index > pos) frag.appendChild(document.createTextNode(text.slice(pos, m.index)));
+          var span = document.createElement('span');
+          span.className = 'bil-nlf bil-w';
+          span.dataset.w = k;
+          span.textContent = tok;
+          if (!vocab[k]) vocab[k] = { word: tok, ipa: '', def: '低频词：不在高频词表前 10000 内，建议查词典确认。', auto: true };
+          frag.appendChild(span);
+          pos = m.index + tok.length;
+          changed = true;
+        }
+        if (changed) {
+          if (pos < text.length) frag.appendChild(document.createTextNode(text.slice(pos)));
+          node.parentNode.replaceChild(frag, node);
+        }
+      });
+    });
+  }
+
   // ── 每轮初始化 ──────────────────────────────────────────────────────────
   function init() {
     var doc = document.documentElement;   // 主题脚本会重写 body.className，状态一律挂 <html>
@@ -379,6 +484,7 @@
       '<button type="button" data-scale="-1" aria-label="缩小字号">A−</button>' +
       '<button type="button" data-scale="1" aria-label="放大字号">A＋</button>' +
       '<button type="button" class="bil-vocab-btn" aria-pressed="true">词汇提示 开</button>' +
+      '<button type="button" class="bil-nlf-btn" aria-pressed="false">难词提示 关</button>' +
       '</div>';
     if (first) first.parentNode.insertBefore(bar, first);
 
@@ -483,6 +589,12 @@
       }
       var play = e.target.closest && e.target.closest('.bil-play');
       if (play) { speakPair(play.closest('.bil-pair')); return; }
+      var sh = e.target.closest && e.target.closest('.bil-shadow');
+      if (sh) { handleShadow(sh.closest('.bil-pair'), sh); return; }
+      var mine = e.target.closest && e.target.closest('.bil-shadow-mine');
+      if (mine) { playMine(mine); return; }
+      var del = e.target.closest && e.target.closest('.bil-shadow-del');
+      if (del) { delShadow(del); return; }
       if (!e.target.closest('.bil-pop')) closePop();
     }, { signal: signal });
 
@@ -538,6 +650,44 @@
       }
       write(PREF, prefs);
     }
+    var freqPromise = null;
+    function ensureTop() {
+      if (!freqPromise) {
+        freqPromise = fetch('/static/vocab.json')
+          .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(function (d) {
+            var set = new Set(d.top || []);
+            // 词形还原兜底：把常见屈折变化并入集合（improves/paired 这类不再误标）
+            (d.top || []).forEach(function (w) {
+              if (w.length < 3) return;
+              set.add(w + 's'); set.add(w + 'es'); set.add(w + 'ed'); set.add(w + 'd'); set.add(w + 'ing');
+            });
+            return set;
+          })
+          .catch(function (e) {
+            console.warn('[bilingual-reader] 词频表加载失败，难词提示不可用:', e);
+            freqPromise = null;
+            return null;
+          });
+      }
+      return freqPromise;
+    }
+    function applyNlf(on) {
+      prefs.nlf = !!on;
+      doc.classList.toggle('bil-nlf-hide', !prefs.nlf);
+      var btn = bar.querySelector('.bil-nlf-btn');
+      if (btn) {
+        btn.setAttribute('aria-pressed', prefs.nlf ? 'true' : 'false');
+        btn.textContent = '难词提示 ' + (prefs.nlf ? '开' : '关');
+      }
+      write(PREF, prefs);
+      if (prefs.nlf) {
+        ensureTop().then(function (set) {
+          if (!set || !prefs.nlf) return;
+          annotateLowFreq(root, set, vocab);
+        });
+      }
+    }
 
     bar.addEventListener('click', function (e) {
       var m = e.target.closest('[data-mode]');
@@ -555,11 +705,13 @@
       var s = e.target.closest('[data-scale]');
       if (s) return applyScale(prefs.scale + Number(s.dataset.scale) * 0.05);
       if (e.target.closest('.bil-vocab-btn')) return applyVocab(!prefs.vocab);
+      if (e.target.closest('.bil-nlf-btn')) return applyNlf(!prefs.nlf);
     }, { signal: signal });
 
     applyMode(prefs.mode);
     applyScale(prefs.scale);
     applyVocab(prefs.vocab);
+    applyNlf(prefs.nlf);
     var rateBtn = bar.querySelector('[data-rate]');
     if (rateBtn) rateBtn.textContent = '语速 ' + (RATE_LABEL[RATES.indexOf(prefs.rate)] || '常速');
 
