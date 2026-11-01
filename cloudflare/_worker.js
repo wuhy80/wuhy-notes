@@ -11,6 +11,8 @@
 //   GET /api/semantic-search?q=短句&limit=8 → 语义搜索（余弦相似度，向量来自
 //     /embeddings.json，问题文本经 Workers AI @cf/baai/bge-m3 向量化）
 //   GET /api/note?path=相对路径     → 取单篇全文
+//   POST /api/write-grade { text, words[] } → 英语写作批改（Workers AI LLM，
+//     双语精读页的「输出练习」组件调用；AI 未绑定时客户端降级为复制提示词）
 //
 // 绑定要求：D1（变量名 DB）、Workers AI（变量名 AI）
 //
@@ -61,6 +63,7 @@ export default {
       if (url.pathname === "/api/search") return handleSearch(url, env);
       if (url.pathname === "/api/semantic-search") return handleSemanticSearch(url, env);
       if (url.pathname === "/api/note") return handleNote(url, env);
+      if (url.pathname === "/api/write-grade") return handleWriteGrade(request, env);
       return env.ASSETS.fetch(request);
     } catch (e) {
       return json({ error: String(e && e.message ? e.message : e) }, 500);
@@ -132,4 +135,37 @@ async function handleNote(url, env) {
     .first();
   if (!row) return json({ error: "未找到该笔记", path: p }, 404);
   return json(row);
+}
+
+// /api/write-grade：英语写作批改（Workers AI LLM）。
+// 模型可按需更换——Workers AI 上可用的 instruct 模型均可。
+const GRADE_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+
+async function handleWriteGrade(request, env) {
+  if (!env.AI) return json({ error: "Workers AI 未绑定：需要在 Pages 项目设置里绑定名为 AI 的 AI binding" }, 500);
+  if (request.method !== "POST") return json({ error: "仅支持 POST" }, 405);
+  let body;
+  try { body = await request.json(); } catch { return json({ error: "请求体必须是 JSON" }, 400); }
+  const text = String(body.text || "").trim();
+  const words = Array.isArray(body.words) ? body.words.map((w) => String(w)).slice(0, 12) : [];
+  if (!text) return json({ error: "缺少 text（要批改的英文段落）" }, 400);
+  if (text.length > 4000) return json({ error: "文本过长（上限 4000 字符）" }, 400);
+  const sys =
+    "You are a patient English writing coach for a Chinese learner (B2 level). " +
+    "Grade the learner's short English paragraph. Reply in Chinese. " +
+    "Structure: 1) 一句话总评；2) 逐条列出语法/搭配/用词问题并给出母语者改写；" +
+    "3) 检查目标词汇是否用对；4) 一句鼓励结尾。Be specific and concrete; " +
+    "never invent content the learner did not write.";
+  const user =
+    "目标词汇：" + (words.length ? words.join("、") : "（无）") + "\n\n学习者段落：\n" + text;
+  const res = await env.AI.run(GRADE_MODEL, {
+    messages: [
+      { role: "system", content: sys },
+      { role: "user", content: user },
+    ],
+    max_tokens: 1024,
+  });
+  const feedback = res && res.response ? String(res.response) : "";
+  if (!feedback) return json({ error: "模型未返回内容" }, 502);
+  return json({ feedback, model: GRADE_MODEL });
 }

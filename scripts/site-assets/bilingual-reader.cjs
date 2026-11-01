@@ -25,7 +25,10 @@
   'use strict';
   var PREF = 'gzb-bil-prefs';
   var KNOWN = 'gzb-bil-known';
-  var DEFAULTS = { mode: 'pair', scale: 1, vocab: true };
+  var OUT = 'gzb-bil-out';
+  var DEFAULTS = { mode: 'pair', scale: 1, vocab: true, rate: 0.95 };
+  var RATES = [0.95, 0.7, 0.55];       // 常速 / 慢速 / 更慢（跟读用）
+  var RATE_LABEL = ['常速', '慢速', '更慢'];
 
   function read(key, fallback) {
     try { var v = JSON.parse(localStorage.getItem(key)); return v == null ? fallback : v; } catch (e) { return fallback; }
@@ -250,11 +253,11 @@
   // ── 朗读 ────────────────────────────────────────────────────────────────
   var speaking = null;
   function speak(text) {
-    if (!('speechSynthesis' in window)) return;
+    if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') return;
     window.speechSynthesis.cancel();
     var u = new SpeechSynthesisUtterance(text);
     u.lang = 'en-US';
-    u.rate = 0.95;
+    u.rate = prefs.rate != null ? prefs.rate : 0.95;
     u.onend = u.onerror = function () {
       if (speaking) { speaking.classList.remove('is-speaking'); speaking = null; }
     };
@@ -264,6 +267,7 @@
     if (!pair) return;
     var text = (pair.querySelector('.bil-en') || {}).textContent || '';
     if (!text) return;
+    if (playAllState) stopPlayAll(); // 手动单段朗读打断连播
     if (speaking === pair) {
       window.speechSynthesis.cancel();
       pair.classList.remove('is-speaking');
@@ -276,6 +280,46 @@
     speak(text);
   }
 
+  // ── 连播：按篇顺序朗读原文，自动滚动跟随，随时可停 ──────────────────────
+  var playAllState = null;
+  function stopPlayAll() {
+    playAllState = null;
+    window.speechSynthesis.cancel();
+    [].slice.call(document.querySelectorAll('.bil-pair.is-speaking')).forEach(function (p) {
+      p.classList.remove('is-speaking');
+    });
+    var b = document.querySelector('.bil-toolbar [data-playall]');
+    if (b) b.textContent = '▶ 连播';
+  }
+  function playAll() {
+    if (typeof SpeechSynthesisUtterance === 'undefined') return; // 无 TTS 环境（旧 webview）不进入
+    var pairs = [].slice.call(root.querySelectorAll('.bil-pair'));
+    if (!pairs.length) return;
+    playAllState = { pairs: pairs, i: 0 };
+    var b = bar.querySelector('[data-playall]');
+    if (b) b.textContent = '■ 停止';
+    stepPlayAll();
+  }
+  function stepPlayAll() {
+    if (!playAllState) return;
+    if (playAllState.i >= playAllState.pairs.length) return stopPlayAll();
+    var pair = playAllState.pairs[playAllState.i++];
+    pair.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    var text = (pair.querySelector('.bil-en') || {}).textContent || '';
+    [].slice.call(document.querySelectorAll('.bil-pair.is-speaking')).forEach(function (p) {
+      p.classList.remove('is-speaking');
+    });
+    if (!text) { if (playAllState) setTimeout(stepPlayAll, 120); return; }
+    pair.classList.add('is-speaking');
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US';
+    u.rate = prefs.rate != null ? prefs.rate : 0.95;
+    u.onend = u.onerror = function () {
+      pair.classList.remove('is-speaking');
+      if (playAllState) setTimeout(stepPlayAll, 350);
+    };
+    window.speechSynthesis.speak(u);
+  }
   // ── 每轮初始化 ──────────────────────────────────────────────────────────
   function init() {
     var doc = document.documentElement;   // 主题脚本会重写 body.className，状态一律挂 <html>
@@ -294,6 +338,7 @@
     if (!pairTables.length) {
       // 同一页被重复初始化（首次加载后 Quartz 还会再发一次 nav）：保持现状，别把类名和生词栏清掉
       if (root.querySelector('.bil')) return;
+      if (playAllState) stopPlayAll(); // 切到非精读页时停掉连播与朗读
       doc.classList.remove('bil-page', 'bil-mode-pair', 'bil-mode-en', 'bil-mode-zh', 'bil-vocab-off');
       return;
     }
@@ -305,6 +350,7 @@
     var signal = ac.signal;
 
     // SPA 切页后上一轮的弹层/生词栏可能还在，先清掉
+    if (playAllState) stopPlayAll();
     [].slice.call(document.querySelectorAll('.bil-pop, .bil-rail')).forEach(function (n) { n.remove(); });
     doc.classList.add('bil-page');
 
@@ -327,12 +373,82 @@
       '<button type="button" data-mode="en">原文</button>' +
       '<button type="button" data-mode="zh">译文</button></div>' +
       '<div class="bil-tools">' +
+      '<button type="button" data-playall aria-pressed="false">▶ 连播</button>' +
+      '<button type="button" data-rate>语速 常速</button>' +
       '<span class="bil-size-label">字号</span>' +
       '<button type="button" data-scale="-1" aria-label="缩小字号">A−</button>' +
       '<button type="button" data-scale="1" aria-label="放大字号">A＋</button>' +
       '<button type="button" class="bil-vocab-btn" aria-pressed="true">词汇提示 开</button>' +
       '</div>';
     if (first) first.parentNode.insertBefore(bar, first);
+
+    // 输出练习：检测「输出练习」callout，注入写作批改组件
+    // （批改走站点 Worker 的 /api/write-grade（Workers AI）；接口不可用时降级为复制提示词）
+    [].slice.call(root.querySelectorAll('blockquote.callout')).forEach(function (c) {
+      var title = c.querySelector('.callout-title-inner');
+      if (!title || title.textContent.indexOf('输出练习') < 0) return;
+      var body = c.querySelector('.callout-content');
+      if (!body || body.querySelector('.bil-out')) return;
+      var words = Object.keys(vocab).map(function (k) { return vocab[k]; })
+        .sort(function (a, b) { return a.order - b.order; }).slice(0, 6)
+        .map(function (v) { return v.word; });
+      var outKey = OUT + ':' + location.pathname;
+      var box = document.createElement('div');
+      box.className = 'bil-out';
+      var saved = '';
+      try { saved = localStorage.getItem(outKey) || ''; } catch (e) {}
+      box.innerHTML =
+        '<textarea class="bil-out-ta" rows="4" placeholder="用本篇生词写一段 3–5 句的英文摘要……"></textarea>' +
+        '<div class="bil-out-a">' +
+        '<button type="button" class="bil-out-go">AI 批改</button>' +
+        '<button type="button" class="bil-out-copy">复制批改提示词</button>' +
+        '<span class="bil-out-msg"></span></div>' +
+        '<div class="bil-out-fb" hidden></div>';
+      body.appendChild(box);
+      var ta = box.querySelector('.bil-out-ta');
+      var msg = box.querySelector('.bil-out-msg');
+      var fb = box.querySelector('.bil-out-fb');
+      ta.value = saved;
+      ta.addEventListener('input', function () {
+        try { localStorage.setItem(outKey, ta.value); } catch (e) {}
+      });
+      function buildPrompt() {
+        return '请批改下面这段中国英语学习者写的英文摘要。要求：\n' +
+          '1) 一句话总评；2) 逐条列出语法/搭配/用词问题，并给出母语者改写；\n' +
+          '3) 检查目标词汇用得对不对：' + (words.join('、') || '本篇生词') + '；\n' +
+          '4) 用中文讲解，最后一句鼓励。\n\n学习者段落：\n' + ta.value;
+      }
+      box.querySelector('.bil-out-copy').addEventListener('click', function () {
+        var done = function () {
+          msg.textContent = '已复制，粘贴给任意 AI 即可';
+          setTimeout(function () { msg.textContent = ''; }, 2500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(buildPrompt()).then(done, done);
+        else { ta.select(); document.execCommand('copy'); done(); }
+      });
+      box.querySelector('.bil-out-go').addEventListener('click', function () {
+        var text = ta.value.trim();
+        if (!text) { msg.textContent = '先写一段再提交'; return; }
+        msg.textContent = '批改中……';
+        fb.hidden = true;
+        fetch('/api/write-grade', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: text, words: words }),
+        })
+          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+          .then(function (r) {
+            if (!r.ok || !r.j.feedback) {
+              msg.textContent = (r.j && r.j.error ? r.j.error : '批改失败') + '，可用「复制批改提示词」';
+              return;
+            }
+            msg.textContent = '';
+            fb.textContent = r.j.feedback;
+            fb.hidden = false;
+          })
+          .catch(function () { msg.textContent = '网络错误，可用「复制批改提示词」'; });
+      });
+    });
 
     // 右侧生词栏
     var rail = document.querySelector('.right.sidebar');
@@ -426,6 +542,16 @@
     bar.addEventListener('click', function (e) {
       var m = e.target.closest('[data-mode]');
       if (m) return applyMode(m.dataset.mode);
+      if (e.target.closest('[data-playall]')) return playAllState ? stopPlayAll() : playAll();
+      var rt = e.target.closest('[data-rate]');
+      if (rt) {
+        var idx = RATES.indexOf(prefs.rate != null ? prefs.rate : 0.95);
+        var next = RATES[(idx + 1 + RATES.length) % RATES.length];
+        prefs.rate = next;
+        write(PREF, prefs);
+        rt.textContent = '语速 ' + RATE_LABEL[RATES.indexOf(next)];
+        return;
+      }
       var s = e.target.closest('[data-scale]');
       if (s) return applyScale(prefs.scale + Number(s.dataset.scale) * 0.05);
       if (e.target.closest('.bil-vocab-btn')) return applyVocab(!prefs.vocab);
@@ -434,6 +560,8 @@
     applyMode(prefs.mode);
     applyScale(prefs.scale);
     applyVocab(prefs.vocab);
+    var rateBtn = bar.querySelector('[data-rate]');
+    if (rateBtn) rateBtn.textContent = '语速 ' + (RATE_LABEL[RATES.indexOf(prefs.rate)] || '常速');
 
     function syncRail() {
       [].slice.call(document.querySelectorAll('.bil-rail-item')).forEach(function (b) {

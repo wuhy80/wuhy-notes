@@ -556,7 +556,7 @@
     try { localStorage.setItem(VOCAB_KEY, JSON.stringify(list)) } catch (e) {}
   }
   function speakWord(text) {
-    if (!('speechSynthesis' in window)) return
+    if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') return
     window.speechSynthesis.cancel()
     var u = new SpeechSynthesisUtterance(text)
     u.lang = 'en-US'

@@ -495,5 +495,8 @@ status: 精读
 - 演讲视频（YouTube）：<https://www.youtube.com/watch?v=GAkIytR7vcc>
 - Simon Willison 博客：<https://simonwillison.net/>
 
+> [!question]- 输出练习
+> 用本篇生词写一段 3–5 句的英文摘要（重点关注总词汇表里的词）。写完展开下面的批改框，点「AI 批改」获取逐条反馈；也可以「复制批改提示词」粘贴给你常用的 AI。
+
 > [!warning] 版权说明
 > 本文为 Simon Willison 个人博客内容，本笔记为个人学习用途的翻译整理；原文版权归原作者所有，请勿二次分发。

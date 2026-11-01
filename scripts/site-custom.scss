@@ -3932,3 +3932,61 @@ html body div#quartz-root.page article .dvl-vocab-row {
     }
   }
 }
+
+// 16 输出练习（2026-11-01）—— 精读文末的写作批改组件（bilingual-reader 注入到
+// 「输出练习」callout 内；批改走 /api/write-grade，Workers AI）
+html body div#quartz-root.page article .bil-out {
+  margin-top: 0.9em;
+  .bil-out-ta {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.6em 0.8em;
+    border: 1px solid var(--line, rgba(28, 28, 27, 0.16));
+    border-radius: 6px;
+    background: var(--card, #fff);
+    font: inherit;
+    font-size: 0.95em;
+    line-height: 1.7;
+    resize: vertical;
+  }
+  .bil-out-a {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5em;
+    margin-top: 0.5em;
+    button {
+      padding: 0.3em 0.9em;
+      border: 1px solid var(--line, rgba(28, 28, 27, 0.16));
+      border-radius: 6px;
+      background: var(--card, #fff);
+      font-size: 0.88em;
+      cursor: pointer;
+    }
+    button:hover {
+      border-color: var(--accent, #b3551d);
+      color: var(--accent, #b3551d);
+    }
+    .bil-out-msg {
+      font-size: 0.8em;
+      color: var(--ink-faint, rgba(28, 28, 27, 0.45));
+    }
+  }
+  .bil-out-fb {
+    margin-top: 0.7em;
+    padding: 0.8em 1em;
+    background: var(--paper-deep, #f7f5f0);
+    border-left: 3px solid var(--accent, #b3551d);
+    white-space: pre-wrap;
+    font-size: 0.92em;
+    line-height: 1.85;
+  }
+}
+
+// 词卡弹层里的 YouGlish 链接
+html body div#quartz-root.page article .bil-pop .bil-pop-yg {
+  font-size: 0.85em;
+  color: var(--accent, #b3551d);
+  text-decoration: none;
+  margin-left: 0.4em;
+}

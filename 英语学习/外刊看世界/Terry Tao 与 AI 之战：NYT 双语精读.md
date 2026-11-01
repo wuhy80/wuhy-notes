@@ -268,5 +268,8 @@ status: 精读
 - 陶哲轩 Mastodon：<https://mathstodon.xyz/@tao>
 - 陶哲轩博客：<https://terrytao.wordpress.com>
 
+> [!question]- 输出练习
+> 用本篇生词写一段 3–5 句的英文摘要（重点关注总词汇表里的词）。写完展开下面的批改框，点「AI 批改」获取逐条反馈；也可以「复制批改提示词」粘贴给你常用的 AI。
+
 > [!warning] 版权说明
 > 本文为 The New York Times 付费内容，本笔记仅供个人英语学习与资料留存，版权归原作者及作者所有，请勿二次分发。
