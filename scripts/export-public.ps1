@@ -52,17 +52,14 @@ $PublicRootFiles = @()
 # （实测曾有 8 个行业报告 PDF 共 101 MB，其中 36 MB 那个超过 Cloudflare 单文件 25 MiB 上限）
 # 2026-10-18：放行 .svg——《AI 大模型原理教程-轩辕》的 94 张插图是 SVG，
 # 不放行的话教程页面上只会留下一行行「附件未随站点发布」的文字占位。
-# 2026-10-22：位图（png/webp/jpg）只放行 $AttachRasterDirs 里的目录，不做全库放行——
-# 站内另有一批位图嵌入（模型训练 49 处、AI 早报 11 处、软著 8 处），
-# 全库放行会把它们一并公开，属于没人要求、也不该顺手做的范围外变更。
+# 2026-10-22：位图（png/webp/jpg/gif）曾改为目录白名单 $AttachRasterDirs 放行。
+# 2026-11-01：应用户要求**位图全库放行**——白名单外当时仅剩「附件/软著」8 张
+# （第三方软著申请教程视频截图，已逐一目检：无个人敏感信息，用户确认发布），
+# 故删除目录白名单。仍保留两层护栏不变：
+#   ① 非位图（PDF/压缩包/音视频等）一律不发布；② 单文件 10MB 上限；
+#   ③ 只复制「被笔记引用」的附件，未被引用的孤儿文件不会进导出目录。
 $AttachExt        = @('.svg')
 $AttachRasterExt  = @('.png', '.webp', '.jpg', '.jpeg', '.gif')   # gif：算法可视化动画
-$AttachRasterDirs = @(
-  '附件\逐层分解',
-  '附件\大模型',        # 2026-10-22：模型/评测/订阅图表（60 处引用）
-  '附件\算法可视化',    # 2026-10-22：排序/搜索算法演示 gif（10 处引用）
-  '附件\AI算法速刷'     # 2026-11-01：labuladong「AI 时代的算法题速刷方案」视频笔记的 9 张关键帧截图
-)
 $AttachMaxMB = 10   # 单个附件体积上限，超过则跳过并记入报告
 $ExcludeDirs = @(
   '技术笔记\虚拟机', '技术笔记\安全',                          # 2026-10-01/02 迁至私密库
@@ -120,18 +117,14 @@ function Get-InputSig {
     # 附件也要参与指纹：它们不叫 .md，上面那轮扫不到。
     # 否则「只换了图、没动笔记」时增量判断会认为无变化而跳过导出，
     # 线上就一直留着旧图（2026-10-18 重取教程插图时踩到）。
-    # 位图只统计白名单目录，免得全库位图的 mtime 变化都被当成「站点有更新」。
+    # 2026-11-01 起位图全库放行，附件目录整体参与指纹（含未被引用的孤儿文件，
+    # 它们不会进导出目录，但文件变化应视为「站点输入有变化」）。
     foreach ($f in (Get-ChildItem -LiteralPath $src -Recurse -File -Force -ErrorAction SilentlyContinue)) {
       $e = $f.Extension.ToLower()
       $isSvg = $AttachExt -contains $e
       $isRaster = $AttachRasterExt -contains $e
       if (-not ($isSvg -or $isRaster)) { continue }
       $vaultRel = "$d\$($f.FullName.Substring($prefixLen))"
-      if ($isRaster) {
-        $allowed = $false
-        foreach ($rd in $AttachRasterDirs) { if ($vaultRel -like "$rd*") { $allowed = $true; break } }
-        if (-not $allowed) { continue }
-      }
       $skip = $false
       foreach ($x in $ExcludeDirs) { if ($vaultRel -like "$x*") { $skip = $true; break } }
       if ($skip) { continue }
@@ -140,13 +133,13 @@ function Get-InputSig {
   }
   # 位图白名单目录（附件/…）不在 $PublicDirs 里——附件目录只发布被引用的图，没有 .md。
   # 不单独扫一遍的话，「只换了图、没动笔记」不会改变指纹，导出会被误判为无变化。
-  foreach ($rd in $AttachRasterDirs) {
-    $src = Join-Path $Vault $rd
-    if (-not (Test-Path -LiteralPath $src)) { continue }
+  # 2026-11-01 起白名单退役，改为扫描整个附件目录（见 $AttachRasterExt 上方注释）。
+  $src = Join-Path $Vault '附件'
+  if (Test-Path -LiteralPath $src) {
     $prefixLen = $src.Length + 1
     foreach ($f in (Get-ChildItem -LiteralPath $src -Recurse -File -Force -ErrorAction SilentlyContinue)) {
       if ($AttachRasterExt -notcontains $f.Extension.ToLower()) { continue }
-      [void]$parts.Add($rd + '\' + $f.FullName.Substring($prefixLen) + '|' + $f.Length + '|' + $f.LastWriteTimeUtc.Ticks)
+      [void]$parts.Add('附件\' + $f.FullName.Substring($prefixLen) + '|' + $f.Length + '|' + $f.LastWriteTimeUtc.Ticks)
     }
   }
   $scriptSig = Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256
@@ -237,13 +230,7 @@ foreach ($f in $expFiles) {
     $name = [System.IO.Path]::GetFileName($t)
     $found = $vaultFileIndex[$name]
     if (-not $found) { if ($attachMiss -notcontains $name) { $attachMiss += $name }; continue }
-    # 位图只在白名单目录里放行（见 $AttachRasterDirs 的注释）
-    if ($isRaster) {
-      $foundRel = $found.FullName.Substring($Vault.Length).TrimStart('\')
-      $allowed = $false
-      foreach ($rd in $AttachRasterDirs) { if ($foundRel -like "$rd*") { $allowed = $true; break } }
-      if (-not $allowed) { continue }
-    }
+    # 2026-11-01 起位图全库放行（目录白名单 $AttachRasterDirs 已退役，见文件头注释）
     if ($found.Length -gt ($AttachMaxMB * 1MB)) {
       $tooBig = "$name ($([math]::Round($found.Length/1MB,1)) MB)"
       if ($attachSkip -notcontains $tooBig) { $attachSkip += $tooBig }

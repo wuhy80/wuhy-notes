@@ -362,8 +362,10 @@ eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、�
   - **位图插图用 `<img class="site-img">`**（2026-10-22，转载文档用）：与 SVG 同位置、同圆角，
     但**不设 `width:100%`**——矢量图铺满只会更清晰，截图放大会糊，所以只给
     `max-width:100%` + `height:auto`，并用 1px `line` 描边 + `card` 底把白底截图和纸色页面分开。
-    导出脚本按扩展名分流（`.svg` → `site-svg`，位图 → `site-img`），位图**只放行**
-    `scripts/export-public.ps1` 里 `$AttachRasterDirs` 列出的目录，不做全库放行
+    导出脚本按扩展名分流（`.svg` → `site-svg`，位图 → `site-img`）；位图
+    2026-11-01 起**全库放行**（原 `$AttachRasterDirs` 目录白名单退役——白名单外
+    仅剩软著 8 张，经逐一目检无敏感内容后由用户拍板发布），仍只复制被笔记引用的
+    附件、单文件 10MB 上限、非位图（PDF/压缩包/音视频）一律不发布
 - **文章 hero**：`h1.article-title` 数黑体 48px/900；**h1 下方没有边线**（主题默认画了一条
   `rgba(31,30,29,.16)` 的灰线，已去掉）；h1 上方依次是面包屑、**eyebrow**（`.content-meta`：
   等宽 12px、字距 0.1em、`accent` 色——参考站的 `LESSON 03 · 卷一 基础数学 · ◉ 4,903 次阅读`）。
