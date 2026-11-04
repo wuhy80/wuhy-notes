@@ -448,7 +448,7 @@
 
     // SPA 切页后上一轮的弹层可能还在，先清掉
     if (playAllState) stopPlayAll();
-    [].slice.call(document.querySelectorAll()).forEach(function (n) { n.remove(); });
+    [].slice.call(document.querySelectorAll('.bil-pop')).forEach(function (n) { n.remove(); });
     doc.classList.add('bil-page');
 
     var collected = collectVocab(root);
