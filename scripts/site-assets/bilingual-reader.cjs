@@ -6,8 +6,8 @@
  * 这里在浏览器里把表格重排成「一段英文 + 一段中文」，并补上阅读工具：
  *   · 对照 / 原文 / 译文 三档切换（localStorage 记忆）
  *   · 字号调节（记忆）
- *   · 行内词卡：文中的生词加虚线下划线，点击/回车弹出音标、释义、朗读
- *   · 右侧「本篇生词」栏：点击滚到首次出现、标记已掌握（记忆）
+ *   · 行内词卡：文中的生词加虚线下划线，点击/回车弹出音标、释义、朗读、标记已掌握（YouGlish）
+ *   （2026-11-04 移除右侧「本篇生词」栏：内容与文末总词汇表卡片、行内词卡完全重复）
  *   · 段落朗读（Web Speech API，无需后端）
  *   · 文末总词汇表 → 卡片网格
  *
@@ -248,14 +248,6 @@
     el.classList.add('is-open');
   }
 
-  function jumpToWord(key) {
-    var target = document.querySelector('.bil-w[data-w="' + key + '"]');
-    if (!target) return;
-    target.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    target.classList.add('is-flash');
-    setTimeout(function () { target.classList.remove('is-flash'); }, 1400);
-  }
-
   // ── 朗读 ────────────────────────────────────────────────────────────────
   var speaking = null;
   function speak(text) {
@@ -454,9 +446,9 @@
     ac = new AbortController();
     var signal = ac.signal;
 
-    // SPA 切页后上一轮的弹层/生词栏可能还在，先清掉
+    // SPA 切页后上一轮的弹层可能还在，先清掉
     if (playAllState) stopPlayAll();
-    [].slice.call(document.querySelectorAll('.bil-pop, .bil-rail')).forEach(function (n) { n.remove(); });
+    [].slice.call(document.querySelectorAll()).forEach(function (n) { n.remove(); });
     doc.classList.add('bil-page');
 
     var collected = collectVocab(root);
@@ -556,23 +548,6 @@
       });
     });
 
-    // 右侧生词栏
-    var rail = document.querySelector('.right.sidebar');
-    if (rail && words.length) {
-      var panel = document.createElement('div');
-      panel.className = 'bil-rail';
-      var html = '<h3>本篇生词 <span>' + words.length + '</span></h3><div class="bil-rail-list">';
-      words.forEach(function (v) {
-        var k = v.word.toLowerCase();
-        html += '<button type="button" class="bil-rail-item" data-w="' + k + '">'
-          + '<i class="dot' + (known[k] ? ' known' : '') + '"></i>'
-          + '<b>' + v.word + '</b><em>' + v.ipa + '</em>'
-          + '<span>' + v.def.split('。')[0] + '</span></button>';
-      });
-      panel.innerHTML = html + '</div>';
-      rail.insertBefore(panel, rail.firstChild);
-    }
-
     // 弹层（挂进 quartz-root 才能继承主题变量）
     pop = document.createElement('div');
     pop.className = 'bil-pop';
@@ -610,19 +585,12 @@
         var k = active.dataset.w;
         known[k] = !known[k];
         write(KNOWN, Object.keys(known).filter(function (x) { return known[x]; }));
-        openPop(active, vocab);
-        syncRail();
+        openPop(active, vocab); // 重新渲染弹层，刷新「已掌握」按钮状态
       }
     }, { signal: signal });
 
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePop(); }, { signal: signal });
     document.addEventListener('scroll', closePop, { capture: true, signal: signal });
-
-    // 生词栏在 article 之外，单独委托
-    document.addEventListener('click', function (e) {
-      var item = e.target.closest && e.target.closest('.bil-rail-item');
-      if (item) jumpToWord(item.dataset.w);
-    }, { signal: signal });
 
     // 偏好
     function applyMode(mode) {
@@ -715,12 +683,6 @@
     var rateBtn = bar.querySelector('[data-rate]');
     if (rateBtn) rateBtn.textContent = '语速 ' + (RATE_LABEL[RATES.indexOf(prefs.rate)] || '常速');
 
-    function syncRail() {
-      [].slice.call(document.querySelectorAll('.bil-rail-item')).forEach(function (b) {
-        var dot = b.querySelector('.dot');
-        if (dot) dot.classList.toggle('known', !!known[b.dataset.w]);
-      });
-    }
   }
 
   // 首次加载 + SPA 切页后都跑一遍
