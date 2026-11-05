@@ -31,6 +31,8 @@
 # 需要预先配置的仓库 secrets：
 #   CLOUDFLARE_API_TOKEN   —— 权限 Account → Cloudflare Pages → Edit
 #   CLOUDFLARE_ACCOUNT_ID  —— 1ff939df6fe444fa1fe21ed7d1b8caac
+#   WUHY_SERVER_SSH_KEY        —— 阿里云国内镜像服务器的部署专用私钥（ed25519，可单独吊销）
+#   WUHY_SERVER_KNOWN_HOSTS    —— 47.100.85.94 的 host key（ssh-keyscan 采集，严格校验防中间人）
 
 name: Publish site
 
@@ -72,8 +74,14 @@ on:
   # ③ 兜底：每天北京时间 11:10 跑一次
   schedule:
     - cron: "10 3 * * *"
-  # ④ 手动触发（GitHub Actions 页面 Run workflow，或由 DSH 代为触发）
+  # ④ 手动触发（GitHub Actions 页面 Run workflow，或由 DSH 代为触发）；
+  #    force = 忽略增量短路强制重建重发（publish-site.ps1 -Force）
   workflow_dispatch:
+    inputs:
+      force:
+        description: '强制重新构建并部署（增量判断照常算，只是不允许短路跳过部署）'
+        type: boolean
+        default: false
 
 # 同一仓库同一时刻只跑一个发布。连推时让最新一次赢：
 # Cloudflare 的一次部署是原子的，取消在途 run 不会留下半个站点。
@@ -262,8 +270,10 @@ jobs:
           WRANGLER_JS: '${{ github.workspace }}\_wrangler\node_modules\wrangler\bin\wrangler.js'
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          FORCE_DEPLOY: ${{ github.event.inputs.force || 'false' }}
         run: |
-          pwsh -NoProfile -ExecutionPolicy Bypass -File "$env:VAULT_DIR\scripts\publish-site.ps1"
+          $forceFlag = if ($env:FORCE_DEPLOY -eq 'true') { '-Force' } else { '' }
+          pwsh -NoProfile -ExecutionPolicy Bypass -File "$env:VAULT_DIR\scripts\publish-site.ps1" $forceFlag
           if ($LASTEXITCODE -ne 0) { throw "发布失败" }
 
       # 全库灌入 D1（FTS 全文索引），供站点 /api/search 查询。可选功能：
@@ -297,6 +307,48 @@ jobs:
           node $env:WRANGLER_JS d1 execute wuhy-notes-kb --remote --file "$env:SITE_ROOT\d1-index.sql" -y
           if ($LASTEXITCODE -ne 0) { throw "D1 同步失败" }
           Write-Host "D1 知识库索引已更新（数据库 wuhy-notes-kb）"
+
+      # 国内镜像：把与 Cloudflare 相同的产物同步到阿里云服务器（47.100.85.94，
+      # nginx 8080 + Basic Auth，root=/var/www/wuhy-notes）。只在第 7 步真正部署过
+      # （publish-site.ps1 留下 .deployed-this-run 标记）才同步；内容没变的增量 run
+      # 没有标记，服务器保持上次内容。tar 管道一次连接传完（131M 站点压到 ~40MB），
+      # 解到 .new 目录校验 index.html 后原子换目录，解包途中不会出现半个站点。
+      # ControlMaster 复用一条 SSH 连接：服务器 ufw 对 22 有 LIMIT 限流（30 秒内
+      # 6 次新连接会临时拉黑），逐条命令开连接可能触发。
+      # continue-on-error：跨网 SSH 偶发失败不该标红发布本身，日志里可见。
+      - name: 7c. 同步产物到国内服务器（阿里云 47.100.85.94）
+        continue-on-error: true
+        shell: bash
+        env:
+          WUHY_SSH_KEY: ${{ secrets.WUHY_SERVER_SSH_KEY }}
+          WUHY_KNOWN_HOSTS: ${{ secrets.WUHY_SERVER_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          WS="$(cygpath -u "$GITHUB_WORKSPACE" 2>/dev/null || echo "$GITHUB_WORKSPACE")"
+          MARKER="$WS/_site/.deployed-this-run"
+          PUB="$WS/_site/quartz/public"
+          if [ ! -f "$MARKER" ]; then
+            echo "本次 run 未执行部署（增量跳过），国内服务器保持上次内容，跳过同步"
+            exit 0
+          fi
+          if [ ! -f "$PUB/index.html" ]; then
+            echo "产物缺 index.html，跳过同步"
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$WUHY_SSH_KEY" > ~/.ssh/wuhy_deploy_key
+          printf '%s\n' "$WUHY_KNOWN_HOSTS" > ~/.ssh/wuhy_deploy_known_hosts
+          chmod 600 ~/.ssh/wuhy_deploy_key ~/.ssh/wuhy_deploy_known_hosts
+          SSH_OPTS=(-i "$HOME/.ssh/wuhy_deploy_key" -o IdentitiesOnly=yes
+                    -o UserKnownHostsFile="$HOME/.ssh/wuhy_deploy_known_hosts"
+                    -o StrictHostKeyChecking=yes
+                    -o ControlMaster=auto -o "ControlPath=$HOME/.ssh/wuhy_cm_%r@%h:%p" -o ControlPersist=180)
+          HOST=root@47.100.85.94
+          ssh "${SSH_OPTS[@]}" "$HOST" "mkdir -p /var/www/wuhy-notes.new"
+          tar czf - -C "$PUB" . | ssh "${SSH_OPTS[@]}" "$HOST" "rm -rf /var/www/wuhy-notes.new && mkdir -p /var/www/wuhy-notes.new && tar xzf - -C /var/www/wuhy-notes.new"
+          ssh "${SSH_OPTS[@]}" "$HOST" "test -f /var/www/wuhy-notes.new/index.html"
+          ssh "${SSH_OPTS[@]}" "$HOST" "if [ -d /var/www/wuhy-notes ]; then mv /var/www/wuhy-notes /var/www/wuhy-notes.old; fi && mv /var/www/wuhy-notes.new /var/www/wuhy-notes && rm -rf /var/www/wuhy-notes.old"
+          echo "国内服务器已更新：http://47.100.85.94:8080（Basic Auth）"
 
       - name: 8. 汇总（脱敏校验必须全为 0）
         if: always()

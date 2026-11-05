@@ -558,6 +558,12 @@ if ($SkipDeploy) {
 & $Node $Wrangler pages deploy (Join-Path $Quartz 'public') --project-name $ProjectName --branch main --commit-dirty=true
 if ($LASTEXITCODE -ne 0) { throw "部署失败" }
 
+# 「本次已部署」标记：CI 的 runner 每次都是干净 workspace，只有真的走到部署这一步
+# 才会留下该文件；publish-site.yml 的 7c 步骤据此决定是否把产物同步到阿里云国内
+# 服务器（增量跳过的 run 没有标记，服务器保持上次内容）。本机运行时多写一个
+# _site 下的标记文件，无副作用。
+Set-Content -LiteralPath (Join-Path $SiteRoot '.deployed-this-run') -Value (Get-Date -Format 'o') -Encoding UTF8
+
 # 记录发布状态（仅在部署成功后写入，作为下次增量判断的基准）
 Save-PubState $exportSig $siteSig
 
