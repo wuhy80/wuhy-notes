@@ -208,15 +208,16 @@ classDiagram
 
 ```mermaid
 flowchart LR
-    DATA["Data<br/>数据：结构化 / 流 / 非结构化 / 决策数据"] --> DEC{"决策"}
-    LOGIC["Logic<br/>规则 / ML / 优化器 / LLM"] --> DEC
-    SEC["Security<br/>标记 / 目的 / 角色 / 行列表级限制"] -.-> DEC
-    DEC --> ACT["Action<br/>场景预演 → 审批 → 写回"]
-    ACT --> SYS["业务系统 / 边缘设备 / 自定义应用"]
-    ACT --> LINEAGE["决策血缘<br/>谁在什么数据版本上做了什么"]
-    LINEAGE -.-> DATA
-    LINEAGE -.-> LOGIC
+    D["① Data 数据<br/>结构化 · 流 · 文档 · 决策数据"] --> G["② Logic 逻辑<br/>规则 · ML · 优化器 · LLM"]
+    G --> C{"③ 决策"}
+    C --> A["④ Action 动作<br/>场景预演 → 审批 → 写回"]
+    A --> S["⑤ 业务系统 / 边缘 / 自定义应用"]
+    A --> L["决策血缘<br/>decision lineage"]
+    SEC["Security 安全<br/>标记 · 目的 · 角色 · 行列表级限制"] -.-> C
+    SEC -.-> A
 ```
+
+读法：四要素不是四个模块，而是**同一条链上的四个位置**——数据喂逻辑，逻辑支撑决策，决策化成动作写回系统；Security 不属于任何一层，它以虚线的方式约束每一个环节。
 
 四个要素的落地方式：
 
