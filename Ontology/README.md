@@ -4,7 +4,7 @@ tags:
   - Ontology
   - Foundry
 created: 2026-06-05
-updated: 2026-07-11
+updated: 2026-11-07
 status: 入口
 ---
 
@@ -15,6 +15,7 @@ Palantir Ontology 资料整理入口。
 ## 目录
 
 - [[Palantir Ontology 资料索引]]
+- [[Palantir Ontology 架构图与界面截图]]
 - [[Palantir Ontology 核心概念]]
 - [[Ontology 资源模型]]
 - [[关系建模：Link、关系对象与 Object-backed Link]]

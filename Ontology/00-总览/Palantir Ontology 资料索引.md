@@ -5,7 +5,7 @@ tags:
   - Foundry
   - AIP
 created: 2026-06-05
-updated: 2026-06-05
+updated: 2026-11-07
 status: 整理中
 source: Palantir 官方文档
 ---
@@ -17,6 +17,7 @@ source: Palantir 官方文档
 
 ## 快速入口
 
+- [[Ontology/00-总览/Palantir Ontology 架构图与界面截图|00 Palantir Ontology 架构图与界面截图]]
 - [[Ontology/01-核心概念/Palantir Ontology 核心概念|01 Palantir Ontology 核心概念]]
 - [[Ontology/02-资源模型/Ontology 资源模型|02 Ontology 资源模型]]
 - [[Ontology/02-资源模型/关系建模：Link、关系对象与 Object-backed Link|02 附：关系建模]]
