@@ -7,9 +7,10 @@
 #     下一次运行会自动补齐，不丢数据
 #
 # 设计要点：
-#   · 不调用任何 AI —— 橘鸦原文自带的「概览」小节被提升为 summary callout，
-#     因此不需要任何 API Key secret
-#   · 只用一个 Node 脚本（.github/scripts/fetch-ai-daily.mjs），无第三方依赖
+#   · 抓取与周报本身不调用任何 AI —— 橘鸦原文自带的「概览」小节被提升为
+#     summary callout；可选的「注意力评分」是步骤 3b（rank-ai-daily.mjs），
+#     配置 AI_RANK_API_KEY 后生效，未配置时自动跳过
+#   · 只用 Node 脚本（.github/scripts/），无第三方依赖
 #   · 先查本地再发 HTTP：追平之后一次网络请求都不发
 #   · 单次最多写 14 期，从最近往前补
 #   · 定时用 UTC：北京时间 11:00 / 15:00 / 19:00 / 23:00
@@ -18,7 +19,8 @@
 # 需要的仓库配置：
 #   · Settings → Actions → General → Workflow permissions 选 "Read and write permissions"
 #     （或依赖本文件里的 permissions: contents: write）
-#   · 无需任何 secrets
+#   · secrets 全部可选：AI_RANK_API_KEY（OpenAI 兼容接口的 Key，用于步骤 3b 评分；
+#     可另用仓库变量 AI_RANK_BASE_URL / AI_RANK_MODEL 指定服务商与模型）
 
 name: AI 早报归档
 
@@ -68,6 +70,15 @@ jobs:
             node .github/scripts/fetch-ai-daily.mjs
           fi
 
+      - name: 3b. AI 注意力评分（可选，未配置 AI_RANK_API_KEY 时自动跳过）
+        id: rank
+        env:
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+          AI_RANK_API_KEY: ${{ secrets.AI_RANK_API_KEY }}
+          AI_RANK_BASE_URL: ${{ vars.AI_RANK_BASE_URL }}
+          AI_RANK_MODEL: ${{ vars.AI_RANK_MODEL }}
+        run: node .github/scripts/rank-ai-daily.mjs
+
       - name: 4. 聚合周报（幂等回补，从日报生成，无网络请求）
         env:
           GITHUB_WORKSPACE: ${{ github.workspace }}
@@ -80,6 +91,8 @@ jobs:
 
       - name: 5. 提交并推送
         if: ${{ inputs.dry_run != true }}
+        env:
+          RANKED: ${{ steps.rank.outputs.RANKED }}
         run: |
           set -e
           git config user.name  "github-actions[bot]"
@@ -113,6 +126,8 @@ jobs:
             MSG="AI 早报归档: 新增 ${DAILY_COUNT} 期"
           elif [ "$WEEKLY_COUNT" -gt 0 ]; then
             MSG="大模型周报聚合: 新增 ${WEEKLY_COUNT} 期（${WEEKLY_RANGE}）"
+          elif [ "${RANKED:-0}" -gt 0 ]; then
+            MSG="AI 早报评分: 回填 ${RANKED} 期注意力评分（无新增归档）"
           else
             MSG="AI 早报归档: 仅更新索引（$(date -u +%Y-%m-%d) UTC）"
           fi
