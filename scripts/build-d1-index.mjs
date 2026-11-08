@@ -71,6 +71,64 @@ function normalizeTags(meta) {
   return typeof t === "string" && t ? t : "";
 }
 
+// ---------- 摘要抽取（L0：先读摘要再读全文） ----------
+//
+// 优先取正文开头的 [!abstract] callout（本库概述惯例）；没有的退回首个
+// 散文段落。统一剥离 Markdown 结构后截断到 300 字符，供 /api/search 结果
+// 直接展示，免点开即可判断要不要读。
+
+const ABSTRACT_CAP = 300;
+
+function stripMarkdown(s) {
+  return s
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // [t](url) → t
+    .replace(/\[\[([^\]|]*\|)?([^\]]*)\]\]/g, "$2") // [[a|b]] → b
+    .replace(/[*_`~]/g, "")
+    .replace(/(^|\s)#[\w/\-\u4e00-\u9fff]+/g, "$1") // 标签（含中文标签）
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractAbstract(body) {
+  const lines = body.split("\n");
+  const abs = [];
+  let inAbs = false;
+  for (const l of lines) {
+    if (/^>\s*\[!abstract\]/i.test(l)) {
+      inAbs = true;
+      // 去掉 marker 与纯标题词（如「概述」），保留同行的实质内容
+      abs.push(
+        l.replace(/^>\s*\[!abstract\]\s*/i, "").replace(/^(概述|概要|summary|说明)\s*[:：]?\s*/i, "")
+      );
+      continue;
+    }
+    if (inAbs) {
+      if (!l.startsWith(">")) break;
+      abs.push(l.replace(/^>\s?/, ""));
+    }
+  }
+  let src = stripMarkdown(abs.join(" "));
+  if (!src) {
+    // 回退：跳过标题/callout/代码块/表格/嵌入行，取第一段散文
+    const para = [];
+    let inCode = false;
+    for (const l of lines) {
+      if (/^```/.test(l)) {
+        inCode = !inCode;
+        continue;
+      }
+      if (inCode) continue;
+      if (/^(#{1,6}\s|>|!|\||---)/.test(l) || !l.trim()) {
+        if (para.length) break;
+        continue;
+      }
+      para.push(l.trim());
+    }
+    src = stripMarkdown(para.join(" "));
+  }
+  return src.length > ABSTRACT_CAP ? src.slice(0, ABSTRACT_CAP) + "…" : src;
+}
+
 // ---------- 收集与生成 ----------
 
 function sqlEscape(s) {
@@ -115,6 +173,7 @@ function main() {
       source: meta.source || "",
       created: meta.created || "",
       updated: meta.updated || "",
+      abstract: extractAbstract(clean),
       body: clean,
     });
   }
@@ -126,22 +185,23 @@ function main() {
     "DROP TABLE IF EXISTS notes_fts;",
     "DROP TABLE IF EXISTS notes;",
     `CREATE TABLE notes (
-  id      INTEGER PRIMARY KEY,
-  path    TEXT UNIQUE,
-  title   TEXT,
-  tags    TEXT,
-  type    TEXT,
-  status  TEXT,
-  source  TEXT,
-  created TEXT,
-  updated TEXT,
-  body    TEXT);`,
+  id       INTEGER PRIMARY KEY,
+  path     TEXT UNIQUE,
+  title    TEXT,
+  tags     TEXT,
+  type     TEXT,
+  status   TEXT,
+  source   TEXT,
+  created  TEXT,
+  updated  TEXT,
+  abstract TEXT,
+  body     TEXT);`,
     "CREATE VIRTUAL TABLE notes_fts USING fts5(title, tags, body);",
   ];
   for (const r of rows) {
     parts.push(
-      `INSERT INTO notes (path,title,tags,type,status,source,created,updated,body) VALUES (` +
-        [r.path, r.title, r.tags, r.type, r.status, r.source, r.created, r.updated, r.body].map(sqlEscape).join(",") +
+      `INSERT INTO notes (path,title,tags,type,status,source,created,updated,abstract,body) VALUES (` +
+        [r.path, r.title, r.tags, r.type, r.status, r.source, r.created, r.updated, r.abstract, r.body].map(sqlEscape).join(",") +
         ");",
     );
   }

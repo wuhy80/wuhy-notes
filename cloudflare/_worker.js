@@ -7,7 +7,8 @@
 //
 // 接口：
 //   GET /api/health                → { ok, db, vectors }
-//   GET /api/search?q=关键词&limit=20 → FTS5 全文搜索（带高亮摘要）
+//   GET /api/search?q=关键词&limit=20 → FTS5 全文搜索（带高亮摘要 + L0 概述
+//     abstract：优先笔记的 [!abstract]，否则首段散文，由 build-d1-index.mjs 生成）
 //   GET /api/semantic-search?q=短句&limit=8 → 语义搜索（余弦相似度，向量来自
 //     /embeddings.json，问题文本经 Workers AI @cf/baai/bge-m3 向量化）
 //   GET /api/note?path=相对路径     → 取单篇全文
@@ -112,7 +113,7 @@ async function handleSearch(url, env) {
   // 用户输入整体按短语处理，内部双引号翻倍转义，避免 FTS5 语法报错
   const match = `"${q.replace(/"/g, '""')}"`;
   const { results } = await env.DB.prepare(
-    `SELECT n.path, n.title, n.tags, n.updated,
+    `SELECT n.path, n.title, n.tags, n.updated, n.abstract,
             snippet(notes_fts, 2, '<mark>', '</mark>', '…', 16) AS excerpt
        FROM notes_fts f JOIN notes n ON n.id = f.rowid
       WHERE notes_fts MATCH ?1
@@ -129,7 +130,7 @@ async function handleNote(url, env) {
   const p = (url.searchParams.get("path") || "").trim();
   if (!p) return json({ error: "缺少 path 参数" }, 400);
   const row = await env.DB.prepare(
-    "SELECT path, title, tags, type, status, source, created, updated, body FROM notes WHERE path = ?1",
+    "SELECT path, title, tags, type, status, source, created, updated, abstract, body FROM notes WHERE path = ?1",
   )
     .bind(p)
     .first();
