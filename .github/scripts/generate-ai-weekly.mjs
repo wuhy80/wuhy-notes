@@ -120,6 +120,7 @@ function parseDailySummary(text) {
   const cats = [];
   let current = null;
   let items = 0;
+  const rankable = []; // 带 `#N` 编号的条目，供 Top 10 与 ai_rankings 对齐
   for (let i = start + 1; i < lines.length; i++) {
     const l = lines[i];
     if (!l.startsWith(">")) break; // callout 结束
@@ -135,9 +136,76 @@ function parseDailySummary(text) {
       }
       current.items.push(item[1].trim());
       items++;
+      const numbered = item[1].trim().match(/^(.*)\s*`#(\d+)`\s*$/);
+      if (numbered) {
+        rankable.push({
+          n: Number(numbered[2]),
+          title: numbered[1].replace(/\s*\[[^\]]*\]\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim(),
+        });
+      }
     }
   }
-  return items ? { cats, items } : null;
+  return items ? { cats, items, rankable } : null;
+}
+
+/** 解析日报 frontmatter 里的 AI 评分（rank-ai-daily.mjs 写入），未评分返回 null */
+function parseRankings(text) {
+  const fm = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!fm || !/^ai_ranked:\s*true\b/m.test(fm[1])) return null;
+  const map = new Map();
+  for (const m of fm[1].matchAll(/-\s*\{\s*n:\s*(\d+),\s*score:\s*(\d+)\s*\}/g)) {
+    map.set(Number(m[1]), Number(m[2]));
+  }
+  return map;
+}
+
+/** 标题归一化：去空格与标点，仅保留字母数字与 CJK，用于跨天同事件去重 */
+function normTitle(t) {
+  return t.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]+/g, "");
+}
+
+/** 跨天汇总 Top 10：同事件（归一化后相等或互为包含，且较短方 ≥8 字）取最高分 */
+function buildTopSection(days) {
+  const pool = [];
+  for (const d of days) {
+    if (!d.rankings || !d.summary) continue;
+    for (const r of d.summary.rankable) {
+      const score = d.rankings.get(r.n);
+      if (score !== undefined) pool.push({ date: d.date, title: r.title, score });
+    }
+  }
+  if (!pool.length) return "";
+
+  pool.sort((a, b) => b.score - a.score);
+  const accepted = [];
+  for (const cand of pool) {
+    const cn = normTitle(cand.title);
+    if (!cn) continue;
+    const dup = accepted.some((a) => {
+      const an = normTitle(a.title);
+      return an === cn || (cn.includes(an) && an.length >= 8) || (an.includes(cn) && cn.length >= 8);
+    });
+    if (!dup) accepted.push(cand);
+    if (accepted.length >= 10) break;
+  }
+  if (!accepted.length) return "";
+
+  const rankedDays = days.filter((d) => d.rankings).length;
+  const rows = accepted
+    .map(
+      (a, i) =>
+        `| ${i + 1} | ${a.score} | ${a.title} | [[${a.date} AI 早报\\|${a.date.slice(5)}]] |`
+    )
+    .join("\n");
+  return (
+    `## 本周 Top 10（按 AI 注意力评分）\n\n` +
+    `> [!tip] 口径\n` +
+    `> 依据各期日报的 AI 注意力评分（五轴加权 0–100，\`deepseek-v4.1-flash\` 生成）跨天汇总，` +
+    `同事件取最高分；本期 ${days.length} 天中 ${rankedDays} 天已评分，未评分日期不参与排名。\n\n` +
+    `| 排名 | 分数 | 事件 | 当日 |\n` +
+    `|---:|---:|---|---|\n` +
+    `${rows}\n\n`
+  );
 }
 
 // ---------- 周报排版 ----------
@@ -172,9 +240,11 @@ function buildWeekly(weekEnd, days) {
   const intro =
     `> [!summary] 一周结论（自动聚合）\n` +
     `> 本篇由归档脚本从当周 ${days.length} 期 [[大模型/10-新闻/日报/00-日报索引|AI 早报]] 自动聚合` +
-    `（${firstDay} ~ ${lastDay}，共 ${totalItems} 条要点），只做逐日汇总，不含人工评论与观察。\n` +
+    `（${firstDay} ~ ${lastDay}，共 ${totalItems} 条要点），只做逐日汇总与评分榜单，不含人工评论与观察。\n` +
     `> 覆盖日期：${days.map((d) => `[[${d.date} AI 早报|${d.date.slice(5)}（周${weekdayCn(d.date)}）]]`).join("、")}\n\n` +
     `---\n\n`;
+
+  const top = buildTopSection(days);
 
   const body = days
     .map((d) => {
@@ -196,7 +266,7 @@ function buildWeekly(weekEnd, days) {
     "",
   ].join("\n");
 
-  return fm + "\n" + intro + body + "\n" + links;
+  return fm + "\n" + intro + top + body + "\n" + links;
 }
 
 // ---------- 索引模板（沿用现有周报索引的 Dataview 结构） ----------
@@ -312,7 +382,8 @@ function main() {
       const date = addDays(weekEnd, -i);
       const p = dailyPath(date);
       if (fs.existsSync(p)) {
-        days.push({ date, summary: parseDailySummary(fs.readFileSync(p, "utf8")) });
+        const text = fs.readFileSync(p, "utf8");
+        days.push({ date, summary: parseDailySummary(text), rankings: parseRankings(text) });
       }
     }
     if (!days.length) {
