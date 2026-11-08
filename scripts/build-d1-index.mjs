@@ -198,12 +198,48 @@ function main() {
   body     TEXT);`,
     "CREATE VIRTUAL TABLE notes_fts USING fts5(title, tags, body);",
   ];
+
+  // D1 单语句上限 100KB（UTF-8 字节），超长正文（如数小时访谈全文）分段写入：
+  // 第一段随 INSERT 落库，后续段用 UPDATE ... || 逐段追加，全文照常可搜
+  const STMT_LIMIT = 90_000;
+
+  function utf8Chunks(s, maxBytes) {
+    const chunks = [];
+    let start = 0;
+    while (start < s.length) {
+      let end = s.length;
+      let bytes = Buffer.byteLength(s.slice(start, end), "utf8");
+      while (end > start && bytes > maxBytes) {
+        end = start + Math.max(1, Math.floor(((end - start) * maxBytes) / bytes));
+        bytes = Buffer.byteLength(s.slice(start, end), "utf8");
+      }
+      chunks.push(s.slice(start, end));
+      start = end;
+    }
+    return chunks;
+  }
+
   for (const r of rows) {
+    const fields = [r.path, r.title, r.tags, r.type, r.status, r.source, r.created, r.updated, r.abstract]
+      .map(sqlEscape)
+      .join(",");
+    // 固定开销（列名清单 + 逗号括号）+ 当前字段 + 正文，全部按转义后的 UTF-8 字节计
+    const overhead =
+      Buffer.byteLength(
+        "INSERT INTO notes (path,title,tags,type,status,source,created,updated,abstract,body) VALUES (",
+        "utf8"
+      ) +
+      Buffer.byteLength(fields, "utf8") +
+      8;
+    const chunks = utf8Chunks(r.body, STMT_LIMIT - overhead);
     parts.push(
-      `INSERT INTO notes (path,title,tags,type,status,source,created,updated,abstract,body) VALUES (` +
-        [r.path, r.title, r.tags, r.type, r.status, r.source, r.created, r.updated, r.abstract, r.body].map(sqlEscape).join(",") +
-        ");",
+      `INSERT INTO notes (path,title,tags,type,status,source,created,updated,abstract,body) VALUES (${fields},${sqlEscape(chunks[0])});`
     );
+    for (let i = 1; i < chunks.length; i++) {
+      parts.push(
+        `UPDATE notes SET body = body || ${sqlEscape(chunks[i])} WHERE path = ${sqlEscape(r.path)};`
+      );
+    }
   }
   parts.push("INSERT INTO notes_fts(rowid,title,tags,body) SELECT id,title,tags,body FROM notes;");
   const sql = parts.join("\n") + "\n";
