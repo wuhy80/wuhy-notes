@@ -299,6 +299,9 @@ $siteSig = Get-StringHash (@(
   (Get-FileSig (Join-Path $Vault 'scripts\build-vault-meta.mjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\build-vocab.mjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\check-bilingual.mjs')),
+  # 站点服务端基础设施：Worker 与 D1 索引脚本变了也必须重新部署
+  (Get-FileSig (Join-Path $Vault 'cloudflare\_worker.js')),
+  (Get-FileSig (Join-Path $Vault 'scripts\build-d1-index.mjs')),
   (Get-FileSig (Join-Path $Vault 'scripts\site-assets\AlimamaShuHeiTi-Bold.woff2')),
   $sspSig,
   (Get-FileSig (Join-Path $Vault 'scripts\quartz.config.yaml')),
