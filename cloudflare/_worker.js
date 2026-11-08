@@ -124,10 +124,11 @@ async function handleSearch(url, env) {
             snippet(notes_fts, 2, '<mark>', '</mark>', '…', 16) AS excerpt
        FROM notes_fts f JOIN notes n ON n.id = f.rowid
       WHERE notes_fts MATCH ?1
-      ORDER BY rank
+      ORDER BY (n.title LIKE '%' || ?3 || '%') DESC,
+               bm25(notes_fts, 10.0, 5.0, 1.0)
       LIMIT ?2`,
   )
-    .bind(match, limit)
+    .bind(match, limit, q)
     .all();
   return json({ query: q, count: results.length, results });
 }
@@ -311,17 +312,21 @@ async function handleVisualAnswer(request, url, env) {
   if (!q) return Response.redirect(new URL("/ask", url).toString(), 302);
   const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 18, 1), 40);
 
-  // ① FTS 全文召回（主通道，永远可用）
+  // ① FTS 全文召回（主通道，永远可用）。
+  //    排序分层：标题命中 > 摘要命中 > 其余按 bm25（标题加权）——
+  //    避免「索引页正文词频高反而压过真正的笔记」
   const match = `"${q.replace(/"/g, '""')}"`;
   const { results } = await env.DB.prepare(
     `SELECT n.path, n.title, n.tags, n.type, n.updated, n.abstract,
             snippet(notes_fts, 2, '『', '』', '…', 12) AS excerpt
        FROM notes_fts f JOIN notes n ON n.id = f.rowid
       WHERE notes_fts MATCH ?1
-      ORDER BY bm25(notes_fts, 10.0, 5.0, 1.0)
+      ORDER BY (n.title LIKE '%' || ?3 || '%') DESC,
+               (n.abstract LIKE '%' || ?3 || '%') DESC,
+               bm25(notes_fts, 10.0, 5.0, 1.0)
       LIMIT ?2`,
   )
-    .bind(match, limit)
+    .bind(match, limit, q)
     .all();
 
   let notes = (results || []).map((r, i) => ({
