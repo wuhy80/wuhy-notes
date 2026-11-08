@@ -425,7 +425,7 @@ async function handleVisualAnswer(request, url, env) {
   const dates = notes.map((n) => n.u).filter(Boolean).sort();
   const data = { q, mode, ai: Boolean(spec), layout: spec ? spec.layout : "cards", feat: spec ? spec.featured : [], notes };
   return new Response(buildAnswerHtml(q, data, spec, llmModel, mode, dates), {
-    headers: { "content-type": "text/html; charset=utf-8" },
+    headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" },
   });
 }
 
