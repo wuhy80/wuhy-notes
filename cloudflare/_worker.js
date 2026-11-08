@@ -13,8 +13,10 @@
 //     /embeddings.json，问题文本经 Workers AI @cf/baai/bge-m3 向量化）
 //   GET /api/note?path=相对路径     → 取单篇全文
 //   GET /ask                       → 可视问答输入页
-//   GET /api/visual-answer?q=问题  → 可视化回答页（卡片墙/时间线/标签图/类型环，
-//     纯检索驱动、零依赖；绑定了 Workers AI 时追加 AI 一句话结论，未绑定自动降级）
+//   GET /api/visual-answer?q=问题  → 可视化回答页（卡片墙/时间线/标签图/类型环）。
+//     LLM 分层：OPENCODE_API_KEY（opencode Go，deepseek-v4.1-flash）优先，
+//     回退 Workers AI（需绑定 AI），都没有则纯检索渲染——每层只影响
+//     「AI 答案区」的生成质量，四视图本身永远可用。LLM 调用有每 IP 限频。
 //   POST /api/write-grade { text, words[] } → 英语写作批改（Workers AI LLM，
 //     双语精读页的「输出练习」组件调用；AI 未绑定时客户端降级为复制提示词）
 //
@@ -69,7 +71,7 @@ export default {
       if (url.pathname === "/api/note") return handleNote(url, env);
       if (url.pathname === "/api/write-grade") return handleWriteGrade(request, env);
       if (url.pathname === "/ask") return new Response(askPageHtml(), { headers: { "content-type": "text/html; charset=utf-8" } });
-      if (url.pathname === "/api/visual-answer") return handleVisualAnswer(url, env);
+      if (url.pathname === "/api/visual-answer") return handleVisualAnswer(request, url, env);
       return env.ASSETS.fetch(request);
     } catch (e) {
       return json({ error: String(e && e.message ? e.message : e) }, 500);
@@ -177,8 +179,88 @@ async function handleWriteGrade(request, env) {
 }
 
 // ====== /ask 可视问答 ======
-// 纯检索驱动的可视化回答：不依赖 LLM。绑定了 Workers AI 时额外生成
-// 「AI 一句话结论」；未绑定（ai:false）时该块自动省略，其余功能完整。
+// 检索驱动的可视化回答。LLM 分层可用：
+//   1) OPENCODE_API_KEY（Pages 环境变量，opencode Go 的 deepseek-v4.1-flash，中文最佳）
+//   2) Workers AI 绑定（变量名 AI）
+//   3) 都没有 → 纯检索渲染（四视图照常）
+// LLM 输出 JSON 布局规格：{takeaway, bullets, featured, layout_hint}，
+// 解析失败降级为纯文本结论。LLM 调用按 IP 限频 20 次/分钟。
+
+const OPENCODE_BASE = "https://opencode.ai/inference/go/openai/v1";
+const OPENCODE_MODEL = "deepseek-v4.1-flash";
+const LLM_LIMIT_PER_MIN = 20;
+const llmHits = new Map(); // isolate 级：ip -> [timestamp]
+
+function llmAllowed(ip) {
+  const now = Date.now();
+  const arr = (llmHits.get(ip) || []).filter((t) => now - t < 60_000);
+  if (arr.length >= LLM_LIMIT_PER_MIN) {
+    llmHits.set(ip, arr);
+    return false;
+  }
+  arr.push(now);
+  llmHits.set(ip, arr);
+  return true;
+}
+
+/** 分层 LLM：opencode 优先，Workers AI 回退；都不可用返回 null */
+async function llmComplete(env, messages, maxTokens) {
+  if (env.OPENCODE_API_KEY) {
+    try {
+      const res = await fetch(OPENCODE_BASE + "/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + env.OPENCODE_API_KEY,
+          "User-Agent": "wuhy-notes-site/1.0 (visual-answer)",
+          "x-opencode-session": "wuhy-notes-site-ask",
+        },
+        body: JSON.stringify({ model: OPENCODE_MODEL, temperature: 0.3, messages, max_tokens: maxTokens }),
+        signal: AbortSignal.timeout(60_000),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const text = data?.choices?.[0]?.message?.content;
+        if (text) return { text: text.trim(), model: OPENCODE_MODEL };
+      }
+    } catch (e) {
+      /* 回退到 Workers AI */
+    }
+  }
+  if (env.AI) {
+    try {
+      const res = await env.AI.run(GRADE_MODEL, { messages, max_tokens: maxTokens });
+      const text = res && res.response ? String(res.response).trim() : "";
+      if (text) return { text, model: GRADE_MODEL };
+    } catch (e) {
+      /* 都不可用 */
+    }
+  }
+  return null;
+}
+
+/** 解析 LLM 的 JSON 布局规格；失败则把整段文本当 takeaway */
+function parseAnswerSpec(text) {
+  let t = String(text).replace(/```(?:json)?/gi, "").trim();
+  try {
+    const obj = JSON.parse(t);
+    if (obj && typeof obj.takeaway === "string") {
+      return {
+        takeaway: obj.takeaway,
+        bullets: Array.isArray(obj.bullets) ? obj.bullets.filter((b) => typeof b === "string").slice(0, 4) : [],
+        featured: Array.isArray(obj.featured) ? obj.featured.filter((p) => typeof p === "string").slice(0, 3) : [],
+        layout: ["cards", "timeline", "graph", "donut"].includes(obj.layout_hint) ? obj.layout_hint : "cards",
+      };
+    }
+  } catch {
+    const s = t.indexOf("{");
+    const e = t.lastIndexOf("}");
+    if (s !== -1 && e > s) {
+      try { return parseAnswerSpec(t.slice(s, e + 1)); } catch { /* fallthrough */ }
+    }
+  }
+  return { takeaway: t, bullets: [], featured: [], layout: "cards" };
+}
 
 function escapeHtml(s) {
   return String(s ?? "")
@@ -223,7 +305,7 @@ function askPageHtml() {
 </div></body></html>`;
 }
 
-async function handleVisualAnswer(url, env) {
+async function handleVisualAnswer(request, url, env) {
   if (!env.DB) return json({ error: "D1 未绑定" }, 500);
   const q = (url.searchParams.get("q") || "").trim();
   if (!q) return Response.redirect(new URL("/ask", url).toString(), 302);
@@ -236,7 +318,7 @@ async function handleVisualAnswer(url, env) {
             snippet(notes_fts, 2, '『', '』', '…', 12) AS excerpt
        FROM notes_fts f JOIN notes n ON n.id = f.rowid
       WHERE notes_fts MATCH ?1
-      ORDER BY rank
+      ORDER BY bm25(notes_fts, 10.0, 5.0, 1.0)
       LIMIT ?2`,
   )
     .bind(match, limit)
@@ -302,43 +384,54 @@ async function handleVisualAnswer(url, env) {
     }
   }
 
-  // ③ AI 一句话结论（可选）
-  let aiSummary = "";
-  if (env.AI && notes.length) {
-    try {
-      const mat = notes
-        .slice(0, 8)
-        .map((n) => "《" + n.t + "》(" + (n.u || "无日期") + ")：" + (n.abs || n.ex || "").slice(0, 120))
-        .join("\n");
-      const res = await env.AI.run(GRADE_MODEL, {
-        messages: [
-          {
-            role: "system",
-            content:
-              "你是个人知识库的问答总结器。基于检索材料用中文回答用户的问题：先一句话直接回答，再补充最值得注意的 1-2 个细节。只使用材料中的信息，不要编造；材料未覆盖就明说。最多三句话。",
-          },
-          { role: "user", content: "问题：" + q + "\n\n检索材料：\n" + mat },
-        ],
-        max_tokens: 300,
-      });
-      aiSummary = ((res && res.response) || "").trim();
-    } catch (e) {
-      aiSummary = "";
+  // ③ LLM 答案设计（分层可用；每 IP 限频；无命中不调用）
+  const ip = request.headers.get("CF-Connecting-IP") || "anon";
+  let spec = null;
+  let llmModel = "";
+  if (notes.length && llmAllowed(ip)) {
+    const mat = notes
+      .slice(0, 12)
+      .map((n) => "path: " + n.p + "\n标题: " + n.t + "\n日期: " + (n.u || "无") + "\n摘要: " + (n.abs || n.ex || "无").slice(0, 150))
+      .join("\n---\n");
+    const res = await llmComplete(
+      env,
+      [
+        {
+          role: "system",
+          content:
+            "你是个人知识库的问答设计师。基于检索材料，输出 JSON（只输出 JSON，不要 Markdown）：\n" +
+            '{"takeaway":"≤80字，直接回答问题","bullets":["≤40字的要点，0-4条"],"featured":["最值得先读的笔记path，最多3个，必须来自材料里的path"],"layout_hint":"cards|timeline|graph 之一"}\n' +
+            "规则：只用材料中的信息，不编造；材料回答不了问题就如实说（takeaway 里说明），featured 给空数组。layout_hint 按问题性质选：问演化/时间选 timeline，问概念关联选 graph，其余 cards。",
+        },
+        { role: "user", content: "问题：" + q + "\n\n检索材料：\n" + mat },
+      ],
+      500
+    );
+    if (res) {
+      spec = parseAnswerSpec(res.text);
+      llmModel = res.model;
     }
   }
 
+  // featured 置顶（保持组内分数序）
+  const featSet = new Set(spec ? spec.featured : []);
+  notes.sort((a, b) => (featSet.has(a.p) === featSet.has(b.p) ? b.score - a.score : featSet.has(a.p) ? -1 : 1));
+
   const dates = notes.map((n) => n.u).filter(Boolean).sort();
-  const data = { q, mode, ai: Boolean(aiSummary), notes };
-  return new Response(buildAnswerHtml(q, data, aiSummary, mode, dates), {
+  const data = { q, mode, ai: Boolean(spec), layout: spec ? spec.layout : "cards", feat: spec ? spec.featured : [], notes };
+  return new Response(buildAnswerHtml(q, data, spec, llmModel, mode, dates), {
     headers: { "content-type": "text/html; charset=utf-8" },
   });
 }
 
-function buildAnswerHtml(q, data, aiSummary, mode, dates) {
+function buildAnswerHtml(q, data, spec, llmModel, mode, dates) {
   const json = JSON.stringify(data).replace(/</g, "\\u003c");
   const esc = escapeHtml;
-  const aiBlock = aiSummary
-    ? '<div class="ai"><div class="ai-t">✦ AI 结论</div>' + esc(aiSummary) + "</div>"
+  const aiBlock = spec
+    ? '<div class="ai"><div class="ai-t">✦ AI 答案 <span class="muted">(' + esc(llmModel) + ")</span></div>" +
+      esc(spec.takeaway) +
+      (spec.bullets.length ? "<ul>" + spec.bullets.map((b) => "<li>" + esc(b) + "</li>").join("") + "</ul>" : "") +
+      "</div>"
     : "";
   const coverage = dates.length
     ? "命中 <b>" + data.notes.length + "</b> 篇 · 时间跨度 " + dates[0] + " ~ " + dates[dates.length - 1] + " · " + esc(mode)
@@ -443,7 +536,8 @@ function renderCards() {
     if (f && (n.t + " " + (n.tags || []).join(" ")).toLowerCase().indexOf(f) < 0) return;
     if (state.tag && (n.tags || []).indexOf(state.tag) < 0) return;
     if (state.type && (n.type || "未标注") !== state.type) return;
-    html += '<div class="card" onclick="openNote(' + i + ')"><div class="card-t">' + esc(n.t) +
+    html += '<div class="card" onclick="openNote(' + i + ')"><div class="card-t">' +
+      ((DATA.feat || []).indexOf(n.p) >= 0 ? "★ " : "") + esc(n.t) +
       ' <span class="score">' + Math.round(n.score * 100) + "</span></div><div class=\"card-a\">" +
       esc(n.abs || n.ex || "（无摘要）") + '</div><div class="card-m">' + esc(n.u || "无日期") + " · " +
       esc((n.tags || []).slice(0, 3).join(" / ") || n.type || "未标注") + "</div></div>";
@@ -580,6 +674,6 @@ function openNote(i) {
 }
 function closeModal() { document.getElementById("modal").style.display = "none"; }
 document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeModal(); });
-renderChips(); renderCards();
+renderChips(); renderCards(); showTab(DATA.layout || "cards");
 </script></body></html>`;
 }
