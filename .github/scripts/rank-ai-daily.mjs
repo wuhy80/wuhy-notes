@@ -183,7 +183,13 @@ function parseScores(text, expectN) {
 async function callLLM(items) {
   const res = await fetch(`${BASE_URL}/chat/completions`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${API_KEY}` },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${API_KEY}`,
+      // opencode Go 要求外部脚本自报身份 + 稳定会话 ID（反滥用监控）
+      "User-Agent": "wuhy-notes-ai-rank/1.0 (github.com/wuhy80/wuhy-notes)",
+      "x-opencode-session": "wuhy-notes-ai-daily-rank",
+    },
     body: JSON.stringify({
       model: MODEL,
       temperature: 0.4,
