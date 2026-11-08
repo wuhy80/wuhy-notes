@@ -205,7 +205,7 @@ func KruskalMST(edges []KruskalEdge, n int) (int, []KruskalEdge) {
 ## 相关主题
 
 - [[Prim算法|Prim算法]] - 从点扩展的MST算法
-- [[../../树算法/高级树结构/并查集|并查集]] - Kruskal的核心数据结构
+- [[../../数据结构/并查集|并查集]] - Kruskal的核心数据结构
 - [[../图的基础/边集数组|边集数组]] - Kruskal算法的数据结构
 - [[../经典问题/连接所有点|连接所有点]] - Kruskal算法应用
 - [[../_index|图算法]] - 返回图算法总览

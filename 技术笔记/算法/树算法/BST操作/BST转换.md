@@ -56,7 +56,7 @@ func bstToSortedArray(root *TreeNode) []int {
 ## 相关主题
 
 - [[中序遍历|中序遍历]]
-- [[平衡二叉树|平衡二叉树]]
+- [[平衡二叉树判断|平衡二叉树]]
 - [[../_index|树算法]]
 
 ---
