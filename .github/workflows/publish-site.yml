@@ -67,6 +67,11 @@ on:
       - "scripts/publish-site.ps1"
       - "scripts/site-assets/**"
       - ".github/workflows/publish-site.yml"
+      # 数据基础设施：影响 D1 索引 / Worker / 元数据 / 生词本，变了也要重新发布
+      - "cloudflare/**"
+      - "scripts/build-d1-index.mjs"
+      - "scripts/build-vault-meta.mjs"
+      - "scripts/build-vocab.mjs"
   # ② 日报归档成功即发布（归档用 GITHUB_TOKEN 推送，接不到 ①）
   workflow_run:
     workflows: ["AI 早报归档"]
