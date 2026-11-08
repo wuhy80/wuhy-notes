@@ -204,28 +204,30 @@ function llmAllowed(ip) {
   return true;
 }
 
-/** 分层 LLM：opencode 优先，Workers AI 回退；都不可用返回 null */
+/** 分层 LLM：opencode 优先（失败自动重试一次），Workers AI 回退；都不可用返回 null */
 async function llmComplete(env, messages, maxTokens) {
   if (env.OPENCODE_API_KEY) {
-    try {
-      const res = await fetch(OPENCODE_BASE + "/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + env.OPENCODE_API_KEY,
-          "User-Agent": "wuhy-notes-site/1.0 (visual-answer)",
-          "x-opencode-session": "wuhy-notes-site-ask",
-        },
-        body: JSON.stringify({ model: OPENCODE_MODEL, temperature: 0.3, messages, max_tokens: maxTokens }),
-        signal: AbortSignal.timeout(60_000),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const text = data?.choices?.[0]?.message?.content;
-        if (text) return { text: text.trim(), model: OPENCODE_MODEL };
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res = await fetch(OPENCODE_BASE + "/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + env.OPENCODE_API_KEY,
+            "User-Agent": "wuhy-notes-site/1.0 (visual-answer)",
+            "x-opencode-session": "wuhy-notes-site-ask",
+          },
+          body: JSON.stringify({ model: OPENCODE_MODEL, temperature: 0.3, messages, max_tokens: maxTokens }),
+          signal: AbortSignal.timeout(60_000),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const text = data?.choices?.[0]?.message?.content;
+          if (text) return { text: text.trim(), model: OPENCODE_MODEL };
+        }
+      } catch (e) {
+        /* 重试或回退 */
       }
-    } catch (e) {
-      /* 回退到 Workers AI */
     }
   }
   if (env.AI) {
@@ -239,6 +241,11 @@ async function llmComplete(env, messages, maxTokens) {
   }
   return null;
 }
+
+// 同问题的 LLM 布局规格缓存（isolate 级，30 分钟）：重复访问不再调用 LLM，
+// 也让「偶发失败」只影响第一次
+const specCache = new Map(); // key: q.toLowerCase() -> {spec, model, ts}
+const SPEC_TTL = 30 * 60_000;
 
 /** 解析 LLM 的 JSON 布局规格；失败则把整段文本当 takeaway */
 function parseAnswerSpec(text) {
@@ -389,11 +396,16 @@ async function handleVisualAnswer(request, url, env) {
     }
   }
 
-  // ③ LLM 答案设计（分层可用；每 IP 限频；无命中不调用）
+  // ③ LLM 答案设计（分层可用；每 IP 限频；无命中不调用；同问题 30 分钟内复用缓存）
   const ip = request.headers.get("CF-Connecting-IP") || "anon";
+  const cacheKey = q.toLowerCase();
+  const cachedSpec = specCache.get(cacheKey);
   let spec = null;
   let llmModel = "";
-  if (notes.length && llmAllowed(ip)) {
+  if (cachedSpec && Date.now() - cachedSpec.ts < SPEC_TTL) {
+    spec = cachedSpec.spec;
+    llmModel = cachedSpec.model + "（缓存）";
+  } else if (notes.length && llmAllowed(ip)) {
     const mat = notes
       .slice(0, 12)
       .map((n) => "path: " + n.p + "\n标题: " + n.t + "\n日期: " + (n.u || "无") + "\n摘要: " + (n.abs || n.ex || "无").slice(0, 150))
@@ -415,6 +427,11 @@ async function handleVisualAnswer(request, url, env) {
     if (res) {
       spec = parseAnswerSpec(res.text);
       llmModel = res.model;
+      specCache.set(cacheKey, { spec, model: res.model, ts: Date.now() });
+      if (specCache.size > 200) {
+        const oldest = [...specCache.entries()].sort((a, b) => a[1].ts - b[1].ts)[0];
+        if (oldest) specCache.delete(oldest[0]);
+      }
     }
   }
 
