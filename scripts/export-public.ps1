@@ -439,6 +439,10 @@ Write-Host "=== 4.6 生成首页 index.md 与静态早报索引 ===" -Foreground
 
 # 1. 扫描最近早报（供首页和索引页静态使用）
 $dailyDir = Join-Path $Content '大模型\10-新闻\日报'
+# 站点链接一律用「库内相对路径」：Quartz 的 shortest 解析只在全库同名文件唯一时才
+# 直接命中，日报与周报下都有 00-YYYY 年索引 / 00-YYYY-MM 月索引，裸文件名会被判成
+# 不唯一并退化成「从站点根目录解析」→ 点开 404（2026-11-10 线上实际发生）。
+$dailyRel = '大模型/10-新闻/日报'
 $recentDailies = @()
 if (Test-Path -LiteralPath $dailyDir) {
   $dailyFiles = @(Get-ChildItem -LiteralPath $dailyDir -Recurse -File -Filter "*AI 早报.md" -Force | Sort-Object Name -Descending)
@@ -451,17 +455,24 @@ if (Test-Path -LiteralPath $dailyIndexFile) {
   $dContent = Get-Content -LiteralPath $dailyIndexFile -Raw -Encoding UTF8
   $staticNav = @(
     '',
-    '## 📰 静态归档直达（网页端）',
+    '## 📰 静态归档直达（免脚本备用）',
     '',
     '> [!tip] 网页端直达说明',
-    '> 静态站点不运行 Obsidian Dataview 插件，下方为构建时生成的直达归档列表。',
+    '> 上面的查询块由站点的 Dataview 渲染器在浏览器里现场执行；下面是构建时生成的纯静态列表，渲染器没加载时也能点。',
     '',
-    '### 📅 月度索引',
-    '- [[00-2026 年索引|2026 年早报总索引]]'
+    '### 📅 年度与月度索引'
   )
-  $monthIndexFiles = @(Get-ChildItem -LiteralPath $dailyDir -Recurse -File -Filter "*月索引.md" -Force | Sort-Object Name -Descending)
-  foreach ($mf in $monthIndexFiles) {
-    $staticNav += "  - [[$($mf.BaseName)]]"
+  $yearIndexFiles = @(Get-ChildItem -LiteralPath $dailyDir -Recurse -File -Filter "*年索引.md" -Force | Sort-Object Name -Descending)
+  foreach ($yf in $yearIndexFiles) {
+    $yRel = (($yf.FullName.Substring($dailyDir.Length + 1)) -replace '\\', '/') -replace '\.md$', ''
+    $staticNav += "- [[$dailyRel/$yRel|$($yf.BaseName)]]"
+    $monthDirsOfYear = @(Get-ChildItem -LiteralPath $yf.Directory -Directory -Force | Where-Object { $_.Name -match '^\d{4}-\d{2}$' } | Sort-Object Name -Descending)
+    foreach ($mDir in $monthDirsOfYear) {
+      $mIndexFile = Join-Path $mDir.FullName "00-$($mDir.Name) 月索引.md"
+      if (-not (Test-Path -LiteralPath $mIndexFile)) { continue }
+      $mRel = (($mIndexFile.Substring($dailyDir.Length + 1)) -replace '\\', '/') -replace '\.md$', ''
+      $staticNav += "  - [[$dailyRel/$mRel|00-$($mDir.Name) 月索引]]"
+    }
   }
   if ($recentDailies.Count -gt 0) {
     $staticNav += ''
@@ -471,7 +482,8 @@ if (Test-Path -LiteralPath $dailyIndexFile) {
     foreach ($df in $recentDailies) {
       $base = $df.BaseName
       $dateStr = if ($base -match '^(\d{4}-\d{2}-\d{2})') { $Matches[1] } else { '' }
-      $staticNav += "| $dateStr | [[$base]] |"
+      $rel = (($df.FullName.Substring($dailyDir.Length + 1)) -replace '\\', '/') -replace '\.md$', ''
+      $staticNav += "| $dateStr | [[$dailyRel/$rel]] |"
     }
   }
   $dContent = $dContent + "`n" + ($staticNav -join "`n") + "`n"
@@ -497,7 +509,8 @@ foreach ($md in $monthDirs) {
       foreach ($mf in $mFiles) {
         $base = $mf.BaseName
         $dateStr = if ($base -match '^(\d{4}-\d{2}-\d{2})') { $Matches[1] } else { '' }
-        $mNav += "| $dateStr | [[$base]] |"
+        $rel = (($mf.FullName.Substring($dailyDir.Length + 1)) -replace '\\', '/') -replace '\.md$', ''
+        $mNav += "| $dateStr | [[$dailyRel/$rel]] |"
       }
       $mContent = $mContent + "`n" + ($mNav -join "`n") + "`n"
       Write-Utf8 $mIndexFile $mContent

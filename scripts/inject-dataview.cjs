@@ -27,6 +27,10 @@ const TAG = '<script defer src="/static/dataview-lite.js"></script>'
 // Quartz 的 rehype-pretty-code 输出 data-language 属性；language-* class 只在
 // 命中高亮语言时才有，两种形态都认
 const HAS_BLOCK = /data-language="(?:dataview(?:js)?|tagcloud)"|language-(?:dataview|tagcloud)[\s"']/
+// 幂等判断必须认「脚本标签」而不是裸文件名：笔记正文里只要提到过
+// `/static/dataview-lite.js`（例如 00-日报索引 的发布说明），裸 includes 就会误判成
+// 「已注入」并跳过，页面上剩下一堆没渲染的查询块（2026-11-10 线上实际发生）。
+const HAS_TAG = /<script[^>]*\bsrc=["']\/static\/dataview-lite\.js["']/
 
 function walk(dir, out) {
   for (const name of fs.readdirSync(dir)) {
@@ -45,7 +49,7 @@ function main() {
   let skipped = 0
   for (const file of files) {
     const html = fs.readFileSync(file, 'utf8')
-    if (html.includes('dataview-lite.js')) { skipped++; continue }
+    if (HAS_TAG.test(html)) { skipped++; continue }
     // 脚本标签注入所有页面（SPA 导航安全）；含查询块的页面才计入统计
     if (!DRY) {
       const idx = html.lastIndexOf('</head>')
