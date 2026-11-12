@@ -202,6 +202,24 @@ if (Test-Path -LiteralPath $bilSrc) {
   Write-Host "  未找到 bilingual-reader.js，精读页将保持表格版式" -ForegroundColor Yellow
 }
 
+# 数字孪生交互示例页（技术笔记《Three.js 数字孪生可视化网页制作指南》的在线体验）：
+# 纯前端单文件 HTML，Three.js 走 CDN，无本地依赖；→ Quartz static，
+# 线上路径 /static/pv-digital-twin.html（HTML 附件不进导出白名单，故走静态资源通道）
+$dtSrc = Join-Path $Vault 'scripts\site-assets\pv-digital-twin.html'
+if (Test-Path -LiteralPath $dtSrc) {
+  $dtDstDir = Join-Path $Quartz 'quartz\static'
+  New-Item -ItemType Directory -Force -Path $dtDstDir | Out-Null
+  $dtDst = Join-Path $dtDstDir 'pv-digital-twin.html'
+  if (-not (Test-Path -LiteralPath $dtDst) -or (Get-FileHash -LiteralPath $dtDst).Hash -ne (Get-FileHash -LiteralPath $dtSrc).Hash) {
+    Copy-Item -LiteralPath $dtSrc -Destination $dtDst -Force
+    Write-Host "  已部署数字孪生示例 pv-digital-twin.html（内容有变化）"
+  } else {
+    Write-Host "  数字孪生示例无变化，跳过覆盖"
+  }
+} else {
+  Write-Host "  未找到 pv-digital-twin.html，示例页不随本次发布" -ForegroundColor Yellow
+}
+
 # 移动端抽屉脚本：所有页面都用，源码 .cjs（.js 会被本机文档加密驱动加密）
 $mnavSrc = Join-Path $Vault 'scripts\site-assets\mobile-nav.cjs'
 if (Test-Path -LiteralPath $mnavSrc) {

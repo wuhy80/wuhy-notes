@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PHOTON // TWIN · 光伏组件无人自动化制造车间数字孪生</title>
+<script src="https://unpkg.com/lucide@0.294.0/dist/umd/lucide.js"></script>
+<script>
+window.zcode = {
+  widgetState: (function(){ try { return JSON.parse(localStorage.getItem("pvtwin-state") || "null"); } catch(e){ return null; } })(),
+  setWidgetState: function(s){ try { localStorage.setItem("pvtwin-state", JSON.stringify(s)); } catch(e){} return Promise.resolve(); }
+};
+</script>
+<style> html,body{margin:0;padding:14px;background:#050e1c} </style>
+</head>
+<body>
+<meta charset="utf-8">
+<div id="pvtwin-app" class="pv-app">
+  <div class="pv-topbar">
+    <div class="pv-brand">
+      <div class="pv-logo"><i data-lucide="factory" aria-hidden="true"></i></div>
+      <div class="pv-brand-text">
+        <div class="pv-brand-name">PHOTON <span>//</span> TWIN</div>
+        <div class="pv-brand-sub">光伏组件无人自动化制造车间 · 数字孪生</div>
+      </div>
+    </div>
+    <div class="pv-stats">
+      <div class="pv-stat"><div class="pv-stat-label">OEE 综合效率</div><div class="pv-stat-value num" id="pv-oee">94.5<span class="unit">%</span></div></div>
+      <div class="pv-stat"><div class="pv-stat-label">今日产量</div><div class="pv-stat-value num" id="pv-output">12,730<span class="unit">件</span></div></div>
+      <div class="pv-stat pv-hide-sm"><div class="pv-stat-label">洁净等级</div><div class="pv-stat-value num">ISO 7</div></div>
+      <div class="pv-stat pv-hide-sm"><div class="pv-stat-label">本月产值</div><div class="pv-stat-value num" id="pv-value">18.6<span class="unit">亿</span></div></div>
+    </div>
+    <div class="pv-actions">
+      <span class="pv-run-chip"><span class="pv-dot pv-dot-green" id="pv-run-dot"></span><span id="pv-run-text">运行中 RUNNING</span></span>
+      <span class="pv-uptime num" id="pv-uptime">21:08:02</span>
+    </div>
+  </div>
+  <div class="pv-ticker"><span class="pv-ticker-tag">DATA LINK</span><span class="pv-ticker-dot"></span><span class="pv-ticker-text" id="pv-ticker">设备数据链路已建立 · 正在同步 5 个工位实时数据</span></div>
+
+  <div class="pv-stage" id="pv-stage">
+    <div class="pv-canvas-wrap" id="pv-canvas-wrap" role="img" aria-label="光伏组件自动化产线三维数字孪生场景：五道工序设备沿传送带排布，产品在传送带上流动，AGV 小车往返配送">
+      <div class="pv-fallback" id="pv-fallback" hidden>
+        <i data-lucide="wifi-off" aria-hidden="true"></i>
+        <p>3D 引擎加载失败（需要联网加载 Three.js）。刷新或检查网络后重试。</p>
+      </div>
+    </div>
+    <div class="pv-labels" id="pv-labels" aria-hidden="true"></div>
+
+    <aside class="pv-panel pv-left" aria-label="工序清单">
+      <div class="pv-panel-head"><i data-lucide="workflow" aria-hidden="true"></i><span>工序清单</span><span class="pv-panel-count num">5 STEPS</span></div>
+      <ol class="pv-steps" id="pv-steps"></ol>
+      <div class="pv-panel-foot"><span class="pv-aux-title">辅助单元</span>
+        <div class="pv-aux"><span class="pv-dot pv-dot-green"></span>六轴机械人 ×4</div>
+        <div class="pv-aux"><span class="pv-dot pv-dot-green"></span>AGV 物流车 ×3</div>
+      </div>
+    </aside>
+
+    <aside class="pv-panel pv-right" aria-label="设备详情" aria-live="polite">
+      <div class="pv-panel-head"><i data-lucide="cpu" aria-hidden="true"></i><span>设备详情</span><span class="pv-panel-live">LIVE</span></div>
+      <div id="pv-detail"></div>
+    </aside>
+
+    <div class="pv-toasts" id="pv-toasts" aria-live="polite"></div>
+
+    <div class="pv-toolbar" role="toolbar" aria-label="视角与运行控制">
+      <button type="button" class="pv-btn is-active" id="pv-btn-flow" aria-pressed="true"><i data-lucide="play" aria-hidden="true"></i>产品流动</button>
+      <button type="button" class="pv-btn" id="pv-btn-pause" aria-pressed="false"><i data-lucide="pause" aria-hidden="true"></i>暂停运行</button>
+      <button type="button" class="pv-btn" id="pv-btn-top"><i data-lucide="video" aria-hidden="true"></i>俯视视角</button>
+      <button type="button" class="pv-btn" id="pv-btn-xray" aria-pressed="false"><i data-lucide="scan-line" aria-hidden="true"></i>X光透视</button>
+      <button type="button" class="pv-btn" id="pv-btn-alarm"><i data-lucide="bell" aria-hidden="true"></i>报警模拟</button>
+      <button type="button" class="pv-btn" id="pv-btn-energy" aria-pressed="false"><i data-lucide="zap" aria-hidden="true"></i>能耗监控</button>
+      <button type="button" class="pv-btn" id="pv-btn-reset"><i data-lucide="rotate-ccw" aria-hidden="true"></i>一键复位</button>
+    </div>
+    <div class="pv-hint" id="pv-hint">拖拽旋转 · 滚轮缩放 · 点击设备查看详情</div>
+  </div>
+
+  <style>
+    #pvtwin-app {
+      --pv-bg: #050e1c; --pv-panel: rgba(9, 24, 46, 0.92); --pv-panel2: rgba(6, 16, 32, 0.85);
+      --pv-line: rgba(56, 189, 248, 0.28); --pv-line-strong: rgba(56, 189, 248, 0.55);
+      --pv-text: #d9ecfb; --pv-dim: #6f8dab; --pv-accent: #38bdf8; --pv-accent2: #7dd3fc;
+      --pv-green: #34d399; --pv-red: #f87171; --pv-amber: #fbbf24;
+      font-family: "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+      color: var(--pv-text); background: var(--pv-bg); border-radius: 12px; overflow: hidden;
+      border: 1px solid rgba(56, 189, 248, 0.16);
+    }
+    #pvtwin-app * { box-sizing: border-box; margin: 0; padding: 0; }
+    #pvtwin-app .num { font-variant-numeric: tabular-nums; font-family: "JetBrains Mono", Consolas, monospace; }
+
+    /* ---- top bar ---- */
+    .pv-topbar { display: flex; align-items: center; gap: 18px; padding: 12px 16px; background: linear-gradient(180deg, #0a1e3a, #071629); border-bottom: 1px solid var(--pv-line); flex-wrap: wrap; }
+    .pv-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .pv-logo { width: 38px; height: 38px; border-radius: 9px; display: grid; place-items: center; color: var(--pv-accent2); background: rgba(56,189,248,.12); border: 1px solid var(--pv-line); box-shadow: inset 0 0 14px rgba(56,189,248,.18); }
+    .pv-logo svg { width: 20px; height: 20px; }
+    .pv-brand-name { font-weight: 500; letter-spacing: 2px; font-size: 16px; color: #eaf6ff; white-space: nowrap; }
+    .pv-brand-name span { color: var(--pv-accent); }
+    .pv-brand-sub { font-size: 11px; color: var(--pv-dim); letter-spacing: 1px; white-space: nowrap; }
+    .pv-stats { display: flex; gap: 26px; flex: 1; justify-content: center; flex-wrap: wrap; }
+    .pv-stat-label { font-size: 11px; color: var(--pv-dim); letter-spacing: 1px; }
+    .pv-stat-value { font-size: 21px; color: #eaf6ff; line-height: 1.25; }
+    .pv-stat-value .unit { font-size: 12px; color: var(--pv-dim); margin-left: 3px; }
+    .pv-actions { display: flex; align-items: center; gap: 12px; }
+    .pv-run-chip { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--pv-green); border: 1px solid rgba(52,211,153,.35); background: rgba(52,211,153,.08); border-radius: 999px; padding: 5px 12px; letter-spacing: 1px; white-space: nowrap; }
+    .pv-uptime { font-size: 13px; color: var(--pv-dim); }
+    .pv-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex: none; }
+    .pv-dot-green { background: var(--pv-green); box-shadow: 0 0 6px rgba(52,211,153,.9); }
+    .pv-dot-red { background: var(--pv-red); box-shadow: 0 0 6px rgba(248,113,113,.9); }
+    .pv-dot-amber { background: var(--pv-amber); box-shadow: 0 0 6px rgba(251,191,36,.9); }
+
+    /* ---- ticker ---- */
+    .pv-ticker { display: flex; align-items: center; gap: 8px; padding: 5px 16px; font-size: 11px; color: var(--pv-dim); border-bottom: 1px solid rgba(56,189,248,.1); letter-spacing: 1px; overflow: hidden; white-space: nowrap; }
+    .pv-ticker-tag { color: var(--pv-accent); border: 1px solid var(--pv-line); border-radius: 3px; padding: 1px 6px; flex: none; }
+    .pv-ticker-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--pv-green); box-shadow: 0 0 6px rgba(52,211,153,.9); animation: pvBlink 1.6s infinite; flex: none; }
+    @keyframes pvBlink { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+    .pv-ticker-text { min-width: 0; text-overflow: ellipsis; }
+
+    /* ---- stage ---- */
+    .pv-stage { position: relative; height: 640px; background: radial-gradient(1100px 480px at 50% 0%, #0a1e38 0%, var(--pv-bg) 62%); overflow: hidden; }
+    .pv-canvas-wrap { position: absolute; inset: 0; cursor: grab; }
+    .pv-canvas-wrap:active { cursor: grabbing; }
+    .pv-canvas-wrap canvas { display: block; }
+    .pv-fallback { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 10px; align-items: center; justify-content: center; color: var(--pv-dim); font-size: 13px; text-align: center; padding: 20px; }
+    .pv-fallback[hidden] { display: none; }
+    .pv-fallback svg { width: 28px; height: 28px; color: var(--pv-accent); }
+    .pv-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+    .pv-label { position: absolute; left: 0; top: 0; transform: translate(-50%, -120%); display: flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: 1px; color: #bfe0f6; background: rgba(6,18,36,.72); border: 1px solid rgba(56,189,248,.22); padding: 3px 9px; border-radius: 4px; white-space: nowrap; transition: color .2s, border-color .2s; }
+    .pv-label .pv-dot { width: 6px; height: 6px; }
+    .pv-label.is-active { color: #eaf6ff; border-color: var(--pv-line-strong); box-shadow: 0 0 12px rgba(56,189,248,.25); }
+    .pv-label.is-alert { color: #fecaca; border-color: rgba(248,113,113,.6); }
+    .pv-energy { position: absolute; left: 0; top: 0; transform: translate(-50%, 8px); font-size: 10px; color: var(--pv-amber); background: rgba(6,18,36,.7); border: 1px solid rgba(251,191,36,.3); border-radius: 3px; padding: 1px 6px; white-space: nowrap; }
+
+    /* ---- panels ---- */
+    .pv-panel { position: absolute; top: 14px; width: 218px; max-height: calc(100% - 120px); display: flex; flex-direction: column; background: var(--pv-panel); border: 1px solid var(--pv-line); border-radius: 8px; backdrop-filter: blur(6px); box-shadow: 0 6px 24px rgba(2,8,20,.55); overflow: hidden; }
+    .pv-left { left: 14px; }
+    .pv-right { right: 14px; width: 246px; }
+    .pv-panel-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; font-size: 13px; letter-spacing: 2px; color: #cfe8fa; border-bottom: 1px solid rgba(56,189,248,.16); background: linear-gradient(90deg, rgba(56,189,248,.1), transparent); }
+    .pv-panel-head svg { width: 15px; height: 15px; color: var(--pv-accent); }
+    .pv-panel-count { margin-left: auto; font-size: 10px; color: var(--pv-dim); }
+    .pv-panel-live { margin-left: auto; font-size: 10px; color: var(--pv-green); border: 1px solid rgba(52,211,153,.4); border-radius: 3px; padding: 1px 5px; animation: pvBlink 2s infinite; }
+    .pv-panel-foot { border-top: 1px solid rgba(56,189,248,.14); padding: 9px 12px 11px; }
+    .pv-aux-title { font-size: 10px; letter-spacing: 2px; color: var(--pv-dim); display: block; margin-bottom: 7px; }
+    .pv-aux { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #a8c8e2; padding: 3px 0; }
+
+    .pv-steps { list-style: none; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(56,189,248,.3) transparent; }
+    .pv-steps::-webkit-scrollbar { width: 4px; }
+    .pv-steps::-webkit-scrollbar-thumb { background: rgba(56,189,248,.3); border-radius: 2px; }
+    .pv-step { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; background: transparent; border: 0; border-left: 2px solid transparent; color: #b6d4ec; font: inherit; font-size: 13px; padding: 11px 12px; cursor: pointer; transition: background .15s, color .15s; }
+    .pv-step:hover { background: rgba(56,189,248,.07); color: #e2f2fe; }
+    .pv-step.is-active { background: linear-gradient(90deg, rgba(56,189,248,.16), rgba(56,189,248,.03)); border-left-color: var(--pv-accent); color: #eaf6ff; }
+    .pv-step-idx { font-size: 10px; color: var(--pv-dim); width: 16px; flex: none; }
+    .pv-step.is-active .pv-step-idx { color: var(--pv-accent2); }
+    .pv-step-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pv-step-en { display: block; font-size: 9px; letter-spacing: 1.5px; color: var(--pv-dim); margin-top: 2px; }
+    .pv-step.is-active .pv-step-en { color: rgba(125,211,252,.8); }
+    .pv-step.is-alert .pv-step-name { color: #fecaca; }
+
+    /* ---- detail panel ---- */
+    #pv-detail { padding: 12px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(56,189,248,.3) transparent; }
+    #pv-detail::-webkit-scrollbar { width: 4px; }
+    #pv-detail::-webkit-scrollbar-thumb { background: rgba(56,189,248,.3); }
+    .pv-d-empty { color: var(--pv-dim); font-size: 12px; line-height: 1.7; padding: 6px 2px; }
+    .pv-d-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+    .pv-d-name { font-size: 17px; color: #eaf6ff; font-weight: 500; }
+    .pv-d-status { font-size: 10px; letter-spacing: 1px; color: var(--pv-green); border: 1px solid rgba(52,211,153,.4); background: rgba(52,211,153,.08); border-radius: 3px; padding: 2px 7px; white-space: nowrap; }
+    .pv-d-status.is-alert { color: var(--pv-red); border-color: rgba(248,113,113,.5); background: rgba(248,113,113,.1); }
+    .pv-d-code { font-size: 10px; letter-spacing: 2px; color: var(--pv-dim); margin-bottom: 10px; }
+    .pv-d-alert { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #fecaca; background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.4); border-radius: 5px; padding: 8px 10px; margin-bottom: 10px; animation: pvBlink 1.2s infinite; }
+    .pv-metric { padding: 8px 0 2px; }
+    .pv-metric-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: #9dc2de; }
+    .pv-metric-val { font-size: 15px; color: #eaf6ff; }
+    .pv-metric-val .unit { font-size: 10px; color: var(--pv-dim); margin-left: 2px; }
+    .pv-bar { height: 4px; border-radius: 2px; background: rgba(56,189,248,.12); margin-top: 5px; overflow: hidden; }
+    .pv-bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #0ea5e9, #7dd3fc); box-shadow: 0 0 8px rgba(56,189,248,.5); transition: width .6s ease; }
+    .pv-bar-fill.is-warn { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .pv-d-meta { margin-top: 12px; border-top: 1px solid rgba(56,189,248,.14); padding-top: 10px; display: grid; gap: 6px; }
+    .pv-d-meta-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--pv-dim); }
+    .pv-d-meta-row b { color: #a8c8e2; font-weight: 400; }
+    .pv-d-desc { font-size: 11px; color: var(--pv-dim); line-height: 1.7; margin-top: 10px; }
+
+    /* ---- toasts ---- */
+    .pv-toasts { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; z-index: 5; max-width: min(92%, 560px); }
+    .pv-toast { display: flex; align-items: center; gap: 9px; font-size: 12px; color: #d9ecfb; background: rgba(8,22,42,.92); border: 1px solid var(--pv-line); border-left: 3px solid var(--pv-accent); border-radius: 6px; padding: 8px 14px; box-shadow: 0 6px 20px rgba(2,8,20,.6); animation: pvToastIn .25s ease; }
+    .pv-toast.is-alert { border-left-color: var(--pv-red); color: #fee2e2; }
+    .pv-toast.is-ok { border-left-color: var(--pv-green); }
+    .pv-toast.leaving { opacity: 0; transform: translateY(-6px); transition: all .3s; }
+    @keyframes pvToastIn { from { opacity: 0; transform: translateY(-8px); } }
+
+    /* ---- toolbar ---- */
+    .pv-toolbar { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; gap: 6px; padding: 6px; background: rgba(6,18,36,.85); border: 1px solid var(--pv-line); border-radius: 10px; backdrop-filter: blur(6px); z-index: 4; max-width: calc(100% - 20px); overflow-x: auto; scrollbar-width: none; }
+    .pv-toolbar::-webkit-scrollbar { display: none; }
+    .pv-btn { display: inline-flex; align-items: center; gap: 6px; flex: none; font: inherit; font-size: 12px; color: #a8c8e2; background: rgba(56,189,248,.05); border: 1px solid rgba(56,189,248,.2); border-radius: 6px; padding: 7px 12px; cursor: pointer; transition: all .15s; white-space: nowrap; }
+    .pv-btn svg { width: 13px; height: 13px; color: var(--pv-accent); }
+    .pv-btn:hover { color: #eaf6ff; border-color: var(--pv-line-strong); background: rgba(56,189,248,.12); }
+    .pv-btn.is-active { color: #eaf6ff; background: rgba(14,165,233,.22); border-color: var(--pv-line-strong); box-shadow: inset 0 0 10px rgba(56,189,248,.15); }
+    .pv-btn.is-warn-active { color: #fee2e2; background: rgba(248,113,113,.16); border-color: rgba(248,113,113,.5); }
+    .pv-btn.is-warn-active svg { color: var(--pv-red); }
+    .pv-hint { position: absolute; right: 16px; bottom: 16px; font-size: 10px; letter-spacing: 1px; color: rgba(111,141,171,.75); z-index: 3; }
+
+    @media (max-width: 980px) {
+      .pv-stage { height: 560px; }
+      .pv-stats { gap: 16px; }
+      .pv-left { width: 178px; }
+      .pv-right { width: 210px; }
+      .pv-hint { display: none; }
+    }
+    @media (max-width: 760px) {
+      .pv-stage { height: 480px; }
+      .pv-hide-sm { display: none; }
+      .pv-brand-sub { display: none; }
+      .pv-left { width: 148px; top: 10px; left: 10px; }
+      .pv-right { width: 178px; top: 10px; right: 10px; }
+      .pv-step { padding: 9px 10px; }
+      .pv-step-en { display: none; }
+      .pv-toolbar { bottom: 10px; }
+      .pv-btn { padding: 6px 9px; font-size: 11px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .pv-ticker-dot, .pv-panel-live, .pv-d-alert { animation: none; }
+    }
+  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+  (() => {
+    const root = document.getElementById("pvtwin-app");
+    if (!root) return;
+    const wrap = document.getElementById("pv-canvas-wrap");
+    const fallback = document.getElementById("pv-fallback");
+    if (typeof THREE === "undefined") { fallback.hidden = false; return; }
+
+    /* ================= data ================= */
+    const STATIONS = [
+      { id: "weld",  name: "电池串焊接", en: "CELL STRINGER",  x: -24, desc: "多主栅串焊机，将电池片焊接成串，红外加热 + 高温短时焊接工艺，破片率 < 0.3%。", maintain: "11-06 09:30", temp: 41, yld: 98.6, spd: 3600, out: 2380, pow: 18.2 },
+      { id: "layup", name: "排版铺层",   en: "LAYUP ROBOT",    x: -12, desc: "六轴机械臂视觉定位排版，吸盘末端拾取电池串，铺设精度 ±0.1mm，支持双玻组件。", maintain: "11-04 14:00", temp: 37, yld: 99.0, spd: 2400, out: 2512, pow: 12.6 },
+      { id: "lam",   name: "真空层压",   en: "LAMINATOR",      x: 0,   desc: "真空层压机，EVA/POE 交联固化，层压温度 145℃，抽真空时间 300s， reside率为 0。", maintain: "11-02 20:00", temp: 145, yld: 98.9, spd: 1800, out: 2466, pow: 42.8 },
+      { id: "el",    name: "EL检测",     en: "EL TESTER",      x: 12,  desc: "高分辨率 EL 隐裂检测，CCD 曝光成像 + AI 缺陷判定，可识别隐裂、断栅、黑心片。", maintain: "11-05 11:20", temp: 26, yld: 99.2, spd: 2200, out: 2440, pow: 8.4 },
+      { id: "frame", name: "自动装框",   en: "FRAMING PRESS",  x: 24,  desc: "自动装框一体机，铝合金边框自动入料、组角压装，接线盒自动打胶固化。", maintain: "11-01 08:45", temp: 33, yld: 98.8, spd: 2000, out: 2932, pow: 15.5 }
+    ];
+    const state = { selected: "layup", flow: true, xray: false, energy: false, paused: false, alarmId: null };
+
+    /* saved widget state */
+    const saved = (window.zcode && window.zcode.widgetState && window.zcode.widgetState.privateContent) || null;
+    if (saved) {
+      if (STATIONS.some(s => s.id === saved.selected)) state.selected = saved.selected;
+      if (typeof saved.flow === "boolean") state.flow = saved.flow;
+      if (typeof saved.xray === "boolean") state.xray = saved.xray;
+      if (typeof saved.energy === "boolean") state.energy = saved.energy;
+    }
+    const persist = () => { if (window.zcode && window.zcode.setWidgetState) window.zcode.setWidgetState({ modelContent: { selected: state.selected }, privateContent: { selected: state.selected, flow: state.flow, xray: state.xray, energy: state.energy } }).catch(() => {}); };
+    document.addEventListener("zcode:set_globals", (e) => {
+      const g = e.detail && e.detail.globals && e.detail.globals.widgetState;
+      const p = g && g.privateContent;
+      if (p && STATIONS.some(s => s.id === p.selected) && p.selected !== state.selected) select(p.selected, true);
+      if (p && typeof p.flow === "boolean" && p.flow !== state.flow) toggleFlow();
+      if (p && typeof p.xray === "boolean" && p.xray !== state.xray) toggleXray();
+      if (p && typeof p.energy === "boolean" && p.energy !== state.energy) toggleEnergy();
+    });
+
+    /* ================= three scene ================= */
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050e1c);
+    scene.fog = new THREE.Fog(0x050e1c, 62, 165);
+    const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 400);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    wrap.appendChild(renderer.domElement);
+
+    scene.add(new THREE.HemisphereLight(0x9fd0ff, 0x0a1a2e, 0.55));
+    const sun = new THREE.DirectionalLight(0xdfeeff, 0.85); sun.position.set(24, 42, 18); scene.add(sun);
+    const fill = new THREE.DirectionalLight(0x38bdf8, 0.22); fill.position.set(-30, 20, -24); scene.add(fill);
+
+    const mat = (color, opt = {}) => new THREE.MeshStandardMaterial(Object.assign({ color, metalness: 0.35, roughness: 0.55 }, opt));
+    const glow = (color, intensity = 1) => new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: intensity, metalness: 0.1, roughness: 0.4 });
+    const B = (w, h, d, m, x = 0, y = 0, z = 0) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); return b; };
+
+    /* floor + grid */
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(150, 90), mat(0x081b2f, { metalness: 0.2, roughness: 0.9 }));
+    floor.rotation.x = -Math.PI / 2; scene.add(floor);
+    const grid = new THREE.GridHelper(170, 46, 0x1e4f75, 0x0f2c44);
+    grid.material.transparent = true; grid.material.opacity = 0.4; grid.position.y = 0.02; scene.add(grid);
+    /* safety strip around line */
+    [-9, 9].forEach(z => { const s = B(66, 0.04, 0.35, glow(0xf5c542, 0.35), 0, 0.05, z); scene.add(s); });
+
+    /* ================= stations ================= */
+    const BELT_Y = 1.02, BELT_Z = 0, MACH_Z = -4.6;
+    const stationGroups = [];
+    const ringGeo = new THREE.RingGeometry(3.4, 3.9, 48);
+
+    function addStrip(group, w, h, d, x, y, z) { const s = B(w, h, d, glow(0x38bdf8, 1.4), x, y, z); group.add(s); return s; }
+
+    function buildStation(st) {
+      const g = new THREE.Group(); g.position.set(st.x, 0, MACH_Z);
+      g.add(B(7.6, 0.35, 5.4, mat(0x0d2440), 0, 0.18, 0));            // plinth
+      addStrip(g, 6.4, 0.06, 0.14, 0, 0.4, 2.6);                       // front glow strip
+      const body = B(6.6, 2.2, 3.4, mat(0x123253, { metalness: 0.5 }), 0, 1.5, -0.4);
+      g.add(body);
+      g.add(B(6.6, 0.16, 3.4, mat(0x1a4066), 0, 2.68, -0.4));          // roof
+      const statusLight = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 12), glow(0x22c55e, 2));
+      statusLight.position.set(2.9, 3.0, -0.4); g.add(statusLight);
+      const pole = B(0.08, 0.5, 0.08, mat(0x27496b), 2.9, 2.85, -0.4); g.add(pole);
+      g.userData.statusLight = statusLight;
+
+      if (st.id === "weld") {
+        g.add(B(5.6, 0.14, 0.9, mat(0x27496b), 0, 3.3, -0.4));         // gantry beam
+        [-2.7, 2.7].forEach(x => g.add(B(0.16, 1.3, 0.16, mat(0x27496b), x, 2.65, -0.4)));
+        const head = B(0.7, 0.6, 0.7, glow(0x38bdf8, 0.9), 0, 3.0, -0.4);
+        g.add(head); g.userData.mover = head;
+        g.userData.moverAxis = "x"; g.userData.moverRange = 2.2; g.userData.moverSpeed = 0.9;
+        for (let i = -2; i <= 2; i++) g.add(B(0.5, 0.05, 0.5, glow(0x7dd3fc, 0.5), i * 1.2, 2.66, 1.15)); // ribbon points
+      }
+      if (st.id === "layup") {
+        const base = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.7, 0.5, 18), mat(0x27496b)); base.position.set(0, 0.6, 0.4); g.add(base);
+        const col = B(0.6, 1.5, 0.6, mat(0x1a4066), 0, 1.4, 0.4); g.add(col);
+        const shoulder = new THREE.Group(); shoulder.position.set(0, 2.2, 0.4); g.add(shoulder);
+        shoulder.add(new THREE.Mesh(new THREE.SphereGeometry(0.32, 14, 14), mat(0x38bdf8, { metalness: 0.6 })));
+        const upArm = B(0.4, 0.4, 2.6, mat(0x1e4a73), 0, 0, 1.2); shoulder.add(upArm);
+        const elbow = new THREE.Group(); elbow.position.set(0, 0, 2.5); shoulder.add(elbow);
+        elbow.add(new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 12), mat(0x27496b)));
+        elbow.add(B(0.32, 0.32, 1.7, mat(0x1a4066), 0, 0, 0.75));
+        const wrist = B(0.5, 0.16, 0.5, glow(0x38bdf8, 0.8), 0, -0.1, 1.6); elbow.add(wrist);
+        g.userData.shoulder = shoulder; g.userData.elbow = elbow;
+      }
+      if (st.id === "lam") {
+        g.add(B(6.6, 0.9, 3.4, mat(0x0f2c44), 0, 0.8, -0.4));
+        const door = B(3.4, 1.15, 0.1, glow(0x38bdf8, 0.55), 0, 1.65, 1.32); g.add(door);
+        g.userData.door = door;
+        const stack = B(1.4, 0.5, 1.2, mat(0x1a4066), 4.15, 0.75, 0.6); g.add(stack);
+        g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.3, 2.2, 12), mat(0x27496b)).translateX(-2.6).translateY(3.5).translateZ(-1.2));
+        const vent = B(0.9, 0.35, 0.9, mat(0x123253), -2.6, 4.7, -1.2); g.add(vent);
+      }
+      if (st.id === "el") {
+        const chamber = B(6.6, 2.5, 3.4, mat(0x0a1e33, { metalness: 0.6, roughness: 0.35 }), 0, 1.45, -0.4); g.add(chamber);
+        g.add(B(4.4, 0.08, 0.12, glow(0x7dd3fc, 1.6), 0, 1.15, 1.32));
+        g.add(B(0.14, 2.6, 0.14, mat(0x27496b), 0, 3.8, -1.2));
+        const cam = B(1.1, 0.5, 0.8, mat(0x1a4066), 0, 4.7, -1.2); g.add(cam);
+        const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.22, 0.3, 12), glow(0x38bdf8, 1.2)); lens.rotation.x = Math.PI / 2; lens.position.set(0, 4.45, -0.85); g.add(lens);
+      }
+      if (st.id === "frame") {
+        [-2.4, 2.4].forEach(x => g.add(B(0.5, 3.2, 0.5, mat(0x1e4a73), x, 1.9, 0.2)));
+        g.add(B(5.6, 0.7, 1.1, mat(0x123253), 0, 3.7, 0.2));
+        const piston = B(0.9, 1.3, 0.9, glow(0x38bdf8, 0.5), 0, 3.0, 0.2);
+        g.add(piston); g.userData.piston = piston;
+        g.add(B(3.4, 0.5, 1.6, mat(0x1a4066), 0, 0.6, 0.2));
+      }
+      const ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.65, side: THREE.DoubleSide }));
+      ring.rotation.x = -Math.PI / 2; ring.position.y = 0.06; ring.visible = false; g.add(ring);
+      g.userData.ring = ring;
+      g.userData.station = st;
+      scene.add(g); stationGroups.push(g);
+      return g;
+    }
+    STATIONS.forEach(buildStation);
+
+    /* ================= belt + products ================= */
+    const beltGroup = new THREE.Group(); scene.add(beltGroup);
+    beltGroup.add(B(64, 0.18, 2.3, mat(0x0d2440, { metalness: 0.5 }), 0, BELT_Y - 0.09, BELT_Z));
+    beltGroup.add(B(64, 0.05, 2.42, mat(0x123253), 0, BELT_Y, BELT_Z));
+    [-31, 31].forEach(x => { const r = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 2.3, 16), mat(0x27496b)); r.rotation.x = Math.PI / 2; r.position.set(x, BELT_Y - 0.05, BELT_Z); beltGroup.add(r); });
+    for (let i = 0; i < 10; i++) beltGroup.add(B(0.5, 0.35, 0.4, mat(0x0f2c44), -30 + i * 6.6, 0.45, BELT_Z));
+    const dashes = [];
+    for (let i = 0; i < 26; i++) { const d = B(0.55, 0.02, 1.9, glow(0x38bdf8, 0.35), -32 + i * 2.55, BELT_Y + 0.035, BELT_Z); beltGroup.add(d); dashes.push(d); }
+
+    const products = [];
+    const prodMat = mat(0x7dd3fc, { metalness: 0.65, roughness: 0.18 });
+    for (let i = 0; i < 9; i++) {
+      const p = new THREE.Group();
+      p.add(B(2.3, 0.1, 1.6, prodMat, 0, 0, 0));
+      p.add(B(2.42, 0.05, 1.72, mat(0x0e3a5c), 0, -0.06, 0));
+      p.position.set(-30 + i * 7.4, BELT_Y + 0.12, BELT_Z);
+      scene.add(p); products.push(p);
+    }
+
+    /* ================= AGV ================= */
+    const agv = new THREE.Group();
+    agv.add(B(1.7, 0.42, 2.5, mat(0x123253, { metalness: 0.5 }), 0, 0.42, 0));
+    agv.add(B(1.5, 0.06, 0.16, glow(0x38bdf8, 1.2), 0, 0.62, 1.1));
+    agv.add(B(1.3, 0.09, 1.5, prodMat, 0, 0.7, 0));
+    agv.position.set(-19, 0, 8); scene.add(agv);
+
+    /* ================= labels ================= */
+    const labelLayer = document.getElementById("pv-labels");
+    STATIONS.forEach(st => {
+      const lb = document.createElement("div"); lb.className = "pv-label";
+      lb.innerHTML = '<span class="pv-dot pv-dot-green"></span><span>' + st.name + "</span>";
+      labelLayer.appendChild(lb); st.labelEl = lb;
+      const en = document.createElement("div"); en.className = "pv-energy num"; en.textContent = st.pow.toFixed(1) + " kW";
+      en.style.display = "none"; labelLayer.appendChild(en); st.energyEl = en;
+      st.anchor = new THREE.Vector3(st.x, 2.8, 1.3);
+    });
+
+    /* ================= camera ================= */
+    const DEF = { theta: 0.16, phi: 0.9, radius: 45, target: new THREE.Vector3(0, 1.6, 0) };
+    const orb = { theta: DEF.theta, phi: DEF.phi, radius: DEF.radius, target: DEF.target.clone() };
+    let tween = null;
+    const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    function flyTo(to, dur = 1300) {
+      tween = { t0: performance.now(), dur, from: { theta: orb.theta, phi: orb.phi, radius: orb.radius, target: orb.target.clone() }, to };
+    }
+    function applyCamera() {
+      camera.position.set(
+        orb.target.x + orb.radius * Math.sin(orb.phi) * Math.sin(orb.theta),
+        orb.target.y + orb.radius * Math.cos(orb.phi),
+        orb.target.z + orb.radius * Math.sin(orb.phi) * Math.cos(orb.theta)
+      );
+      camera.lookAt(orb.target);
+    }
+    applyCamera();
+
+    /* pointer controls */
+    let dragging = false, moved = 0, px = 0, py = 0;
+    const ndc = new THREE.Vector2(), ray = new THREE.Raycaster();
+    wrap.addEventListener("pointerdown", e => { dragging = true; moved = 0; px = e.clientX; py = e.clientY; tween = null; wrap.setPointerCapture(e.pointerId); });
+    wrap.addEventListener("pointermove", e => {
+      if (!dragging) return;
+      const dx = e.clientX - px, dy = e.clientY - py; px = e.clientX; py = e.clientY;
+      moved += Math.abs(dx) + Math.abs(dy);
+      orb.theta -= dx * 0.0052; orb.phi = Math.min(1.46, Math.max(0.18, orb.phi - dy * 0.0052));
+    });
+    wrap.addEventListener("pointerup", e => {
+      dragging = false;
+      if (moved < 7) {
+        const r = renderer.domElement.getBoundingClientRect();
+        ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+        ray.setFromCamera(ndc, camera);
+        const hit = ray.intersectObjects(stationGroups, true)[0];
+        if (hit) { let o = hit.object; while (o && !o.userData.station) o = o.parent; if (o) select(o.userData.station.id, true); }
+      }
+    });
+    wrap.addEventListener("wheel", e => { e.preventDefault(); orb.radius = Math.min(95, Math.max(13, orb.radius * (1 + e.deltaY * 0.0011))); }, { passive: false });
+
+    /* ================= UI ================= */
+    const $ = id => document.getElementById(id);
+    const stepsEl = $("pv-steps"), detailEl = $("pv-detail"), toastsEl = $("pv-toasts");
+
+    function toast(msg, type = "") {
+      const t = document.createElement("div"); t.className = "pv-toast " + type; t.textContent = msg;
+      toastsEl.appendChild(t);
+      while (toastsEl.children.length > 3) toastsEl.firstChild.remove();
+      setTimeout(() => { t.classList.add("leaving"); setTimeout(() => t.remove(), 320); }, 3400);
+    }
+
+    function renderList() {
+      stepsEl.innerHTML = "";
+      STATIONS.forEach((st, i) => {
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "pv-step" + (st.id === state.selected ? " is-active" : "") + (state.alarmId === st.id ? " is-alert" : "");
+        btn.innerHTML = '<span class="pv-step-idx num">' + String(i + 1).padStart(2, "0") + '</span><span class="pv-step-name">' + st.name +
+          '<span class="pv-step-en">' + st.en + "</span></span>" +
+          '<span class="pv-dot ' + (state.alarmId === st.id ? "pv-dot-red" : "pv-dot-green") + '"></span>';
+        btn.addEventListener("click", () => select(st.id, true));
+        li.appendChild(btn); stepsEl.appendChild(li);
+      });
+    }
+
+    function bar(v, min, max) { return Math.round(Math.min(100, Math.max(2, ((v - min) / (max - min)) * 100))); }
+
+    function renderDetail() {
+      const prevScroll = detailEl.scrollTop;
+      const st = STATIONS.find(s => s.id === state.selected);
+      if (!st) { detailEl.innerHTML = '<div class="pv-d-empty">点击左侧工序或 3D 场景中的设备，查看实时运行数据。</div>'; return; }
+      const alert = state.alarmId === st.id;
+      const m = [
+        { k: "设备温度", raw: st.temp, fmt: st.temp.toFixed(1), u: "℃", min: 0, max: alert && st.id === "lam" ? 170 : 160, warn: alert },
+        { k: "良品率", raw: st.yld, fmt: st.yld.toFixed(2), u: "%", min: 96, max: 100 },
+        { k: "节拍速度", raw: st.spd, fmt: Math.round(st.spd).toLocaleString(), u: "件/h", min: 800, max: 4200 },
+        { k: "累计产量", raw: st.out, fmt: Math.round(st.out).toLocaleString(), u: "件", min: 0, max: 4000 }
+      ];
+      detailEl.innerHTML =
+        '<div class="pv-d-head"><span class="pv-d-name">' + st.name + '</span><span class="pv-d-status' + (alert ? " is-alert" : "") + '">' + (alert ? "⚠ ALARM" : "运行中 RUNNING") + "</span></div>" +
+        '<div class="pv-d-code">' + st.en + " · ST-0" + (STATIONS.indexOf(st) + 1) + " / 已接入数据链路</div>" +
+        (alert ? '<div class="pv-d-alert">层压温度超限，已自动派单维护</div>' : "") +
+        m.map(x => '<div class="pv-metric"><div class="pv-metric-row"><span>' + x.k + '</span><span class="pv-metric-val num">' + x.fmt + '<span class="unit">' + x.u + "</span></span></div>" +
+          '<div class="pv-bar"><div class="pv-bar-fill' + (x.warn ? " is-warn" : "") + '" style="width:' + bar(x.raw, x.min, x.max) + '%"></div></div></div>').join("") +
+        '<div class="pv-d-meta"><div class="pv-d-meta-row"><span>实时功耗</span><b class="num">' + st.pow.toFixed(1) + " kW</b></div>" +
+        '<div class="pv-d-meta-row"><span>最近维护</span><b class="num">2026-' + st.maintain + "</b></div>" +
+        '<div class="pv-d-meta-row"><span>通讯协议</span><b>OPC-UA / MQTT</b></div></div>' +
+        '<div class="pv-d-desc">' + st.desc + "</div>";
+      detailEl.scrollTop = prevScroll;
+    }
+
+    let camLock = false;
+    function select(id, fly) {
+      state.selected = id;
+      stationGroups.forEach(g => { g.userData.ring.visible = g.userData.station.id === id; });
+      renderList(); renderDetail(); persist();
+      const st = STATIONS.find(s => s.id === id);
+      if (fly && !camLock) flyTo({ theta: 0.16, phi: 1.05, radius: 20, target: new THREE.Vector3(st.x, 1.8, MACH_Z + 1) }, 1200);
+      if (fly) toast("已聚焦 · " + st.name + "（" + st.en + "）");
+    }
+
+    /* toolbar */
+    const btnFlow = $("pv-btn-flow"), btnPause = $("pv-btn-pause"), btnXray = $("pv-btn-xray"), btnEnergy = $("pv-btn-energy"), btnAlarm = $("pv-btn-alarm");
+    function syncToolbar() {
+      btnFlow.classList.toggle("is-active", state.flow && !state.paused);
+      btnFlow.setAttribute("aria-pressed", String(state.flow && !state.paused));
+      btnPause.classList.toggle("is-active", state.paused);
+      btnPause.setAttribute("aria-pressed", String(state.paused));
+      btnXray.classList.toggle("is-active", state.xray);
+      btnXray.setAttribute("aria-pressed", String(state.xray));
+      btnEnergy.classList.toggle("is-active", state.energy);
+      btnEnergy.setAttribute("aria-pressed", String(state.energy));
+      $("pv-run-text").textContent = state.paused ? "已暂停 PAUSED" : "运行中 RUNNING";
+      $("pv-run-dot").className = "pv-dot " + (state.paused ? "pv-dot-amber" : "pv-dot-green");
+    }
+    function toggleFlow() {
+      state.flow = !state.flow;
+      if (state.flow && state.paused) state.paused = false;
+      syncToolbar(); persist();
+      toast(state.flow ? "产品流转已恢复" : "产品流转已停止", state.flow ? "is-ok" : "");
+    }
+    function togglePause() {
+      state.paused = !state.paused;
+      if (state.paused) state.flow = false; else state.flow = true;
+      syncToolbar(); persist();
+      toast(state.paused ? "全线暂停运行 · 仿真挂起" : "全线恢复运行", state.paused ? "" : "is-ok");
+    }
+    let origMats = new Map();
+    function applyXray(on) {
+      scene.traverse(o => {
+        if (!o.isMesh || o.userData.noXray) return;
+        if (on) {
+          if (!origMats.has(o)) origMats.set(o, o.material);
+          o.material = new THREE.MeshBasicMaterial({ color: 0x7dd3fc, wireframe: true, transparent: true, opacity: 0.28 });
+        } else if (origMats.has(o)) { o.material = origMats.get(o); }
+      });
+      if (!on) origMats.clear();
+    }
+    function toggleXray() {
+      state.xray = !state.xray; applyXray(state.xray); syncToolbar(); persist();
+      toast(state.xray ? "X 光透视模式 · 已穿透外壳查看结构" : "已恢复正常渲染");
+    }
+    function toggleEnergy() {
+      state.energy = !state.energy;
+      STATIONS.forEach(st => { st.energyEl.style.display = state.energy ? "block" : "none"; });
+      syncToolbar(); persist();
+      toast(state.energy ? "能耗监控已开启 · 实时功率标注" : "能耗监控已关闭", state.energy ? "is-ok" : "");
+    }
+    function triggerAlarm() {
+      const st = STATIONS[Math.floor(Math.random() * STATIONS.length)];
+      state.alarmId = st.id;
+      st.labelEl.classList.add("is-alert");
+      st.labelEl.querySelector(".pv-dot").className = "pv-dot pv-dot-red";
+      const g = stationGroups.find(g => g.userData.station === st);
+      g.userData.statusLight.material = glow(0xf87171, 2.4);
+      toast("⚠ 报警 · " + st.name + " 设备温度超限，已派单维护", "is-alert");
+      renderList(); renderDetail();
+      btnAlarm.classList.add("is-warn-active");
+      setTimeout(() => {
+        state.alarmId = null;
+        st.labelEl.classList.remove("is-alert");
+        st.labelEl.querySelector(".pv-dot").className = "pv-dot pv-dot-green";
+        g.userData.statusLight.material = glow(0x22c55e, 2);
+        btnAlarm.classList.remove("is-warn-active");
+        renderList(); renderDetail();
+      }, 8000);
+    }
+    btnFlow.addEventListener("click", toggleFlow);
+    btnPause.addEventListener("click", togglePause);
+    $("pv-btn-top").addEventListener("click", () => { camLock = true; flyTo({ theta: 0.0, phi: 0.08, radius: 62, target: new THREE.Vector3(0, 0, 2) }, 1300); setTimeout(() => { camLock = false; }, 1400); toast("俯视视角 · 全线鸟瞰"); });
+    btnXray.addEventListener("click", toggleXray);
+    btnAlarm.addEventListener("click", () => { if (state.alarmId) return; triggerAlarm(); });
+    btnEnergy.addEventListener("click", toggleEnergy);
+    $("pv-btn-reset").addEventListener("click", () => { camLock = true; flyTo({ theta: DEF.theta, phi: DEF.phi, radius: DEF.radius, target: DEF.target.clone() }, 1200); setTimeout(() => { camLock = false; }, 1300); toast("视角已复位"); });
+
+    /* ticker */
+    const TICKS = [
+      "设备数据链路已建立 · 正在同步 5 个工位实时数据",
+      "AGV-03 完成一次配送 · 平均节拍 42s",
+      "层压工序 EVA 交联度检测通过 · 99.2%",
+      "EL AI 判定模型 v2.4 · 隐裂识别率 99.6%",
+      "排版机械臂视觉标定正常 · 精度 ±0.1mm"
+    ];
+    let tickIdx = 0;
+    setInterval(() => { tickIdx = (tickIdx + 1) % TICKS.length; const el = $("pv-ticker"); if (el) el.textContent = TICKS[tickIdx]; }, 4200);
+
+    /* live data loop (1s) */
+    let upSeconds = 21 * 3600 + 8 * 60 + 2, totalOut = 12730, totalVal = 18.6, oee = 94.5;
+    const drift = (v, base, amp, lo, hi) => { let n = v + (Math.random() - 0.5) * amp; n = Math.min(hi, Math.max(lo, n)); return n; };
+    setInterval(() => {
+      upSeconds++;
+      const h = String(Math.floor(upSeconds / 3600)).padStart(2, "0"), m = String(Math.floor(upSeconds % 3600 / 60)).padStart(2, "0"), s = String(upSeconds % 60).padStart(2, "0");
+      $("pv-uptime").textContent = h + ":" + m + ":" + s;
+      const running = !state.paused;
+      STATIONS.forEach(st => {
+        st.temp = drift(st.temp, st.temp, st.id === "lam" ? 3 : 0.8, st.id === "lam" ? 138 : 20, st.id === "lam" ? state.alarmId === st.id ? 168 : 152 : 48);
+        st.yld = drift(st.yld, st.yld, 0.06, 97.6, 99.7);
+        st.spd = running ? drift(st.spd, st.spd, 60, 1400, 4000) : st.spd;
+        st.pow = drift(st.pow, st.pow, 0.5, 2, 60);
+        if (st.energyEl) st.energyEl.textContent = st.pow.toFixed(1) + " kW";
+        if (running && state.flow) st.out += Math.random() * 2.4;
+      });
+      if (running && state.flow) { totalOut += 1 + Math.floor(Math.random() * 3); if (Math.random() < 0.3) totalVal += 0.01; }
+      oee = running ? drift(oee, oee, 0.1, 92.5, 96.8) : Math.max(88, oee - 0.2);
+      $("pv-oee").innerHTML = oee.toFixed(1) + '<span class="unit">%</span>';
+      $("pv-output").innerHTML = Math.round(totalOut).toLocaleString() + '<span class="unit">件</span>';
+      $("pv-value").innerHTML = totalVal.toFixed(1) + '<span class="unit">亿</span>';
+      if (state.selected) renderDetailMetricsOnly();
+    }, 1000);
+    function renderDetailMetricsOnly() {
+      const open = document.querySelector("#pv-detail .pv-d-name");
+      if (open) renderDetail();
+    }
+
+    /* resize */
+    function resize() {
+      const w = wrap.clientWidth, h = wrap.clientHeight;
+      if (w < 2 || h < 2) return;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h; camera.updateProjectionMatrix();
+    }
+    new ResizeObserver(resize).observe(wrap); resize();
+
+    /* ================= animation ================= */
+    let last = performance.now();
+    const proj = new THREE.Vector3();
+    function placeLabel(st, el, dy) {
+      proj.copy(st.anchor).project(camera);
+      const behind = proj.z > 1;
+      el.style.visibility = behind ? "hidden" : "visible";
+      if (!behind) {
+        el.style.left = ((proj.x * 0.5 + 0.5) * wrap.clientWidth) + "px";
+        el.style.top = ((-proj.y * 0.5 + 0.5) * wrap.clientHeight + (dy || 0)) + "px";
+      }
+    }
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      const t = now / 1000;
+      const running = !state.paused;
+
+      if (tween) {
+        const k = Math.min(1, (now - tween.t0) / tween.dur), e = ease(k);
+        orb.theta = tween.from.theta + (tween.to.theta - tween.from.theta) * e;
+        orb.phi = tween.from.phi + (tween.to.phi - tween.from.phi) * e;
+        orb.radius = tween.from.radius + (tween.to.radius - tween.from.radius) * e;
+        orb.target.lerpVectors(tween.from.target, tween.to.target, e);
+        if (k >= 1) tween = null;
+      }
+      applyCamera();
+
+      if (running && state.flow) {
+        const v = 1.7;
+        products.forEach(p => { p.position.x += v * dt; if (p.position.x > 32) p.position.x = -32; });
+        dashes.forEach(d => { d.position.x += v * 2.1 * dt; if (d.position.x > 32) d.position.x = -32; });
+        agv.position.z = 12 + Math.sin(t * 0.35) * 9;
+        agv.rotation.y = Math.cos(t * 0.35) > 0 ? 0 : Math.PI;
+      }
+      stationGroups.forEach((g, i) => {
+        const st = g.userData.station;
+        if (g.userData.mover && running) g.userData.mover.position.x = Math.sin(t * g.userData.moverSpeed + i) * g.userData.moverRange;
+        if (g.userData.shoulder && running) { g.userData.shoulder.rotation.y = Math.sin(t * 0.8) * 0.55; g.userData.elbow.rotation.x = 0.35 + Math.sin(t * 1.3) * 0.22; }
+        if (g.userData.piston && running) g.userData.piston.position.y = 3.0 + Math.sin(t * 1.1 + i * 2) * 0.3;
+        if (g.userData.door) g.userData.door.material.emissiveIntensity = 0.4 + Math.sin(t * 1.8) * 0.15;
+        const alert = state.alarmId === st.id;
+        if (alert) { const k = 1.4 + Math.sin(t * 9) * 1.2; g.userData.statusLight.material.emissiveIntensity = Math.max(0.4, k); g.userData.ring.visible = true; g.userData.ring.material.color.setHex(0xf87171); }
+        else { g.userData.ring.material.color.setHex(0x38bdf8); g.userData.ring.visible = st.id === state.selected; }
+        if (g.userData.ring.visible) { g.userData.ring.rotation.z = t * 0.5; const s = 1 + Math.sin(t * 2.4) * 0.03; g.userData.ring.scale.set(s, s, 1); }
+        st.labelEl.classList.toggle("is-active", st.id === state.selected);
+        placeLabel(st, st.labelEl, 0);
+        if (state.energy) placeLabel(st, st.energyEl, 16);
+      });
+      renderer.render(scene, camera);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    /* apply restored state */
+    stationGroups.forEach(g => { g.userData.ring.visible = g.userData.station.id === state.selected; });
+    renderList(); renderDetail(); syncToolbar();
+    if (state.xray) applyXray(true);
+    if (state.energy) STATIONS.forEach(st => { st.energyEl.style.display = "block"; });
+  })();
+  </script>
+</div>
+
+<script>
+  if (window.lucide) lucide.createIcons({ attrs: { width: 16, height: 16 } });
+</script>
+</body>
+</html>
