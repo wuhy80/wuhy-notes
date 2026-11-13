@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>奈奎斯特极限 · 采样交互演示</title>
+<style>
+  :root {
+    --bg:#f6f1e7; --card:#fffdf8; --ink:#1c1c1c; --soft:#57544e; --faint:#8c8676;
+    --line:#d8ceb6; --accent:#c2410c; --wash:#fbe6c7; --ok:#2f7d4f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    line-height: 1.6; padding: 22px 16px 36px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  header h1 { font-size: 22px; margin-bottom: 4px; }
+  header p { color: var(--soft); font-size: 14px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 16px 18px; margin-top: 16px;
+  }
+  .card h2 { font-size: 16px; margin-bottom: 2px; }
+  .card .desc { color: var(--soft); font-size: 13px; margin-bottom: 10px; }
+  canvas {
+    width: 100%; display: block;
+    border: 1px solid var(--line); border-radius: 8px; background: #fffef9;
+  }
+  #c1 { height: 280px; } #c2 { height: 240px; } #c3 { height: 150px; }
+  .ctrl { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 13px; flex-wrap: wrap; }
+  .ctrl label { color: var(--soft); white-space: nowrap; }
+  .ctrl input[type=range] { flex: 1; min-width: 120px; accent-color: var(--accent); }
+  .ctrl .val { font-variant-numeric: tabular-nums; font-weight: 600; min-width: 70px; text-align: right; }
+  .readout { margin-top: 10px; font-size: 13.5px; padding: 8px 12px; border-radius: 8px; background: var(--wash); }
+  .readout.ok { background: #e8f2ea; color: var(--ok); }
+  .readout.bad { background: #fdeae4; color: var(--accent); font-weight: 600; }
+  footer { margin-top: 16px; color: var(--faint); font-size: 12px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>奈奎斯特极限 · 采样交互演示</h1>
+    <p>想用离散样本无损记录连续信号，采样频率必须大于信号最高频率的两倍（fs ≥ 2f）。拖动滑块，亲手违反一次这条极限，看看会发生什么。</p>
+  </header>
+
+  <div class="card">
+    <h2>① 采样实验台：连续信号 → 离散样本</h2>
+    <div class="desc">灰线是真实信号，橙点是采样得到的样本，蓝折线是样本插值出的「重建信号」。降低 fs，看蓝色波形如何变成一个从未存在过的低频假信号。</div>
+    <canvas id="c1"></canvas>
+    <div class="ctrl"><label>信号频率 f</label><input type="range" id="f1" min="1" max="30" step="0.5" value="6"><span class="val" id="f1v"></span></div>
+    <div class="ctrl"><label>采样频率 fs</label><input type="range" id="fs1" min="2" max="80" step="1" value="40"><span class="val" id="fs1v"></span></div>
+    <div class="readout" id="r1"></div>
+  </div>
+
+  <div class="card">
+    <h2>② 车轮频闪：为什么视频里的车轮会倒转</h2>
+    <div class="desc">灰色残影是车轮的真实连续位置，黑轮是相机按 fps 帧率拍到的。转速一旦超过 fps/2，车轮看起来就会慢转、静止甚至倒转——和采样混叠是同一件事。</div>
+    <canvas id="c2"></canvas>
+    <div class="ctrl"><label>真实转速</label><input type="range" id="w2" min="0.2" max="6" step="0.1" value="1.5"><span class="val" id="w2v"></span></div>
+    <div class="ctrl"><label>相机帧率 fps</label><input type="range" id="fps2" min="1" max="24" step="1" value="5"><span class="val" id="fps2v"></span></div>
+    <div class="readout" id="r2"></div>
+  </div>
+
+  <div class="card">
+    <h2>③ 频域视角：镜像分量藏在哪里</h2>
+    <div class="desc">采样会把频谱以 fs 为周期不断复制：信号 f 的镜像 fs−f、fs+f、2fs−f……一个接一个排下去。红色虚线是奈奎斯特边界 fs/2——镜像一旦钻进它左边，就混进真实信号再也分不开（跟随演示①的滑块联动）。</div>
+    <canvas id="c3"></canvas>
+  </div>
+
+  <footer>纯前端单文件演示 · 无外部依赖 · 配合笔记《奈奎斯特极限与采样定理》使用</footer>
+</div>
+<script>
+(function () {
+  'use strict';
+  var TAU = Math.PI * 2;
+  function id(v) { return document.getElementById(v); }
+  function fit(c) {
+    var dpr = window.devicePixelRatio || 1;
+    var w = c.clientWidth, h = c.clientHeight;
+    if (!w || !h) return null;
+    var bw = Math.round(w * dpr), bh = Math.round(h * dpr);
+    if (c.width !== bw || c.height !== bh) { c.width = bw; c.height = bh; }
+    var ctx = c.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx: ctx, w: w, h: h };
+  }
+  // 纯音采样后的感知频率：|f − k·fs| 取最小
+  function aliasFreq(f, fs) {
+    return Math.abs(((f + fs / 2) % fs) - fs / 2);
+  }
+  // 车轮视觉转速（带符号，负=倒转）
+  function apparentRot(w, fps) {
+    return ((w % fps) + fps / 2) % fps - fps / 2;
+  }
+
+  // ── 演示① 采样实验台 ──────────────────────────────────────────────
+  var c1 = id('c1');
+  function draw1(t) {
+    var g = fit(c1); if (!g) return;
+    var ctx = g.ctx, W = g.w, H = g.h;
+    var f = parseFloat(id('f1').value), fs = parseFloat(id('fs1').value);
+    id('f1v').textContent = f + ' Hz';
+    id('fs1v').textContent = fs + ' Hz';
+    ctx.clearRect(0, 0, W, H);
+    var win = 0.6;                    // 可视窗口 0.6 秒，随时间滚动
+    var left = t - win;
+    function X(tq) { return (tq - left) / win * W; }
+    function Y(v) { return H / 2 - v * H * 0.38; }
+    // 时间网格
+    ctx.strokeStyle = '#eee5d2'; ctx.lineWidth = 1;
+    for (var tg = Math.ceil(left * 10) / 10; tg <= t; tg += 0.1) {
+      ctx.beginPath(); ctx.moveTo(X(tg), 0); ctx.lineTo(X(tg), H); ctx.stroke();
+    }
+    // 真实信号（灰）
+    ctx.strokeStyle = '#a89f8d'; ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    for (var px = 0; px <= W; px++) {
+      var tq = left + px / W * win;
+      var vy = Math.sin(TAU * f * tq);
+      if (px === 0) ctx.moveTo(px, Y(vy)); else ctx.lineTo(px, Y(vy));
+    }
+    ctx.stroke();
+    // 样本（橙）：茎 + 点
+    var k0 = Math.ceil(left * fs), k1 = Math.floor(t * fs);
+    ctx.strokeStyle = 'rgba(194,65,12,0.35)'; ctx.lineWidth = 1;
+    for (var k = k0; k <= k1; k++) {
+      var xx = X(k / fs), yy = Y(Math.sin(TAU * f * (k / fs)));
+      ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx, H / 2); ctx.stroke();
+    }
+    ctx.fillStyle = '#c2410c';
+    for (var k2 = k0; k2 <= k1; k2++) {
+      var tq2 = k2 / fs;
+      ctx.beginPath();
+      ctx.arc(X(tq2), Y(Math.sin(TAU * f * tq2)), 3.2, 0, TAU);
+      ctx.fill();
+    }
+    // 重建（蓝）：相邻样本线性插值
+    ctx.strokeStyle = '#2b6cb0'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    var started = false;
+    for (var k3 = Math.max(k0 - 1, 0); k3 <= k1; k3++) {
+      var ta = k3 / fs, tb = (k3 + 1) / fs;
+      if (tb < left || ta > t) continue;
+      var xa = Math.max(0, X(ta)), xb = Math.min(W, X(tb));
+      if (xb <= xa) continue;
+      var ya = Y(Math.sin(TAU * f * ta)), yb = Y(Math.sin(TAU * f * tb));
+      if (!started) { ctx.moveTo(xa, ya); started = true; } else { ctx.lineTo(xa, ya); }
+      ctx.lineTo(xb, yb);
+    }
+    ctx.stroke();
+    // 读数
+    var half = fs / 2, r1 = id('r1');
+    if (Math.abs(f - half) < 1e-9) {
+      r1.className = 'readout bad';
+      r1.textContent = '临界状态：f 恰好等于奈奎斯特频率 fs/2 = ' + half + ' Hz。样本可能全部落在过零点上，什么也采不到——工程上必须留裕量，严格大于。';
+    } else if (f < half) {
+      r1.className = 'readout ok';
+      r1.textContent = '无混叠：fs/2 = ' + half + ' Hz ≥ f = ' + f + ' Hz。蓝色折线紧贴灰色真实信号，样本唯一确定原波形。';
+    } else {
+      r1.className = 'readout bad';
+      r1.textContent = '混叠！f = ' + f + ' Hz 已越过奈奎斯特频率 fs/2 = ' + half + ' Hz，重建出的是 ' + aliasFreq(f, fs) + ' Hz 的假信号——一个从未存在过的低频波形。';
+    }
+  }
+
+  // ── 演示② 车轮频闪 ────────────────────────────────────────────────
+  var c2 = id('c2');
+  function drawWheel(ctx, cx, cy, R, angle, rim, spoke, alpha) {
+    ctx.save(); ctx.globalAlpha = alpha;
+    ctx.strokeStyle = rim; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke();
+    ctx.lineWidth = 1.8; ctx.strokeStyle = spoke;
+    for (var i = 0; i < 4; i++) {
+      var a = angle + i * Math.PI / 2;
+      ctx.beginPath(); ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); ctx.stroke();
+    }
+    ctx.fillStyle = spoke;
+    ctx.beginPath();
+    ctx.arc(cx + Math.cos(angle) * R, cy + Math.sin(angle) * R, 5, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+  }
+  function draw2(t) {
+    var g = fit(c2); if (!g) return;
+    var ctx = g.ctx, W = g.w, H = g.h;
+    var w = parseFloat(id('w2').value), fps = parseFloat(id('fps2').value);
+    id('w2v').textContent = w + ' 转/秒';
+    id('fps2v').textContent = fps + ' 帧/秒';
+    ctx.clearRect(0, 0, W, H);
+    var cx = W * 0.32, cy = H / 2, R = Math.min(W * 0.5, H) * 0.36;
+    var tf = Math.floor(t * fps) / fps;   // 相机最近一次曝光时刻
+    drawWheel(ctx, cx, cy, R, TAU * w * t, '#c9bfa9', '#c9bfa9', 0.35);
+    drawWheel(ctx, cx, cy, R, TAU * w * tf, '#1c1c1c', '#57544e', 1);
+    var phase = t * fps - Math.floor(t * fps);
+    ctx.fillStyle = phase < 0.12 ? '#c2410c' : '#8c8676';
+    ctx.font = '12px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('快门 ' + fps + ' 帧/秒', W - 118, 22);
+    var app = apparentRot(w, fps), r2 = id('r2');
+    if (Math.abs(app) < 0.05) {
+      r2.className = 'readout bad';
+      r2.textContent = '视觉静止！转速 ' + w + ' 转/秒 恰为帧率 ' + fps + ' 帧/秒 的整数倍——每次曝光车轮都转到同一角度。';
+    } else if (app > 0) {
+      r2.className = 'readout ok';
+      r2.textContent = '看起来正转 ' + app.toFixed(2) + ' 转/秒（真实 ' + w + ' 转/秒，相机 ' + fps + ' 帧/秒，fps/2 = ' + fps / 2 + ' 转/秒）。';
+    } else {
+      r2.className = 'readout bad';
+      r2.textContent = '视觉倒转 ' + Math.abs(app).toFixed(2) + ' 转/秒（真实正转 ' + w + ' 转/秒）——转速已超过 fps/2 = ' + fps / 2 + ' 转/秒，方向信息被混叠翻转。';
+    }
+  }
+
+  // ── 演示③ 频域镜像 ────────────────────────────────────────────────
+  var c3 = id('c3');
+  function draw3() {
+    var g = fit(c3); if (!g) return;
+    var ctx = g.ctx, W = g.w, H = g.h;
+    var f = parseFloat(id('f1').value), fs = parseFloat(id('fs1').value);
+    ctx.clearRect(0, 0, W, H);
+    var padL = 16, padR = 16, span = 2 * fs, base = H - 26;
+    function X(fq) { return padL + fq / span * (W - padL - padR); }
+    ctx.strokeStyle = '#8c8676'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(padL, base); ctx.lineTo(W - padR, base); ctx.stroke();
+    function tick(fq, label, color, dash, ly) {
+      ctx.save();
+      if (dash) ctx.setLineDash([4, 3]);
+      ctx.strokeStyle = color; ctx.lineWidth = dash ? 1.4 : 2.2;
+      ctx.beginPath(); ctx.moveTo(X(fq), base); ctx.lineTo(X(fq), ly); ctx.stroke();
+      ctx.restore();
+      ctx.fillStyle = color; ctx.font = '10.5px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(label, X(fq), ly - 4);
+    }
+    tick(fs / 2, 'fs/2 边界', '#c2410c', true, 32);
+    tick(fs, 'fs', '#8c8676', true, 24);
+    tick(2 * fs, '2fs', '#8c8676', true, 24);
+    tick(f, 'f 真实', '#1c1c1c', false, 56);
+    tick(fs - f, 'fs−f', f > fs / 2 ? '#c2410c' : '#b59b6a', true, 44);
+    tick(fs + f, 'fs+f', '#b59b6a', true, 44);
+    if (2 * fs - f < 2 * fs) tick(2 * fs - f, '2fs−f', '#b59b6a', true, 56);
+    ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    if (f > fs / 2) {
+      ctx.fillStyle = '#c2410c'; ctx.font = 'bold 11px sans-serif';
+      ctx.fillText('镜像 fs−f = ' + (fs - f) + ' Hz 已落入边界左侧 → 混入真实信号，无法再滤除', W / 2, H - 8);
+    } else {
+      ctx.fillStyle = '#2f7d4f';
+      ctx.fillText('镜像分量都落在 fs/2 右侧 → 一个低通滤波器即可完整还原信号', W / 2, H - 8);
+    }
+  }
+
+  // ── 主循环 ─────────────────────────────────────────────────────────
+  var t0 = performance.now();
+  function loop() {
+    var t = (performance.now() - t0) / 1000;
+    draw1(t);
+    draw2(t);
+    draw3();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

@@ -220,6 +220,24 @@ if (Test-Path -LiteralPath $dtSrc) {
   Write-Host "  未找到 pv-digital-twin.html，示例页不随本次发布" -ForegroundColor Yellow
 }
 
+# 奈奎斯特采样定理交互演示（数学学习《奈奎斯特极限与采样定理》的动画演示）：
+# 纯前端单文件 HTML，Canvas + 原生 JS，无外部依赖；→ Quartz static，
+# 线上路径 /static/nyquist-demo.html
+$nqSrc = Join-Path $Vault 'scripts\site-assets\nyquist-demo.html'
+if (Test-Path -LiteralPath $nqSrc) {
+  $nqDstDir = Join-Path $Quartz 'quartz\static'
+  New-Item -ItemType Directory -Force -Path $nqDstDir | Out-Null
+  $nqDst = Join-Path $nqDstDir 'nyquist-demo.html'
+  if (-not (Test-Path -LiteralPath $nqDst) -or (Get-FileHash -LiteralPath $nqDst).Hash -ne (Get-FileHash -LiteralPath $nqSrc).Hash) {
+    Copy-Item -LiteralPath $nqSrc -Destination $nqDst -Force
+    Write-Host "  已部署奈奎斯特采样演示 nyquist-demo.html（内容有变化）"
+  } else {
+    Write-Host "  奈奎斯特采样演示无变化，跳过覆盖"
+  }
+} else {
+  Write-Host "  未找到 nyquist-demo.html，演示页不随本次发布" -ForegroundColor Yellow
+}
+
 # 离线版 3D 产线演示（技术笔记《3D 产线可视化》的在线体验）：
 # 与 pv-digital-twin.html 的单文件 CDN 版互补——这一版是多文件 + three.js 本地打包，
 # 断网可跑，带泛光/环境反射与 8 工位拾取。整个目录复制到 quartz\static\pv-factory-3d\，
