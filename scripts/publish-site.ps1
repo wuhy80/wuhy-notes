@@ -385,6 +385,11 @@ $siteSig = Get-StringHash (@(
   (Get-FileSig (Join-Path $Vault 'scripts\site-assets\pv-factory-3d\style.css')),
   $sspSig,
   (Get-FileSig (Join-Path $Vault 'scripts\quartz.config.yaml')),
+  # 构建补丁（OG 图缓存/并行）：它会改变产物（OG 图），不进指纹的话
+  # 「只改这个补丁」会被增量判断当成无变化而跳过构建，补丁永远生效不了（2026-11-13 踩到）
+  (Get-FileSig (Join-Path $Vault 'scripts\site-overrides\quartz.ts')),
+  # 发布流水线自身：改了构建/部署逻辑也应重新构建，避免「脚本变了但站点没变」的假一致
+  (Get-FileSig (Join-Path $Vault 'scripts\publish-site.ps1')),
   $ThemeName
 ) -join '|')
 $pub = Load-PubState
