@@ -368,6 +368,16 @@ jobs:
           ssh "${SSH_OPTS[@]}" "$HOST" "if [ -d /var/www/wuhy-notes ]; then mv /var/www/wuhy-notes /var/www/wuhy-notes.old; fi && mv /var/www/wuhy-notes.new /var/www/wuhy-notes && rm -rf /var/www/wuhy-notes.old"
           echo "国内服务器已更新：http://47.100.85.94:8080（Basic Auth）"
 
+      # 显式保存 OG 图缓存（2026-11-13）：实测 actions/cache 的 post 步骤在
+      # 「构建成功但部署失败」这类 run 里没有真的落盘（缓存列表里始终没有 og-cache-*），
+      # 所以改成独立一步、if: always()，成功失败都存，日志里也有明确结果。
+      - name: 7d. 保存 OG 图缓存
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.SITE_ROOT }}\.og-cache
+          key: og-cache-${{ github.run_id }}
+
       - name: 8. 汇总（脱敏校验必须全为 0）
         if: always()
         shell: pwsh

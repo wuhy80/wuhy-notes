@@ -497,10 +497,16 @@ try {
     # 多 lane 并发 + 磁盘缓存。实测 1000 篇 237s → 26s（缓存命中时），仍保持全量、确定性。
     $wid = Find-WorkerPid
     if ($wid) { Stop-Worker $wid }
-    Write-Host "  前台全量构建（OG 图有缓存时约 30-60 秒；首次或缓存清空约 2 分钟）..."
+    Write-Host "  前台全量构建（OG 图有缓存时约 1-2 分钟；首次或缓存清空约 3-4 分钟）..."
     & $Node 'quartz/bootstrap-cli.mjs' build -d $Content
     if ($LASTEXITCODE -ne 0) { throw "构建失败，中止发布" }
     Set-Content -LiteralPath $BuildSigPath -Value $exportSig -Encoding UTF8
+    # OG 缓存统计：CI 日志里能直接看出「这轮是冷启动还是命中」，也方便判断缓存是否真的落地
+    if (Test-Path -LiteralPath $env:OG_CACHE_DIR) {
+      $ogFiles = @(Get-ChildItem -LiteralPath $env:OG_CACHE_DIR -File -ErrorAction SilentlyContinue)
+      $ogMB = [math]::Round((($ogFiles | Measure-Object Length -Sum).Sum) / 1MB, 1)
+      Write-Host "  OG 图缓存：$($ogFiles.Count) 个 / $ogMB MB（$($env:OG_CACHE_DIR)）"
+    }
   }
   # 产物完整性校验：绝不允许把残缺构建部署上线
   $PublicDir = Join-Path $Quartz 'public'
