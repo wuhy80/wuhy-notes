@@ -149,6 +149,22 @@ if (Test-Path -LiteralPath $src) {
   Write-Host "  未找到 site-custom.scss，保留 Quartz 现有样式" -ForegroundColor Yellow
 }
 
+# 构建加速补丁（2026-11-13）：覆盖上游 quartz.ts，把 OG 社交图生成从「1841 张串行」
+# 改成「只渲真实文件 + 多 lane 并发 + 磁盘缓存」。实测 237s → 26s（缓存全命中）。
+# 没这个文件时回退到上游默认行为，不影响发布。
+$quartzTsSrc = Join-Path $Vault 'scripts\site-overrides\quartz.ts'
+$quartzTsDst = Join-Path $Quartz 'quartz.ts'
+if (Test-Path -LiteralPath $quartzTsSrc) {
+  if (-not (Test-Path -LiteralPath $quartzTsDst) -or (Get-FileHash -LiteralPath $quartzTsSrc).Hash -ne (Get-FileHash -LiteralPath $quartzTsDst).Hash) {
+    Copy-Item -LiteralPath $quartzTsSrc -Destination $quartzTsDst -Force
+    Write-Host "  已应用 quartz.ts 构建加速补丁（OG 图缓存）"
+  } else {
+    Write-Host "  quartz.ts 补丁无变化，跳过覆盖"
+  }
+} else {
+  Write-Host "  未找到 scripts/site-overrides/quartz.ts，使用上游默认 quartz.ts" -ForegroundColor Yellow
+}
+
 # 站点自托管字体（阿里妈妈数黑体，标题字体）→ Quartz static，构建时随 public 发布
 $fontSrc = Join-Path $Vault 'scripts\site-assets\AlimamaShuHeiTi-Bold.woff2'
 $fontDstDir = Join-Path $Quartz 'quartz\static\font'
@@ -445,6 +461,11 @@ if (Test-Path -LiteralPath $bilingualChecker) {
   Write-Host "  未找到 check-bilingual.mjs，跳过校验" -ForegroundColor Yellow
 }
 Write-Step "3/4 Quartz 构建（前台全量，确定性优先）"
+# OG 图缓存放站点根：不进 git、CI 可跨 run 复用；清空它等于强制重渲全部 OG 图
+$env:OG_CACHE_DIR = Join-Path $SiteRoot '.og-cache'
+if (-not (Test-Path -LiteralPath $env:OG_CACHE_DIR)) {
+  New-Item -ItemType Directory -Force -Path $env:OG_CACHE_DIR | Out-Null
+}
 Push-Location $Quartz
 try {
   if ($Serve) {
@@ -466,11 +487,12 @@ try {
     # 2026-10-25 起一律前台全量构建，不再走「常驻 worker + --watch 增量」：
     # 探针实验两度复现 chokidar 对 content 新增 .md 的 add 事件不可靠（写入 90s
     # 内不触发任何 rebuild，新页面不进产物），且 watch 增量因 changesSinceLastBuild
-    # 只增不清而退化成全量 parse（909 文件/40s + emit 3-4 分钟），速度也不再占优。
-    # 前台全量约 4 分钟，结果确定；新鲜度/尾随重建的竞态也随之消失。
+    # 只增不清而退化成全量 parse，速度也不再占优。
+    # 2026-11-13：OG 图走后门（scripts/site-overrides/quartz.ts）：只给真实文件生成 +
+    # 多 lane 并发 + 磁盘缓存。实测 1000 篇 237s → 26s（缓存命中时），仍保持全量、确定性。
     $wid = Find-WorkerPid
     if ($wid) { Stop-Worker $wid }
-    Write-Host "  前台全量构建（约 4 分钟）..."
+    Write-Host "  前台全量构建（OG 图有缓存时约 30-60 秒；首次或缓存清空约 2 分钟）..."
     & $Node 'quartz/bootstrap-cli.mjs' build -d $Content
     if ($LASTEXITCODE -ne 0) { throw "构建失败，中止发布" }
     Set-Content -LiteralPath $BuildSigPath -Value $exportSig -Encoding UTF8

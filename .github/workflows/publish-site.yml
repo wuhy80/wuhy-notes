@@ -66,6 +66,7 @@ on:
       - "scripts/export-public.ps1"
       - "scripts/publish-site.ps1"
       - "scripts/site-assets/**"
+      - "scripts/site-overrides/**"
       - ".github/workflows/publish-site.yml"
       # 数据基础设施：影响 D1 索引 / Worker / 元数据 / 生词本，变了也要重新发布
       - "cloudflare/**"
@@ -140,7 +141,7 @@ jobs:
             default { $out.Add("- 事件：$($env:GITHUB_EVENT_NAME)（手动触发）") }
           }
           if ($changed.Count -gt 0) {
-            $stylePat = '^(scripts/site-custom\.scss|scripts/quartz\.config\.yaml|scripts/site-assets/|scripts/enhance-content\.cjs|scripts/build-section-nav\.cjs|scripts/add-edit-links\.cjs|scripts/skin-switcher\.cjs|scripts/fix-html-emphasis\.cjs|scripts/export-public\.ps1|scripts/publish-site\.ps1|scripts/build-vault-meta\.mjs|scripts/inject-dataview\.cjs|scripts/build-vocab\.mjs|scripts/check-bilingual\.mjs|\.github/)'
+            $stylePat = '^(scripts/site-custom\.scss|scripts/quartz\.config\.yaml|scripts/site-assets/|scripts/site-overrides/|scripts/enhance-content\.cjs|scripts/build-section-nav\.cjs|scripts/add-edit-links\.cjs|scripts/skin-switcher\.cjs|scripts/fix-html-emphasis\.cjs|scripts/export-public\.ps1|scripts/publish-site\.ps1|scripts/build-vault-meta\.mjs|scripts/inject-dataview\.cjs|scripts/build-vocab\.mjs|scripts/check-bilingual\.mjs|\.github/)'
             $contentPat = '^(大模型|Ontology|技术笔记|读书笔记|网址收藏|编程语言|Golang编程|Rust编程|数学学习|英语学习|专项学习|附件|template)/'
             $style = @($changed | Where-Object { $_ -match $stylePat })
             $content = @($changed | Where-Object { $_ -notmatch $stylePat -and $_ -match $contentPat })
@@ -207,6 +208,18 @@ jobs:
           key: publish-state-${{ github.run_id }}
           restore-keys: |
             publish-state-
+
+      # OG 社交图缓存（2026-11-13）：OG 图是构建里最贵的一步——上游是 1841 张串行渲染，
+      # 本地实测 189s（占 80%）。scripts/site-overrides/quartz.ts 把它改成只渲真实文件 +
+      # 并发 + 按内容哈希缓存，缓存全命中时这一步 0.7s。缓存本身很小（~999 个 webp / 20MB），
+      # 命中后整次构建从 ~4 分钟降到 ~30 秒，也顺带省掉大段 runner 计费时间。
+      - name: 2d. 恢复 OG 图缓存
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.SITE_ROOT }}\.og-cache
+          key: og-cache-${{ github.run_id }}
+          restore-keys: |
+            og-cache-
 
       - name: 3. 浅克隆 Quartz 并 checkout 到 pin 死的提交
         shell: pwsh
