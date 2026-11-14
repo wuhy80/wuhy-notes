@@ -55,13 +55,21 @@ test('Pages Worker 保留 API 与静态资源，已知文章返回阅读器，�
     ASSETS: { async fetch(request) {
       const pathname = decodeURIComponent(new URL(request.url).pathname);
       if (pathname === '/index.json') return Response.json(manifest);
-      if (pathname === '/index.html') return new Response('<html>阅读器</html>');
+      if (pathname === '/index.html') return Response.redirect('https://preview.local/', 301);
+      if (pathname === '/') {
+        if (request.headers.has('If-None-Match')) return new Response(null, { status: 304 });
+        return new Response('<html>阅读器</html>');
+      }
       if (pathname === '/notes/技术笔记/网络/采样.md') return new Response('# 采样', { headers: { 'Content-Type': 'text/markdown' } });
       return new Response('missing', { status: 404 });
     } },
   };
   const request = (url, options) => worker.fetch(new Request('https://preview.local' + url, options), env, {});
   assert.equal((await request('/技术笔记/网络/采样.html')).status, 200);
+  assert.equal(await (await request('/技术笔记/网络/采样.html')).text(), '<html>阅读器</html>');
+  assert.equal(await (await request('/index.html')).text(), '<html>阅读器</html>');
+  assert.equal(await (await request('/', { headers: { 'If-None-Match': 'old-shell' } })).text(), '<html>阅读器</html>');
+  assert.equal(await (await request('/', { method: 'HEAD' })).text(), '');
   assert.equal((await request('/不存在.html')).status, 404);
   assert.equal(await (await request('/notes/技术笔记/网络/采样.md')).text(), '# 采样');
   assert.equal((await request('/notes/missing.md')).status, 404);

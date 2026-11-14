@@ -22,8 +22,11 @@ export default {
     try {
       const resolver = await getResolver(env);
       const known = url.pathname === '/' || url.pathname === '/index.html' || resolver.resolve(url.pathname).note;
-      const shellUrl = new URL('/index.html', url);
-      const shell = await env.ASSETS.fetch(new Request(shellUrl, request));
+      // Pages 会将 /index.html 重定向到 /；通过静态绑定取根入口正文。
+      // 不传文章请求的条件缓存和 Range 头，避免把无正文的 304 改写成 200。
+      const shellUrl = new URL('/', url);
+      const shell = await env.ASSETS.fetch(new Request(shellUrl));
+      if (!shell.ok) throw new Error('阅读器入口暂不可用');
       const headers = new Headers(shell.headers);
       headers.set('Cache-Control', 'no-cache');
       headers.set('Content-Type', 'text/html; charset=utf-8');
