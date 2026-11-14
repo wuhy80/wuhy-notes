@@ -155,8 +155,8 @@ async function renderArticle(id) {
   await Promise.all(loads);
   if (id !== navigation) return;
   document.dispatchEvent(new CustomEvent('nav', { detail: { url: location.pathname } }));
-  enhanceDiagrams(article, () => id === navigation && !sourceMode).catch(error => console.warn(error));
-  scrollToHash();
+  await enhanceDiagrams(article, () => id === navigation && !sourceMode).catch(error => console.warn(error));
+  if (id === navigation && !sourceMode) scrollToHash();
 }
 function scrollToHash() {
   if (!location.hash) return;
@@ -307,7 +307,14 @@ $('#menu').addEventListener('click', () => {
   $('#menu').setAttribute('aria-expanded', String(open));
 });
 document.documentElement.dataset.theme = document.documentElement.getAttribute('saved-theme') || 'light';
-document.addEventListener('themechange', event => { document.documentElement.dataset.theme = event.detail.theme; });
+document.addEventListener('themechange', event => {
+  if (document.documentElement.dataset.theme === event.detail.theme) return;
+  document.documentElement.dataset.theme = event.detail.theme;
+  if (!sourceMode && !loading) {
+    const id = navigation;
+    enhanceDiagrams(article, () => id === navigation && !sourceMode).catch(error => console.warn(error));
+  }
+});
 $('#focus-mode').addEventListener('click', () => {
   const focused = document.body.classList.toggle('reader-focus');
   $('#focus-mode').setAttribute('aria-pressed', String(focused));

@@ -39,6 +39,18 @@ test('章节、块引用与附件保留参数并正确转义', () => {
   assert.equal(asset('同名.svg', 'index.md'), null);
   assert.equal(rawHref('技术笔记/图 #1.png'), '/notes/%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/%E5%9B%BE%20%231.png');
 });
+
+test('中文章节链接经过解析和净化后不会把百分号编码当成标题', () => {
+  const target = '技术笔记/网络/采样';
+  const hash = '采样 A：边界？';
+  const first = resolve(target + '#' + hash);
+  const href = noteHref(first.note, first.hash);
+  const again = resolve(href);
+  assert.equal(again.hash, headingId(hash));
+  assert.equal(noteHref(again.note, again.hash), href);
+  assert.equal(resolve(target + '#完成50%').hash, '完成50%');
+  assert.equal(resolve(target + '#%5Esample').hash, '^sample');
+});
 test('YAML 保持标签列表、日期、布尔和嵌套字段的类型', () => {
   const note = parseNote('---\ntags: [技术/网络, 数学]\ncreated: 2026-11-14\ndraft: false\naliases:\n  - 采样\nnested:\n  enabled: true\n---\n# 正文\n');
   assert.deepEqual(note.fm.tags, ['技术/网络', '数学']);

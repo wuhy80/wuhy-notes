@@ -35,7 +35,7 @@ API Server 是 Kubernetes 控制平面的前端，用于处理内部和外部请
 | kubectl | 命令行工具 |
 | kubeadm | 集群管理工具 |
 
-**相关文档**: [[高可用/00 如何检查是否高可用#检查 Kubernetes 集群高可用性|检查 API Server 状态]]
+**相关文档**: [[高可用/00 如何检查是否高可用#检查 API 服务器状态|检查 API Server 状态]]
 
 ### kube-scheduler
 
@@ -112,7 +112,7 @@ kube-proxy 是网络代理，负责处理集群内部或外部的网络通信：
 - 使用操作系统的数据包过滤层（iptables/IPVS）
 - 或自行转发流量
 
-**相关文档**: [[高可用/00 如何检查是否高可用#方法 1 检查 kube-proxy 模式|检查 kube-proxy 模式]]
+**相关文档**: [kube-proxy 配置参考](https://kubernetes.io/docs/reference/config-api/kube-proxy-config.v1alpha1/)
 
 ---
 

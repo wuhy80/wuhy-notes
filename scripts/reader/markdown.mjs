@@ -62,7 +62,8 @@ export function createMarkdown(resolver) {
       if (state.src[end - 1] !== '\\') break;
       end++;
     }
-    if (end < 0 || /\s/.test(state.src[end - 1])) return false;
+    // 金额之间的美元符号（如 $20 与 $30）不能充当公式结束符。
+    if (end < 0 || /\s/.test(state.src[end - 1]) || /\d/.test(state.src[end + 1] || '')) return false;
     if (!silent) {
       const token = state.push('math_inline', '', 0);
       token.content = state.src.slice(state.pos + 1, end);
@@ -72,26 +73,29 @@ export function createMarkdown(resolver) {
   });
   md.renderer.rules.math_inline = (tokens, i) => '<span class="math-pending" data-math="inline">' + escape(tokens[i].content) + '</span>';
   md.block.ruler.before('fence', 'math_block', (state, start, end, silent) => {
-    const line = state.src.slice(state.bMarks[start] + state.tShift[start], state.eMarks[start]);
-    if (!line.startsWith('$$')) return false;
-    if (silent) return true;
+    const line = state.src.slice(state.bMarks[start] + state.tShift[start], state.eMarks[start]).trimEnd();
+    if (state.sCount[start] - state.blkIndent >= 4 || !line.startsWith('$$')) return false;
     const body = [];
     let next = start + 1;
+    let closed = false;
     if (line.length > 3 && line.endsWith('$$')) body.push(line.slice(2, -2));
     else {
       body.push(line.slice(2));
       for (; next < end; next++) {
+        if (state.sCount[next] < state.blkIndent && state.src.slice(state.bMarks[next], state.eMarks[next]).trim()) break;
         const text = state.src.slice(state.bMarks[next] + state.tShift[next], state.eMarks[next]);
-        if (text.trim().endsWith('$$')) { body.push(text.trim().slice(0, -2)); next++; break; }
+        if (text.trim().endsWith('$$')) { body.push(text.trim().slice(0, -2)); next++; closed = true; break; }
         body.push(text);
       }
+      if (!closed) return false;
     }
+    if (silent) return true;
     const token = state.push('math_block', 'div', 0);
     token.content = body.join('\n').trim();
     token.map = [start, next];
     state.line = next;
     return true;
-  });
+  }, { alt: ['paragraph', 'reference', 'blockquote', 'list'] });
   md.renderer.rules.math_block = (tokens, i) => '<div class="math-pending" data-math="block">' + escape(tokens[i].content) + '</div>\n';
 
   md.core.ruler.after('inline', 'note_structure', state => {
@@ -202,8 +206,14 @@ export function createMarkdown(resolver) {
   };
 }
 
-export async function enhanceDiagrams(root, active = () => true) {
-  const math = [...root.querySelectorAll('[data-math]')];
+const diagramSources = new WeakMap();
+const diagramJobs = new WeakMap();
+let diagramSequence = 0;
+export async function enhanceDiagrams(root, isActive = () => true) {
+  const job = {};
+  diagramJobs.set(root, job);
+  const active = () => isActive() && diagramJobs.get(root) === job;
+  const math = [...root.querySelectorAll('.math-pending[data-math]')];
   if (math.length) {
     const { default: katex } = await import('katex');
     if (!active()) return;
@@ -215,24 +225,27 @@ export async function enhanceDiagrams(root, active = () => true) {
       catch { /* 原始公式仍可读 */ }
     }
   }
-  const diagrams = [...root.querySelectorAll('.mermaid-pending')];
+  const theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'default';
+  const diagrams = [...root.querySelectorAll('.mermaid-pending, .mermaid')].filter(el =>
+    el.matches('.mermaid-pending') || (diagramSources.has(el) && diagramSources.get(el).theme !== theme));
   if (diagrams.length) {
     const { default: mermaid } = await import('mermaid');
     if (!active()) return;
     mermaid.initialize({
       startOnLoad: false, securityLevel: 'strict',
-      theme: document.documentElement.dataset.theme === 'dark' ? 'dark' : 'default',
+      theme,
       // 窄屏保留时间轴的可读宽度，由图内滚动承载，避免日期挤在一起。
       gantt: { useWidth: Math.max(640, root.clientWidth) },
     });
-    for (const [i, el] of diagrams.entries()) {
+    for (const el of diagrams) {
       if (!active()) return;
       // 在文章内测量图宽，避免甘特图按整个视口布局后再缩小文字。
       const box = document.createElement('div');
       box.className = 'mermaid';
       el.before(box);
       try {
-        const result = await mermaid.render('diagram-' + Date.now() + '-' + i, el.textContent, box);
+        const source = diagramSources.get(el)?.source ?? el.textContent;
+        const result = await mermaid.render('diagram-' + ++diagramSequence, source, box);
         if (!active()) { box.remove(); return; }
         // Mermaid 默认用 foreignObject + HTML 绘制标签，纯 SVG profile 会删掉节点文字。
         box.innerHTML = DOMPurify.sanitize(result.svg, {
@@ -241,6 +254,7 @@ export async function enhanceDiagrams(root, active = () => true) {
           HTML_INTEGRATION_POINTS: { foreignobject: true },
           FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form'],
         });
+        diagramSources.set(box, { source, theme });
         el.remove();
       } catch {
         box.remove();

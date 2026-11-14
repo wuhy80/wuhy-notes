@@ -87,11 +87,14 @@ test('绘图功能笔记保留 Mermaid 文字、甘特图字号与 LaTeX 示例'
   await expect(page.locator('article pre[data-language="markdown"]')).toContainText('E = mc^2');
   await expect(page.locator('article h3').filter({ hasText: '2. PlantUML' })).toBeVisible();
   await page.screenshot({ path: '.cache/reader-drawing-desktop.png', fullPage: true });
+  const nodeFill = await flowchart.locator('.node rect').first().evaluate(el => getComputedStyle(el).fill);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.locator('.gz-skin-dd summary').click();
   await page.locator('button[data-gz-skin="yaoye"]').click();
   await page.locator('.gz-skin-dd summary').click();
   await page.locator('button[data-gz-mode="dark"]').click();
+  await expect.poll(() => flowchart.locator('.node rect').first().evaluate(el => getComputedStyle(el).fill)).not.toBe(nodeFill);
+  await expect(page.locator('article .katex-display')).toHaveCount(1);
   // 切换源码后重新排版，验证窄屏测量的甘特图不会挤出正文。
   await page.locator('#source-mode').click();
   await page.locator('#read-mode').click();
@@ -102,6 +105,52 @@ test('绘图功能笔记保留 Mermaid 文字、甘特图字号与 LaTeX 示例'
   await expect(page.locator('article .katex-display')).toBeVisible();
   await page.screenshot({ path: '.cache/reader-drawing-mobile.png', fullPage: true });
   expect(errors).toEqual([]);
+});
+
+test('中文章节链接定位、紧接段落的公式和未闭合公式不丢失正文', async ({ page }) => {
+  const fixture = { path: '公式兼容.md', url: '/公式兼容.html', title: '公式兼容', tags: [], aliases: [], links: [], hash: 'fixture' };
+  const raw = [
+    '# 公式兼容', '', '[[#中文章节|跳到中文章节]]', '',
+    '> [!note] 公式', '> 前文 $a$ 后直接接公式', '> $$', '> f_s \\geq 2B', '> $$', '> 公式之后的正文', '',
+    '金额从 $20 升到 $30，估值为 $1.2 billion (vs $0.8 billion)。公式 $x=2$ 正常。', '',
+    '段落后直接接公式', '$$E=mc^2$$   ', '', '## 中文章节', '',
+    '块末引用 ^sample', '', '[[#^sample|块引用]]', '',
+    '```markdown', '$$这段保留为代码$$', '```', '',
+    '$$', '未闭合公式', '', '## 后续正文', '', '这段文字必须正常显示',
+  ].join('\n');
+  await page.route('**/index.json', route => route.fulfill({ json: { ...manifest, notes: [...manifest.notes, fixture] } }));
+  await page.route('**/notes/**', route => decodeURIComponent(new URL(route.request().url()).pathname) === '/notes/公式兼容.md'
+    ? route.fulfill({ contentType: 'text/markdown', body: raw }) : route.continue());
+  await page.goto('/');
+  await expect(page.locator('article h1')).toBeVisible();
+  await page.evaluate(() => { history.pushState(null, '', '/公式兼容.html'); dispatchEvent(new PopStateEvent('popstate')); });
+  await expect(page.locator('article .katex-display')).toHaveCount(2);
+  await expect(page.locator('article .callout .katex-display')).toBeVisible();
+  await expect(page.locator('article .katex-error')).toHaveCount(0);
+  await expect(page.locator('article [data-math="inline"]')).toHaveCount(2);
+  await expect(page.locator('article')).toContainText('$1.2 billion (vs $0.8 billion)');
+  await expect(page.locator('article')).toContainText('公式之后的正文');
+  await expect(page.locator('article h2#后续正文')).toBeVisible();
+  await expect(page.locator('article pre')).toContainText('$$这段保留为代码$$');
+  const chapter = page.locator('article a').filter({ hasText: '跳到中文章节' });
+  await expect(chapter).toHaveAttribute('href', '/公式兼容.html#' + encodeURIComponent('中文章节'));
+  await chapter.click();
+  await expect(page).toHaveURL(/#%E4%B8%AD%E6%96%87%E7%AB%A0%E8%8A%82$/);
+  await expect(page.locator('#中文章节')).toBeInViewport();
+  await expect(page.locator('article a').filter({ hasText: '块引用' })).toHaveAttribute('href', '/公式兼容.html#sample');
+  await expect(page.locator('article')).toContainText('这段文字必须正常显示');
+});
+
+test('手机端长报告、神经元示例与 KMP 内嵌 SVG 不撑宽页面', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route('**/*', route => route.request().resourceType() === 'image' ? route.abort() : route.continue());
+  for (const pattern of [/Stanford AI Index Report 2026 全文提取\.md$/, /07-神经元结构\.md$/, /字符串算法\/KMP算法\.md$/]) {
+    await page.goto(selectNote(pattern).url);
+    await expect(page.locator('#status')).toBeHidden();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBeTruthy();
+  }
+  await expect(page.locator('article svg').first()).toBeVisible();
+  expect(await page.locator('article svg').first().evaluate(el => el.getBoundingClientRect().width <= el.parentElement.clientWidth)).toBeTruthy();
 });
 
 test('Dataview 索引与生词本复用现有 JS，教学查询保留代码', async ({ page }) => {

@@ -21,7 +21,9 @@ export function headingId(text) {
 
 export function splitTarget(target) {
   const [path, ...hash] = target.replace(/\\\|/g, '|').split('#');
-  return { path: path.trim(), hash: hash.join('#') };
+  let fragment = hash.join('#');
+  try { fragment = decodeURIComponent(fragment); } catch { /* 保留含字面百分号的章节名 */ }
+  return { path: path.trim(), hash: fragment };
 }
 
 export function createResolver(manifest) {

@@ -36,6 +36,9 @@ html body div#quartz-root.page article .markdown-preview-view{max-width:100%;ove
 html body div#quartz-root.page article .markdown-preview-view>table{display:block;width:max-content;max-width:100%;overflow-x:auto}
 html body div#quartz-root.page article .mermaid svg{height:auto}
 html body div#quartz-root.page article .mermaid svg[aria-roledescription=gantt]{min-width:640px}
+html body div#quartz-root.page article svg:not(.mermaid svg):not(.katex svg){max-width:100%;height:auto}
+html body div#quartz-root.page article .fig-frame input[type=range]{min-width:0}
+@media(max-width:799px){html body div#quartz-root.page article .fig-frame div:has(>label>input[type=range]){grid-template-columns:minmax(0,1fr)!important}}
 html body div#quartz-root.page .right.sidebar #toc a{font-size:12px;margin:10px 0;line-height:1.5;color:var(--ink-soft)}
 #toc a::before{content:'○ ';color:var(--accent);font-size:10px}
 #toc a.subheading{padding-left:14px}
