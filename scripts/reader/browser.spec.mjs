@@ -67,7 +67,7 @@ test('Mermaid、公式与附件可以在浏览器解析', async ({ page }) => {
   await expect(page.locator('article h1')).toBeVisible();
   const image = page.locator('article img[src^="/notes/"]').first();
   await expect(image).toBeVisible();
-  expect(await image.evaluate(img => img.complete && img.naturalWidth > 0)).toBeTruthy();
+  await expect.poll(() => image.evaluate(img => img.complete && img.naturalWidth > 0), { timeout: 15000 }).toBeTruthy();
 });
 
 test('Dataview 索引与生词本复用现有 JS，教学查询保留代码', async ({ page }) => {

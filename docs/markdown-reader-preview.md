@@ -14,13 +14,15 @@ type: guide
 ## Windows 双击入口
 
 - **start-reader.cmd**：双击后安装首次运行所需依赖，导出公开笔记，启动 http://127.0.0.1:8790 并打开浏览器。保存笔记后自动重新导出、构建和刷新。关闭该窗口或按 Ctrl+C 即停止服务。
-- **deploy-reader.cmd**：先快进同步 Git，运行校验与独立构建，再提交公开笔记、被引用且无重名歧义的图片和阅读器相关代码，推送当前 upstream，并触发预览部署。窗口会等待部署结果并显示访问链接。
+- **deploy-reader.cmd**：先快进同步 Git，运行校验与独立构建，再提交公开笔记、被引用且无重名歧义的图片和阅读器相关代码，推送当前 upstream，并触发预览部署。窗口会等待部署结果，检查线上入口、目录和 MD 正文后显示访问链接。
 
 部署入口要求已安装 Git、GitHub CLI（gh）和 Node.js，且 Git 推送凭据与 gh auth login 已配置。它不会暂存 .obsidian、.smart-env、.vscode、.zcode 等状态或配置目录，也不会混入原本已暂存的其他改动；若暂存区非空，会明确报错。未被公开笔记引用的附件保持原样，不自动提交。
 
 端口占用时可以在终端运行 start-reader.cmd --port 8793。部署提交说明可以通过 deploy-reader.cmd --message "本次更新说明" 指定。
 
 只校验与查看预计提交范围，可运行 deploy-reader.cmd --check；该模式不进行 Git 同步、提交、推送或部署。
+
+本地预览与部署使用各自独立的导出目录，可以保持预览服务运行并执行部署。部署同步到远端的新笔记时，本地预览仍会自动刷新。
 
 ## 与原站保持一致的样式
 
@@ -48,6 +50,9 @@ npm run reader:build
 # 已构建后，只启动阅读器
 npm run reader:preview -- --skip-build
 
+# 需要完整重新导出时
+npm run reader:build -- --force-export
+
 # 复用已经检查过的公开导出目录，跳过导出
 node scripts/build-md-reader.mjs --content _site/md-reader-export/content
 
@@ -63,6 +68,7 @@ npm run reader:test
 | 目录 | 用途 |
 |---|---|
 | _site/md-reader-export/content | 沿用现有规则导出的公开内容 |
+| _site/md-reader-export/deploy | 部署校验专用的独立导出与构建目录 |
 | _site/md-reader | 可部署的阅读器、MD、附件和索引 |
 | scripts/reader | 阅读器源码、路径规则与测试 |
 

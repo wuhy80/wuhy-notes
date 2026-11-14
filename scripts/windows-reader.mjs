@@ -11,8 +11,8 @@ const args = process.argv.slice(2);
 const action = args[0];
 const gitArgs = ['-c', 'safe.directory=' + vault.split(path.sep).join('/')];
 const env = { ...process.env, GIT_TERMINAL_PROMPT: '0' };
-function run(command, params, { quiet = false } = {}) {
-  const result = spawnSync(command, params, { cwd: vault, env, encoding: 'utf8', windowsHide: true, maxBuffer: 16 * 1024 * 1024 });
+function run(command, params, { quiet = false, environment = env } = {}) {
+  const result = spawnSync(command, params, { cwd: vault, env: environment, encoding: 'utf8', windowsHide: true, maxBuffer: 16 * 1024 * 1024 });
   if (!quiet && result.stdout) process.stdout.write(result.stdout);
   if (!quiet && result.stderr) process.stderr.write(result.stderr);
   if (result.error || result.status !== 0) throw new Error(command + ' 执行失败：' + (result.error?.message || result.stderr || result.stdout).trim());
@@ -32,6 +32,29 @@ function ensureDependencies() {
 function openBrowser(url) {
   if (process.platform !== 'win32') return;
   spawn(process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', 'start "" "' + url + '"'], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+}
+async function verifyPreview(url) {
+  const get = async pathname => {
+    const response = await fetch(new URL(pathname, url), { cache: 'no-store', signal: AbortSignal.timeout(15000) });
+    if (!response.ok) throw new Error(pathname + ' 返回 HTTP ' + response.status);
+    return response;
+  };
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      if (!(await (await get('/')).text()).includes('<article')) throw new Error('入口未返回阅读器页面');
+      const manifest = await (await get('/index.json')).json();
+      if (!manifest.notes?.length) throw new Error('线上目录为空');
+      const note = manifest.notes[0];
+      const raw = await get('/notes/' + note.path.split('/').map(encodeURIComponent).join('/'));
+      if (!raw.headers.get('Content-Type')?.includes('text/markdown') || !(await raw.text()).trim()) throw new Error('线上 MD 正文不可用');
+      console.log('线上访问校验通过：阅读器入口、' + manifest.notes.length + ' 篇笔记目录与 MD 正文。');
+      return;
+    } catch (error) {
+      if (attempt === 3) throw new Error('部署工作流已完成，但线上访问校验失败：' + error.message);
+      console.log('正在等待预览入口更新，稍后重新检查…');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
 }
 function allowed(file, publishedImages = new Set(), imageCounts = new Map()) {
   if (/(?:^|\/)(?:AGENTS|CLAUDE)\.md$/i.test(file)) return false;
@@ -62,8 +85,9 @@ async function deploy() {
   }
   ensureDependencies();
   run(process.execPath, ['--test', 'scripts/reader/reader.test.mjs']);
-  const siteRoot = process.env.SITE_ROOT || path.join(vault, '_site/md-reader-export');
-  run(process.execPath, ['scripts/preview-md-reader.mjs', '--build-only', '--out', path.join(siteRoot, 'release')]);
+  // 部署独用导出目录，避免 Git 同步触发本地预览刷新时争用同一份中间文件。
+  const siteRoot = path.join(process.env.SITE_ROOT || path.join(vault, '_site/md-reader-export'), 'deploy');
+  run(process.execPath, ['scripts/preview-md-reader.mjs', '--build-only', '--out', path.join(siteRoot, 'release')], { environment: { ...env, SITE_ROOT: siteRoot } });
   const released = JSON.parse(fs.readFileSync(path.join(siteRoot, 'release/index.json'), 'utf8'));
   const publishedImages = new Set(released.files.map(file => path.posix.basename(file).toLowerCase()));
   const imageCounts = new Map();
@@ -116,6 +140,8 @@ async function deploy() {
     if (active.status === 'completed') {
       if (active.conclusion !== 'success') throw new Error('发布未成功（' + active.conclusion + '），本地提交和推送已保留。查看：' + active.html_url);
       const url = 'https://markdown-preview.wuhy-notes.pages.dev/';
+      console.log('工作流已完成，正在检查线上访问…');
+      await verifyPreview(url);
       console.log('部署完成：' + url);
       if (args.includes('--open')) openBrowser(url);
       return;

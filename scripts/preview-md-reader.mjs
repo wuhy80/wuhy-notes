@@ -23,7 +23,7 @@ if (!args.includes('--skip-build')) {
     const shell = process.env.PWSH_EXE || (hasPwsh || process.platform !== 'win32' ? 'pwsh' : path.join(process.env.SystemRoot, 'System32/WindowsPowerShell/v1.0/powershell.exe'));
     console.log('正在导出公开笔记并校验（' + (hasPwsh ? 'PowerShell 7' : 'Windows PowerShell') + '）…');
     const exportPath = path.join(VAULT, 'scripts/export-public.ps1').replace(/'/g, "''");
-    const exportCommand = "[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false); $OutputEncoding = [Console]::OutputEncoding; & '" + exportPath + "'";
+    const exportCommand = "[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false); $OutputEncoding = [Console]::OutputEncoding; & '" + exportPath + "'" + (args.includes('--force-export') ? ' -Force' : '');
     const result = spawnSync(shell, ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', exportCommand], { env, cwd: VAULT, encoding: 'utf8', windowsHide: true, maxBuffer: 16 * 1024 * 1024 });
     if (result.stdout) process.stdout.write(result.stdout);
     if (result.stderr) process.stderr.write(result.stderr);
