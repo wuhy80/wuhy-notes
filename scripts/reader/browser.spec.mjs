@@ -70,6 +70,40 @@ test('Mermaid、公式与附件可以在浏览器解析', async ({ page }) => {
   await expect.poll(() => image.evaluate(img => img.complete && img.naturalWidth > 0), { timeout: 15000 }).toBeTruthy();
 });
 
+test('绘图功能笔记保留 Mermaid 文字、甘特图字号与 LaTeX 示例', async ({ page }) => {
+  const note = selectNote(/00 Obsidian有哪些绘图功能\.md$/);
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto(note.url);
+  const flowchart = page.locator('article .mermaid svg').first();
+  await expect(flowchart.locator('.nodeLabel')).toHaveText(['想法', '结构化', '可视化'], { timeout: 30000 });
+  for (const label of await flowchart.locator('.nodeLabel').all()) await expect(label).toBeVisible();
+  const gantt = page.locator('article svg[aria-roledescription="gantt"]');
+  await expect(gantt).toBeVisible();
+  expect(await gantt.evaluate(svg => svg.viewBox.baseVal.width <= svg.closest('.mermaid').clientWidth + 1)).toBeTruthy();
+  expect(await gantt.locator('.taskText').first().evaluate(el => el.getBoundingClientRect().height)).toBeGreaterThanOrEqual(10);
+  await expect(page.locator('article .katex-display')).toHaveCount(1);
+  await expect(page.locator('article .katex-error, article .math-pending, article .diagram-error')).toHaveCount(0);
+  await expect(page.locator('article pre[data-language="markdown"]')).toContainText('E = mc^2');
+  await expect(page.locator('article h3').filter({ hasText: '2. PlantUML' })).toBeVisible();
+  await page.screenshot({ path: '.cache/reader-drawing-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator('.gz-skin-dd summary').click();
+  await page.locator('button[data-gz-skin="yaoye"]').click();
+  await page.locator('.gz-skin-dd summary').click();
+  await page.locator('button[data-gz-mode="dark"]').click();
+  // 切换源码后重新排版，验证窄屏测量的甘特图不会挤出正文。
+  await page.locator('#source-mode').click();
+  await page.locator('#read-mode').click();
+  await expect(page.locator('article .mermaid svg').first().locator('.nodeLabel')).toHaveText(['想法', '结构化', '可视化']);
+  await expect(gantt).toBeVisible();
+  expect(await gantt.evaluate(svg => svg.viewBox.baseVal.width >= 640 && svg.closest('.mermaid').scrollWidth > svg.closest('.mermaid').clientWidth)).toBeTruthy();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBeTruthy();
+  await expect(page.locator('article .katex-display')).toBeVisible();
+  await page.screenshot({ path: '.cache/reader-drawing-mobile.png', fullPage: true });
+  expect(errors).toEqual([]);
+});
+
 test('Dataview 索引与生词本复用现有 JS，教学查询保留代码', async ({ page }) => {
   await page.goto(selectNote(/00-日报索引\.md$/).url);
   await expect(page.locator('article .dvl-block').first()).toBeVisible();
@@ -120,7 +154,8 @@ test('嵌套 Callout、章节和块嵌入、代码保护与 HTML 净化', async 
     '正文引用 ^sample', '', '![[嵌入测试#引用章节]]', '', '![[嵌入测试#^block]]', '',
     '| 笔记 | 别名 |', '|---|---|', '| [[嵌入测试\\|链接别名]] | 保留 |', '',
     String.fromCharCode(96,96,96) + 'js', 'const text = "[[不应解析]]";', String.fromCharCode(96,96,96), '',
-    '%%不可见注释%%', '', '<script>window.readerInjection = true</script>', '<img src="x" onerror="window.readerInjection=true">',
+    '%%不可见注释%%', '', '<script>window.readerInjection = true</script>', '<img src="x" onerror="window.readerInjection=true">', '',
+    String.fromCharCode(96,96,96) + 'mermaid', 'flowchart LR', 'A["保留<br/>换行"] --> B["<img src=x onerror=window.readerInjection=true>"]', String.fromCharCode(96,96,96),
   ].join('\n');
   await page.route('**/index.json', route => route.fulfill({ json: { ...manifest, notes: [...manifest.notes, fixture, embedded] } }));
   await page.route('**/notes/**', route => {
@@ -143,6 +178,9 @@ test('嵌套 Callout、章节和块嵌入、代码保护与 HTML 净化', async 
   await expect(page.locator('article td a')).toContainText('链接别名');
   await expect(page.locator('article pre')).toContainText('[[不应解析]]');
   await expect(page.locator('article')).not.toContainText('不可见注释');
+  await expect(page.locator('article .mermaid svg')).toBeVisible();
+  await expect(page.locator('article .mermaid .nodeLabel').first()).toContainText('保留');
+  await expect(page.locator('article .mermaid [onerror], article .mermaid [onclick], article .mermaid iframe')).toHaveCount(0);
   expect(await page.evaluate(() => window.readerInjection)).toBeUndefined();
   await expect(page.locator('article script')).toHaveCount(0);
 });

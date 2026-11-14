@@ -208,7 +208,10 @@ export async function enhanceDiagrams(root, active = () => true) {
     const { default: katex } = await import('katex');
     if (!active()) return;
     for (const el of math) {
-      try { katex.render(el.textContent, el, { displayMode: el.dataset.math === 'block', throwOnError: false, trust: false }); }
+      try {
+        katex.render(el.textContent, el, { displayMode: el.dataset.math === 'block', throwOnError: false, trust: false });
+        el.classList.remove('math-pending');
+      }
       catch { /* 原始公式仍可读 */ }
     }
   }
@@ -216,16 +219,33 @@ export async function enhanceDiagrams(root, active = () => true) {
   if (diagrams.length) {
     const { default: mermaid } = await import('mermaid');
     if (!active()) return;
-    mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: document.documentElement.dataset.theme === 'dark' ? 'dark' : 'default' });
+    mermaid.initialize({
+      startOnLoad: false, securityLevel: 'strict',
+      theme: document.documentElement.dataset.theme === 'dark' ? 'dark' : 'default',
+      // 窄屏保留时间轴的可读宽度，由图内滚动承载，避免日期挤在一起。
+      gantt: { useWidth: Math.max(640, root.clientWidth) },
+    });
     for (const [i, el] of diagrams.entries()) {
+      if (!active()) return;
+      // 在文章内测量图宽，避免甘特图按整个视口布局后再缩小文字。
+      const box = document.createElement('div');
+      box.className = 'mermaid';
+      el.before(box);
       try {
-        const result = await mermaid.render('diagram-' + Date.now() + '-' + i, el.textContent);
-        if (!active()) return;
-        const box = document.createElement('div');
-        box.className = 'mermaid';
-        box.innerHTML = DOMPurify.sanitize(result.svg, { USE_PROFILES: { svg: true, svgFilters: true } });
-        el.replaceWith(box);
-      } catch { el.classList.add('diagram-error'); }
+        const result = await mermaid.render('diagram-' + Date.now() + '-' + i, el.textContent, box);
+        if (!active()) { box.remove(); return; }
+        // Mermaid 默认用 foreignObject + HTML 绘制标签，纯 SVG profile 会删掉节点文字。
+        box.innerHTML = DOMPurify.sanitize(result.svg, {
+          USE_PROFILES: { html: true, svg: true, svgFilters: true, mathMl: true },
+          ADD_TAGS: ['foreignObject'],
+          HTML_INTEGRATION_POINTS: { foreignobject: true },
+          FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form'],
+        });
+        el.remove();
+      } catch {
+        box.remove();
+        el.classList.add('diagram-error');
+      }
     }
   }
 }

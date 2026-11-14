@@ -23,14 +23,20 @@ flowchart LR
 ```
 
 ### 1. LaTeX
-Obsidian支持LaTeX数学公式，可以用来书写复杂的数学表达式。使用双美元符号（`$$`）来包围 LaTeX 代码。例如：
+Obsidian支持LaTeX数学公式，可以用来书写复杂的数学表达式。使用双美元符号（`$$`）来包围 LaTeX 代码。
+
+语法示例：
 
 ```markdown
 $$
 E = mc^2
 $$
 ```
+
+渲染效果：
+
 $$E=mc^2$$
+
 ### 2. PlantUML
 Obsidian 可以通过插件支持 PlantUML 来创建 UML 图，例如类图、序列图等。需要安装相关插件并在代码块中使用：
 
