@@ -16,7 +16,7 @@ aliases:
 # 图解 Transformer 中的 QKV 机制
 
 > [!abstract] 一句话理解
-> QKV 是 [[Transformer]] 注意力机制里的三组向量：**Query 负责提问，Key 负责被匹配，Value 负责被取出**。模型先用 Query 和 Key 计算“该关注谁”，再用这个关注权重去加权汇总 Value。
+> QKV 是 [[大模型/01-基础原理/Transformer/Transformer 整体结构|Transformer]] 注意力机制里的三组向量：**Query 负责提问，Key 负责被匹配，Value 负责被取出**。模型先用 Query 和 Key 计算“该关注谁”，再用这个关注权重去加权汇总 Value。
 
 ## 为什么需要 QKV
 

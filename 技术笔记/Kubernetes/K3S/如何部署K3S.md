@@ -84,6 +84,6 @@ mirrors:
 
 - [[Kubernetes常见问题]] - K8S 常见问题汇总
 - [[如何部署K3S]] - K3S 部署详细步骤
-- [[Docker]] - Docker 相关配置
+- [[技术笔记/Kubernetes/Docker/00 Docker配置|Docker]] - Docker 相关配置
 
 **返回**: [[Kubernetes]]

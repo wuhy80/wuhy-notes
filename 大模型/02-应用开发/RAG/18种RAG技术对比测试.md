@@ -194,7 +194,7 @@ evaluation_response = generate_response(evaluate_system_prompt, evaluation_promp
 ## 相关链接
 
 - 微调 vs RAG 的选择
-- [[向量数据库]] - RAG 的存储层
+- [[大模型/04-部署与工具链/向量数据库/向量数据库使用方式|向量数据库]] - RAG 的存储层
 
 ## 主题关联
 

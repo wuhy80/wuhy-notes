@@ -20,7 +20,7 @@ aliases:
 # Gemma 4 与 Qwen3.6-27B 对比
 
 > [!summary] 结论
-> 如果目标是中文、代码 Agent、长上下文工程任务，优先看 [[Qwen]] 的 **Qwen3.6-27B**。如果目标是更强的多模态通用能力、Google 生态、Apache 2.0 许可和更灵活的本地模型尺寸组合，优先看 **Gemma 4**，尤其是 **Gemma 4 31B** 或 **Gemma 4 26B A4B**。
+> 如果目标是中文、代码 Agent、长上下文工程任务，优先看 Qwen 的 **Qwen3.6-27B**。如果目标是更强的多模态通用能力、Google 生态、Apache 2.0 许可和更灵活的本地模型尺寸组合，优先看 **Gemma 4**，尤其是 **Gemma 4 31B** 或 **Gemma 4 26B A4B**。
 
 > [!note] 命名说明
 > 你提到的 `qwen3.7 27b`，截至 2026-06-06 我没有在 Qwen 官方页面或 Hugging Face 的 Qwen 官方仓库中查到对应的正式模型。当前可核验、最接近的是 **Qwen3.6-27B**。下面先按 Qwen3.6-27B 对比；如果后续 Qwen3.7-27B 正式发布，需要再更新。

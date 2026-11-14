@@ -287,7 +287,7 @@ npx -y flint-chart-mcp --disable-file-reference
 
 ## 关联笔记
 
-- [[MCP]]
-- [[Agent]]
-- [[数据可视化]]
+- [[技术笔记/MOC/MOC-MCP|MCP]]
+- [[大模型/09-Agent/00-Agent导航|Agent]]
+- 数据可视化
 

@@ -19,8 +19,6 @@ status: 完成
 参考抖音视频《使用 DeepSeek 做了〈光伏组件无人自动化制造车间〉3D 产线可视化网页》，复刻成品如下（已放在本库附件）：
 
 - **在线体验（发布站）**：[wuhy-notes.pages.dev/static/pv-digital-twin.html](https://wuhy-notes.pages.dev/static/pv-digital-twin.html)
-- 嵌入预览（阅读视图中直接渲染，需联网加载 3D 引擎）：![[光伏工厂数字孪生.html]]
-- 独立打开：[[光伏工厂数字孪生.html|光伏工厂数字孪生.html]]（也可在附件目录右键 → 外部打开）
 
 实现的功能清单：
 

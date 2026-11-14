@@ -340,4 +340,4 @@ git config --global url."https://ghproxy.net/https://github.com/".insteadOf "htt
 ---
 
 > [!tip] 相关笔记
-> [[大模型/00-大模型学习导航|大模型学习导航]] · [[大模型/04-部署与工具链/本地部署/M3 ULTRA部署|M3 ULTRA 部署]] · [[大模型/06-论文与报告/论文学习/2025年LLM年度回顾 - Simon Willison|2025 年 LLM 年度回顾]] · [[Home|Home]]
+> [[大模型/00-大模型学习导航|大模型学习导航]] · [[大模型/04-部署与工具链/本地部署/M3 ULTRA部署|M3 ULTRA 部署]] · [[大模型/06-论文与报告/论文学习/2025年LLM年度回顾 - Simon Willison|2025 年 LLM 年度回顾]]
