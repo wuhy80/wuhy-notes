@@ -3,6 +3,10 @@
 # 查找 .gitignore，把 _site/content 下的笔记全部排除，导致 CI 发布产物不完整。
 _site/quartz/
 _site/_reports/
+/_site/md-reader/
+/_site/md-reader-export/
+/node_modules/
+/.cache/
 
 # Obsidian 本地状态与工作区
 .obsidian/

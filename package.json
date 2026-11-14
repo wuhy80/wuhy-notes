@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test scripts/reader/reader.test.mjs",
+    "reader:build": "node scripts/preview-md-reader.mjs --build-only",
+    "reader:preview": "node scripts/preview-md-reader.mjs",
+    "reader:test": "playwright test --config scripts/reader/playwright.config.mjs"
   },
   "repository": {
     "type": "git",
@@ -17,5 +20,19 @@
   "bugs": {
     "url": "https://github.com/wuhy80/wuhy-notes/issues"
   },
-  "homepage": "https://github.com/wuhy80/wuhy-notes#readme"
+  "homepage": "https://github.com/wuhy80/wuhy-notes#readme",
+  "dependencies": {
+    "dompurify": "^3.4.17",
+    "highlight.js": "^11.12.0",
+    "katex": "^0.16.47",
+    "markdown-it": "^14.3.3",
+    "markdown-it-footnote": "^4.0.0",
+    "markdown-it-task-lists": "^2.1.1",
+    "mermaid": "^11.17.2",
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56",
+    "esbuild": "^0.25.12"
+  }
 }

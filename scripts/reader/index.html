@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>格物志 · Markdown 阅读</title>
+  <link rel="stylesheet" href="/assets/reader.css">
+  <link rel="stylesheet" href="/assets/katex/katex.min.css">
+  <link rel="stylesheet" href="/assets/reading-tools.css">
+  <script type="module" src="/assets/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#article">跳到正文</a>
+  <div id="quartz-root" class="page">
+    <header class="topbar">
+      <button id="menu" class="mobile-menu" aria-label="打开笔记目录" aria-expanded="false">☰</button>
+      <a class="brand" href="/">格物志<span>格物致知</span></a>
+      <nav aria-label="阅读工具">
+        <button id="search-toggle" aria-label="搜索笔记">搜索 <kbd>Ctrl K</kbd></button>
+        <button id="theme" aria-label="切换明暗主题">明暗</button>
+        <a href="https://github.com/wuhy80/wuhy-notes" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </header>
+    <div id="quartz-body">
+      <aside id="sidebar" class="left sidebar" aria-label="笔记目录">
+        <div class="rail-heading">知识目录 <span id="note-count"></span></div>
+        <label class="filter-label" for="filter">筛选标题、路径或标签</label>
+        <input id="filter" type="search" placeholder="筛选笔记…" autocomplete="off">
+        <nav id="tree" aria-label="知识库分区"></nav>
+      </aside>
+      <main class="center">
+        <div class="article-tools">
+          <p id="breadcrumb"></p>
+          <div role="group" aria-label="正文显示模式">
+            <button id="read-mode" aria-pressed="true">阅读</button>
+            <button id="source-mode" aria-pressed="false">源码</button>
+            <a id="download" download>下载 MD</a>
+          </div>
+        </div>
+        <p id="status" role="status" aria-live="polite">正在打开知识库…</p>
+        <article id="article" tabindex="-1"></article>
+        <pre id="source" hidden><code></code></pre>
+      </main>
+      <aside class="right sidebar" aria-label="本文导航">
+        <div class="rail-heading">本文目录</div>
+        <nav id="toc" aria-label="文章章节"></nav>
+        <section class="backlinks">
+          <div class="rail-heading">反向链接</div>
+          <div id="backlinks"></div>
+        </section>
+      </aside>
+    </div>
+    <footer><span>格物志 · 记录、连接与理解</span><a href="/最近更新.html">最近更新</a></footer>
+  </div>
+  <dialog id="search-dialog" aria-label="搜索知识库">
+    <form method="dialog" class="search-head"><label for="query">搜索知识库</label><button aria-label="关闭搜索">关闭</button></form>
+    <input id="query" type="search" placeholder="输入关键词，搜索标题、标签和全文…" autocomplete="off">
+    <p id="search-status" role="status"></p>
+    <div id="results"></div>
+  </dialog>
+  <noscript>阅读视图需要启用 JavaScript。也可以从 GitHub 查看原始 Markdown 文件。</noscript>
+</body>
+</html>
