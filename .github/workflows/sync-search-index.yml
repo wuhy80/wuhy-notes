@@ -1,0 +1,91 @@
+name: Sync search index
+
+on:
+  workflow_run:
+    workflows: ["Publish site"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      refresh_vectors:
+        description: "同时更新语义向量并重新发布"
+        type: boolean
+        default: false
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: sync-search-index
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      VAULT_DIR: ${{ github.workspace }}
+      SITE_ROOT: '${{ github.workspace }}\_site\search-export'
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - name: 获取本次已发布的公开 Markdown
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v4
+        with:
+          name: site-public
+          path: _site/published
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+      - name: 手动运行时生成公开副本
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          npm ci --no-audit --no-fund
+          node scripts/preview-md-reader.mjs --build-only --out _site/published
+      - name: 同步全文索引到 D1
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:D1_DATABASE_ID)) {
+            Write-Host '未配置 D1_DATABASE_ID，跳过全文索引同步'
+            exit 0
+          }
+          node scripts/build-d1-index.mjs --content _site/published/notes --out _site/d1-index.sql
+          if ($LASTEXITCODE -ne 0) { throw '生成 D1 索引失败' }
+          @{ name='wuhy-notes-search'; compatibility_date='2026-11-01'; d1_databases=@(@{binding='DB';database_name='wuhy-notes-kb';database_id=$env:D1_DATABASE_ID}) } | ConvertTo-Json -Depth 5 | Set-Content _site/wrangler.json -Encoding utf8
+          npx --yes wrangler@4 --config _site/wrangler.json d1 execute DB --remote --file _site/d1-index.sql -y
+          if ($LASTEXITCODE -ne 0) { throw 'D1 同步失败' }
+      - name: 手动刷新语义向量
+        if: github.event_name == 'workflow_dispatch' && inputs.refresh_vectors
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node scripts/build-embeddings.mjs --content _site/published/notes --out cloudflare/embeddings.json
+      - name: 保存向量并触发正式发布
+        if: github.event_name == 'workflow_dispatch' && inputs.refresh_vectors
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          if (-not (git diff --name-only -- cloudflare/embeddings.json)) { exit 0 }
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin
+          git pull --ff-only
+          if ($LASTEXITCODE -ne 0) { throw '快进同步失败' }
+          git add -- cloudflare/embeddings.json
+          git commit -m '更新知识库语义搜索向量'
+          if ($LASTEXITCODE -ne 0) { throw '向量提交失败' }
+          git push origin HEAD:main
+          if ($LASTEXITCODE -ne 0) { throw '向量推送失败' }
+          gh workflow run publish-site.yml --ref main
+          if ($LASTEXITCODE -ne 0) { throw '触发正式发布失败' }

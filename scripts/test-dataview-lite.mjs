@@ -2,13 +2,15 @@
 import fs from 'fs'
 import path from 'path'
 import { createRequire } from 'module'
+import { fileURLToPath } from 'node:url'
 const require = createRequire(import.meta.url)
+const vault = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 // 最小 document stub，让 IIFE 顺利加载
 global.document = { addEventListener() {}, querySelectorAll() { return [] } }
-require('D:/code/obsidian-vault/scripts/site-assets/dataview-lite.cjs')
+require('./site-assets/dataview-lite.cjs')
 const dvl = globalThis.__dataviewLite
-const meta = JSON.parse(fs.readFileSync(process.argv[2] || 'C:/Users/Administrator/AppData/Local/Temp/vault-meta.json', 'utf8'))
+const meta = JSON.parse(fs.readFileSync(process.argv[2] || path.join(vault, '_site/md-reader/static/vault-meta.json'), 'utf8'))
 
 const pages = meta.pages.map((r) => {
   const page = {}
@@ -26,7 +28,7 @@ dvl.setPages(pages)
 console.log(`元数据 ${pages.length} 页`)
 
 // 抽取全部 dataview 块（含 callout 内 > 前缀）
-const ROOT = 'D:/code/obsidian-vault'
+const ROOT = path.resolve(process.argv[3] || path.join(vault, '_site/md-reader/notes'))
 const blocks = []
 ;(function walk(d) {
   for (const e of fs.readdirSync(d, { withFileTypes: true })) {

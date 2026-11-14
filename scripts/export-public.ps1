@@ -1,6 +1,6 @@
 ﻿# export-public.ps1 — 导出公开子集 + 自动脱敏 + 生成审查报告
-# 产物：E:\Obsidian\public-site\content\    （只含 .md 与被引用附件，且已脱敏）
-# 报告：E:\Obsidian\public-site\_reports\   （SUMMARY / dead-links / sensitive / masked）
+# 产物：<知识库>\_site\md-reader-export\content\（公开 MD 与引用附件，含脱敏）
+# 报告：<知识库>\_site\md-reader-export\_reports\
 # 用法：powershell -NoProfile -ExecutionPolicy Bypass -File scripts\export-public.ps1
 #       加 -Force 强制完整重新导出（默认增量：公开子集源内容与导出脚本均未变化时直接跳过）
 param(
@@ -23,11 +23,11 @@ if (-not (Test-Path -LiteralPath $DefaultVault)) {
   throw "无法确定知识库根目录（$DefaultVault 不存在）。请把脚本放在 <知识库>\scripts\ 下，或用环境变量 VAULT_DIR 指定。"
 }
 $Vault    = Get-EnvOr 'VAULT_DIR' $DefaultVault
-$SiteRoot = Get-EnvOr 'SITE_ROOT' 'E:\Obsidian\public-site'
+$SiteRoot = Get-EnvOr 'SITE_ROOT' (Join-Path $Vault '_site\md-reader-export')
 $Content  = Join-Path $SiteRoot 'content'
 $Reports  = Join-Path $SiteRoot '_reports'
 # Node 可执行文件（4.55 步的 CJK 强调修复脚本要用）
-$Node     = Get-EnvOr 'NODE_EXE' 'C:\nvm4w\nodejs\node.exe'
+$Node     = Get-EnvOr 'NODE_EXE' 'node'
 
 # ── 发布范围 ──
 # 原则：只发布技术学习类内容。以下类别不发布（判断记录见运维笔记「展示层」一节）：

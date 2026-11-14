@@ -1,541 +1,114 @@
 ---
-version: alpha
-name: 格物志站（claude-paper）
-# Token 源：scripts/quartz.config.yaml 的 theme 段 + scripts/site-custom.scss
-# 改颜色/字体请改 quartz.config.yaml，改样式规则请改 site-custom.scss，
-# 本文件是二者的「契约摘要」——只描述，不承载实现。
+version: 2
+name: 格物志 Markdown 阅读站点
+updated: 2026-11-14
+sources:
+  tokens: scripts/site-custom.scss
+  layout: scripts/reader/layout.css
+  shell: scripts/reader/index.html
+  skins: scripts/reader/skin.html
+default-skin:
+  light: cibai
+  dark: yaoye
 colors:
-  # 参考站调色板（2026-10-18 二次对齐：直接取自 xuanyuancode.com 课程页
-  # .ai-llm-scope 自己声明的 CSS 变量，不再是像素采样近似值）
-  paper: "#f5eddb"          # --paper      页面纸底（body / #quartz-body / 左右侧栏 / 中栏同色）
-  paper-deep: "#ede3c4"     # --paper-deep 深一档纸色（表头、callout 内嵌代码块）
-  card: "#ffffff"           # --paper-card 卡片底（代码块、表格、callout；同参考站 .fig-frame/.quiz-item）
-  ink: "#1c1c1c"            # --ink        正文与标题
-  ink-soft: "#57544e"       # --ink-soft   次要文字
-  ink-faint: "#8c8676"      # --ink-faint  弱化文字（元信息、行号、语言角标）
-  line: "#d8ceb6"           # --line       边线（侧栏分隔、表格框、卡片描边；同时是 Quartz lightgray）
-  accent: "#c2410c"         # --accent     链接、h2 左边条、目录编号、属性框左边条（Quartz secondary）
-  accent-deep: "#9a3010"    # --accent-deep 当前态文字、行内代码文字
-  accent-warm: "#e0561f"    # --accent-warm 当前态描边与高亮条（Quartz tertiary）
-  accent-wash: "#fbe6c7"    # --accent-wash 当前态洗色（Quartz highlight、逐行高亮底色）
-  inline-code: "rgba(194, 65, 12, 0.08)"      # 行内代码底（accent 8% 洗色）
-  text-highlight: "rgba(225, 181, 92, 0.45)"  # 荧光笔（暖金，取自参考站 highlight 色相）
-  # Quartz token 映射（quartz.config.yaml 的 lightMode；必须与 site-custom.scss 的
-  # 「0/6 调色板」强制块逐值一致，两边冲突时以 scss 为准）
-  quartz-light: "#f5eddb"
-  quartz-lightgray: "#d8ceb6"
-  quartz-gray: "#8c8676"
-  quartz-darkgray: "#57544e"
-  quartz-dark: "#1c1c1c"
-  quartz-secondary: "#c2410c"
-  quartz-tertiary: "#e0561f"
-  quartz-highlight: "#fbe6c7"
-  # 暗色（2026-10-18 未改：沿用 claude-paper 主题原暗色；scss 里另有一份同名映射）
-  paper-dark: "#30302e"
-  paper-deep-dark: "#262624"
-  card-dark: "#383835"
-  ink-dark: "#faf9f5"
-  ink-soft-dark: "#c2c0b6"
-  ink-faint-dark: "#9c9a92"
-  line-dark: "rgba(222, 220, 209, 0.16)"
-  accent-dark: "#e38b6b"
-  accent-deep-dark: "#f0a283"
-  accent-wash-dark: "rgba(227, 139, 107, 0.15)"
+  # 以下为纸墨皮肤；其他皮肤按 site-custom.scss 的 data-gz-skin 规则取值。
+  paper: "#f5eddb"
+  paper-deep: "#ede3c4"
+  card: "#ffffff"
+  ink: "#1c1c1c"
+  ink-soft: "#57544e"
+  ink-faint: "#8c8676"
+  line: "#d8ceb6"
+  accent: "#c2410c"
+  accent-deep: "#9a3010"
+  accent-wash: "#fbe6c7"
 typography:
-  # 2026-10-18 字体与参考站（xuanyuancode）靠齐：标题 = 阿里妈妈数黑体
-  # （自托管 woff2，发布流水线拷入 Quartz static/font/）。
-  # 2026-10-26 正文改「西文打头」：Source Sans Pro（自托管 latin 子集 ×4，
-  # 发布流水线拷入 Quartz static/font/source-sans-pro/）→ Noto Sans SC →
-  # 苹方 → 雅黑。中文黑体打头会把西文弯引号/撇号（U+2018/2019/201C/201D）
-  # 渲染成全角字形，英文出现 `world’ s` 式空隙（线上实测病灶）；
-  # Source Sans Pro 与思源黑体同源，混排最协调。
-  header:
-    fontFamily: AlimamaShuHeiTi
-    fontWeight: 700
-    lineHeight: 1.25
-  article-title:
-    fontFamily: AlimamaShuHeiTi
-    fontWeight: 900
-    fontSize: 48px
-    lineHeight: 1.22
-    marginTop: 1.4rem
-  h2:
-    fontFamily: AlimamaShuHeiTi
-    fontWeight: 900
-    fontSize: 25px
-    lineHeight: 1.3
-    前缀: 站号徽标「第 N 站」（accent 底 + paper 字 + 等宽 11px/字距 .22em）+ 右侧 170px 水印数字
-  h3:
-    fontFamily: AlimamaShuHeiTi
-    fontWeight: 900
-    fontSize: 17px
   body:
-    fontFamily: Source Sans Pro（西文打头，自托管 latin 子集）→ Noto Sans SC → 苹方 → 雅黑
+    fontFamily: Source Sans Pro → Noto Sans SC → 苹方 → 雅黑
     fontSize: 17px
-    fontWeight: 400
     lineHeight: 1.95
-    color: "{colors.ink}"
+  article-title:
+    fontFamily: var(--gz-font-heading)
+    fontSize: 48px
+    fontWeight: 900
+    lineHeight: 1.22
+  h2:
+    fontSize: 25px
+    fontWeight: 900
+    margin: 68px 0 24px
+  h3:
+    fontSize: 17px
+    fontWeight: 900
+    margin: 34px 0 12px
   code:
-    fontFamily: IBM Plex Mono
+    fontFamily: IBM Plex Mono → 系统等宽字体
     fontSize: 0.875rem
     lineHeight: 1.75
-  code-inline:
-    fontFamily: IBM Plex Mono
-    fontSize: 0.86em
-  code-label:
-    fontFamily: IBM Plex Mono
-    fontSize: 0.64rem
-    lineHeight: 1
-rounded:
-  sm: 5px     # 行内代码
-  md: 10px    # 代码块卡片
-spacing:
-  sm: 0.5rem
-  md: 1rem
-  lg: 1.5rem
-  code-y: 1.1rem      # 代码块上下外边距
-  code-x: 1.15rem     # 代码块左右内边距
-  # 纵向节奏（2026-10-21 按参考站实测重定：段距 20px、站间距 68/24px）
-  p-block: 20px       # 正文段落段间距（参考站 .station p { margin-top: 20px }）
-  li-block: 0         # 列表项外边距归零（行高随正文 1.95）
-  li-p-block: 0.1em   # 松散列表 li>p 段落间距
-  h2-block: 68px 24px # h2 上/下外边距（参考站 .station 上留白 68、标题下 24）
-  h3-block: 34px 12px # h3 上/下外边距
-  hero-top: 1.4rem    # 文章标题上边距
-  meta-bottom: 10px   # eyebrow 下边距
-  callout-in: 0       # callout 标题与内容贴合
 layout:
-  # 参考站原栅格：40 + 260 + 82 + 716 + 82 + 220 + 40 = 1440
-  # 2026-10-21 两次放大（用户要求）：侧栏各 +50% 后继续加宽，尤其左栏；
-  # 正文 716 → 980。当前 500 + 82 + 980 + 82 + 390 = 2034 为外壳上限。
-  container: 2034px            # 三栏总宽上限，居中（视口更宽时两侧留白）
+  container: 2034px
   columns: clamp(240px,26vw,500px) minmax(0,1fr) clamp(200px,20.3vw,390px)
-  article: 980px               # 正文列上限（阅读宽度），列内居中；不足 2034 时侧栏按 vw 回缩，优先保正文
-  article-padding: 24px        # 正文与侧栏边线之间的呼吸位（中列上限 = 980 + 48 = 1028）
-  sidebar-left: 500px          # 下限 240（26vw 回缩；刻意比右栏宽，用户要求「尤其左边栏」）
-  sidebar-right: 390px         # 下限 200（20.3vw 回缩）
-  rail-padding: 28px 0 48px 22px
-  navbar: 64px                 # 纸色固定顶栏（--paper 底 + 1px --line 底边，随皮肤与明暗走）
-  progress-bar: 2px            # accent 色阅读进度条（纯 CSS 滚动驱动）
-  footer: full-width          # 页脚通栏横条（--paper-deep 底 + 1px --line 上边，随皮肤与明暗走）
-  explorer-row: 28px           # 左栏探索树行高（文件行与文件夹行统一）
-  explorer-scroll: calc(100dvh - 136px)  # 探索树内滚高度 = 视口 - 顶栏 64 - 侧栏上下内边距 24/48
-components:
-  code-block:
-    backgroundColor: "{colors.card}"
-    borderColor: "{colors.line}"
-    rounded: "{rounded.md}"
-    textColor: "{colors.ink}"
-  inline-code:
-    backgroundColor: "{colors.inline-code}"
-    rounded: "{rounded.sm}"
-    textColor: "{colors.accent-deep}"
-  table:
-    backgroundColor: "{colors.card}"
-    borderColor: "{colors.line}"
-    headerBackgroundColor: "{colors.paper-deep}"
-  callout:
-    backgroundColor: "{colors.card}"
-    borderColor: "{colors.line}"
-    accentBarColor: "{colors.accent}"   # 2026-10-21 起统一赭橙（不再按类型上色）
-    titleColor: "{colors.ink}"
-    rounded: 4px
-    abstractVariant: 导语条（无卡片、无标题、衬线字体 + 3px accent 左边条）
-  figure-card:            # 插图白卡（对应参考站 .fig-frame）
-    backgroundColor: "{colors.card}"
-    borderColor: "{colors.line}"
-    padding: 26px 22px 18px
-    rounded: 0
-    captionTextColor: "{colors.ink-faint}"
-    captionFontSize: 13px
-    figureNumberColor: "{colors.accent}"   # 「图 3-1」等宽赭橙（导出时注入 .fig-no）
-  station-badge:          # 「第 N 站」徽标（h2::before）
-    backgroundColor: "{colors.accent}"
-    textColor: "{colors.paper}"
-    typography: IBM Plex Mono 11px / 字距 0.22em
-  station-watermark:      # 站号水印（h2::after，170px，颜色很淡）
-    textColor: "rgba(28,28,28,0.055)"
-  dropcap:                # 小节首字下沉（h2 + p::first-letter）
-    fontSize: 3.2em
-    textColor: "{colors.accent}"
-  eyebrow:                # 标题上方的元信息行（.content-meta）
-    typography: IBM Plex Mono 12px / 字距 0.1em
-    textColor: "{colors.accent}"
-  toc-marker:             # 右栏目录的圆点标记（未激活 ○ / 激活 ●）+ 编号
-    textColor: "{colors.accent}"
-  navbar:                 # 纸色固定顶栏（复用左栏的 .page-title，fixed 定位）
-    backgroundColor: "{colors.paper}"        # 2026-10-28 起：顶栏不再是深色墨面，直接随主题纸色
-    textColor: "{colors.ink}"
-    activeItem: "accent-wash 底 + accent-deep 文字的小标签（当前一级分区）"
-    borderBottom: "1px {colors.line}"
-  footer:                 # 页脚通栏横条：主题纸色的深一档
-    backgroundColor: "{colors.paper-deep}"
-    textColor: "{colors.ink-soft}"
-    linkHoverColor: "{colors.accent}"
-    borderTop: "1px {colors.line}"
-  quiz:                   # 测验（enhance-content.cjs 把 callout 结构化后才有）
-    badgeBackgroundColor: "{colors.accent}"
-    itemBackgroundColor: "{colors.card}"
-    itemBorderColor: "{colors.line}"
-    optionBackgroundColor: "{colors.paper}"
-    okColor: "#2f7d4f"    # 只用于「答对」，不参与全站配色
-    badColor: "#b3261e"   # 只用于「答错」，不参与全站配色
-  lesson-nav:             # 文末上一课/下一课（enhance-content.cjs 生成）
-    cardBackgroundColor: "{colors.card}"
-    cardBorderColor: "{colors.line}"
-    labelTypography: IBM Plex Mono 11px / 字距 0.16em
-    emptyBorderStyle: dashed
-  search-overlay:         # 搜索弹层（2026-10-29 重做：墨色压底 + 白卡面板）
-    overlayColor: "rgba(28,28,27,0.45)；暗色 rgba(0,0,0,0.55)（禁 backdrop-filter）"
-    panelBackgroundColor: "{colors.card}"
-    panelBorderColor: "{colors.line}"
-    panelRounded: "{rounded.md}"
-    panelGap: 10px
-    activeResultBackgroundColor: "{colors.accent-wash}"
-    scrollbar: 6px / "{colors.line}"
-    shadow: "0 14px 50px rgba(27,33,48,.14), 0 10px 30px rgba(27,33,48,.18)（全站唯一投影例外）"
-  code-line-number:
-    textColor: "{colors.ink-faint}"
-    typography: "{typography.code}"
-  code-language-label:
-    textColor: "{colors.ink-faint}"
-    typography: "{typography.code}"
-  link:
-    textColor: "{colors.accent}"
-  active-item:
-    backgroundColor: "{colors.accent-wash}"
-    borderColor: "{colors.accent}"
-    textColor: "{colors.accent-deep}"
-  highlighted-line:
-    backgroundColor: "{colors.accent-wash}"
-  highlight-bar:
-    backgroundColor: "{colors.accent-warm}"
-  mark:
-    backgroundColor: "{colors.text-highlight}"
-    textColor: "{colors.ink}"
+  article: 980px
+  article-padding: 24px
+  navbar: 64px
+  mobile-breakpoint: 1199px
+  mobile-title: 30px
+rounded:
+  inline-code: 5px
+  code-card: 10px
 ---
 
-## Overview
+## 适用范围
 
-中文技术笔记站点，内容以长文阅读为主（Quartz 静态生成，主题 `claude-paper`，
-亮/暗双模式）。视觉基调对齐 xuanyuancode.com 的课程页：**整片暖纸底
-（`paper` #F5EDDB）+ 白色卡片（`card` #FFFFFF）+ 1px 暖线（`line` #D8CEB6）
-+ 赭橙强调（`accent` #C2410C）**，标题用阿里妈妈数黑体。仍然是"正文是唯一焦点"
-的安静阅读体验，结构语汇来自课程页（左右栏 1px 边线、h2 左边条、目录编号、
-属性表引言框）。
+本文件是阅读站点的视觉契约。2026-11-14 起，Markdown 阅读器正式替代 Quartz；颜色、字体和正文排版直接编译 scripts/site-custom.scss，避免维护两套视觉实现。保留旧 DOM 的 quartz-root / quartz-body 等名称用于现有选择器兼容，它们不代表仍依赖 Quartz。
 
-2026-10-18 的二次对齐修的是**「纸色没有铺开」**：上一版只改了页面底色，
-而主题把 `--claude-paper-surface`(#faf9f5) 画在 `#quartz-body`、
-`--claude-paper-surface-secondary`(#f5f4ed) 画在左右侧栏上，于是页面同时存在
-三种"纸色"（`#f5eddb` / `#faf9f5` / `#f5f4ed`），观感是灰白网页而非暖纸。
-现在两套变量一起强制，全站只有 `paper` 一种底色。
+改样式前先读本文件。改 token 在 site-custom.scss 中完成，改页面结构适配在 reader/layout.css 中完成，并验证真实文章、首页、手机与明暗皮肤。
 
-本文件是**给 coding agent 读的设计契约**。改动本站样式前先读它；
-实现细节在 `scripts/site-custom.scss`，Token 定义在 `scripts/quartz.config.yaml`。
+## 配色与字体
 
-2026-10-21 的**第三次对齐**（本次）解决的是「**版式语汇不像参考站**」：同一课页面
-逐项实测后把差异全部补齐——阅读宽度 966→716、正文 16/1.6→17/1.95 且颜色从
-`ink-soft` 改回 `ink`、插图从"裸图 + 卡外图注"改成**白卡 + 卡内图注 + 等宽赭橙图号**、
-callout 的四种类型色左边条统一成**单一赭橙**、补齐参考站的课程页语汇（深色固定顶栏、
-eyebrow、第 N 站徽标 / 170px 水印数字 / 首字下沉、圆点目录、深色页脚、阅读进度条），
-并隐藏了会把 h1 往下推的 frontmatter 属性表。**三条旧的硬规则因此作废**：
-"内容铺满视口"→ 现在正文列固定 716 居中；"h2 带 3px 左边条"→ 现在靠站号徽标；
-"callout 左边条按类型上色"→ 现在全站一种赭橙。
+- 四套皮肤：纸墨、玄墨书卷、曜夜终端、瓷白编辑部；沿用 gz-skin / theme 浏览器偏好。
+- 系统浅色默认瓷白（白底、靛蓝强调、特黑标题），系统深色默认曜夜。切换皮肤与明暗是两个独立选项。
+- 页面、侧栏、正文共用 paper；代码、表格、普通 Callout 使用 card；表头用 paper-deep。
+- accent 用于链接、章节编号、当前态、左边条；不按 Callout 类型另造配色。
+- ink / ink-soft / ink-faint 是三级文字层次；只在测验判分状态使用 quiz-ok / quiz-bad。
+- 正文字体必须西文打头，避免英文弯引号、撇号变成中文全角字形；自托管 Source Sans Pro 的 400 / 600 / 700 与 italic 子集。
+- 标题字体由皮肤的 --gz-font-heading 决定；保留自托管阿里妈妈数黑体作为纸墨标题字体。
 
-2026-10-22 只动**左栏探索树**（正文、卡片、配色一行未改）：旧版文件夹/文件/当前项
-三者同为 13px 同色，层级只剩缩进，当前项还用 `border-left` 画竖条，跟着主题的 6px
-圆角渲染成一个「(」。重做后是「小标签页头 + 28px 等距行 + 文件夹/文件分字重 +
-嵌套层文件小圆点 + 4px 圆角 tab 型的当前态 + 祖先链路染赭橙」，并让树体自己滚。
-同一次还修掉一个真 bug：树建完对当前项调 `scrollIntoView` 会把**整页**往下拖
-（`scrollY` 0 → 462），护栏代码在 `enhance-content.cjs`。
+## 布局与导航
 
-## Colors
+- 三栏布局保留原站比例；1440px 视口正文约 715px，宽屏正文上限 980px。侧栏回缩不能挤窄正文。
+- 左右栏与正文用 1px 边线分隔，不增加底色分区或大阴影。
+- 顶栏高 64px，显示一级分区与搜索、专注阅读、皮肤菜单。小屏隐藏分区导航，目录通过抽屉展开。
+- 左栏只显示当前分区，按卷折叠；当前卷展开，罗马卷号、文章两位序号、篇数和当前项样式保留。
+- 侧栏自行滚动，目录定位不得滚动整页；正文锚点要预留顶栏高度。
+- 右栏顺序为关系图谱、章节目录、反向链接。
+- 首页采用单栏与两列导航卡片，手机上自动单列；不显示文章日期、侧栏、章节水印和首字下沉。
 
-- 全站**只有两层底色**：`paper`（页面与侧栏）与 `card`（卡片：代码块、表格、callout）
-  - `paper-deep` 是纸色深一档，只用于**表头**与 **callout 内的代码块**
-- `accent` 是**强调专用色**：链接、h2 左边条、目录编号、属性框左边条；别拿它做大面积填充
-- `accent-deep` 只用于**当前态文字**（探索树当前文件、目录当前小节、行内代码文字）
-- `accent-warm` 只用于**当前态描边与高亮条**；`accent-wash` 只用于**当前态洗色与逐行高亮**
-- `ink` / `ink-soft` / `ink-faint` 是三级文字层次，**不要引入第四级**
-- 暗色模式使用 `-dark` 后缀的同名 token，不另造颜色
-- ⚠️ **页面底色不使用纯白**（页底永远是 `paper`）；**卡片底色就是纯白 `#fff`**，
-  这是参考站 `--paper-card` 的原值，不要改成暖白
-- ⚠️ 正文不使用纯黑：`ink` 是 `#1c1c1c`
+## 正文与组件
 
-## Typography
+- 文章仅显示一个主标题。日期/阅读时间为标题上方的小号强调色文字，不显示 frontmatter 属性面板。
+- h2 使用「第 N 站」徽标、右侧淡色水印；章节首段保留首字下沉。正文 17px / 1.95，段距 20px。
+- 导语 abstract 无标题、无卡片底色，仅有 3px 强调色左边条和衬线正文。普通引用与 Callout 的外观分别保留。
+- 自学卡仅匹配含内嵌 tip 的 question Callout，不能把所有 question 都变成自学卡。标签跨越顶边时保留 overflow:visible。
+- 代码卡片用 card 背景、1px line、10px 圆角；行内代码 5px 圆角，代码行保持等宽与横向滚动。
+- 公式使用 KaTeX，Mermaid 按文章需要加载。图注的图号用等宽强调色；图片保持原宽高比，不裁切。
+- 表格支持横向滚动；不得造成整页横向溢出。
+- 「学习小测验」仅转换选项完整且恰好有一个正解的 example Callout；使用原 quiz 类名和 CSS 判分。非测验 example 原样显示。
+- 「相关笔记」内显式的上一课/下一课链接生成两张课程导航卡，其他链接保留。
+- 交互实验使用 data-lab 占位，由 scripts/lab-widgets.js 按需挂载；公式卡、金句和实验仍复用原样式。
+- 双语精读、生词本和 Dataview 复用站点组件，不改笔记的插件语法与存储键。
 
-- 标题 `AlimamaShuHeiTi`（自托管 woff2），正文 `Source Sans Pro（西文打头）→ Noto Sans SC → 苹方 → 雅黑`，代码 `IBM Plex Mono`
-- **正文 17px / 行高 1.95 / 颜色 `ink`（#1c1c1c）**——2026-10-21 起与参考站逐值一致；
-  段间距 20px。旧的 16px/1.75 + `ink-soft` 是"读起来发灰又挤"的根因
-- ⚠️ 主题把段落的 `font-family` 单独设成了界面字体（实测 `p` 计算值是 `ui-sans-serif`，
-  既不是 Noto Sans SC 也不是 Source Sans Pro）。因此**必须对 `article p/li/td` 显式
-  设正文字体栈**，否则中文正文会落到系统 UI 字体
-- ⚠️ **正文字体栈必须西文打头（2026-10-26）**：中文黑体打头时，西文弯引号与撇号
-  （U+2018/2019/201C/201D）落到黑体的全角字形上，英文出现 `world’ s` 式空隙。
-  正文西文 = Source Sans Pro（latin 子集 ×4 自托管，发布流水线拷入
-  `static/font/source-sans-pro/`，哈希计入发布增量信号）。代价（已确认接受）：
-  中文段落里的引号、破折号、省略号也转为西文宽度。
-  标题栈（数黑体打头）与衬线组件（`--serif`、想一想卡）不在此列，保持中文优先
-- 代码块 0.875rem / 行高 1.75，`tab-size: 4`
-- 标题层级最多到 `h3`，不再往下分；h1 48/900、h2 25/900、h3 17/900
+## 验证与维护
 
-## Layout
+样式改动至少检查首页、技术长文、双语精读、390px 手机宽度、浅色/深色与四套皮肤切换。交互或页面结构修改运行 npm run reader:test。
 
-- **三栏整体居中，上限 2034px**（视口更宽时两侧留白），列宽
-  `clamp(240px,26vw,500px) / minmax(0,1fr) / clamp(200px,20.3vw,390px)`
-- **正文列上限 980px 并在中栏居中对齐**（中列上限 1028 = 980 + 左右各 24 呼吸位），
-  宽屏下等价于 `500+82+980+82+390=2034`
-  - 2026-10-21 用户要求分两步放大：先两边栏各 **+50%**（260→390、220→330）+
-    正文 **+20%**（716→860），再把正文提到 **980**、侧栏继续加宽且**左栏给得比右栏多**
-    （500 / 390，因为文件树最深、需要横向空间）
-  - 实测：1920 视口 → 499 / 980 / 390；2560 视口 → 500 / 980 / 390（栏间各 82）；
-    1440 视口 → 374 / 715 / 292（vw 回缩，正文仍 ≥715）
-  - 视口不足 2034 时**侧栏按 vw 回缩**（下限 240/200），**优先保住正文宽度**——
-    侧栏加宽不能以挤窄正文为代价（用户明确要求）
-  - ⚠️ 改宽度时**必须同时把 `min-width` 归零**：旧的"铺满视口"规则写了
-    `min-width:100%`，只设 `max-width` 会被它压住（2026-10-21 实测：`#quartz-body`
-    与 `footer` 都踩过这个坑，`footer` 还有主题自带的 `min-width: calc(100% - 48px)`）
-- 左右栏各以 1px 边线（`border`）与正文分隔（右栏 border-left、左栏 border-right），不用底色分区
-- **纸色固定顶栏 64px**：复用左栏里的 `.page-title`（`position: fixed` 铺满宽度，
-  `--paper` 底 + 1px `--line` 底边），工具栏（搜索/阅读模式/皮肤切换器）一并 fixed 到右侧；
-  `#quartz-body` 加 `padding-top: 64px` 让位，左右栏 `sticky top: 64px`。
-  2026-10-28 二次改版：不再用深色墨面（先前的 rgba(28,28,28,.96) 与随皮肤染色的
-  `--gz-chrome-bg` 都已废弃）——顶栏直接随主题纸色，文字 `--ink`，导航项 `--ink-soft`，
-  当前一级分区 = 左栏条目同款 `accent-wash` 小标签；顶栏里不允许再出现白色系硬编码
-- **页脚通栏横条**（2026-10-25 起）：`grid-template-areas` 把 `grid-footer` 提为独占整行
-  （桌面跨三列、平板跨两列，<800px 单列天然通栏），`width:100%` 吃满整行；
-  2026-10-28 起与顶栏同一套主题 token：`--paper-deep` 底 + 1px `--line` 上边 +
-  `--ink-soft` 文字（14px，悬停转 `--accent`），随皮肤与明暗自动跟随，
-  padding 26/48；版权行居左、链接列居右（`space-between`），
-  链接由 `quartz.config.yaml` 的 footer 插件 `options.links` 配置（GitHub/RSS/站点地图）
-- 间距只用上面 `spacing` 里定义的值
-- <1200px 时不启用上述栅格（保持 Quartz 默认单列/抽屉），固定顶栏也不启用
-
-## Elevation & Depth
-
-- 全站**只有两种阴影**：代码块卡片的 `0 1px 2px rgba(20,20,19,0.06)` 与
-  搜索弹层的 `0 14px 50px rgba(27,33,48,.14), 0 10px 30px rgba(27,33,48,.18)`
-  （弹层是浮层语义，2026-10-29 起为唯一投影例外）
-- 除这两个元素外，**任何元素都不使用投影**；层次靠边框与底色区分
-- 不使用玻璃拟态（backdrop-filter）、不使用渐变背景
-  ——搜索弹层的遮罩也不许磨砂，用墨色压底（亮 `rgba(28,28,27,.45)` /
-  暗 `rgba(0,0,0,.55)`，2026-10-29 起）
-
-## Shapes
-
-- 行内代码圆角 `rounded.sm`（5px），代码块卡片圆角 `rounded.md`（10px）
-- **除这两个之外不引入新的圆角值**
-
-## Components
-
-- **代码块**：白卡（底色 `{colors.card}`，边框 `1px solid {colors.line}`，圆角 `{rounded.md}`，
-  阴影 `0 1px 2px rgba(20,20,19,0.06)`）
-  - 只允许 `figure[data-rehype-pretty-code-figure]` 一层承载边框与背景
-  - `pre` 与 `code` 必须透明、无边框、无圆角、无阴影
-  - 右上角显示语言角标（`0.64rem`、大写、字距 `0.09em`、透明度 `0.45`）
-  - 行号：右对齐、宽 `1.6rem`、右边距 `1.05rem`、透明度 `0.45`、`0.82em`
-  - 逐行高亮底色 `{colors.accent-wash}`，左强调条用内阴影 `inset 2px 0 0 {colors.accent-warm}`，**不挤动文字**
-  - 横向滚动条高 `8px`，滑块用 `line` 色，轨道透明
-- **行内代码**：`{colors.inline-code}`（accent 8% 洗色）+ `{colors.accent-deep}` 文字，
-  圆角 `rounded.sm`，**不要方框感**（无边框）——对应参考站 `.article-body :not(pre) > code`
-- **表格**：白卡（`card` + 1px `line` 描边 + 8px 圆角），单元格只保留 1px `line` 分隔线，
-  表头铺 `paper-deep` 且**取消斑马纹**——对应参考站 `.fig-frame` 的卡片语汇
-- **Callout**：白卡（`card` + 1px `line` 描边）+ **3px 赭橙左边条**（全站统一用 `accent`，
-  图标同色），圆角 4px，padding `0 24px`——2026-10-21 起不再按类型上色（之前 abstract 蓝 /
-  question 琥珀 / tip 青 / example 紫，一页四种颜色，与"全站一种强调色"的基调冲突）
-- **「本课导读」callout（abstract）= 参考站的导语条**：无卡片、无边框、无标题，
-  3px `accent` 左边条 + 16px 左内边距，文字用衬线 `Noto Serif SC`、`ink-soft`、17/1.95
-- **Callout 内的代码块**：首尾外边距归零，避免与 callout 内边距叠加；底色改回 `paper-deep`（白卡叠白卡会失去层次）
-- **文章插图 = 白卡 + 卡内图注**（对应参考站 `.fig-frame` + `figcaption`）：
-  `<img class="site-svg">` 自身是卡片上半部（`card` 底 + 1px `line` 描边、**圆角 0**、
-  padding `26px 22px 18px`、下边线去掉），紧随其后的图注段落
-  （`p:has(> em:only-child)`）是卡片下半部（同底色、左右下三条边、上边线去掉、
-  padding `0 22px 14px`、13px `ink-faint`、**斜体转正**），两者拼接成一个连续卡片
-  - `width:100%` + `height:auto` + `box-sizing:border-box`，图片内容区 = 716 − 44 = 672px，
-    与参考站卡片内图宽一致
-  - 图注里的「图 3-1」由导出脚本包成 `<span class="fig-no">`（等宽 + `accent`），
-    只处理行首的 `*图 N-M…*`，不影响正文里的图号引用
-  - **永不**用 Quartz 原生的 `<object>`：它对 Obsidian 的 SVG 嵌入固定输出
-    `<object width="auto" height="auto">`，浏览器按替换元素默认尺寸渲染成 300×150 的小框
-  - 插图文件必须与引用它的笔记**同目录**（导出脚本按嵌入目标镜像路径），
-    且必须带 `xmlns="http://www.w3.org/2000/svg"`——缺命名空间的独立 SVG 在 `<img>` 里加载失败
-  - **位图插图用 `<img class="site-img">`**（2026-10-22，转载文档用）：与 SVG 同位置、同圆角，
-    但**不设 `width:100%`**——矢量图铺满只会更清晰，截图放大会糊，所以只给
-    `max-width:100%` + `height:auto`，并用 1px `line` 描边 + `card` 底把白底截图和纸色页面分开。
-    导出脚本按扩展名分流（`.svg` → `site-svg`，位图 → `site-img`）；位图
-    2026-11-01 起**全库放行**（原 `$AttachRasterDirs` 目录白名单退役——白名单外
-    仅剩软著 8 张，经逐一目检无敏感内容后由用户拍板发布），仍只复制被笔记引用的
-    附件、单文件 10MB 上限、非位图（PDF/压缩包/音视频）一律不发布
-- **文章 hero**：`h1.article-title` 数黑体 48px/900；**h1 下方没有边线**（主题默认画了一条
-  `rgba(31,30,29,.16)` 的灰线，已去掉）；h1 上方依次是面包屑、**eyebrow**（`.content-meta`：
-  等宽 12px、字距 0.1em、`accent` 色——参考站的 `LESSON 03 · 卷一 基础数学 · ◉ 4,903 次阅读`）。
-  实现靠 `.popover-hint` 的 flex + `order` 重排（breadcrumb −4 / meta −3 / h1 0）
-- **frontmatter 属性表在正文页隐藏**（`display:none`）：参考站标题区只有「eyebrow → h1 → 导语条」
-  三段；教材笔记的属性表有 6 行，会把 h1 往下推 60~100px。frontmatter 仍在源文件里，
-  标签页（`/tags`）不受影响。需要恢复时删掉那条 `display:none` 即可
-- **h2 = 站号徽标 + 标题 + 水印数字**（对应参考站 `.station-head` + `.station::before`）：
-  `h2::before` 输出「第 N 站」（`accent` 底、`paper` 字、等宽 11px、字距 0.22em、
-  padding 3×12、无圆角），`h2::after` 输出 170px 的同序号水印（`rgba(28,28,28,.055)`）；
-  **h2 本身不再有左边条**；序号来自 `counter-increment: station`
-- **小节首字下沉**：`h2 + p::first-letter` = 3.2em / 900 / `accent`（对应参考站 `.dropcap-letter`）
-- **课程公式卡 `.formula`**（2026-10-23，对齐参考站同名组件）：笔记里以 HTML 块存在，
-  样式为**白卡 + 1px `line` 边框 + 3px `ink` 左边条 + 等宽 16px 居中 + 上下 30px**；
-  数字高亮用 `.f-hl`（`accent` + 700），注释用 `.f-dim`（`ink-faint`）。
-  ⚠️ 左边条是 **`ink` 不是 `accent`**——这是参考站原值，别按 callout 的习惯改成赭橙
-- **课程「金句」段 `.lesson-punch`**：`<p class="lesson-punch">`，衬线 `Noto Serif SC` 19px/700、
-  居中、上下 30px，强调词用 `.hl`（`accent`）。对应参考站那种把结论单独居中放大的写法
-- **源站组件的内联样式依赖三个变量**：笔记里的 `.formula` 变体（衬线 18px / 左对齐 14px）
-  直接内联了 `font-family:var(--serif/--sans/--mono)`，`:root` 里已补同名映射，别删
-- **动手实验 `.lab`**（2026-10-23，站内原生实现）：笔记里只写占位
-  `<div class="lab" data-lab="animal-map"></div>`，由 `scripts/lab-widgets.js`
-  （构建后拷到 `/static/js/`，`enhance-content.cjs` 注入 `<head>`）渲染。
-  卡片 = 1.5px `ink` 边框 + `paper-deep` 页头 + 等宽「动手实验」黑底标签 + 底部 `lab-hint` 虚线说明。
-  已有三种：`animal-map`（拖「？」算最近动物）、`secant`（拖滑块让割线贴近切线）、
-  `attention`（切句子 + 点词看注意力权重）
-- **右栏目录**：`li.depth-1` 前加「○/● + 编号」（等宽 0.78em、`accent`；当前小节实心 ● 并加粗转 `accent-deep`）；
-  字号 12.5px（参考站 rail 是 12.5px，之前 16px 明显偏大）
-- **左栏探索树**（2026-10-22 重做）：`探索` 页头是 **11px 等宽 + 0.14em 字距 + 1px 暖线**（`ink-soft`），
-  和右栏「目录 / 关系图谱」同一套小标签语汇；行高统一 `28px`（文件 12.5px/400 `ink-soft`，
-  文件夹 13px/500 `ink`，深层文件夹 12.5px/500 `ink-soft`）；嵌套层文件前 2px 小圆点
-  （**顶层文件不加**，否则像列表项）；**当前文件 = 4px 圆角 `accent-wash` tab + 2px `accent` 竖条**
-  （竖条是绝对定位伪元素，**不是** `border-left`），当前文件的**祖先文件夹**箭头染 `accent`、
-  标题回 600（`li:has(> .folder-outer a.active)`）；悬停 5% `ink` 洗色 + 130ms；导轨降到 62% `line`、
-  末项之后不拖尾。树本体 `overflow-y: auto` 内滚（`calc(100dvh - 136px)`）+ 6px `line` 细滚动条，
-  「探索」页头固定不随树滚动
-- **探索树里的重复标题会瘦身**（`enhance-content.cjs` 注入，2026-10-22）：链接文字若以**父文件夹名**
-  开头、且紧跟「系列?(序号)」，只缩短**侧栏里的显示**——去掉文件夹名与「系列」，序号变成
-  11px `ink-faint` 的「（八）」；完整标题写进 `title` 属性（悬停可见）。笔记自身的 frontmatter
-  title / H1 / URL / 搜索索引**一律不动**。例：`5分钟手把手系列(八)：本地通过Browser Use…`
-- **顶栏分区导航 + 左栏「卷 → 条目」**（`build-section-nav.cjs` 构建后生成，2026-10-22）：
-  一级目录（大模型 / 技术笔记 / …）全部上顶栏（`<nav class="top-nav">`，深色栏内、站名右侧，
-  当前一级 14% 白底）；左栏换成 `<nav class="side-nav">`——「卷」= 二级目录（`<details>`，
-  卷头是黑底罗马数字 badge + 名称 + 篇数，当前卷 badge 转 `accent`），「条目」= 该卷下的页面
-  （两位序号 `01` + 标题，当前页 `accent-deep` 加粗 + 2px `accent` 左边条 + `accent-wash`）。
-  **默认只展开当前卷**；**超过 40 篇的卷只列子目录**（新闻 173、算法 236 这类，避免侧栏无限长）。
-  Quartz 自己的客户端探索树 `.explorer` 在这套导航下整体 `display:none`——两套树并存会互相干扰
-  → `（八）本地通过Browser Use…`
-  - **只认带括号的序号**（（八）/(8)/【三】）：日期目录里「2026-06-18 AI 早报」的剩余部分是
-    「-18 AI 早报」，按分隔符削会变成「18 AI 早报」，把月份削掉（实测误伤 156 条）
-  - 序号用**正文体**而不是等宽体：一/二/三 在 IBM Plex Mono 里会细成一条横线，认不出来
-- **探索树当前文件**：`accent-wash` 底色 + 2px `accent` 左边条 + `accent-deep` 加粗文字
-  （对应参考站 `.sidebar-lesson-item a.active`）；探索树的完整外观见下方「左栏探索树」一条
-- **左右栏**：≥1200px 时左栏 260px、右栏 220px（padding `28px 0 48px 18px`），
-  各以 1px `line` 边线与正文分隔；右栏栏目标题降为 13px，关系图谱压到 150px 给目录腾位置
-- **阅读进度条**：`body::before` 2px `accent` 条，`animation-timeline: scroll(root block)`
-  纯 CSS 驱动（无需 JS，Chrome 115+；不支持时静默不显示）
-- **测验**（`scripts/enhance-content.cjs` 构建后生成）：把 `> [!example] 学习小测验` 的
-  「Q1/Q2 + A~D + ✅ 正解 + 折叠讲解」改写成 `<section class="quiz">`：
-  每题一张白卡，选项是真 `<input type="radio">`（可点、可键盘操作），
-  **判分纯 CSS**：`:has(input:checked)` + 正确项上的 `.is-answer` 类 →
-  选对绿 `✓ 答对`、选错红 `✗ 再想想` 同时把正确项标绿，讲解用
-  `grid-template-rows: 0fr→1fr` 过渡自动展开。**无 JS、无后端**
-- **「停下来 · 想一想」自学卡**（纯 CSS，2026-10-22，对齐参考站 `.think`）：源写法是
-  `> [!question] 想一想` + 内嵌折叠的 `> > [!tip]- 我想好了，看答案`；样式用
-  `:has(> .callout-content > .callout[data-callout="tip"])` 认领这个组合后整块换皮：
-  1.5px 虚线框（`accent` 48%）+ 压住顶边的等宽小标签（`::before` 写「停下来 · 想一想」，
-  底色用 `paper`→`card` 的两段渐变，才能同时对上框外的纸底和框内的白卡）+ 衬线加粗问句
-  + `accent-wash` 米色按钮。展开沿用 Quartz 自带折叠，展开后按钮隐藏，只留 `line`
-  细分隔线与 `ink-soft` 答案
-- **文末上一课/下一课**（同一脚本）：把 `<h2 id="相关笔记">` 后的 `<ul>`
-  （所属卷/上一课/下一课/课程总览）改写成 `<nav class="lesson-nav">` 两张箭头卡
-  + 一行「所属卷 · 总览」小字；该 h2 加 `.lesson-nav-heading` 类以跳过站号徽标与水印。
-  卡片直接复用原 `<a>` 的 `href`（相对路径，已由 Quartz 解析）+ `internal` 类保留 SPA 跳转
-- **搜索弹层**（2026-10-29 重做，样式在 `site-custom.scss`「13 搜索弹层」）：
-  遮罩禁磨砂、改墨色压底（见 Elevation）；输入框、结果面板、标签候选下拉统一
-  白卡（`card` + 1px `line` + `rounded.md`），与输入框间隙 2em 收成 10px；
-  结果行悬停/选中 `accent-wash`（替换原生的 `--lightgray` 灰底）；
-  结果区滚动条 6px `line`。原生病根：`.search-container` 只有
-  `backdrop-filter: blur(4px)` 无底色、面板底 `var(--light)` 与页面纸色同色，
-  整层「浮不住」（用户反馈「半透明效果不好」）
-  - ⚠️ 暗色遮罩选择器必须写 `html[saved-theme="dark"] body …`——
-    `:root[saved-theme="dark"] html …` 因 `:root` 就是 `html`，是永远匹配不到的死选择器
-- **Dataview 结果块**（2026-10-31，`site-custom.scss`「14 Dataview 站点端渲染」）：
-  笔记里的 ```dataview/dataviewjs/tagcloud 代码块由 `/static/dataview-lite.js`
-  在浏览器里替换成 `<div class="dvl-block">` 结果（表格继承正文表格的白卡语汇，
-  块自身只带外距与横向滚动；TASK 用强调色复选框、标签云按频次定字号、空态
-  `ink-faint`）。Obsidian 教学目录的查询块豁免渲染，保持代码示例原样
-
-## Do's and Don'ts
-
-- 代码块**只有一层卡片**；`pre` / `code` **永不**再加边框、圆角、背景或阴影
-- 卡片圆角使用 `rounded.md`，行内代码使用 `rounded.sm`，**永不混用**
-- **代码字体栈里中文回退必须排在 `monospace` 之前**——否则中文会落到系统 serif（Windows 上是宋体），小字号下很难看
-- 行号与语言角标**永不**使用正文色，必须是 `ink-faint` 且透明度 0.45
-- `text` / `txt` / `plaintext` 代码块**永不**显示语言角标，顶部也不保留角标高度
-- **改宽度时先查 `min-width`**：主题与早期规则给 `#quartz-body` 写了 `min-width:100%`、
-  给 `footer` 写了 `min-width: calc(100% - 48px)`——只设 `max-width` 会被它们压住
-  （2026-10-21 两次踩坑，表现为"设了 716 却仍是 822/870"）。凡改宽度都同时写
-  `min-width: 0 !important`
-- **永不**用 `!important` 之外的普通规则去改内容区宽度——主题的特异性更高，改不动
-- **h1 下不要边线**：主题给 `h1.article-title` 画了 `border-bottom: 1px rgba(31,30,29,.16)`，
-  参考站的标题是"裸露"的，需显式 `border-bottom: 0`
-- **探索树的当前项永不**用 `border-left` 做竖条：主题给 `.nav-file-title` 6px 圆角，
-  2px 左边框会跟着圆角渲染成一个「(」，文字还贴着它（2026-10-22 线上实测）。
-  竖条必须是绝对定位伪元素（`::before`，`left:4px`）
-- **探索树必须保留内滚 + 滚动护栏**：树建好后会对当前项调用 `scrollIntoView`；
-  侧栏没有自己的滚动容器时，这个调用会把**整个窗口**往下拖（实测 `scrollY` 0 → 462，
-  打开笔记直接落在正文中段）。两道保险都要留：`.explorer-content { overflow-y:auto; max-height }`
-  与 `enhance-content.cjs` 注入的护栏（只拦 `.explorer` 内的调用，其余元素行为不变）
-- **标题瘦身只做在侧栏，别去改 frontmatter title**：树是客户端渲染的（`contentIndex.json`
-  建树），纯 CSS 拿不到父文件夹名；而改内容标题会波及 H1、搜索、反向链接和站外引用。
-  需要放宽规则时改 `enhance-content.cjs` 里的 `shorten()`，并在真实站点上点数（`data-ex-short`）确认
-- **课程笔记里的 `.formula` / `.lesson-punch` 保持 HTML 块**：源站这两个是自定义组件
-  （参考站 CSS：白卡 + 3px `ink` 左边条 + 等宽居中；金句是衬线 19px 居中加粗），
-  压成普通段落就会和源站对不上（2026-10-23 实测：40 个公式卡全被降级成段落）。
-  只有 `formula-tex`（LaTeX 版）例外：它在笔记里写成 `$$` 块，**不要**把 KaTeX 的 HTML 搬进来
-- **交互实验一律走 `data-lab` 占位 + `scripts/lab-widgets.js`**：笔记里不要写死实验的
-  SVG/JS，也不要用「请去原站体验」的占位 callout（默认折叠，读起来像没迁移）。
-  新增实验时在 `lab-widgets.js` 里加一个 `mountXxx` 并在 `init()` 里注册，
-  样式加在 13/13 节；颜色只用本站 token（曲线 `ink-soft`、切线 `ink`、割线 `accent`）
-- **加粗里套行内公式（`**第一步 · 打分 $QK^T$。**`）由 `fix-html-emphasis.cjs` 兜底**：
-  一对 `**` 被 `<span class="katex">` 隔开时，按文本节点配对会漏掉，产物里留字面星号
-  （2026-10-23 实测 5 处）。脚本现在多了「同块内、含 katex、`**` 为偶数」的跨节点配对，
-  只在构建产物上动手；笔记里照常写 `**…**` 即可，**不要**手动改成 `<strong>`
-- **固定顶栏靠 fixed 复用 DOM**：`.page-title` 是左栏的子元素，靠 `position: fixed` 拉成
-  全宽顶栏；它所在的 `.sidebar.left` 是 `sticky`（无 `transform`/`filter`），所以 fixed
-  才相对视口定位。**一旦给侧栏加 `transform`/`filter`/`contain`，顶栏会缩进侧栏宽度内**。
-  顶栏明暗切换不在工具栏放独立按钮（2026-10-28 起 darkmode 插件停用）——
-  皮肤切换器下拉里的「明暗」分组是唯一入口，「跟随系统」的解析由 skin-switcher.cjs 负责
-- **callout 只用一种强调色**：改 `--color` 到 `accent` 即可同时改变左边条与图标；
-  不要按类型再上色，参考站全站只有赭橙一种强调色
-- **构建后两个改写器的顺序不能颠倒**：先 `fix-html-emphasis.cjs`（兜住字面 `**`），
-  再 `enhance-content.cjs`（测验要靠已经生成好的 `<strong>Q1.…</strong>` 才能识别题目）
-- **`enhance-content.cjs` 只认「有选项且恰好标了一个 ✅」的 example callout**，
-  不满足就原样保留——不要在样式里硬把它当测验，否则普通示例块会被误伤
-- **自学卡靠 `:has()` 精确认领**（必须同时有内嵌 tip），别用 `[data-callout="question"]`
-  一把抓：站内还有「后续问题」「待研究」这类普通 question callout，仍应是赭橙卡片
-- **自学卡必须 `overflow: visible`**：Quartz 基础样式给 `.callout` 设了 `overflow-y: hidden`，
-  会把压在顶边外的标签整行裁掉（2026-10-22 实测：只剩一块没字的色块）
-- 测验的对/错用 `--quiz-ok` / `--quiz-bad` **两个语义色，只在判分状态里出现**；
-  全站其余地方仍然只有赭橙一种强调色，不要拿它们做装饰
-- **⚠️ 改颜色要动三处**（`quartz.config.yaml` + `site-custom.scss` 的「0/6 调色板」强制块 + 本文件）：
-  主题包 `@quartz-themes/claude-paper` 会在自己的样式里重新声明两套变量且加载更晚——
-  (1) Quartz token（`--light/--lightgray/--dark/--secondary/--tertiary`…）；
-  (2) 主题私有的一整套 `--claude-paper-surface / -surface-secondary / -surface-raised /
-  -ink / -border / -accent…`（**这是 2026-10-18 之前"纸色铺不开"的根因**：只改前者时
-  `#quartz-body` 仍是主题的 `#faf9f5`、侧栏仍是 `#f5f4ed`）。
-  两套都要在强制块里用 `!important` 压；强制块**只强制亮色**（`:root[saved-theme="light"]`），
-  暗色另有一份 `:root[saved-theme="dark"]` 映射——裸 `:root` 会把亮色值灌进暗色模式
-- **永远不要用 `var(--code-background)` 给代码块上底色**：主题会在
-  `figure[data-rehype-pretty-code-figure]` 元素自身上把这个变量清成空值
-  （实测 2026-10-18：该元素取到 `""`），声明会静默落到 fallback 上，
-  代码块变成"边线色卡片"。代码块底色直接用本站的 `--card`
-- **`color-mix()` 里不要用主题变量做底色**：主题给 `.callout` 的底色是它自己按类型
-  算出的 `oklch(...)`，必须在白卡规则里 `!important` 直接覆盖
-- 此版 Quartz 的**页头不在 `article` 里**（结构：`div.page-header` > `div.popover-hint`
-  > `h1.article-title`；正文在 `article.popover-hint` 里），hero 相关选择器不能带 `article`
-- 正文首个 `h1[id]`（Obsidian 惯例的 `# 标题`）**永不**显示——它与 hero 标题重复
-- 正文**永不**使用纯黑（用 `ink` #1c1c1c）；**页面底色永不**使用纯白，
-  但**卡片底色就是纯白**（参考站 `--paper-card` 原值）
-- 不新增上面未定义的间距值、圆角值与颜色
-
-## 相关文件
+保留原始 Markdown、WikiLinks、Callout、脚注和引用结构。站点增强在渲染后处理，不回写原始笔记；普通 HTML 仍需净化，笔记内 script 不执行。
 
 | 文件 | 角色 |
 |---|---|
-| `scripts/quartz.config.yaml` | **Token 源**（颜色、字体、主题、插件） |
-| `scripts/site-custom.scss` | **样式实现**（含每条硬规则的实测依据） |
-| `scripts/DESIGN.md` | **本文件**：给 agent 的设计契约 |
-| `scripts/fix-html-emphasis.cjs` | 构建后：把产物里残留的字面 `**` 收口成 `<strong>`（在 `enhance-content.cjs` 之前跑） |
-| `scripts/enhance-content.cjs` | 构建后：测验结构化（纯 CSS 判分）+ 文末上一课/下一课导航卡 + 探索树滚动护栏 |
-| `.github/workflows/publish-site.yml` | 发布流水线（把上面两个文件覆盖进 Quartz 后构建） |
+| scripts/site-custom.scss | 颜色、字体、四皮肤与正文组件的实现源 |
+| scripts/reader/layout.css | 阅读器结构适配 |
+| scripts/reader/skin.html | 首屏皮肤初始化与菜单 |
+| scripts/reader/content.mjs | 测验与上下课卡片 |
+| scripts/lab-widgets.js | 课程交互实验 |
+| scripts/build-md-reader.mjs | 打包阅读器、元数据与公开文件 |
+| .github/workflows/publish-site.yml | 唯一正式发布流程 |

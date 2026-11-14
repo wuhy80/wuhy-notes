@@ -30,7 +30,7 @@
 - `Home.md`：知识库仪表板，包含 Dataview 统计、贡献图、标签云和最近文件。
 - `我的任务.md`：主要任务跟踪文件。
 - `CLAUDE.md`：更完整的历史协作说明，可作为本文件的补充参考。
-- `scripts/DESIGN.md`：**站点视觉契约**（按 Google Labs 的 DESIGN.md 规范写，含 YAML token + 正文规则）。改动已发布站点（Quartz / `claude-paper` 主题）的**样式、颜色、字体、布局前必读**；Token 源在 `scripts/quartz.config.yaml`，样式实现与实测依据在 `scripts/site-custom.scss`。
+- `scripts/DESIGN.md`：**站点视觉契约**。改动 Markdown 阅读站点的**样式、颜色、字体、布局前必读**；token 源为 `scripts/site-custom.scss`，阅读器布局适配位于 `scripts/reader/layout.css`。不再使用 Quartz 或主题包。
 
 ## Git 与工作区约束
 
@@ -130,8 +130,8 @@
 ## 维护模式变化（2026-10-26 起：Obsidian 退役，ZCode 是唯一编辑器）
 
 - 本库不再通过 Obsidian 应用编辑。内容的唯一真相源是本 git 仓库，由 ZCode/DSH 直接增改并提交；发布由 `publish-site.yml` 的 push 触发自动完成，不需要也不应该手动等定时。
-- **Dataview 块在站点上由渲染器现场渲染**（2026-10-31 起）：`scripts/site-assets/dataview-lite.cjs` 在浏览器里执行 ```dataview / ```dataviewjs / ```tagcloud 代码块，元数据来自构建期生成的 `/static/vault-meta.json`（`scripts/build-vault-meta.mjs`），导出脚本不再剥离 `00-*` 索引页的查询块。渲染器只支持本库现有的查询方言（TABLE/LIST/TASK + FROM/WHERE/GROUP BY/SORT/LIMIT + dateformat/date/length/max/min，dataviewjs 支持 pages/where/sort/groupBy/table/paragraph/header）；**新增查询前先确认方言在渲染器支持范围内**（单测：`node scripts/test-dataview-lite.mjs`），能用脚本生成纯 Markdown 列表仍优先脚本。Obsidian 教学笔记（`技术笔记/编辑器/Obsidian/`）的查询块豁免渲染、保留原文。
+- **Dataview 块在站点上由渲染器现场渲染**（2026-10-31 起）：`scripts/site-assets/dataview-lite.cjs` 在浏览器里执行 ```dataview / ```dataviewjs / ```tagcloud 代码块，元数据来自构建期生成的 `/static/vault-meta.json`（`scripts/build-md-reader.mjs`），导出脚本不再剥离 `00-*` 索引页的查询块。渲染器只支持本库现有的查询方言（TABLE/LIST/TASK + FROM/WHERE/GROUP BY/SORT/LIMIT + dateformat/date/length/max/min，dataviewjs 支持 pages/where/sort/groupBy/table/paragraph/header）；**新增查询前先确认方言在渲染器支持范围内**（单测：`node scripts/test-dataview-lite.mjs`），能用脚本生成纯 Markdown 列表仍优先脚本。Obsidian 教学笔记（`技术笔记/编辑器/Obsidian/`）的查询块豁免渲染、保留原文。
 - **双语精读有格式校验与生成模板**（2026-11-01 起）：新精读笔记按 `scripts/templates/bilingual-prompt.md` 的提示词生成，发布前 `scripts/check-bilingual.mjs` 自动校验（对照表两列必须成对、词汇注释 callout 三种合法形态：`**词条** /IPA/ —— 释义`、`*短语* —— 说明`、纯中文说明行；单词条目缺 IPA 计警告）。全站生词聚合页为 `英语学习/我的生词本.md`（构建期 `scripts/build-vocab.mjs` 生成 `/static/vocab.json`，站点端由 dataview-lite 渲染；「已掌握」标记与精读页词卡共享 localStorage 键 `gzb-bil-known`，支持导出 CSV / Anki；生词带词频段标签，覆盖率条按 COCA/Google 高频表前 10000 分级）。精读文末的「输出练习」callout 由阅读器注入写作批改组件（POST `/api/write-grade`，Workers AI LLM；AI 绑定不可用时降级为复制批改提示词），朗读支持语速切换（常速/慢速/更慢，存偏好）与整篇连播；另有「难词提示」开关（标注高频表外的小写词）与每段「影子跟读」录音对比（录音只存浏览器内存，不上传）。词频表入库于 `scripts/data/english-top10k.txt`（github.com/first20hours/google-10000-english，MIT License）。
 - `template/`（Templater 模板）进入退役状态：不再新增模板、不再按模板建笔记；新笔记直接写正文 + frontmatter。
-- frontmatter 约定升级为「入库元数据」：`tags / created / updated / source / status / type` 字段名保持英文小写——发布时全库会灌入 Cloudflare D1（`scripts/build-d1-index.mjs`），字段缺失或类型混乱会直接降低 `/api/search` 的质量。
+- frontmatter 约定升级为「入库元数据」：`tags / created / updated / source / status / type` 字段名保持英文小写——正式发布成功后，独立工作流将公开内容同步到 Cloudflare D1（`scripts/build-d1-index.mjs`），字段缺失或类型混乱会直接降低 `/api/search` 的质量。
 - 上一节里关于 Dataview、Templater、Callout、WikiLink 的「保护性条款」对存量内容继续有效（改旧文件时不要弄坏），只是不再约束新增内容。

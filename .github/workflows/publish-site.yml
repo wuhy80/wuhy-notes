@@ -1,340 +1,92 @@
-# 把站点构建与发布搬到 CI —— 桌面端从此只需"编辑 + 提交"
-#
-# 设计要点：
-#   · 跑在 windows-latest：runner 自带可用的 PowerShell 与 Node，现有的
-#     export-public.ps1 / publish-site.ps1 原样复用，脱敏逻辑一行都不用改（最安全）
-#   · Quartz 不在本仓库里：按 pin 死的上游提交浅克隆，再叠加本仓库的
-#     scripts/quartz.config.yaml 与 scripts/site-custom.scss
-#   · 凭据只通过 secrets 注入，脚本里不落任何明文
-#   · 触发方式（2026-10-22 起）：push 到 main / 日报归档完成 / 每天兜底一次 / 手动
-#
-# 为什么改成「推送即发布」（2026-10-22）：
-#   · 原来只靠定时，内容改完最多要等 24 小时才上线；现在落主干即发。
-#   · 成本核算：本仓库是**公开仓库**，标准 runner 的 Actions 分钟数不计费；
-#     Cloudflare Pages 免费额度 500 次部署/月。实际产生部署的只有「内容真的变了」
-#     的 run：人工提交 ~2.5 次/天 + 归档真正落地新一期 ~1 次/天 + 定时兜底最多 1 次，
-#     归档空转的 run 会被增量判断挡在部署之前，估 ~150 次/月，余量充足。
-#   · push 只认「会影响站点」的路径（内容目录 + 站点样式/配置/流水线脚本），
-#     改 README、AGENTS.md、备份脚本不会白发一版。
-#   · 日报归档（ai-daily-archive.yml）用 GITHUB_TOKEN 推送，这类推送**不会**触发
-#     别的 workflow 的 push 事件，所以额外用 workflow_run 接住它。
-#   · 定时保留为兜底（UTC 03:10 = 北京 11:10）：事件漏了、或在别的机器上改完没推，也能收敛。
-#
-# 关于「增量」：本机脚本那套 .publish-state.json 增量判断原先在 CI 里命中不了——
-# runner 每次都是干净的，状态文件落在临时目录 _site 里。现在用步骤 2c 把这份状态
-# 带过 run 边界：内容与样式都没变的 run（归档空转、定时兜底）会在导出后立刻退出，
-# 既不构建也不占用 Pages 的部署额度；构建本身仍是一次全量（Quartz 没有页面级增量）。
-#
-# 注意：job 级 env 里不能使用 runner 上下文（只支持 github/needs/strategy/matrix/vars/secrets/inputs），
-#       所以站点目录一律从 github.workspace 派生，不使用 runner.temp。
-#
-# 需要预先配置的仓库 secrets：
-#   CLOUDFLARE_API_TOKEN   —— 权限 Account → Cloudflare Pages → Edit
-#   CLOUDFLARE_ACCOUNT_ID  —— 1ff939df6fe444fa1fe21ed7d1b8caac
-#   WUHY_SERVER_SSH_KEY        —— 阿里云国内镜像服务器的部署专用私钥（ed25519，可单独吊销）
-#   WUHY_SERVER_KNOWN_HOSTS    —— 47.100.85.94 的 host key（ssh-keyscan 采集，严格校验防中间人）
-
 name: Publish site
 
 on:
-  # ① 内容落主干即发布。只认会影响站点的路径：改 README / AGENTS.md / 备份脚本不触发。
   push:
     branches: [main]
     paths:
+      - "技术笔记/**"
       - "大模型/**"
       - "Ontology/**"
-      - "技术笔记/**"
-      - "读书笔记/**"
-      - "网址收藏/**"
-      - "编程语言/**"
       - "Golang编程/**"
       - "Rust编程/**"
-      - "数学学习/**"
+      - "读书笔记/**"
       - "英语学习/**"
-      - "专项学习/**"
+      - "数学学习/**"
+      - "网址收藏/**"
       - "附件/**"
-      - "template/**"
-      - "scripts/site-custom.scss"
-      - "scripts/quartz.config.yaml"
-      - "scripts/enhance-content.cjs"
-      - "scripts/build-section-nav.cjs"
-      - "scripts/add-edit-links.cjs"
-      - "scripts/skin-switcher.cjs"
-      - "scripts/fix-html-emphasis.cjs"
-      - "scripts/inject-reader.cjs"
-      - "scripts/inject-mobile-nav.cjs"
-      - "scripts/export-public.ps1"
-      - "scripts/publish-site.ps1"
+      - "scripts/reader/**"
       - "scripts/site-assets/**"
-      - "scripts/site-overrides/**"
-      - ".github/workflows/publish-site.yml"
-      # 数据基础设施：影响 D1 索引 / Worker / 元数据 / 生词本，变了也要重新发布
-      - "cloudflare/**"
-      - "scripts/build-d1-index.mjs"
-      - "scripts/build-vault-meta.mjs"
+      - "scripts/site-custom.scss"
+      - "scripts/lab-widgets.js"
+      - "scripts/build-md-reader.mjs"
+      - "scripts/preview-md-reader.mjs"
+      - "scripts/prepare-site-mirror.mjs"
+      - "scripts/verify-reader.mjs"
+      - "scripts/export-public.ps1"
+      - "scripts/fix-cjk-emphasis.cjs"
+      - "scripts/check-bilingual.mjs"
       - "scripts/build-vocab.mjs"
-  # ② 日报归档成功即发布（归档用 GITHUB_TOKEN 推送，接不到 ①）
+      - "cloudflare/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/publish-site.yml"
   workflow_run:
     workflows: ["AI 早报归档"]
     types: [completed]
-  # ③ 兜底：每天北京时间 11:10 跑一次
   schedule:
     - cron: "10 3 * * *"
-  # ④ 手动触发（GitHub Actions 页面 Run workflow，或由 DSH 代为触发）；
-  #    force = 忽略增量短路强制重建重发（publish-site.ps1 -Force）
-  workflow_dispatch:
-    inputs:
-      force:
-        description: '强制重新构建并部署（增量判断照常算，只是不允许短路跳过部署）'
-        type: boolean
-        default: false
+  workflow_dispatch: {}
 
-# 同一仓库同一时刻只跑一个发布。连推时让最新一次赢：
-# Cloudflare 的一次部署是原子的，取消在途 run 不会留下半个站点。
+permissions:
+  contents: read
+
 concurrency:
   group: publish-site
   cancel-in-progress: true
 
 jobs:
   publish:
-    runs-on: windows-latest
-    timeout-minutes: 40
-    # workflow_run 无论上游成败都会触发，失败的归档不该把上一次成功的内容再发一遍
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
-
+    runs-on: windows-latest
+    timeout-minutes: 15
     env:
       VAULT_DIR: ${{ github.workspace }}
-      SITE_ROOT: '${{ github.workspace }}\_site'
-      WRANGLER_DIR: '${{ github.workspace }}\_wrangler'
-      # 让 Quartz 依赖、主题包、wrangler 共用一份可缓存的 npm 目录
-      npm_config_cache: '${{ github.workspace }}\.npm-cache'
-      QUARTZ_REPO: https://github.com/jackyzha0/quartz.git
-      # Quartz 上游提交（与本机 E:\Obsidian\public-site\quartz 的 HEAD 一致）
-      QUARTZ_SHA: 97a2d05f80c4c50534959b1d0d41cc4b3895625e
-
+      SITE_ROOT: '${{ github.workspace }}\_site\md-reader-export'
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
-      - name: 0. 本次触发与变更清单（同时写进 Actions 摘要）
-        shell: pwsh
-        run: |
-          $evt = Get-Content -LiteralPath $env:GITHUB_EVENT_PATH -Raw -Encoding UTF8 | ConvertFrom-Json
-          $out = [System.Collections.Generic.List[string]]::new()
-          $out.Add('## 发布触发')
-          $out.Add('')
-          $changed = @()
-          switch ($env:GITHUB_EVENT_NAME) {
-            'push' {
-              $commits = @($evt.commits)
-              $out.Add("- 事件：push -> $($env:GITHUB_REF_NAME)，$($commits.Count) 个提交")
-              foreach ($c in $commits) {
-                $first = (($c.message -split "`n")[0]).Trim()
-                $out.Add('- `' + $c.id.Substring(0, 7) + '` ' + $first)
-              }
-              $changed = @($commits | ForEach-Object { @($_.added) + @($_.modified) + @($_.removed) } |
-                Where-Object { $_ } | Sort-Object -Unique)
-            }
-            'workflow_run' {
-              $wr = $evt.workflow_run
-              $out.Add("- 事件：workflow_run <-「$($wr.name)」（$($wr.conclusion)）")
-              $out.Add('- 上游提交：`' + $wr.head_sha.Substring(0, 7) + '` ' + $wr.display_title)
-            }
-            'schedule' { $out.Add('- 事件：schedule（每日兜底）') }
-            default { $out.Add("- 事件：$($env:GITHUB_EVENT_NAME)（手动触发）") }
-          }
-          if ($changed.Count -gt 0) {
-            $stylePat = '^(scripts/site-custom\.scss|scripts/quartz\.config\.yaml|scripts/site-assets/|scripts/site-overrides/|scripts/enhance-content\.cjs|scripts/build-section-nav\.cjs|scripts/add-edit-links\.cjs|scripts/skin-switcher\.cjs|scripts/fix-html-emphasis\.cjs|scripts/export-public\.ps1|scripts/publish-site\.ps1|scripts/build-vault-meta\.mjs|scripts/inject-dataview\.cjs|scripts/build-vocab\.mjs|scripts/check-bilingual\.mjs|\.github/)'
-            $contentPat = '^(大模型|Ontology|技术笔记|读书笔记|网址收藏|编程语言|Golang编程|Rust编程|数学学习|英语学习|专项学习|附件|template)/'
-            $style = @($changed | Where-Object { $_ -match $stylePat })
-            $content = @($changed | Where-Object { $_ -notmatch $stylePat -and $_ -match $contentPat })
-            $meta = @($changed | Where-Object { $_ -notmatch $stylePat -and $_ -notmatch $contentPat })
-            $out.Add('')
-            $out.Add("### 本次变更 $($changed.Count) 个文件")
-            $out.Add('')
-            if ($style.Count) {
-              $out.Add("**影响站点外观 / 流水线（$($style.Count)）**")
-              foreach ($f in $style) { $out.Add('- `' + $f + '`') }
-              $out.Add('')
-            }
-            if ($content.Count) {
-              $out.Add("**内容（$($content.Count)）**")
-              foreach ($f in ($content | Select-Object -First 40)) { $out.Add('- `' + $f + '`') }
-              if ($content.Count -gt 40) { $out.Add("- …另有 $($content.Count - 40) 个") }
-              $out.Add('')
-            }
-            if ($meta.Count) {
-              $out.Add("**仓库自身、不进站点（$($meta.Count)）**")
-              foreach ($f in ($meta | Select-Object -First 10)) { $out.Add('- `' + $f + '`') }
-              if ($meta.Count -gt 10) { $out.Add("- …另有 $($meta.Count - 10) 个") }
-            }
-          } else {
-            $out.Add('')
-            $out.Add('（非 push 事件或推送体被截断，列不出逐文件变更）')
-          }
-          $text = $out -join "`n"
-          if ($env:GITHUB_STEP_SUMMARY) {
-            $text | Out-File -LiteralPath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
-          }
-          Write-Host $text
-
-      # fetch-depth: 0 = 完整历史：export-public.ps1 的「最近更新」靠 git log 取每个文件
-      # 的最后提交时间（文件 mtime 在 runner 上不保留，全部等于检出时刻，不可用）
-      - name: 1. 检出知识库（完整历史，供「最近更新」取提交时间）
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: 2. 安装 Node（Quartz 要求 >=22，本机为 24）
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "24"
-
-      # 只缓存 npm 的下载缓存，不缓存 node_modules：依赖图完全由 pin 死的
-      # QUARTZ_SHA 决定，缓存命中率高；但安装步骤照常执行，不会出现「缓存里
-      # 少一个插件导致构建莫名其妙失败」这种脏状态。
-      - name: 2b. 恢复 npm 下载缓存
-        uses: actions/cache@v4
+          cache: npm
+      - name: 安装阅读器依赖
+        run: npm ci --no-audit --no-fund
+      - name: 编码与路由校验
+        run: |
+          node scripts/check-bom.mjs
+          npm test
+      - name: 导出公开 Markdown、构建阅读器
+        run: npm run reader:build
+      - name: 校验双语笔记与 Dataview
+        run: |
+          node scripts/check-bilingual.mjs _site/md-reader/notes/英语学习
+          node scripts/test-dataview-lite.mjs _site/md-reader/static/vault-meta.json _site/md-reader/notes
+      - name: 保留公开产物（供搜索索引同步）
+        uses: actions/upload-artifact@v4
         with:
-          path: ${{ env.npm_config_cache }}
-          key: npm-cache-v1-${{ env.QUARTZ_SHA }}
-
-      # 把「上次成功部署的指纹」带过 run 边界。没有它，CI 的 state 永远是空的，
-      # 增量判断永远命中不了；有了它，内容没变的 run 会在导出后直接跳过构建与部署
-      # （约 1 分钟，且不消耗 Cloudflare Pages 的 500 次/月部署额度）。
-      # 只有 publish-site.ps1 在部署成功后才写这个文件，所以缓存里不会出现
-      # 「没发成功却记成已发」的假状态。
-      - name: 2c. 恢复上次成功部署的指纹
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.SITE_ROOT }}\.publish-state.json
-          key: publish-state-${{ github.run_id }}
-          restore-keys: |
-            publish-state-
-
-      # OG 社交图缓存（2026-11-13）：OG 图是构建里最贵的一步——上游是 1841 张串行渲染，
-      # 本地实测 189s（占 80%）。scripts/site-overrides/quartz.ts 把它改成只渲真实文件 +
-      # 并发 + 按内容哈希缓存，缓存全命中时这一步 0.7s。缓存本身很小（~999 个 webp / 20MB），
-      # 命中后整次构建从 ~4 分钟降到 ~30 秒，也顺带省掉大段 runner 计费时间。
-      - name: 2d. 恢复 OG 图缓存
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.SITE_ROOT }}\.og-cache
-          key: og-cache-${{ github.run_id }}
-          restore-keys: |
-            og-cache-
-
-      - name: 3. 浅克隆 Quartz 并 checkout 到 pin 死的提交
-        shell: pwsh
-        run: |
-          $q = "$env:SITE_ROOT\quartz"
-          New-Item -ItemType Directory -Force -Path $env:SITE_ROOT | Out-Null
-          New-Item -ItemType Directory -Force -Path $q | Out-Null
-          git -C $q init -q
-          git -C $q remote add origin $env:QUARTZ_REPO
-          git -C $q fetch --depth 1 origin $env:QUARTZ_SHA
-          if ($LASTEXITCODE -ne 0) { throw "拉取 Quartz 提交失败" }
-          git -C $q checkout -q --detach FETCH_HEAD
-          if ($LASTEXITCODE -ne 0) { throw "checkout Quartz 失败" }
-          git -C $q log --oneline -1
-
-      - name: 4. 叠加本仓库的 Quartz 配置与自定义样式
-        shell: pwsh
-        run: |
-          Copy-Item "$env:VAULT_DIR\scripts\quartz.config.yaml" "$env:SITE_ROOT\quartz\quartz.config.yaml" -Force
-          Copy-Item "$env:VAULT_DIR\scripts\site-custom.scss" "$env:SITE_ROOT\quartz\quartz\styles\custom.scss" -Force
-          "quartz.config.yaml 与 custom.scss 已叠加"
-
-      - name: 5. 安装 Quartz 依赖（含 3 个主题包）与插件
-        shell: pwsh
-        run: |
-          $q = "$env:SITE_ROOT\quartz"
-          npm --prefix $q install "@quartz-themes/core@^2.0.0" "@quartz-themes/claude-paper@^1.0.1" "@quartz-themes/minimal@^1.0.1"
-          if ($LASTEXITCODE -ne 0) { throw "npm install 失败" }
-          npm --prefix $q run install-plugins
-          if ($LASTEXITCODE -ne 0) { throw "install-plugins 失败" }
-
-      - name: 6. 隔离安装 wrangler（不污染知识库仓库）
-        shell: pwsh
-        run: |
-          npm --prefix $env:WRANGLER_DIR install wrangler@4
-          if ($LASTEXITCODE -ne 0) { throw "安装 wrangler 失败" }
-
-      # 语义搜索的向量索引：导出内容 → Workers AI 逐批向量化 → 写 cloudflare\embeddings.json
-      # （步骤 7 会把它连同 _worker.js 一起拷进产物）。可选功能：CI Token 需有
-      # Workers AI 权限，缺权限/失败时 continue-on-error，站点保持纯全文搜索。
-      # 本地生成同样可行：node scripts/build-embeddings.mjs --content _site\content --out cloudflare\embeddings.json
-      - name: 6b. 生成语义搜索向量索引
-        continue-on-error: true
-        shell: pwsh
-        env:
-          NODE_EXE: node
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          VAULT_DIR: ${{ github.workspace }}
-          SITE_ROOT: '${{ github.workspace }}\_site'
-        run: |
-          pwsh -NoProfile -ExecutionPolicy Bypass -File "$env:VAULT_DIR\scripts\export-public.ps1"
-          if ($LASTEXITCODE -ne 0) { throw "导出失败" }
-          $content = Join-Path $env:SITE_ROOT 'content'
-          if (-not (Test-Path -LiteralPath (Join-Path $content 'index.md'))) {
-            Write-Host "本次 run 内容未重建（增量跳过），向量索引已是最新，跳过"
-            exit 0
-          }
-          node "$env:VAULT_DIR\scripts\build-embeddings.mjs" --content $content --out "$env:VAULT_DIR\cloudflare\embeddings.json"
-          if ($LASTEXITCODE -ne 0) { throw "向量索引生成失败" }
-
-      - name: 7. 导出（含脱敏）→ 套主题 → 构建 → 部署
-        shell: pwsh
-        env:
-          NODE_EXE: node
-          WRANGLER_JS: '${{ github.workspace }}\_wrangler\node_modules\wrangler\bin\wrangler.js'
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          FORCE_DEPLOY: ${{ github.event.inputs.force || 'false' }}
-        run: |
-          $forceFlag = if ($env:FORCE_DEPLOY -eq 'true') { '-Force' } else { '' }
-          pwsh -NoProfile -ExecutionPolicy Bypass -File "$env:VAULT_DIR\scripts\publish-site.ps1" $forceFlag
-          if ($LASTEXITCODE -ne 0) { throw "发布失败" }
-
-      # 全库灌入 D1（FTS 全文索引），供站点 /api/search 查询。可选功能：
-      # 未配置 secrets.D1_DATABASE_ID 时跳过；导出被增量判断跳过时同样跳过
-      # （内容没变，数据库已是最新）。配置步骤见 docs/d1-search-setup.md。
-      - name: 7b. 同步知识库索引到 D1
-        # continue-on-error：CI 的 CLOUDFLARE_API_TOKEN 若还没补 D1 Edit 权限，
-        # 同步会鉴权失败——发布本身在第 7 步已经成功，不该因此标红整个 run。
-        continue-on-error: true
-        shell: pwsh
-        env:
-          NODE_EXE: node
-          WRANGLER_JS: '${{ github.workspace }}\_wrangler\node_modules\wrangler\bin\wrangler.js'
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}
-          VAULT_DIR: ${{ github.workspace }}
-          SITE_ROOT: '${{ github.workspace }}\_site'
-        run: |
-          if ([string]::IsNullOrWhiteSpace($env:D1_DATABASE_ID)) {
-            Write-Host "未配置 secrets.D1_DATABASE_ID，跳过 D1 同步（配置方法见 docs/d1-search-setup.md）"
-            exit 0
-          }
-          $content = Join-Path $env:SITE_ROOT 'content'
-          if (-not (Test-Path -LiteralPath (Join-Path $content 'index.md'))) {
-            Write-Host "本次 run 内容未重建（增量跳过），D1 已是最新，跳过同步"
-            exit 0
-          }
-          node "$env:VAULT_DIR\scripts\build-d1-index.mjs" --content $content --out "$env:SITE_ROOT\d1-index.sql"
-          if ($LASTEXITCODE -ne 0) { throw "索引 SQL 生成失败" }
-          node $env:WRANGLER_JS d1 execute wuhy-notes-kb --remote --file "$env:SITE_ROOT\d1-index.sql" -y
-          if ($LASTEXITCODE -ne 0) { throw "D1 同步失败" }
-          Write-Host "D1 知识库索引已更新（数据库 wuhy-notes-kb）"
-
-      # 国内镜像：把与 Cloudflare 相同的产物同步到阿里云服务器（47.100.85.94，
-      # nginx 8080 + Basic Auth，root=/var/www/wuhy-notes）。只在第 7 步真正部署过
-      # （publish-site.ps1 留下 .deployed-this-run 标记）才同步；内容没变的增量 run
-      # 没有标记，服务器保持上次内容。tar 管道一次连接传完（131M 站点压到 ~40MB），
-      # 解到 .new 目录校验 index.html 后原子换目录，解包途中不会出现半个站点。
-      # ControlMaster 复用一条 SSH 连接：服务器 ufw 对 22 有 LIMIT 限流（30 秒内
-      # 6 次新连接会临时拉黑），逐条命令开连接可能触发。
-      # continue-on-error：跨网 SSH 偶发失败不该标红发布本身，日志里可见。
-      - name: 7c. 同步产物到国内服务器（阿里云 47.100.85.94）
+          name: site-public
+          path: _site/md-reader/
+          retention-days: 7
+      - name: 发布正式站点
+        run: npx --yes wrangler@4 pages deploy _site/md-reader --project-name wuhy-notes --branch main --commit-dirty=true
+      - name: 检查正式站点
+        run: node scripts/verify-reader.mjs https://wuhy-notes.pages.dev/ _site/md-reader/index.json
+      - name: 准备国内静态镜像
+        run: node scripts/prepare-site-mirror.mjs
+      - name: 同步国内镜像
         continue-on-error: true
         shell: bash
         env:
@@ -342,46 +94,33 @@ jobs:
           WUHY_KNOWN_HOSTS: ${{ secrets.WUHY_SERVER_KNOWN_HOSTS }}
         run: |
           set -euo pipefail
+          if [ -z "$WUHY_SSH_KEY" ] || [ -z "$WUHY_KNOWN_HOSTS" ]; then
+            echo "未配置国内镜像凭据，跳过同步"
+            exit 0
+          fi
           WS="$(cygpath -u "$GITHUB_WORKSPACE" 2>/dev/null || echo "$GITHUB_WORKSPACE")"
-          MARKER="$WS/_site/.deployed-this-run"
-          PUB="$WS/_site/quartz/public"
-          if [ ! -f "$MARKER" ]; then
-            echo "本次 run 未执行部署（增量跳过），国内服务器保持上次内容，跳过同步"
-            exit 0
-          fi
-          if [ ! -f "$PUB/index.html" ]; then
-            echo "产物缺 index.html，跳过同步"
-            exit 0
-          fi
+          PUB="$WS/_site/mirror"
           mkdir -p ~/.ssh
           printf '%s\n' "$WUHY_SSH_KEY" > ~/.ssh/wuhy_deploy_key
           printf '%s\n' "$WUHY_KNOWN_HOSTS" > ~/.ssh/wuhy_deploy_known_hosts
           chmod 600 ~/.ssh/wuhy_deploy_key ~/.ssh/wuhy_deploy_known_hosts
           SSH_OPTS=(-i "$HOME/.ssh/wuhy_deploy_key" -o IdentitiesOnly=yes
                     -o UserKnownHostsFile="$HOME/.ssh/wuhy_deploy_known_hosts"
-                    -o StrictHostKeyChecking=yes
+                    -o StrictHostKeyChecking=yes -o ConnectTimeout=20
                     -o ControlMaster=auto -o "ControlPath=$HOME/.ssh/wuhy_cm_%r@%h:%p" -o ControlPersist=180)
           HOST=root@47.100.85.94
-          ssh "${SSH_OPTS[@]}" "$HOST" "mkdir -p /var/www/wuhy-notes.new"
-          tar czf - -C "$PUB" . | ssh "${SSH_OPTS[@]}" "$HOST" "rm -rf /var/www/wuhy-notes.new && mkdir -p /var/www/wuhy-notes.new && tar xzf - -C /var/www/wuhy-notes.new"
-          ssh "${SSH_OPTS[@]}" "$HOST" "test -f /var/www/wuhy-notes.new/index.html"
-          ssh "${SSH_OPTS[@]}" "$HOST" "if [ -d /var/www/wuhy-notes ]; then mv /var/www/wuhy-notes /var/www/wuhy-notes.old; fi && mv /var/www/wuhy-notes.new /var/www/wuhy-notes && rm -rf /var/www/wuhy-notes.old"
-          echo "国内服务器已更新：http://47.100.85.94:8080（Basic Auth）"
-
-      # 显式保存 OG 图缓存（2026-11-13）：实测 actions/cache 的 post 步骤在
-      # 「构建成功但部署失败」这类 run 里没有真的落盘（缓存列表里始终没有 og-cache-*），
-      # 所以改成独立一步、if: always()，成功失败都存，日志里也有明确结果。
-      - name: 7d. 保存 OG 图缓存
-        if: always()
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ env.SITE_ROOT }}\.og-cache
-          key: og-cache-${{ github.run_id }}
-
-      - name: 8. 汇总（脱敏校验必须全为 0）
+          NEW="/var/www/wuhy-notes.new-$GITHUB_RUN_ID"
+          tar czf - -C "$PUB" . | ssh "${SSH_OPTS[@]}" "$HOST" "mkdir -p '$NEW' && tar xzf - -C '$NEW'"
+          ssh "${SSH_OPTS[@]}" "$HOST" "test -s '$NEW/index.html' && test -s '$NEW/index.json' && if [ -d /var/www/wuhy-notes ]; then mv /var/www/wuhy-notes /var/www/wuhy-notes.old-$GITHUB_RUN_ID; fi && mv '$NEW' /var/www/wuhy-notes && rm -rf /var/www/wuhy-notes.old-$GITHUB_RUN_ID"
+      - name: 写入运行摘要
         if: always()
         shell: pwsh
         run: |
-          $rep = "$env:SITE_ROOT\_reports\SUMMARY.md"
-          if (Test-Path -LiteralPath $rep) { Get-Content -LiteralPath $rep -Encoding UTF8 }
-          else { "未找到 SUMMARY.md（导出阶段可能未完成）" }
+          @'
+          ## Markdown 阅读站点
+          正式入口：https://wuhy-notes.pages.dev/
+
+          正文以 MD 发布，浏览器按需解析；搜索索引由独立工作流同步。
+          '@ | Out-File -LiteralPath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          $report = Join-Path $env:SITE_ROOT '_reports/SUMMARY.md'
+          if (Test-Path -LiteralPath $report) { Get-Content -LiteralPath $report -Encoding UTF8 | Out-File -LiteralPath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8 }

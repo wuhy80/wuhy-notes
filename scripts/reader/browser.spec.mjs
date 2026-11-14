@@ -146,3 +146,20 @@ test('嵌套 Callout、章节和块嵌入、代码保护与 HTML 净化', async 
   expect(await page.evaluate(() => window.readerInjection)).toBeUndefined();
   await expect(page.locator('article script')).toHaveCount(0);
 });
+
+test('课程测验、上下课导航和动手实验保留交互', async ({ page }) => {
+  const fixture = { path: '课程测试.md', url: '/课程测试.html', title: '课程测试', tags: [], aliases: [], links: [], hash: 'fixture' };
+  const raw = ['# 课程测试', '', '> [!example] 学习小测验', '> **Q1. 哪个是正确答案？**', '>', '> - A. 错误', '> - B. 正确 ✅', '>', '> > [!tip] 讲解', '> > 答案说明', '', '<div class="lab" data-lab="attention"></div>', '', '## 相关笔记', '', '- 上一课：[[index|首页]]', '- 下一课：[[index|下一课]]'].join('\n');
+  await page.route('**/index.json', route => route.fulfill({ json: { ...manifest, notes: [...manifest.notes, fixture] } }));
+  await page.route('**/notes/**', route => decodeURIComponent(new URL(route.request().url()).pathname) === '/notes/课程测试.md'
+    ? route.fulfill({ contentType: 'text/markdown', body: raw }) : route.continue());
+  await page.goto('/');
+  await expect(page.locator('article h1')).toBeVisible();
+  await page.evaluate(() => { history.pushState(null, '', '/课程测试.html'); dispatchEvent(new PopStateEvent('popstate')); });
+  await expect(page.locator('.quiz-item')).toHaveAttribute('data-answer', 'B');
+  await page.locator('.quiz-opt.is-answer input').check();
+  await expect(page.locator('.quiz-opt.is-answer input')).toBeChecked();
+  await expect(page.locator('.lesson-nav a')).toHaveCount(2);
+  await expect(page.locator('[data-lab="attention"]')).toHaveAttribute('data-lab-ready', '1');
+  await expect(page.locator('[data-lab="attention"] button').first()).toBeVisible();
+});

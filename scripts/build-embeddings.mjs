@@ -20,6 +20,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import crypto from 'node:crypto';
 
 function argValue(flag, fallback) {
   const i = process.argv.indexOf(flag);
@@ -143,11 +144,13 @@ async function main() {
   console.log(`待向量化 ${files.length} 篇（模型 ${MODEL}，字符预算 ${BATCH_CHARS}/批）`);
   if (DRY_RUN) return;
 
-  // 断点续跑：输出文件已存在的路径直接跳过
-  const out = fs.existsSync(OUT)
+  // 内容哈希决定复用；更新和删除的笔记不会沿用旧向量。
+  let out = fs.existsSync(OUT)
     ? JSON.parse(fs.readFileSync(OUT, "utf8"))
     : { model: MODEL, dim: null, generated: new Date().toISOString(), docs: [] };
-  const doneSet = new Set(out.docs.map((d) => d.p));
+  if (out.model !== MODEL) out = { model: MODEL, dim: null, docs: [] };
+  const previous = new Map(out.docs.map(d => [d.p, d]));
+  const reused = [];
 
   const docs = [];
   for (const f of files) {
@@ -159,12 +162,14 @@ async function main() {
     }
     if (!text) continue;
     const rel = path.relative(ROOT, f).split(path.sep).join("/");
-    if (doneSet.has(rel)) continue;
     const titleMatch = text.match(/^#\s+(.+)$/m);
     const title = (titleMatch ? titleMatch[1].trim() : "") || path.basename(f, ".md");
-    docs.push({ p: rel, t: title, text: text.slice(0, BODY_CAP) });
+    const h = crypto.createHash('sha256').update(title + '\n' + text).digest('hex');
+    if (previous.get(rel)?.h === h) { reused.push(previous.get(rel)); continue; }
+    docs.push({ p: rel, t: title, h, text: text.slice(0, BODY_CAP) });
   }
-  if (out.docs.length) console.log(`断点续跑：已有 ${out.docs.length} 条，本次还需 ${docs.length} 篇`);
+  out.docs = reused;
+  if (out.docs.length) console.log(`复用 ${out.docs.length} 条未变化向量，本次处理 ${docs.length} 篇`);
 
   // 按字符预算组批（中文 ≈1 字符 1 token，30000 字符远低于单请求 60k 上限）
   const batches = [];
@@ -188,7 +193,7 @@ async function main() {
       if (!vectors[j]) return; // 超限被跳过的单篇
       const v = normalize(vectors[j] || []);
       if (!out.dim) out.dim = v.length;
-      out.docs.push({ p: d.p, t: d.t, v });
+      out.docs.push({ p: d.p, t: d.t, h: d.h, v });
     });
     done += batch.length;
     process.stdout.write(`  ${done}/${out.docs.length + docs.length}（批 ${bi + 1}/${batches.length}）\n`);
@@ -198,7 +203,9 @@ async function main() {
   }
   for (const w of warnings) console.log("  ⚠ " + w);
 
-  fs.writeFileSync(OUT, JSON.stringify(out), "utf8");
+  out.docs.sort((a, b) => a.p.localeCompare(b.p));
+  const output = JSON.stringify(out);
+  if (!fs.existsSync(OUT) || fs.readFileSync(OUT, 'utf8') !== output) fs.writeFileSync(OUT, output, "utf8");
   console.log(`完成：${out.docs.length} 条向量（${out.dim} 维）→ ${OUT}（${(fs.statSync(OUT).size / 1048576).toFixed(2)} MB）`);
 }
 

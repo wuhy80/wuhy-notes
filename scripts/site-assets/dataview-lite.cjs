@@ -3,7 +3,7 @@
  *
  * Obsidian 退役后库里残留的 ```dataview / ```dataviewjs 代码块在 Quartz 上没有
  * 宿主，只会显示原始查询文本。本脚本在浏览器里把它们渲染出来：
- *   · 元数据来自构建期生成的 /static/vault-meta.json（scripts/build-vault-meta.mjs）
+ *   · 元数据来自构建期生成的 /static/vault-meta.json（scripts/build-md-reader.mjs）
  *   · ```dataview     → 迷你 DQL 引擎（TABLE/LIST/TASK + FROM/WHERE/GROUP BY/SORT/LIMIT，
  *                       dateformat/date/length/max/min，本库用到的方言）
  *   · ```dataviewjs   → 用 dv 垫片直接执行原代码（pages/where/filter/sort/groupBy/
@@ -46,7 +46,7 @@
     if (typeof v === 'string') { var t = Date.parse(v); return isNaN(t) ? null : new DT(t) }
     return null
   }
-  // 与 publish-site.ps1 覆盖校验一致的 slug 规则：逐段小写、空格转 '-'；
+  // 与阅读器 shared.mjs 一致的旧 URL 兼容规则：逐段小写、空格转 '-'；
   // _index.md 或「与父目录同名的 .md」产出父目录页面
   function pathToUrl(rel) {
     var parts = rel.split('/')

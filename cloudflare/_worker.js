@@ -1,6 +1,6 @@
 // 知识库站点 API（Cloudflare Pages 高级模式 _worker.js）
 //
-// 部署时由 publish-site.ps1 拷进产物根目录，Pages 以「高级模式」运行：
+// 构建时由 scripts/reader/worker.mjs 打包，Pages 以「高级模式」运行：
 //   · /api/* 由本文件处理：/api/search 查 D1 全文索引，/api/semantic-search
 //     查向量索引（embeddings.json 静态资产 + Workers AI 向量化问题）
 //   · 其余路径回源到静态资源（env.ASSETS），站点行为不变
@@ -26,7 +26,7 @@
 //   wrangler pages dev <产物目录> --d1 DB=<数据库名或id> --ai AI
 //   （本文件无第三方依赖，不需要构建）
 
-const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
+const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" };
 const EMBED_MODEL = "@cf/baai/bge-m3";
 
 // 向量索引的 isolate 级缓存：5~6MB JSON，首次请求载入，之后常驻内存

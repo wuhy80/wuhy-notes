@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node --test scripts/reader/reader.test.mjs",
+    "test": "node --test scripts/reader/reader.test.mjs scripts/reader/indexing.test.mjs",
     "reader:build": "node scripts/preview-md-reader.mjs --build-only",
     "reader:preview": "node scripts/preview-md-reader.mjs",
     "reader:test": "playwright test --config scripts/reader/playwright.config.mjs"

@@ -1,6 +1,6 @@
 /* lab-widgets.js —— 课程里的「动手实验」组件（站内原生实现，无依赖）
  *
- * 由 scripts/enhance-content.cjs 在构建后拷到 public/static/js/ 并注入 <head>。
+ * 由 build-md-reader.mjs 复制到 static/js/，阅读器按需加载。
  * 笔记里只写占位：<div class="lab" data-lab="animal-map"></div>
  * 支持：animal-map（01 什么是向量）、secant（05 什么是梯度）、attention（19 注意力机制）
  */

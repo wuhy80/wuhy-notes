@@ -1,4 +1,4 @@
-// 沿用 build-section-nav.cjs 的分区顺序、卷编号和大卷折叠方式。
+// 分区顺序、卷编号和大卷折叠方式与既有站点保持一致。
 const order = ['大模型', '技术笔记', '读书笔记', '数学学习', '英语学习', 'Golang编程', 'Rust编程', 'Ontology', '网址收藏'];
 const roman = ['Ⅰ','Ⅱ','Ⅲ','Ⅳ','Ⅴ','Ⅵ','Ⅶ','Ⅷ','Ⅸ','Ⅹ','Ⅺ','Ⅻ','ⅩⅢ','ⅩⅣ','ⅩⅤ','ⅩⅥ','ⅩⅦ','ⅩⅧ','ⅩⅨ','ⅩⅩ'];
 const compare = (a, b) => a.localeCompare(b, 'zh-CN', { numeric: true });

@@ -1,6 +1,7 @@
 import { createResolver, noteHref, rawHref, headingId } from './shared.mjs';
 import { createMarkdown, enhanceDiagrams } from './markdown.mjs';
 import { renderNavigation } from './navigation.mjs';
+import { enhanceContent } from './content.mjs';
 
 const $ = selector => document.querySelector(selector);
 const article = $('#article');
@@ -140,9 +141,11 @@ async function renderArticle(id) {
   await expandEmbeds(article, current, [current.path], loadController.signal);
   if (id !== navigation) return;
   normalizeFrames(article);
+  enhanceContent(article);
   renderToc();
   renderBacklinks();
   const loads = [];
+  if (article.querySelector('[data-lab]')) loads.push(loadScript('/static/js/lab-widgets.js'));
   if (article.querySelector('[data-language="dataview"], [data-language="dataviewjs"], [data-language="tagcloud"], [data-language="vocab-notebook"]')) {
     loads.push(loadScript('/static/dataview-lite.js'));
   }
@@ -248,7 +251,8 @@ async function search() {
   local.forEach(note => append(note));
   $('#search-status').textContent = '本地匹配 ' + local.length + ' 篇，正在查询全文…';
   try {
-    const response = await fetch('/api/search?q=' + encodeURIComponent(query) + '&limit=20', { signal: searchController.signal });
+    const apiOrigin = document.querySelector('meta[name="reader-api-origin"]')?.content || '';
+    const response = await fetch(apiOrigin + '/api/search?q=' + encodeURIComponent(query) + '&limit=20', { signal: searchController.signal });
     if (!response.ok) throw new Error('全文索引暂不可用');
     const data = await response.json();
     const rows = data.results || data.notes || [];

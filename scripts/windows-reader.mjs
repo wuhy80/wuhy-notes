@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn, spawnSync } from 'node:child_process';
 import os from 'node:os';
+import { verifyReader } from './verify-reader.mjs';
 
 const vault = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -33,29 +34,6 @@ function openBrowser(url) {
   if (process.platform !== 'win32') return;
   spawn(process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', 'start "" "' + url + '"'], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
 }
-async function verifyPreview(url) {
-  const get = async pathname => {
-    const response = await fetch(new URL(pathname, url), { cache: 'no-store', signal: AbortSignal.timeout(15000) });
-    if (!response.ok) throw new Error(pathname + ' 返回 HTTP ' + response.status);
-    return response;
-  };
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      if (!(await (await get('/')).text()).includes('<article')) throw new Error('入口未返回阅读器页面');
-      const manifest = await (await get('/index.json')).json();
-      if (!manifest.notes?.length) throw new Error('线上目录为空');
-      const note = manifest.notes[0];
-      const raw = await get('/notes/' + note.path.split('/').map(encodeURIComponent).join('/'));
-      if (!raw.headers.get('Content-Type')?.includes('text/markdown') || !(await raw.text()).trim()) throw new Error('线上 MD 正文不可用');
-      console.log('线上访问校验通过：阅读器入口、' + manifest.notes.length + ' 篇笔记目录与 MD 正文。');
-      return;
-    } catch (error) {
-      if (attempt === 3) throw new Error('部署工作流已完成，但线上访问校验失败：' + error.message);
-      console.log('正在等待预览入口更新，稍后重新检查…');
-      await new Promise(resolve => setTimeout(resolve, 2000));
-    }
-  }
-}
 function allowed(file, publishedImages = new Set(), imageCounts = new Map()) {
   if (/(?:^|\/)(?:AGENTS|CLAUDE)\.md$/i.test(file)) return false;
   if (/^技术笔记\/(?:虚拟机|安全)\//.test(file) || file === '技术笔记/版本管理/知识库双仓库拆分与多机同步.md') return false;
@@ -64,7 +42,7 @@ function allowed(file, publishedImages = new Set(), imageCounts = new Map()) {
     const name = path.posix.basename(file).toLowerCase();
     return publishedImages.has(name) && imageCounts.get(name) === 1;
   }
-  return /^(?:start-reader\.cmd|deploy-reader\.cmd|package(?:-lock)?\.json|scripts\/(?:windows-reader\.mjs|preview-md-reader\.mjs|build-md-reader\.mjs|build-vocab\.mjs|skin-switcher\.cjs|site-custom\.scss|export-public\.ps1|reader\/.*|site-assets\/.*)|cloudflare\/_worker\.js|docs\/markdown-reader-preview\.md|\.github\/workflows\/publish-md-reader\.yml)$/.test(file);
+  return /^(?:start-reader\.cmd|deploy-reader\.cmd|package(?:-lock)?\.json|scripts\/(?:windows-reader\.mjs|preview-md-reader\.mjs|build-md-reader\.mjs|build-vocab\.mjs|verify-reader\.mjs|prepare-site-mirror\.mjs|lab-widgets\.js|site-custom\.scss|export-public\.ps1|reader\/.*|site-assets\/.*)|cloudflare\/_worker\.js|docs\/markdown-reader-preview\.md|\.github\/workflows\/publish-site\.yml)$/.test(file);
 }
 async function deploy() {
   run('git', ['--version']);
@@ -72,6 +50,7 @@ async function deploy() {
   if (git('diff', '--cached', '--name-only')) throw new Error('暂存区已有改动。请先完成或处理该批提交，脚本不会混入其他暂存内容。');
   const branch = git('branch', '--show-current');
   if (!branch) throw new Error('当前处于 detached HEAD，不能自动推送。');
+  if (branch !== 'main') throw new Error('正式发布只接受 main 分支，请先合并到 main。');
   const upstream = git('rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{upstream}');
   const remote = upstream.split('/')[0];
   if (upstream.slice(remote.length + 1) !== branch) throw new Error('upstream 分支与本地分支不同，请先明确推送目标。');
@@ -84,7 +63,7 @@ async function deploy() {
     git('pull', '--ff-only');
   }
   ensureDependencies();
-  run(process.execPath, ['--test', 'scripts/reader/reader.test.mjs']);
+  run(process.execPath, ['--test', 'scripts/reader/reader.test.mjs', 'scripts/reader/indexing.test.mjs']);
   // 部署独用导出目录，避免 Git 同步触发本地预览刷新时争用同一份中间文件。
   const siteRoot = path.join(process.env.SITE_ROOT || path.join(vault, '_site/md-reader-export'), 'deploy');
   run(process.execPath, ['scripts/preview-md-reader.mjs', '--build-only', '--out', path.join(siteRoot, 'release')], { environment: { ...env, SITE_ROOT: siteRoot } });
@@ -119,29 +98,36 @@ async function deploy() {
     finally { fs.unlinkSync(messagePath); }
   } else console.log('没有需要新增提交的公开内容，继续推送并发布当前版本。');
   if (args.includes('--check')) return;
-  git('push', remote, 'HEAD:' + branch);
   const sha = git('rev-parse', 'HEAD');
-  const endpoint = 'repos/' + repo + '/actions/workflows/publish-md-reader.yml';
+  const endpoint = 'repos/' + repo + '/actions/workflows/publish-site.yml';
   const oldRuns = JSON.parse(run('gh', ['api', endpoint + '/runs?per_page=5'], { quiet: true })).workflow_runs;
   const oldIds = new Set(oldRuns.map(run => run.id));
-  run('gh', ['api', endpoint + '/dispatches', '-X', 'POST', '-f', 'ref=' + branch]);
-  console.log('已提交并推送，正在部署独立预览。正式站点继续使用原入口。');
+  git('push', remote, 'HEAD:' + branch);
+  console.log('已推送，正在等待正式站点自动发布。');
+  let dispatched = false;
+  const started = Date.now();
   let lastStatus = '';
   const deadline = Date.now() + 15 * 60 * 1000;
   while (Date.now() < deadline) {
     await new Promise(resolve => setTimeout(resolve, 5000));
     const runs = JSON.parse(run('gh', ['api', endpoint + '/runs?per_page=5'], { quiet: true })).workflow_runs;
-    const active = runs.find(run => !oldIds.has(run.id) && run.head_sha === sha && run.event === 'workflow_dispatch');
-    if (!active) continue;
+    const active = runs.find(run => !oldIds.has(run.id) && run.head_sha === sha && ['push', 'workflow_dispatch'].includes(run.event));
+    if (!active) {
+      if (!dispatched && Date.now() - started > 20000) {
+        run('gh', ['api', endpoint + '/dispatches', '-X', 'POST', '-f', 'ref=' + branch]);
+        dispatched = true;
+      }
+      continue;
+    }
     if (active.status !== lastStatus) {
       console.log(active.status + '：' + active.html_url);
       lastStatus = active.status;
     }
     if (active.status === 'completed') {
       if (active.conclusion !== 'success') throw new Error('发布未成功（' + active.conclusion + '），本地提交和推送已保留。查看：' + active.html_url);
-      const url = 'https://markdown-preview.wuhy-notes.pages.dev/';
+      const url = 'https://wuhy-notes.pages.dev/';
       console.log('工作流已完成，正在检查线上访问…');
-      await verifyPreview(url);
+      await verifyReader(url);
       console.log('部署完成：' + url);
       if (args.includes('--open')) openBrowser(url);
       return;

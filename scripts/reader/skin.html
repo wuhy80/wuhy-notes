@@ -1,45 +1,4 @@
-#!/usr/bin/env node
-/**
- * skin-switcher.cjs —— 皮肤切换器注入（四主题可选）
- *
- * 为什么放在这一层：与 enhance-content.cjs / add-edit-links.cjs 同理，
- * Quartz 没有顶栏工具栏插槽，改组件要维护 fork；在产物上注入零维护。
- *
- * 做法（全部走客户端 DOM，不做正文/工具栏的字符串手术）：
- *   · 每页 <head> 开头注入一段内联脚本（整个站点唯一一处字符串插入点，
- *     <head> 前面只有 doctype/<html>，不存在误匹配）：
- *     ① 读 localStorage('gz-skin') 应用 <html data-gz-skin>；没有保存过则按
- *        系统明暗给默认（浅色→瓷白，深色→曜夜）。放最前是为了在 CSS 取变量
- *        前定好皮肤，避免换肤闪一下。
- *     ② place()：在真实 DOM 里找到工具栏行（.flex-component，锚在 .search-button 上，
- *        兼容 .readermode/.darkmode），把 .gz-skin-dd 下拉插为行内第一项。DOM 查询
- *        天然不会命中 head 里内联的序列化字符串（那是字符串手术踩过的坑）。
- *        顶栏复用的就是左栏这套工具栏 DOM，一份注入两处可见。
- *     ③ 明暗档（浅色/深色/跟随系统）复用 Quartz 的 localStorage.theme 键；
- *        2026-10-28 起 darkmode 插件已停用（顶栏 ☀️ 按钮与下拉里的「明暗」分组重复），
- *        saved-theme 的初始解析、SPA 切页重申与系统明暗实时跟随都由本脚本负责。
- *   · SPA 导航后监听 Quartz 的 nav 事件重新 place + 重申皮肤/明暗属性
- *     （micromorph 可能重置 <html> 属性），保证切页后不丢。
- *
- * 皮肤取值与含义（CSS 端见 site-custom.scss 末尾「12/12 皮肤系统」）：
- *   paper  纸墨 · 现版（暖纸赭橙观感，保留为可选主题）
- *   xuanmo 玄墨书卷（宋体标题 + 朱砂印章色）
- *   yaoye  曜夜终端（深色青荧光 + 等宽点缀；浅色档为青瓷纸面）
- *   cibai  瓷白编辑部（特黑标题 + 靛蓝强调）
- *
- * 幂等：已含 gz-skin-boot 的页面直接跳过，可安全重复执行。
- *
- * 用法：node scripts/skin-switcher.cjs <public 目录> [--dry]
- */
-'use strict'
-
-const fs = require('fs')
-const path = require('path')
-
-const PUB = process.argv[2] || 'public'
-const DRY = process.argv.includes('--dry')
-
-const HEAD_SCRIPT = `<script>(function(){
+<script>(function(){
 var K=["paper","xuanmo","yaoye","cibai"];
 function cur(){var s=null;try{s=localStorage.getItem("gz-skin")}catch(e){}
 if(K.indexOf(s)<0){try{s=matchMedia("(prefers-color-scheme: dark)").matches?"yaoye":"cibai"}catch(e){s="cibai"}}
@@ -105,37 +64,4 @@ document.addEventListener("nav",function(){apply();applyMode();place()});
 // DOM 就绪后补上 body 上的 theme-* 类（head 阶段 body 尚不存在，applyMode 里那段跳过了）
 function boot(){document.body&&(document.body.classList.remove("theme-dark","theme-light"),document.body.classList.add("theme-"+document.documentElement.getAttribute("saved-theme")));place()}
 if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",boot)}else{boot()}
-}})()</script>`
-
-function walk(dir, out) {
-  for (const name of fs.readdirSync(dir)) {
-    const p = path.join(dir, name)
-    if (fs.statSync(p).isDirectory()) walk(p, out)
-    else if (name.endsWith('.html')) out.push(p)
-  }
-  return out
-}
-
-const files = walk(PUB, [])
-let injected = 0
-let skipped = 0
-let noHead = 0
-for (const file of files) {
-  const html = fs.readFileSync(file, 'utf8')
-  if (html.includes('gz-skin-boot') || html.includes('__gzSkinBoot')) { skipped++; continue }
-
-  // 唯一的字符串插入点：<head> 之后（其前只有 doctype/<html>，无误匹配可能）
-  const headIdx = html.indexOf('<head>')
-  if (headIdx < 0) { noHead++; continue }
-  const headAt = headIdx + '<head>'.length
-
-  if (!DRY) {
-    fs.writeFileSync(file, html.slice(0, headAt) + HEAD_SCRIPT + html.slice(headAt), 'utf8')
-  }
-  injected++
-}
-
-console.log('skin-switcher: 注入 ' + injected + '/' + files.length + ' 页' +
-  (skipped ? '，跳过 ' + skipped + ' 页（已有切换器）' : '') +
-  (noHead ? '，跳过 ' + noHead + ' 页（无 head）' : '') +
-  (DRY ? '（--dry 未写盘）' : ''))
+}})()</script>

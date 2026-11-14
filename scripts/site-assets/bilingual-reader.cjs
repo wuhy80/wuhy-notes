@@ -18,7 +18,7 @@
  * Quartz 的 nav 事件重新初始化；每轮初始化用 AbortController 摘掉上一轮的
  * 事件监听，避免叠加。
  *
- * 由 scripts/inject-reader.cjs 在构建后注入；样式见 scripts/site-custom.scss
+ * 由 scripts/reader/app.mjs 按需加载；样式见 scripts/site-custom.scss
  * 的「13/13 双语精读阅读器」段。
  */
 (function () {

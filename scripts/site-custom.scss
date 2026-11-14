@@ -1,10 +1,8 @@
-@use "./variables.scss" as *;
 
 // ============================================================================
 // 站点自定义样式
 // 源文件：<知识库>/scripts/site-custom.scss（纳入 Git 备份）
-// 由 scripts/publish-site.ps1 复制到 quartz/quartz/styles/custom.scss
-// → 不要直接改 quartz 目录里的副本，重装或发布会被覆盖
+// 由 scripts/build-md-reader.mjs 编译并发布；直接维护本文件。
 // ============================================================================
 
 // ---------------------------------------------------------------------------
@@ -264,14 +262,14 @@ html body article figure[data-rehype-pretty-code-figure] > pre::-webkit-scrollba
 // ===========================================================================
 // 课程页风格化（2026-10-11，参考 xuanyuancode.com/ai-llm/lessons/*）
 //
-// 采纳的参考元素：暖纸配色（见下 Token 强制块与 quartz.config.yaml）、
+// 采纳的参考元素：暖纸配色（见下 Token 强制块与 site-custom.scss）、
 // 左右栏边线分隔、大号衬线文章标题、h2 左侧橙色强调条、
 // 右栏目录小节编号、frontmatter 属性表渲染成引言框。
 // 不做 DOM 级改造（prev/next 页脚需要自定义组件，本次未做）。
 //
 // ⚠️ 实测（2026-10-11）：@quartz-themes/claude-paper 会在自己的样式里重新
 // 声明 --light/--lightgray/--tertiary 等 token（如 --tertiary:#873f2b），
-// 且加载顺序在 custom.scss 之后——quartz.config.yaml 改了颜色会被主题盖掉。
+// 且加载顺序在 custom.scss 之后——site-custom.scss 改了颜色会被主题盖掉。
 // 因此颜色必须在这里用 !important 的变量声明强制（主题规则无 !important）。
 // ===========================================================================
 
@@ -1345,7 +1343,7 @@ html body div#quartz-root.page footer a:hover {
   color: var(--accent) !important;
 }
 
-// 链接列（右）：footer 插件 links 配置渲染为 <ul>（quartz.config.yaml 的 footer.options.links）
+// 链接列（右）：footer 插件 links 配置渲染为 <ul>（site-custom.scss 的 footer.options.links）
 html body div#quartz-root.page footer ul {
   color: var(--ink-soft) !important;
   font-size: 14px !important;
@@ -1391,10 +1389,10 @@ html body div#quartz-root.page footer ul li a {
 }
 
 // ===========================================================================
-// 10/10 内容增强（由 scripts/enhance-content.cjs 在构建后生成的 DOM 配套样式）
+// 10/10 内容增强（由 scripts/reader/content.mjs 在构建后生成的 DOM 配套样式）
 //
 // 两件事：测验（纯 CSS 判分，无 JS）+ 文末上一课/下一课导航卡。
-// 结构由 enhance-content.cjs 产出，这里只负责外观与状态。
+// 结构由 reader/content.mjs 产出，这里只负责外观与状态。
 // ===========================================================================
 
 // 判分用的语义色：只在测验的对/错两种状态里出现，不参与全站配色
@@ -1655,7 +1653,7 @@ html body div#quartz-root.page article .lesson-nav-meta a {
 // + 4px 圆角的当前态 tab（竖条改为独立伪元素，不再受圆角影响）
 // + 当前文件的祖先链路染赭橙。只用本站既有 token，不新增颜色与阴影。
 //
-// 配套（脚本侧）：enhance-content.cjs 注入「探索树滚动护栏」，否则树渲染完
+// 配套（脚本侧）：reader/content.mjs 注入「探索树滚动护栏」，否则树渲染完
 // 会对当前项调用 scrollIntoView，把整个窗口往下拖（实测 scrollY 0 → 462）。
 // ===========================================================================
 
@@ -1880,7 +1878,7 @@ html body div#quartz-root.page .explorer .nav-file-title {
 }
 
 // --- 11.7 侧栏标题瘦身后的序号 --------------------------------------------
-// 由 enhance-content.cjs 注入的脚本生成：侧栏里把「5分钟手把手系列(八)：…」
+// 由 reader/content.mjs 注入的脚本生成：侧栏里把「5分钟手把手系列(八)：…」
 // 压成「（八）本地通过…」，序号弱化成小号 ink-faint；完整标题留在链接的
 // title 属性里，笔记自身的 title / H1 / URL 不动。
 // 序号用正文体而不是等宽体：一/二/三 在 IBM Plex Mono 里会细成一条横线，
@@ -1901,7 +1899,7 @@ html body div#quartz-root.page .explorer-content ul li > a.active .ex-idx {
 // ===========================================================================
 // 10/10 分区导航（2026-10-22）—— 一级目录搬到顶栏，左栏只显示当前一级的章节
 //
-// 由 scripts/build-section-nav.cjs 在构建后生成静态 HTML：
+// 由阅读器 navigation.mjs 在浏览器生成分区导航：
 //   顶栏 <nav class="top-nav">：首页 + 各一级目录
 //   左栏 <nav class="side-nav">：卷（二级目录，罗马数字 + 名称 + 篇数）→ 条目（两位序号）
 // Quartz 自己的客户端探索树（.explorer）在这里整体隐藏，避免两套导航并存。
@@ -2081,7 +2079,7 @@ html body div#quartz-root.page .side-nav .vol .items li > a {
 // ===========================================================================
 // 11/11 首页形态（2026-10-23）—— 首页 = 导航页，不要左中右三栏
 //
-// body.landing 由 scripts/build-section-nav.cjs 注入：站点首页 index 与 00-index 合集页。
+// body.landing 由阅读器 app.mjs 为首页设置。
 // 顶栏（站名 + 分区导航）仍然保留——它就挂在左栏 DOM 里，所以这里用 display:contents
 // 让左栏盒子消失、只留固定的顶栏元素；左右栏的目录内容全部隐藏。
 // ===========================================================================
@@ -2592,7 +2590,7 @@ html body div#quartz-root.page .page-footer .edit-page-link:hover {
 // 12/12 皮肤系统：四套可选主题 + 访客切换器（2026-10-28）
 // ===========================================================================
 // 原理：0/6 调色板已把全站组件收敛到 --paper/--ink/--accent 这组变量上，
-// 皮肤只需按 <html data-gz-skin>（由 skin-switcher.cjs 注入的脚本写入）重声明
+// 皮肤只需按 <html data-gz-skin>（由 reader/skin.html 注入的脚本写入）重声明
 // 同一组变量，所有组件自动跟随（含顶栏/页脚：底色直接吃 --paper/--paper-deep）；
 // 标题字体走 --gz-font-heading 令牌。
 // 四套皮肤：paper 纸墨·现版（即上面的默认调色板，不在此重复声明）、
@@ -2901,7 +2899,7 @@ html body div#quartz-root.page .page-footer .edit-page-link:hover {
     -apple-system, sans-serif;
 }
 
-// --- 皮肤切换器（.gz-skin-dd，由 skin-switcher.cjs 注入）--------------------
+// --- 皮肤切换器（.gz-skin-dd，由 reader/skin.html 注入）--------------------
 // 图标钮与 darkmode 同款视觉：侧栏与顶栏里都随纸色（顶栏 2026-10-28 起同为纸色底）。
 .gz-skin-dd {
   position: relative;
@@ -3096,7 +3094,7 @@ html body div#quartz-root.page .search .results-container::-webkit-scrollbar-thu
 }
 
 // ── 13/13 双语精读阅读器（外刊精读页；scripts/site-assets/bilingual-reader.js） ──
-// 笔记侧仍是「原文 | 译文」两列表格，构建后由 inject-reader.cjs 注入脚本，
+// 笔记侧仍是「原文 | 译文」两列表格，由阅读器按需加载双语组件，
 // 浏览器里重排成「一段英文 + 一段中文」。所有配色走 --paper/--card/--line/--accent
 // 这一套 token，四皮肤 × 明暗自动跟随，不写第二种色值。
 
@@ -3667,7 +3665,7 @@ html.gz-nav-open .gz-nav-backdrop {
 
 // 14 Dataview 站点端渲染（2026-10-31）—— 笔记里的 ```dataview/dataviewjs/tagcloud
 // 代码块由 scripts/site-assets/dataview-lite.cjs 在浏览器里渲染成结果
-// （元数据 /static/vault-meta.json，构建期由 build-vault-meta.mjs 生成）。
+// （元数据 /static/vault-meta.json，构建期由 build-md-reader.mjs 生成）。
 // 表格天然继承 `html body article table` 的白卡样式，这里只补块外距、
 // 任务列表、标签云与空态。
 html body div#quartz-root.page article .dvl-block {
