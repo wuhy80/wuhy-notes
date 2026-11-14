@@ -11,6 +11,23 @@ type: guide
 
 正文以公开导出后的 Markdown 文件发布，浏览器打开文章时才下载和解析当前 MD。构建阶段只复制文件、生成目录索引和打包阅读器，不生成整站正文 HTML。现有 Quartz 正式站点继续使用原发布流程，新阅读器先通过独立入口验证。
 
+## Windows 双击入口
+
+- **start-reader.cmd**：双击后安装首次运行所需依赖，导出公开笔记，启动 http://127.0.0.1:8790 并打开浏览器。保存笔记后自动重新导出、构建和刷新。关闭该窗口或按 Ctrl+C 即停止服务。
+- **deploy-reader.cmd**：先快进同步 Git，运行校验与独立构建，再提交公开笔记、被引用且无重名歧义的图片和阅读器相关代码，推送当前 upstream，并触发预览部署。窗口会等待部署结果并显示访问链接。
+
+部署入口要求已安装 Git、GitHub CLI（gh）和 Node.js，且 Git 推送凭据与 gh auth login 已配置。它不会暂存 .obsidian、.smart-env、.vscode、.zcode 等状态或配置目录，也不会混入原本已暂存的其他改动；若暂存区非空，会明确报错。未被公开笔记引用的附件保持原样，不自动提交。
+
+端口占用时可以在终端运行 start-reader.cmd --port 8793。部署提交说明可以通过 deploy-reader.cmd --message "本次更新说明" 指定。
+
+只校验与查看预计提交范围，可运行 deploy-reader.cmd --check；该模式不进行 Git 同步、提交、推送或部署。
+
+## 与原站保持一致的样式
+
+阅读器直接编译现有 scripts/site-custom.scss，复用原字体文件和 scripts/skin-switcher.cjs 的皮肤切换逻辑。保留原来的三栏布局、分区与卷导航、标题字号、章节编号、Callout、代码块、双语精读排版和手机端布局；scripts/reader/layout.css 仅适配新阅读器的页面结构。
+
+四套皮肤继续使用「瓷白」「纸墨」「玄墨」「曜夜」，沿用 gz-skin 与 theme 浏览器偏好。系统浅色默认瓷白，深色默认曜夜。无需重新维护另一套配色或正文样式。
+
 ## 本地使用
 
 在仓库根目录安装依赖并启动：

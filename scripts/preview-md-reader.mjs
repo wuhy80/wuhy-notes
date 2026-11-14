@@ -2,7 +2,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
-import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { spawn, spawnSync } from 'node:child_process';
 import { VAULT, buildReader } from './build-md-reader.mjs';
 import { createResolver } from './reader/shared.mjs';
 
@@ -18,9 +19,19 @@ if (!args.includes('--skip-build')) {
     env.GIT_CONFIG_COUNT = String(count + 1);
     env['GIT_CONFIG_KEY_' + count] = 'safe.directory';
     env['GIT_CONFIG_VALUE_' + count] = VAULT.split(path.sep).join('/');
-    const shell = process.platform === 'win32' ? path.join(process.env.SystemRoot, 'System32/WindowsPowerShell/v1.0/powershell.exe') : 'pwsh';
-    const result = spawnSync(shell, ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', path.join(VAULT, 'scripts/export-public.ps1')], { env, cwd: VAULT, stdio: 'inherit', windowsHide: true });
-    if (result.error || result.status !== 0) throw result.error || new Error('公开导出失败，停止构建');
+    const hasPwsh = spawnSync('pwsh', ['-NoProfile', '-Command', '$PSVersionTable.PSVersion.ToString()'], { encoding: 'utf8', windowsHide: true }).status === 0;
+    const shell = process.env.PWSH_EXE || (hasPwsh || process.platform !== 'win32' ? 'pwsh' : path.join(process.env.SystemRoot, 'System32/WindowsPowerShell/v1.0/powershell.exe'));
+    console.log('正在导出公开笔记并校验（' + (hasPwsh ? 'PowerShell 7' : 'Windows PowerShell') + '）…');
+    const exportPath = path.join(VAULT, 'scripts/export-public.ps1').replace(/'/g, "''");
+    const exportCommand = "[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false); $OutputEncoding = [Console]::OutputEncoding; & '" + exportPath + "'";
+    const result = spawnSync(shell, ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', exportCommand], { env, cwd: VAULT, encoding: 'utf8', windowsHide: true, maxBuffer: 16 * 1024 * 1024 });
+    if (result.stdout) process.stdout.write(result.stdout);
+    if (result.stderr) process.stderr.write(result.stderr);
+    if (result.error || result.status !== 0) {
+      const detail = String(result.stderr || result.stdout || result.error?.message || '导出失败').split(/\r?\n/).slice(-24).join('\n');
+      if (process.env.GITHUB_ACTIONS) console.error('::error title=Markdown 导出失败::' + detail.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A'));
+      throw result.error || new Error('公开导出失败，停止构建：\n' + detail);
+    }
   }
   await buildReader({ content, out });
 }
@@ -29,10 +40,19 @@ if (!args.includes('--build-only')) {
   const manifest = JSON.parse(fs.readFileSync(path.join(out, 'index.json'), 'utf8'));
   const resolver = createResolver(manifest);
   const port = Number(option('--port', '8790'));
+  if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('端口必须为 1–65535 的整数');
+  const clients = new Set();
   const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.md': 'text/markdown; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.woff2': 'font/woff2', '.woff': 'font/woff', '.ttf': 'font/ttf' };
   const server = http.createServer(async (request, response) => {
     if (!['GET', 'HEAD'].includes(request.method)) { response.writeHead(405); response.end(); return; }
     const url = new URL(request.url, 'http://127.0.0.1:' + port);
+    if (url.pathname === '/_reader/events') {
+      response.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
+      response.write(': ready\n\n');
+      clients.add(response);
+      request.on('close', () => clients.delete(response));
+      return;
+    }
     if (url.pathname.startsWith('/api/')) {
       // 仅代理公开只读搜索；本地预览不调用 AI、不写远端。
       if (!['/api/search', '/api/health'].includes(url.pathname)) { response.writeHead(404); response.end(); return; }
@@ -61,4 +81,37 @@ if (!args.includes('--build-only')) {
     else fs.createReadStream(file).pipe(response);
   });
   server.listen(port, '127.0.0.1', () => console.log('Markdown 阅读预览：http://127.0.0.1:' + port + '（Ctrl+C 停止）'));
+  if (args.includes('--watch')) {
+    let debounce, rebuilding = false, queued = false;
+    async function rebuild() {
+      if (rebuilding) { queued = true; return; }
+      rebuilding = true;
+      console.log('检测到修改，正在更新本地预览…');
+      const child = spawn(process.execPath, [fileURLToPath(import.meta.url), '--build-only', '--out', out, '--content', content, ...(args.includes('--skip-export') ? ['--skip-export'] : [])], {
+        cwd: VAULT, env: process.env, stdio: 'inherit', windowsHide: true,
+      });
+      child.once('error', error => { rebuilding = false; console.error('自动更新失败：' + error.message); });
+      child.once('exit', code => {
+        rebuilding = false;
+        if (code === 0) {
+          const next = JSON.parse(fs.readFileSync(path.join(out, 'index.json'), 'utf8'));
+          Object.assign(resolver, createResolver(next));
+          for (const client of clients) client.write('event: reload\ndata: updated\n\n');
+          console.log('预览已更新。');
+        } else console.error('自动更新失败；请检查上方校验错误，修正后保存文件重试。');
+        if (queued) { queued = false; rebuild(); }
+      });
+    }
+    const watchDirs = ['技术笔记', '大模型', 'Ontology', 'Golang编程', 'Rust编程', '读书笔记', '英语学习', '数学学习', '网址收藏', '附件', 'scripts/reader', 'scripts/site-assets'];
+    for (const directory of watchDirs) {
+      const full = path.join(VAULT, directory);
+      if (!fs.existsSync(full)) continue;
+      fs.watch(full, { recursive: true }, (event, filename) => {
+        if (!filename || !/\.(md|mjs|cjs|html|css|scss|svg|png|jpe?g|gif|webp)$/i.test(String(filename)) || /(?:^|[/\\])(?:\.|node_modules)/.test(String(filename))) return;
+        clearTimeout(debounce);
+        debounce = setTimeout(rebuild, 900);
+      });
+    }
+    console.log('自动更新已开启：保存笔记后，浏览器会自动刷新。');
+  }
 }

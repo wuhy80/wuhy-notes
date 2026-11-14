@@ -6,6 +6,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { build } from 'esbuild';
+import { compileString } from 'sass';
 import { parse as parseYaml } from 'yaml';
 import { legacyUrl } from './reader/shared.mjs';
 
@@ -104,7 +105,11 @@ export async function buildReader({ content, out }) {
   const vocab = spawnSync(process.execPath, [path.join(VAULT, 'scripts/build-vocab.mjs'), path.join(out, 'notes'), path.join(out, 'static/vocab.json')], { encoding: 'utf8', windowsHide: true });
   if (vocab.status !== 0) throw new Error(vocab.stderr || '生词本生成失败');
   generated.add('static/vocab.json');
-  write('index.html', fs.readFileSync(path.join(VAULT, 'scripts/reader/index.html')));
+  const skinSource = fs.readFileSync(path.join(VAULT, 'scripts/skin-switcher.cjs'), 'utf8');
+  const skinBoot = skinSource.match(/const HEAD_SCRIPT = \x60([\s\S]*?)\x60/)?.[1];
+  if (!skinBoot) throw new Error('无法读取原站皮肤初始化脚本，请检查 skin-switcher.cjs');
+  const shell = fs.readFileSync(path.join(VAULT, 'scripts/reader/index.html'), 'utf8').replace('<head>', '<head>\n' + skinBoot);
+  write('index.html', shell);
   write('assets/reader.css', fs.readFileSync(path.join(VAULT, 'scripts/reader/reader.css')));
   write('static/dataview-lite.js', fs.readFileSync(path.join(VAULT, 'scripts/site-assets/dataview-lite.cjs')));
   write('static/bilingual-reader.js', fs.readFileSync(path.join(VAULT, 'scripts/site-assets/bilingual-reader.cjs')));
@@ -122,12 +127,10 @@ export async function buildReader({ content, out }) {
   for (const file of bundle.outputFiles) write(slash(path.relative(out, file.path)), file.contents);
   copyTree(path.join(VAULT, 'node_modules/katex/dist/fonts'), 'assets/katex/fonts');
   write('assets/katex/katex.min.css', fs.readFileSync(path.join(VAULT, 'node_modules/katex/dist/katex.min.css')));
-  // 复用原站阅读工具样式；浏览器原生 CSS nesting，无 Sass / Quartz 编译。
+  // 直接编译原站完整样式，保留四套皮肤与正文排版；不加载 Quartz。
   const custom = fs.readFileSync(path.join(VAULT, 'scripts/site-custom.scss'), 'utf8');
-  const readingSections = custom.slice(custom.indexOf('// ── 13/13 双语精读阅读器'), custom.indexOf('// ── 14/14 移动端：')) +
-    custom.slice(custom.indexOf('// 14 Dataview 站点端渲染'));
-  const tools = readingSections.split(/\r?\n/).map(line => line.replace(/^\s*\/\/.*$/, '').replace(/\s+\/\/.*$/, '').replace(/\$codeFontStack/g, 'var(--code)')).join('\n');
-  write('assets/reading-tools.css', tools);
+  write('assets/site-custom.css', compileString(custom.replace(/^@use "\.\/variables\.scss" as \*;\r?\n/, ''), { style: 'compressed', logger: { warn() {}, debug() {} } }).css);
+  write('assets/reader-layout.css', fs.readFileSync(path.join(VAULT, 'scripts/reader/layout.css')));
   const worker = await build({ absWorkingDir: VAULT, entryPoints: ['scripts/reader/worker.mjs'], bundle: true, format: 'esm', platform: 'browser', target: ['es2022'], write: false, minify: true });
   write('_worker.js', worker.outputFiles[0].contents);
   write('404.html', '<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>未找到文件</title><p>此文件未随站点发布。</p><a href="/">返回知识库</a></html>\n');

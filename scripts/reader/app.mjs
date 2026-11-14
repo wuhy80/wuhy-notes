@@ -1,5 +1,6 @@
 import { createResolver, noteHref, rawHref, headingId } from './shared.mjs';
 import { createMarkdown, enhanceDiagrams } from './markdown.mjs';
+import { renderNavigation } from './navigation.mjs';
 
 const $ = selector => document.querySelector(selector);
 const article = $('#article');
@@ -42,8 +43,9 @@ function loadScript(url) {
 }
 function activateTree() {
   for (const a of $('#tree').querySelectorAll('a')) {
-    const active = a.dataset.path === current?.path;
+    const active = a.dataset.path === current?.path || a.dataset.groupActive === 'true';
     a.toggleAttribute('aria-current', active);
+    a.classList.toggle('active', active);
     if (active) {
       a.setAttribute('aria-current', 'page');
       for (let parent = a.parentElement; parent && parent !== $('#tree'); parent = parent.parentElement) {
@@ -53,36 +55,7 @@ function activateTree() {
   }
 }
 function renderTree(filter = '') {
-  const query = filter.trim().toLowerCase();
-  const root = { folders: new Map(), notes: [] };
-  for (const note of manifest.notes) {
-    if (query && !(note.title + ' ' + note.path + ' ' + note.tags.join(' ')).toLowerCase().includes(query)) continue;
-    let cursor = root;
-    for (const folder of note.path.split('/').slice(0, -1)) {
-      if (!cursor.folders.has(folder)) cursor.folders.set(folder, { folders: new Map(), notes: [] });
-      cursor = cursor.folders.get(folder);
-    }
-    cursor.notes.push(note);
-  }
-  function branch(node, depth) {
-    const fragment = document.createDocumentFragment();
-    for (const [name, child] of [...node.folders].sort(([a], [b]) => a.localeCompare(b, 'zh-CN'))) {
-      const details = document.createElement('details');
-      details.open = Boolean(query) || depth === 0;
-      const summary = document.createElement('summary');
-      summary.textContent = name;
-      details.append(summary, branch(child, depth + 1));
-      fragment.append(details);
-    }
-    for (const note of node.notes) {
-      const a = makeLink(note);
-      a.title = note.path;
-      a.dataset.path = note.path;
-      fragment.append(a);
-    }
-    return fragment;
-  }
-  $('#tree').replaceChildren(branch(root, 0));
+  renderNavigation(manifest, current, filter);
   activateTree();
 }
 function renderToc() {
@@ -99,6 +72,26 @@ function renderBacklinks() {
   const refs = manifest.notes.filter(note => note.links.some(target => resolver.resolve(target, note.path).note?.path === current.path));
   $('#backlinks').replaceChildren(...refs.map(note => makeLink(note)));
   if (!refs.length) $('#backlinks').textContent = '暂无其他笔记链接到本文';
+  const outgoing = current.links.map(target => resolver.resolve(target, current.path).note).filter(Boolean);
+  const related = [...new Map([...outgoing, ...refs].filter(note => note.path !== current.path).map(note => [note.path, note])).values()].slice(0, 10);
+  const svg = $('#local-graph');
+  svg.replaceChildren();
+  const make = (tag, attributes) => {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const [key, value] of Object.entries(attributes)) el.setAttribute(key, value);
+    return el;
+  };
+  related.forEach((note, i) => {
+    const angle = 2 * Math.PI * i / related.length - Math.PI / 2;
+    const x = 120 + 80 * Math.cos(angle), y = 87 + 62 * Math.sin(angle);
+    svg.append(make('line', { x1: 120, y1: 87, x2: x, y2: y, stroke: 'var(--line)' }));
+    const a = make('a', { href: note.url, 'aria-label': note.title });
+    const title = make('title', {});
+    title.textContent = note.title;
+    a.append(title, make('circle', { cx: x, cy: y, r: 4, fill: 'var(--ink-faint)' }));
+    svg.append(a);
+  });
+  svg.append(make('circle', { cx: 120, cy: 87, r: 6, fill: 'var(--accent)' }));
 }
 async function expandEmbeds(root, note, chain, signal) {
   for (const element of root.querySelectorAll('[data-embed]')) {
@@ -137,12 +130,13 @@ function normalizeFrames(root) {
   }
 }
 async function renderArticle(id) {
-  article.innerHTML = markdown.render(currentRaw, current.path);
+  article.innerHTML = '<div class="markdown-preview-view">' + markdown.render(currentRaw, current.path) + '</div>';
   if (!article.querySelector('h1')) {
     const h1 = document.createElement('h1');
     h1.textContent = current.title;
-    article.prepend(h1);
+    article.firstElementChild.prepend(h1);
   }
+  article.querySelector('h1')?.classList.add('article-title');
   await expandEmbeds(article, current, [current.path], loadController.signal);
   if (id !== navigation) return;
   normalizeFrames(article);
@@ -183,21 +177,24 @@ async function navigate() {
     return;
   }
   current = note;
+  document.body.classList.toggle('landing', note.path === 'index.md');
   loading = true;
   currentRaw = '';
   source.querySelector('code').textContent = '';
   document.title = note.title + ' · 格物志';
   document.body.dataset.slug = note.path.replace(/\.md$/i, '');
-  $('#breadcrumb').textContent = note.path.split('/').slice(0, -1).join(' / ') || '知识库';
+  $('#breadcrumb').textContent = 'Home  ›  ' + note.path.replace(/\.md$/i, '').split('/').join('  ›  ');
+  $('#metadata').textContent = (note.updated || '').slice(0, 10);
   $('#download').href = rawHref(note.path);
   $('#download').download = note.path.split('/').at(-1);
-  activateTree();
+  renderTree($('#filter').value);
   message('正在读取笔记…');
   article.replaceChildren();
   try {
     currentRaw = await fetchRaw(note, loadController.signal);
     if (id !== navigation) return;
     loading = false;
+    $('#metadata').textContent = (note.updated || '').slice(0, 10) + '，' + Math.max(1, Math.ceil(currentRaw.length / 700)) + ' 分钟阅读';
     source.querySelector('code').textContent = currentRaw;
     article.hidden = sourceMode;
     source.hidden = !sourceMode;
@@ -272,7 +269,7 @@ function openSearch() { $('#search-dialog').showModal(); $('#query').focus(); se
 document.addEventListener('click', event => {
   const a = event.target.closest('a[href]');
   if (!a || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || a.hasAttribute('download') || a.target) return;
-  const url = new URL(a.href, location.href);
+  const url = new URL(a.getAttribute('href'), location.href);
   if (url.origin !== location.origin || !resolver || !resolver.resolve(url.pathname).note || url.pathname.startsWith('/notes/')) return;
   event.preventDefault();
   $('#search-dialog').close();
@@ -305,14 +302,12 @@ $('#menu').addEventListener('click', () => {
   const open = $('#sidebar').classList.toggle('is-open');
   $('#menu').setAttribute('aria-expanded', String(open));
 });
-function setTheme(value) {
-  document.documentElement.dataset.theme = value;
-  document.documentElement.setAttribute('saved-theme', value);
-  try { localStorage.setItem('gzb-md-theme', value); } catch { /* 无持久化仍可阅读 */ }
-}
-try { setTheme(localStorage.getItem('gzb-md-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')); }
-catch { setTheme('light'); }
-$('#theme').addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+document.documentElement.dataset.theme = document.documentElement.getAttribute('saved-theme') || 'light';
+document.addEventListener('themechange', event => { document.documentElement.dataset.theme = event.detail.theme; });
+$('#focus-mode').addEventListener('click', () => {
+  const focused = document.body.classList.toggle('reader-focus');
+  $('#focus-mode').setAttribute('aria-pressed', String(focused));
+});
 
 async function boot() {
   try {
@@ -327,3 +322,8 @@ async function boot() {
   } catch (error) { message(error.message + '，请刷新重试。'); }
 }
 boot();
+if (['127.0.0.1', 'localhost'].includes(location.hostname)) {
+  const updates = new EventSource('/_reader/events');
+  updates.addEventListener('reload', () => location.reload());
+  updates.onerror = () => updates.close();
+}

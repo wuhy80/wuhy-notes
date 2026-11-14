@@ -1,0 +1,55 @@
+/* 只适配新阅读器的 DOM；正文、颜色、字体和皮肤全部继承原站 site-custom.scss。 */
+html body div#quartz-root.page div#quartz-body{display:grid;grid-template-areas:none!important;grid-template-rows:none!important;padding-top:0!important;column-gap:5px}
+html body div#quartz-root.page .topbar{position:sticky;top:0;height:64px;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line);z-index:70}
+html body div#quartz-root.page .brand{font-family:var(--gz-font-heading);font-size:18px;font-weight:900;letter-spacing:.03em;color:var(--ink)}
+html body div#quartz-root.page .topbar .top-nav{display:flex;gap:2px;margin-left:32px;margin-right:auto;overflow:hidden;white-space:nowrap}
+html body div#quartz-root.page .reader-toolbar{gap:12px;flex-shrink:0}
+html body div#quartz-root.page .reader-toolbar .search-button{background:var(--paper-deep);color:var(--ink-soft);padding:3px 12px;font-size:14px}
+.reader-catalog-label,.filter-label{display:none}
+html body div#quartz-root.page #filter{position:absolute;bottom:16px;left:14px;width:calc(100% - 28px);margin:0;z-index:2;font-size:12px;background:var(--card)}
+html body div#quartz-root.page div#quartz-body>.sidebar.left{overflow:auto;padding-bottom:72px!important}
+html body div#quartz-root.page #tree.side-nav{padding-top:18px;padding-bottom:40px}
+html body div#quartz-root.page #tree a{margin:0;border-radius:0}
+html body div#quartz-root.page #tree .vol{margin:0}
+html body div#quartz-root.page #tree .vol>summary{line-height:1.6;font-weight:400}
+html body div#quartz-root.page #tree .items{padding:0;margin:0}
+html body div#quartz-root.page #tree .items li{margin:0}
+html body div#quartz-root.page #tree .items a{line-height:1.5}
+html body div#quartz-root.page #tree .items a,html body div#quartz-root.page .top-nav a{font-weight:600}
+html body div#quartz-root.page .center{padding-top:18px}
+.article-tools{margin-bottom:0}
+#breadcrumb{font-size:14px;color:var(--accent)}
+#breadcrumb a{margin-right:8px}
+.article-tools>div{margin-left:auto}
+.graph{margin-bottom:28px}
+#local-graph{width:100%;height:175px}
+html body div#quartz-root.page .content-meta.reader-meta{font:12px/25.6px var(--code);font-size:12px!important;letter-spacing:.1em;color:var(--accent)!important;margin:0 0 10px!important;padding-bottom:0!important;border-bottom:0!important}
+html body div#quartz-root.page article h1.article-title{margin-bottom:36px!important}
+html body div#quartz-root.page article .callout-title{display:flex;align-items:center;padding:14px 0 0}
+html body div#quartz-root.page article .callout-content{padding-bottom:8px}
+html body div#quartz-root.page article blockquote:not(.callout){background:color-mix(in srgb,var(--accent) 7%,transparent);border:0;border-left:2px solid var(--accent-warm,var(--accent));border-radius:0;padding:11.52px 0;margin:16px 0;color:var(--ink-soft);line-height:1.72}
+html body div#quartz-root.page article pre code{display:block;white-space:pre}
+html body div#quartz-root.page article .hljs-comment{color:var(--ink-faint)}
+html body div#quartz-root.page article .hljs-keyword{color:var(--accent)}
+html body div#quartz-root.page article table{display:table;width:auto;max-width:100%;font-size:17px}
+html body div#quartz-root.page article .markdown-preview-view{max-width:100%;overflow-wrap:anywhere}
+html body div#quartz-root.page article .markdown-preview-view>table{display:block;width:max-content;max-width:100%;overflow-x:auto}
+html body div#quartz-root.page article .mermaid svg{height:auto}
+html body div#quartz-root.page .right.sidebar #toc a{font-size:12px;margin:10px 0;line-height:1.5;color:var(--ink-soft)}
+#toc a::before{content:'○ ';color:var(--accent);font-size:10px}
+#toc a.subheading{padding-left:14px}
+body.landing #quartz-body{grid-template-columns:minmax(0,1fr)!important}
+html body.landing div#quartz-root.page div#quartz-body>.sidebar.left{display:none!important}
+html body.landing div#quartz-root.page article{max-width:none}
+html body.landing div#quartz-root.page .article-tools{position:absolute;right:24px;top:20px}
+html body.landing div#quartz-root.page .article-tools #breadcrumb{display:none}
+html body.landing div#quartz-root.page .reader-meta{display:none}
+html body.landing div#quartz-root.page .center{position:relative}
+html body.reader-focus div#quartz-root.page div#quartz-body{grid-template-columns:minmax(0,1fr)!important}
+html body.reader-focus div#quartz-root.page div#quartz-body>.sidebar{display:none!important}
+html body.reader-focus div#quartz-root.page .center{max-width:1028px!important}
+:root[saved-theme=light]{color-scheme:light}
+:root[saved-theme=dark]{color-scheme:dark}
+@media(min-width:1200px){html body div#quartz-root.page div#quartz-body{grid-template-columns:clamp(240px,26vw,500px) minmax(0,1fr) clamp(200px,20.3vw,390px)!important}}
+@media(max-width:1199px){html body div#quartz-root.page .topbar .top-nav{display:none!important}.mobile-menu{display:block}html body div#quartz-root.page div#quartz-body{display:block!important}html body div#quartz-root.page div#quartz-body>.sidebar.left{display:none!important;top:64px!important;height:calc(100dvh - 64px)!important;padding:24px 14px 72px!important;transform:none!important;box-shadow:none!important;z-index:65!important}html body div#quartz-root.page div#quartz-body>.sidebar.left.is-open{display:block!important}html body div#quartz-root.page div#quartz-body>.sidebar.right{display:none!important}html body div#quartz-root.page .topbar{padding:0 16px}.topbar .brand{margin-right:auto}}
+@media(max-width:799px){html body div#quartz-root.page article h1.article-title{font-size:30px!important}html body div#quartz-root.page .article-tools{font-size:11px}.article-tools #breadcrumb{font-size:12px}html body div#quartz-root.page .reader-toolbar{gap:8px}.reader-toolbar kbd{display:none}html body div#quartz-root.page article .markdown-preview-view>table{font-size:14px}}

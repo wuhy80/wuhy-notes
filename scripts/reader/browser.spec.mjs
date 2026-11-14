@@ -24,6 +24,8 @@ test('首页按需读取 MD，源码切换、目录筛选、搜索与移动端�
   await page.locator('#read-mode').click();
   await expect(page.locator('article h1')).toBeVisible();
   expect(markdownRequests.length).toBe(1);
+  await page.locator('#sections a').filter({ hasText: '技术笔记' }).click();
+  await expect(page.locator('body')).not.toHaveClass(/landing/);
   await page.locator('#filter').fill('奈奎斯特');
   await expect(page.locator('#tree a').first()).toBeVisible();
   await page.locator('#tree a').first().click();
@@ -48,6 +50,17 @@ test('Mermaid、公式与附件可以在浏览器解析', async ({ page }) => {
   await page.goto(note.url);
   await expect(page.locator('article .mermaid svg').first()).toBeVisible({ timeout: 30000 });
   await expect(page.locator('article .katex').first()).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-gz-skin', 'cibai');
+  await expect(page.locator('article [data-callout="abstract"] > .callout-title').first()).toBeHidden();
+  const style = await page.locator('article').evaluate(el => ({ color: getComputedStyle(document.body).backgroundColor, width: el.getBoundingClientRect().width }));
+  expect(style.color).toBe('rgb(255, 255, 255)');
+  expect(style.width).toBeGreaterThan(700);
+  expect(style.width).toBeLessThan(730);
+  await page.locator('.gz-skin-dd summary').click();
+  await page.locator('button[data-gz-skin="paper"]').click();
+  await expect(page.locator('html')).toHaveAttribute('data-gz-skin', 'paper');
+  await page.locator('.gz-skin-dd summary').click();
+  await page.locator('button[data-gz-skin="cibai"]').click();
   await page.screenshot({ path: '.cache/reader-desktop.png', fullPage: false });
   const imageNote = selectNote(/07-教程与课程\/.*\/01-.*\.md$/);
   await page.goto(imageNote.url);
@@ -122,6 +135,8 @@ test('嵌套 Callout、章节和块嵌入、代码保护与 HTML 净化', async 
   await page.evaluate(() => { history.pushState(null, '', '/兼容性测试.html'); dispatchEvent(new PopStateEvent('popstate')); });
   await expect(page.locator('#status')).toBeHidden();
   await expect(page.locator('article .callout.note > details > .callout-content .callout.tip')).toContainText('内层正文');
+  await expect(page.locator('article .callout.note')).toHaveAttribute('data-callout', 'note');
+  await expect(page.locator('article .callout.tip')).toHaveAttribute('data-callout', 'tip');
   await expect(page.locator('.note-embed').first()).toContainText('章节正文');
   await expect(page.locator('.note-embed').first()).not.toContainText('不应嵌入此章节');
   await expect(page.locator('.note-embed').nth(1)).toContainText('块内容');

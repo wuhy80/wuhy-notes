@@ -7,7 +7,8 @@
   <title>格物志 · Markdown 阅读</title>
   <link rel="stylesheet" href="/assets/reader.css">
   <link rel="stylesheet" href="/assets/katex/katex.min.css">
-  <link rel="stylesheet" href="/assets/reading-tools.css">
+  <link rel="stylesheet" href="/assets/site-custom.css">
+  <link rel="stylesheet" href="/assets/reader-layout.css">
   <script type="module" src="/assets/app.js"></script>
 </head>
 <body>
@@ -15,19 +16,19 @@
   <div id="quartz-root" class="page">
     <header class="topbar">
       <button id="menu" class="mobile-menu" aria-label="打开笔记目录" aria-expanded="false">☰</button>
-      <a class="brand" href="/">格物志<span>格物致知</span></a>
-      <nav aria-label="阅读工具">
-        <button id="search-toggle" aria-label="搜索笔记">搜索 <kbd>Ctrl K</kbd></button>
-        <button id="theme" aria-label="切换明暗主题">明暗</button>
-        <a href="https://github.com/wuhy80/wuhy-notes" target="_blank" rel="noopener">GitHub</a>
+      <a class="brand" href="/">格物志</a>
+      <nav id="sections" class="top-nav" aria-label="分区导航"></nav>
+      <nav class="flex-component reader-toolbar" aria-label="阅读工具">
+        <button id="search-toggle" class="search-button" aria-label="搜索笔记">搜索 <kbd>Ctrl K</kbd></button>
+        <button id="focus-mode" aria-label="切换专注阅读">阅读</button>
       </nav>
     </header>
     <div id="quartz-body">
       <aside id="sidebar" class="left sidebar" aria-label="笔记目录">
-        <div class="rail-heading">知识目录 <span id="note-count"></span></div>
+        <div class="rail-heading reader-catalog-label">知识目录 <span id="note-count"></span></div>
         <label class="filter-label" for="filter">筛选标题、路径或标签</label>
         <input id="filter" type="search" placeholder="筛选笔记…" autocomplete="off">
-        <nav id="tree" aria-label="知识库分区"></nav>
+        <nav id="tree" class="side-nav" aria-label="知识库分区"></nav>
       </aside>
       <main class="center">
         <div class="article-tools">
@@ -39,10 +40,12 @@
           </div>
         </div>
         <p id="status" role="status" aria-live="polite">正在打开知识库…</p>
+        <p id="metadata" class="content-meta reader-meta"></p>
         <article id="article" tabindex="-1"></article>
         <pre id="source" hidden><code></code></pre>
       </main>
       <aside class="right sidebar" aria-label="本文导航">
+        <section class="graph"><h3 class="rail-heading">关系图谱</h3><svg id="local-graph" viewBox="0 0 240 175" aria-label="当前笔记的关联图谱"></svg></section>
         <div class="rail-heading">本文目录</div>
         <nav id="toc" aria-label="文章章节"></nav>
         <section class="backlinks">

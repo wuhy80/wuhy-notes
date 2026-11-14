@@ -134,8 +134,10 @@ export function createMarkdown(resolver) {
     if (!token.meta?.callout) return '<blockquote>';
     const meta = token.meta;
     const title = '<div class="callout-title"><span class="callout-title-inner">' + escape(meta.title) + '</span></div>';
-    if (meta.fold) return '<blockquote class="callout ' + escape(token.attrGet('data-callout')) + '"><details' + (meta.fold === '+' ? ' open' : '') + '><summary>' + title + '</summary><div class="callout-content">';
-    return '<blockquote class="callout ' + escape(token.attrGet('data-callout')) + '">' + title + '<div class="callout-content">';
+    const type = escape(token.attrGet('data-callout'));
+    const opening = '<blockquote class="callout ' + type + '" data-callout="' + type + '">';
+    if (meta.fold) return opening + '<details' + (meta.fold === '+' ? ' open' : '') + '><summary>' + title + '</summary><div class="callout-content">';
+    return opening + title + '<div class="callout-content">';
   };
   md.renderer.rules.blockquote_close = (tokens, i) => tokens[i].meta?.callout
     ? '</div>' + (tokens[i].meta.fold ? '</details>' : '') + '</blockquote>\n' : '</blockquote>\n';
