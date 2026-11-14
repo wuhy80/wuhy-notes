@@ -206,7 +206,8 @@ $attachSkip = @()
 # ⚠️ 必须跳过站点构建目录（$SiteRoot）与 .git/.trash/.smart-env：它们就在 vault 里，
 #    且 _site/content 存着上一次导出留下的同名附件，不跳过就会被它们抢到、导出旧图
 #    （2026-10-18 重取教程插图时踩到：修好的图没生效，导出里还是坏的）。
-$indexSkipPrefixes = @($SiteRoot, (Join-Path $Vault '.git'), (Join-Path $Vault '.trash'), (Join-Path $Vault '.smart-env')) |
+# 本阅读器的预览/部署产物位于 _site 的不同子目录，全部排除，避免旧图抢占源附件。
+$indexSkipPrefixes = @($SiteRoot, (Join-Path $Vault '_site'), (Join-Path $Vault 'node_modules'), (Join-Path $Vault '.cache'), (Join-Path $Vault '.git'), (Join-Path $Vault '.trash'), (Join-Path $Vault '.smart-env')) |
   ForEach-Object { $_.ToLower() }
 $vaultFileIndex = @{}
 foreach ($vf in (Get-ChildItem -LiteralPath $Vault -Recurse -File -Force -ErrorAction SilentlyContinue)) {
