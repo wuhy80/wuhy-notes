@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <head>
+    <title>AI 信息源 - 生成于 2026-11-14</title>
+  </head>
+  <body>
+    <outline text="AI-每日快讯">
+      <outline type="rss" text="TLDR AI" xmlUrl="https://tldr.tech/ai/rss" htmlUrl="https://tldr.tech/ai"/>
+      <outline type="rss" text="Hacker News" xmlUrl="https://hnrss.org/frontpage" htmlUrl="https://news.ycombinator.com/"/>
+    </outline>
+    <outline text="AI-深度博客">
+      <outline type="rss" text="Simon Willison" xmlUrl="https://simonwillison.net/atom/everything/" htmlUrl="https://simonwillison.net/"/>
+      <outline type="rss" text="Interconnects (Nathan Lambert)" xmlUrl="https://www.interconnects.ai/feed" htmlUrl="https://www.interconnects.ai/"/>
+      <outline type="rss" text="Latent Space" xmlUrl="https://www.latent.space/feed" htmlUrl="https://www.latent.space/"/>
+      <outline type="rss" text="Stratechery (Ben Thompson)" xmlUrl="https://stratechery.com/feed/" htmlUrl="https://stratechery.com/"/>
+      <outline type="rss" text="One Useful Thing (Ethan Mollick)" xmlUrl="https://www.oneusefulthing.org/feed" htmlUrl="https://www.oneusefulthing.org/"/>
+      <outline type="rss" text="Ahead of AI (Sebastian Raschka)" xmlUrl="https://magazine.sebastianraschka.com/feed" htmlUrl="https://magazine.sebastianraschka.com/"/>
+    </outline>
+    <outline text="AI-论文与技术">
+      <outline type="rss" text="Lilian Weng" xmlUrl="https://lilianweng.github.io/index.xml" htmlUrl="https://lilianweng.github.io/"/>
+    </outline>
+    <outline text="AI-中文">
+      <outline type="rss" text="机器之心" xmlUrl="https://www.jiqizhixin.com/rss" htmlUrl="https://www.jiqizhixin.com/"/>
+      <outline type="rss" text="量子位" xmlUrl="https://www.qbitai.com/feed" htmlUrl="https://www.qbitai.com/"/>
+    </outline>
+    <outline text="AI-社区">
+      <outline type="rss" text="r/LocalLLaMA" xmlUrl="https://www.reddit.com/r/LocalLLaMA/.rss" htmlUrl="https://www.reddit.com/r/LocalLLaMA/"/>
+      <outline type="rss" text="r/MachineLearning" xmlUrl="https://www.reddit.com/r/MachineLearning/.rss" htmlUrl="https://www.reddit.com/r/MachineLearning/"/>
+    </outline>
+  </body>
+</opml>

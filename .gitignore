@@ -19,3 +19,12 @@
 .wrangler/
 /temp_api_data.json
 /openrouter_state_of_ai.html
+node_modules
+.cache/
+_site/
+browser-screenshots/
+
+# 本地临时工作目录（DEM/地图/工具缓存，内容可重建）
+/.tmp/
+/.zcode/
+/tmp/
