@@ -145,11 +145,53 @@ export function createMarkdown(resolver) {
   };
   md.renderer.rules.blockquote_close = (tokens, i) => tokens[i].meta?.callout
     ? '</div>' + (tokens[i].meta.fold ? '</details>' : '') + '</blockquote>\n' : '</blockquote>\n';
+  // 视觉契约（site-custom.scss 3/7）假定 shiki 结构：code 是 grid 容器，
+  // 每行是一个 [data-line] 网格项，行号由 ::before 的 counter(line) 渲染。
+  // hljs 输出是行内 token 结构，直接塞进 grid 会把裸文本节点逐个拆成一行；
+  // 这里按行重新包装。跨行 token（多行字符串、块注释）先闭再开，保证每行
+  // 都是合法的独立 HTML。
+  const wrapDataLines = (html) => {
+    const openTags = [];
+    const lines = [];
+    let cur = '';
+    let i = 0;
+    while (i < html.length) {
+      const ch = html[i];
+      if (ch !== '<') {
+        if (ch === '\n') {
+          let line = cur;
+          for (let k = openTags.length - 1; k >= 0; k--) {
+            line += '</' + /^<(\w+)/.exec(openTags[k])[1] + '>';
+          }
+          lines.push(line);
+          cur = openTags.join('');
+        } else {
+          cur += ch;
+        }
+        i++;
+        continue;
+      }
+      const end = html.indexOf('>', i);
+      if (end === -1) {
+        cur += html.slice(i);
+        break;
+      }
+      const tag = html.slice(i, end + 1);
+      cur += tag;
+      if (tag.startsWith('</')) openTags.pop();
+      else if (!tag.endsWith('/>')) openTags.push(tag);
+      i = end + 1;
+    }
+    if (cur !== '' || lines.length === 0) lines.push(cur);
+    // 空行补一个空格：grid 里空 span 高度为 0，会把空行压扁
+    return lines.map(line => '<span data-line>' + (line === '' ? ' ' : line) + '</span>').join('\n');
+  };
   md.renderer.rules.fence = (tokens, i) => {
     const token = tokens[i];
     const lang = token.info.trim().split(/\s/)[0].toLowerCase();
     if (lang === 'mermaid') return '<pre class="mermaid-pending">' + escape(token.content) + '</pre>';
-    const code = hljs.getLanguage(lang) ? hljs.highlight(token.content, { language: lang, ignoreIllegals: true }).value : escape(token.content);
+    const highlighted = hljs.getLanguage(lang) ? hljs.highlight(token.content, { language: lang, ignoreIllegals: true }).value : escape(token.content);
+    const code = wrapDataLines(highlighted);
     return '<figure data-rehype-pretty-code-figure><pre data-language="' + escape(lang) + '"><code class="language-' + escape(lang) + '">' + code + '</code></pre></figure>\n';
   };
   const defaultLink = md.renderer.rules.link_open || ((tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts));
