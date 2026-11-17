@@ -48,10 +48,15 @@
 
   <div class="card">
     <h2>① 采样实验台：连续信号 → 离散样本</h2>
-    <div class="desc">灰线是真实信号，橙点是采样得到的样本，蓝折线是样本插值出的「重建信号」。降低 fs，看蓝色波形如何变成一个从未存在过的低频假信号。</div>
+    <div class="desc">灰线是真实信号，橙点是采样得到的样本，蓝折线是样本插值出的「重建信号」。降低 fs，看蓝色波形如何变成一个从未存在过的低频假信号；再把「重建方式」切到 sinc 理想内插，体会定理承诺的精确还原——fs 刚过两倍就能贴合原信号。</div>
     <canvas id="c1"></canvas>
     <div class="ctrl"><label>信号频率 f</label><input type="range" id="f1" min="1" max="30" step="0.5" value="6"><span class="val" id="f1v"></span></div>
     <div class="ctrl"><label>采样频率 fs</label><input type="range" id="fs1" min="2" max="80" step="1" value="40"><span class="val" id="fs1v"></span></div>
+    <div class="ctrl"><label>重建方式</label>
+      <label style="display:flex;align-items:center;gap:4px;"><input type="radio" name="rec" value="linear" checked style="accent-color:var(--accent)"> 直线连点</label>
+      <label style="display:flex;align-items:center;gap:4px;"><input type="radio" name="rec" value="sinc" style="accent-color:var(--accent)"> sinc 理想内插</label>
+    </div>
+
     <div class="readout" id="r1"></div>
   </div>
 
@@ -137,18 +142,37 @@
       ctx.arc(X(tq2), Y(Math.sin(TAU * f * tq2)), 3.2, 0, TAU);
       ctx.fill();
     }
-    // 重建（蓝）：相邻样本线性插值
-    ctx.strokeStyle = '#2b6cb0'; ctx.lineWidth = 2;
+    // 重建（蓝）：直线连点 或 sinc 理想内插
+    ctx.lineWidth = 2;
+    var recMode = (document.querySelector('input[name="rec"]:checked') || {}).value || 'linear';
+    ctx.strokeStyle = '#2b6cb0';
     ctx.beginPath();
-    var started = false;
-    for (var k3 = Math.max(k0 - 1, 0); k3 <= k1; k3++) {
-      var ta = k3 / fs, tb = (k3 + 1) / fs;
-      if (tb < left || ta > t) continue;
-      var xa = Math.max(0, X(ta)), xb = Math.min(W, X(tb));
-      if (xb <= xa) continue;
-      var ya = Y(Math.sin(TAU * f * ta)), yb = Y(Math.sin(TAU * f * tb));
-      if (!started) { ctx.moveTo(xa, ya); started = true; } else { ctx.lineTo(xa, ya); }
-      ctx.lineTo(xb, yb);
+    if (recMode === 'sinc') {
+      // 理想带限内插：x(t) = Σ x[k]·sinc(fs·(t−k/fs))，截断窗口 ±min(40, fs/2) 个样本
+      var nw = Math.min(40, Math.floor(fs * 0.5));
+      var first = true;
+      for (var px = 0; px <= W; px += 2) {
+        var tq = left + px / W * win;
+        var acc = 0;
+        var kc = Math.round(tq * fs);
+        for (var k = Math.max(k0, kc - nw); k <= Math.min(k1, kc + nw); k++) {
+          var d = fs * (tq - k / fs);
+          acc += Math.sin(TAU * f * (k / fs)) * (d === 0 ? 1 : Math.sin(Math.PI * d) / (Math.PI * d));
+        }
+        var py = Y(acc);
+        if (first) { ctx.moveTo(px, py); first = false; } else { ctx.lineTo(px, py); }
+      }
+    } else {
+      var started = false;
+      for (var k3 = Math.max(k0 - 1, 0); k3 <= k1; k3++) {
+        var ta = k3 / fs, tb = (k3 + 1) / fs;
+        if (tb < left || ta > t) continue;
+        var xa = Math.max(0, X(ta)), xb = Math.min(W, X(tb));
+        if (xb <= xa) continue;
+        var ya = Y(Math.sin(TAU * f * ta)), yb = Y(Math.sin(TAU * f * tb));
+        if (!started) { ctx.moveTo(xa, ya); started = true; } else { ctx.lineTo(xa, ya); }
+        ctx.lineTo(xb, yb);
+      }
     }
     ctx.stroke();
     // 读数
