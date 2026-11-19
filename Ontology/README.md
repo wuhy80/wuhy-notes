@@ -4,7 +4,7 @@ tags:
   - Ontology
   - Foundry
 created: 2026-06-05
-updated: 2026-11-07
+updated: 2026-11-19
 status: 入口
 ---
 
@@ -24,6 +24,7 @@ Palantir Ontology 资料整理入口。
 - [[OpenFGA 与 PBAC 权限模型对比]]
 - [[OSDK 与应用开发]]
 - [[Palantir Ontology 能力全景]]
+- [[Palantir 本体交付形态：行业模板、片段与现场定制]]
 - [[Ontology 能力核对清单]]
 - [[基于 Hermes 的多用户 Ontology 分析系统评估]]
 - [[Ontology 多用户 Agent 分析平台替代方案选型]]

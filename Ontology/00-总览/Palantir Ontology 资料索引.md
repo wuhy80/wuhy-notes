@@ -5,7 +5,7 @@ tags:
   - Foundry
   - AIP
 created: 2026-06-05
-updated: 2026-11-07
+updated: 2026-11-19
 status: 整理中
 source: Palantir 官方文档
 ---
@@ -26,6 +26,7 @@ source: Palantir 官方文档
 - [[Ontology/05-应用开发/OSDK 与应用开发|05 OSDK 与应用开发]]
 - [[Ontology/07-能力全景/Palantir Ontology 能力全景|07 Palantir Ontology 能力全景]]
 - [[Ontology/07-能力全景/Ontology 能力核对清单|07 附：Ontology 能力核对清单]]
+- [[Ontology/07-能力全景/Palantir 本体交付形态：行业模板、片段与现场定制|07 附：本体交付形态（模板/片段/定制）]]
 - [[基于 Hermes 的多用户 Ontology 分析系统评估]]
 - [[Ontology 多用户 Agent 分析平台替代方案选型]]
 - [[Palantir 实时数据分析与点位流处理]]

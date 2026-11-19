@@ -7,7 +7,7 @@ tags:
   - 能力地图
   - 架构
 created: 2026-10-23
-updated: 2026-10-23
+updated: 2026-11-19
 status: 初稿
 source:
   - https://www.palantir.com/docs/foundry/ontology/overview
@@ -272,7 +272,7 @@ flowchart TB
 | J1 | 定位叙事 | 把 Ontology 定位为组织的 operational layer、digital twin、决策层，而不是数据目录 | 内部叙事决定资源投入和验收标准 |
 | J2 | 设计规范 | best practices、structural guidance、anti-patterns、design validation 四份文档 | 能否转成建模规范 + lint 规则 |
 | J3 | 协作评审 | 分支保护、proposal、评审与合并流程 | 建模是否像写代码一样评审 |
-| J4 | 产品化 | Marketplace 打包与分发、shared ontology 跨组织复用 | 复用单元是对象类型还是整套应用 |
+| J4 | 产品化 | Marketplace 打包与分发、shared ontology 跨组织复用 | 复用单元是对象类型还是整套应用；见 [[Palantir 本体交付形态：行业模板、片段与现场定制\|交付形态]] |
 | J5 | 采用路径 | 官方学习门户课程、speedrun 教程 | 团队上手成本 |
 
 ---
