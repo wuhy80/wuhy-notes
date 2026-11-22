@@ -41,7 +41,7 @@ $PublicDirs = @(
   '技术笔记', '大模型', 'Ontology',
   'Golang编程', 'Rust编程',
   '读书笔记', '英语学习', '数学学习',
-  '网址收藏'
+  '网址收藏', 'AI开发Demo'
 )
 # 文件名级排除（任何层级）
 $ExcludeFileNames = @('CLAUDE.md', 'AGENTS.md')

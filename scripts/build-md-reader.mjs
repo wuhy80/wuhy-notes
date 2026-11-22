@@ -116,6 +116,27 @@ export async function buildReader({ content, out }) {
   copyTree(path.join(VAULT, 'scripts/site-assets/source-sans-pro'), 'static/font/source-sans-pro');
   for (const name of ['nyquist-demo.html', 'pv-digital-twin.html']) write('static/' + name, fs.readFileSync(path.join(VAULT, 'scripts/site-assets', name)));
   copyTree(path.join(VAULT, 'scripts/site-assets/pv-factory-3d'), 'static/pv-factory-3d');
+  // AI 开发 Demo：把专题里的单文件 HTML 原样发布到 /static/demos/（文件名转 ASCII，避免 URL 编码问题）
+  const demoAssets = path.join(VAULT, 'AI开发Demo/assets');
+  if (fs.existsSync(demoAssets)) {
+    const demoMap = {
+      '刀装工具3D装配全景沙盘.html': 'knife-assembly.html',
+      'demo-twin.html': 'cnc-twin.html',
+      '汽车零部件3D本体全景沙盘.html': 'auto-parts-ontology.html',
+      'demo-3d.html': 'servo-line.html',
+      '伺服轴智能运维Demo演示脚本.html': 'servo-script.html',
+    };
+    for (const [srcName, dstName] of Object.entries(demoMap)) {
+      const full = path.join(demoAssets, srcName);
+      if (fs.existsSync(full)) write('static/demos/' + dstName, fs.readFileSync(full));
+    }
+    const entry = path.join(demoAssets, 'demo-site.html');
+    if (fs.existsSync(entry)) {
+      let html = fs.readFileSync(entry, 'utf8');
+      for (const [srcName, dstName] of Object.entries(demoMap)) html = html.split(srcName).join(dstName);
+      write('static/demos/index.html', html);
+    }
+  }
   write('plotly.min.js', fs.readFileSync(path.join(VAULT, 'cloudflare/plotly.min.js')));
   const bundle = await build({
     absWorkingDir: VAULT, entryPoints: { app: 'scripts/reader/app.mjs' },

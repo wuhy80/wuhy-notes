@@ -13,6 +13,7 @@ on:
       - "英语学习/**"
       - "数学学习/**"
       - "网址收藏/**"
+      - "AI开发Demo/**"
       - "附件/**"
       - "scripts/reader/**"
       - "scripts/site-assets/**"
