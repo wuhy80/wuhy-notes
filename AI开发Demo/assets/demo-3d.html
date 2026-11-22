@@ -1,0 +1,2430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#04070F">
+<meta name="description" content="汽车零部件伺服轴生产智能运维全闭环 Demo：监控大屏、异常报警、数字人分析、人工研判、工单与方案匹配、审核下发、维修过程监控、完工校核、知识沉淀九个环节，3D 交互演示。">
+<title>伺服轴生产智能运维 · 3D 全闭环 Demo</title>
+<style>
+/* =========================================================
+   0. Tokens / Reset
+   ========================================================= */
+:root{
+  --bg:#04070F;
+  --bg-2:#070C18;
+  --panel:rgba(14,26,48,.72);
+  --panel-2:rgba(9,16,30,.6);
+  --line:rgba(110,170,255,.14);
+  --line-2:rgba(110,170,255,.28);
+  --text:#E9F2FF;
+  --text-2:#A9BDD9;
+  --muted:#7B8FAE;
+  --cyan:#22E1F0;
+  --blue:#3B82F6;
+  --indigo:#6366F1;
+  --green:#2EE6A8;
+  --amber:#FFB020;
+  --red:#FF4D6D;
+  --violet:#A855F7;
+  --r-lg:22px;
+  --r-md:16px;
+  --r-sm:11px;
+  --shadow:0 34px 90px -34px rgba(0,0,0,.95);
+  --mono:"JetBrains Mono","SFMono-Regular","SF Mono",Consolas,"Liberation Mono",monospace;
+  --sans:"Inter","HarmonyOS Sans SC","PingFang SC","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:var(--sans);line-height:1.72;font-size:15.5px;
+  overflow-x:hidden;font-variant-numeric:tabular-nums;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+img,svg{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+ul,ol{margin:0;padding:0;list-style:none}
+h1,h2,h3,h4,p{margin:0}
+::selection{background:rgba(34,225,240,.28);color:#fff}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:#04070F}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#164e63,#1e3a8a);border-radius:99px;border:2px solid #04070F}
+
+/* =========================================================
+   1. Background FX
+   ========================================================= */
+.bg-fx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.bg-fx .orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.42}
+.orb-1{width:60vw;height:60vw;left:-20vw;top:-22vw;background:radial-gradient(circle,#0EA5E9,transparent 68%)}
+.orb-2{width:52vw;height:52vw;right:-18vw;top:18vw;background:radial-gradient(circle,#6366F1,transparent 70%);opacity:.34}
+.orb-3{width:64vw;height:64vw;left:18vw;bottom:-40vw;background:radial-gradient(circle,#0E7490,transparent 70%);opacity:.3}
+.bg-fx .noise{
+  position:absolute;inset:0;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.bg-fx .vignette{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,transparent 40%,rgba(2,5,12,.75) 100%)}
+.cursor-glow{
+  position:fixed;z-index:2;pointer-events:none;width:520px;height:520px;left:0;top:0;
+  margin:-260px 0 0 -260px;border-radius:50%;opacity:.5;
+  background:radial-gradient(circle,rgba(34,225,240,.12),transparent 62%);
+  transform:translate3d(var(--cx,50vw),var(--cy,30vh),0);
+  transition:transform .18s ease-out;
+}
+
+/* =========================================================
+   2. Progress + Dock
+   ========================================================= */
+.progress{position:fixed;left:0;top:0;height:2px;width:100%;z-index:70;background:transparent}
+.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#22E1F0,#6366F1,#A855F7);box-shadow:0 0 14px rgba(34,225,240,.8)}
+
+.dock{
+  position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:65;
+  display:flex;gap:2px;padding:6px;border-radius:16px;
+  background:rgba(6,12,24,.82);backdrop-filter:blur(20px) saturate(140%);
+  border:1px solid var(--line);box-shadow:0 24px 60px -24px #000,inset 0 1px 0 rgba(255,255,255,.06);
+  max-width:calc(100vw - 24px);overflow-x:auto;scrollbar-width:none;
+}
+.dock::-webkit-scrollbar{display:none}
+.dock a{
+  position:relative;flex:0 0 auto;padding:7px 12px;font-size:12.5px;color:var(--text-2);
+  border-radius:11px;white-space:nowrap;transition:.25s;letter-spacing:.01em;
+}
+.dock a:hover{color:#fff;background:rgba(34,225,240,.1)}
+.dock a.active{color:#031018;background:linear-gradient(135deg,#5FF0FA,#22E1F0);font-weight:700;box-shadow:0 6px 18px -8px rgba(34,225,240,.9)}
+
+/* =========================================================
+   3. Hero
+   ========================================================= */
+.hero{position:relative;z-index:1;min-height:100svh;display:flex;flex-direction:column;justify-content:center;overflow:hidden;padding:82px 0 116px}
+.hero-glow{position:absolute;left:50%;top:44%;width:900px;height:900px;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(34,225,240,.14),rgba(59,130,246,.08) 38%,transparent 66%)}
+.hero-floor{
+  position:absolute;left:50%;bottom:-16%;width:240%;height:78%;pointer-events:none;
+  transform:translateX(-50%) perspective(620px) rotateX(72deg);
+  transform-origin:50% 100%;
+  background-image:
+    linear-gradient(rgba(34,225,240,.22) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(34,225,240,.22) 1px,transparent 1px);
+  background-size:72px 72px;
+  -webkit-mask-image:radial-gradient(ellipse at 50% 42%,#000 4%,transparent 72%);
+  mask-image:radial-gradient(ellipse at 50% 42%,#000 4%,transparent 72%);
+  animation:floorDrift 9s linear infinite;
+}
+@keyframes floorDrift{from{background-position:0 0,0 0}to{background-position:0 72px,72px 0}}
+
+.hero-inner{position:relative;z-index:2;width:min(1180px,92vw);margin:0 auto;display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:10px;font-size:11.5px;letter-spacing:.28em;text-transform:uppercase;
+  color:#8FEAF4;padding:7px 15px;border-radius:999px;border:1px solid rgba(34,225,240,.32);
+  background:linear-gradient(120deg,rgba(34,225,240,.13),rgba(99,102,241,.08));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14);
+}
+.eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:blink 1.8s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+.hero h1{
+  margin:22px 0 20px;font-size:clamp(38px,5.2vw,68px);line-height:1.06;font-weight:900;letter-spacing:-.025em;
+  text-shadow:0 30px 60px rgba(0,0,0,.6);
+}
+.hero h1 em{
+  font-style:normal;
+  background:linear-gradient(105deg,#7DF9FF 0%,#22E1F0 30%,#6E8BFF 62%,#C084FC 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 28px rgba(34,225,240,.35));
+}
+.hero h1 .line2{display:block}
+.hero .lead{max-width:560px;color:var(--text-2);font-size:16px;line-height:1.85;margin-bottom:30px}
+.hero .lead b{color:#fff;font-weight:600}
+.hero-actions{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.btn{
+  display:inline-flex;align-items:center;gap:9px;padding:13px 24px;border-radius:13px;font-size:14.5px;font-weight:650;
+  transition:transform .2s ease,box-shadow .3s ease,background .3s ease;position:relative;overflow:hidden;
+}
+.btn-primary{background:linear-gradient(135deg,#3EE9F5,#2AA7F7 55%,#6366F1);color:#03121A;box-shadow:0 18px 40px -18px rgba(42,167,247,.9)}
+.btn-primary:hover{transform:translateY(-2px) scale(1.015);box-shadow:0 24px 54px -18px rgba(34,225,240,.95)}
+.btn-ghost{border:1px solid var(--line-2);color:var(--text);background:rgba(255,255,255,.03);backdrop-filter:blur(8px)}
+.btn-ghost:hover{background:rgba(34,225,240,.09);border-color:rgba(34,225,240,.5);transform:translateY(-2px)}
+
+.hero-badges{display:flex;flex-wrap:wrap;gap:9px;margin-top:34px}
+.hero-badges span{
+  font-size:12.5px;color:#B9CCE6;padding:7px 13px;border-radius:9px;
+  border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03);
+}
+.hero-badges span::before{content:"";display:inline-block;width:6px;height:6px;border-radius:2px;margin-right:8px;vertical-align:1px;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+
+/* ---- 3D scene ---- */
+.hero-scene{position:relative;display:grid;place-items:center;min-height:440px}
+.scene{position:relative;width:min(540px,86vw);aspect-ratio:1;perspective:1300px}
+.scene-inner{
+  position:absolute;inset:0;transform-style:preserve-3d;
+  transform:rotateX(12deg) rotateY(-10deg);
+  animation:sceneFloat 11s ease-in-out infinite;
+}
+@keyframes sceneFloat{
+  0%,100%{transform:rotateX(12deg) rotateY(-12deg) translateY(0)}
+  50%{transform:rotateX(9deg) rotateY(-4deg) translateY(-10px)}
+}
+.halo{
+  position:absolute;left:50%;top:50%;width:520px;height:360px;margin:-250px 0 0 -260px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(34,225,240,.2),rgba(99,102,241,.12) 42%,transparent 70%);
+  filter:blur(30px);transform:translateZ(-120px);
+}
+.floaters{position:absolute;inset:0;transform-style:preserve-3d}
+
+.plate{
+  position:absolute;left:50%;top:50%;width:340px;height:340px;border-radius:50%;
+  transform:translate(-50%,-50%) rotateX(78deg) translateZ(-70px);transform-style:preserve-3d;
+  background:
+    radial-gradient(circle,rgba(34,225,240,.16),transparent 62%),
+    repeating-radial-gradient(circle,rgba(34,225,240,.24) 0 1px,transparent 1px 34px),
+    repeating-conic-gradient(from 0deg,rgba(34,225,240,.16) 0deg 0.6deg,transparent .6deg 12deg);
+  border:1px solid rgba(34,225,240,.28);
+  box-shadow:0 0 70px rgba(34,225,240,.22),inset 0 0 60px rgba(34,225,240,.12);
+}
+.ring{position:absolute;left:50%;top:50%;border-radius:50%;border:1px solid rgba(34,225,240,.32);transform-style:preserve-3d}
+.ring-1{width:400px;height:400px;transform:translate(-50%,-50%) rotateX(74deg) translateZ(-40px);animation:ringPulse 5s ease-in-out infinite}
+.ring-2{width:470px;height:470px;border-style:dashed;border-color:rgba(99,102,241,.4);transform:translate(-50%,-50%) rotateX(74deg) translateZ(-54px);animation:ringPulse 5s ease-in-out infinite .8s}
+@keyframes ringPulse{0%,100%{opacity:.45}50%{opacity:1}}
+
+.core{
+  position:absolute;left:50%;top:50%;width:14px;height:210px;border-radius:8px;
+  transform:translate(-50%,-50%) translateZ(-140px);
+  background:linear-gradient(180deg,rgba(125,249,255,0),#7DF9FF 22%,#22E1F0 50%,#6366F1 78%,rgba(99,102,241,0));
+  box-shadow:0 0 34px rgba(34,225,240,.7),0 0 90px rgba(34,225,240,.32);opacity:.55;filter:blur(3px);
+  animation:corePulse 3.4s ease-in-out infinite;
+}
+@keyframes corePulse{0%,100%{opacity:.85;transform:translate(-50%,-50%) scaleY(1)}50%{opacity:1;transform:translate(-50%,-50%) scaleY(1.05)}}
+
+.holo{
+  position:absolute;left:50%;top:50%;width:178px;min-height:120px;padding:14px 15px;border-radius:15px;
+  background:linear-gradient(160deg,rgba(22,44,78,.94),rgba(7,14,28,.82));
+  border:1px solid rgba(34,225,240,.38);backdrop-filter:blur(7px);
+  box-shadow:0 0 40px rgba(34,225,240,.16),inset 0 1px 0 rgba(255,255,255,.14);
+  transform-style:preserve-3d;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  transition:box-shadow .4s;
+}
+.holo::after{
+  content:"";position:absolute;inset:0;border-radius:15px;pointer-events:none;
+  background:linear-gradient(180deg,transparent 55%,rgba(34,225,240,.16));
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000);mask-image:linear-gradient(180deg,transparent,#000);
+}
+.holo .hl{display:flex;align-items:center;justify-content:space-between;font-size:11px;letter-spacing:.14em;color:#7B8FAE;text-transform:uppercase}
+.holo .hv{font-family:var(--mono);font-size:21px;font-weight:700;color:#fff;margin-top:6px;letter-spacing:-.02em}
+.holo .hv small{font-size:11px;color:#8FA8C9;font-weight:500;margin-left:3px}
+.holo .hm{display:flex;gap:10px;margin-top:8px;font-size:10.5px;color:#9FB4D2}
+.holo .hm span{display:inline-flex;gap:4px;align-items:center}
+.holo .hm i{width:5px;height:5px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+.h1{transform:translate(-50%,-50%) translate3d(-200px,-54px,-60px) rotateY(10deg) rotateX(5deg)}
+.h2{transform:translate(-50%,-50%) translate3d(0,32px,60px) rotateY(-1deg)}
+.h3{transform:translate(-50%,-50%) translate3d(202px,-10px,-40px) rotateY(-10deg) rotateX(-4deg)}
+.holo:hover{box-shadow:0 0 60px rgba(34,225,240,.42),inset 0 1px 0 rgba(255,255,255,.2)}
+.holo.warn{border-color:rgba(255,176,32,.5);box-shadow:0 0 40px rgba(255,176,32,.18),inset 0 1px 0 rgba(255,255,255,.14)}
+.holo.warn .hm i{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+.holo.warn .hv{color:#FFD37A}
+
+.scan{
+  position:absolute;left:50%;top:50%;width:360px;height:1px;transform:translate(-50%,-50%) rotateX(74deg) translateZ(10px);
+  background:linear-gradient(90deg,transparent,rgba(125,249,255,.9),transparent);
+  animation:scanMove 4.2s ease-in-out infinite;filter:blur(.4px);
+}
+@keyframes scanMove{0%,100%{transform:translate(-50%,-50%) rotateX(74deg) translateZ(-150px)}50%{transform:translate(-50%,-50%) rotateX(74deg) translateZ(150px)}}
+
+.hero-stats{
+  position:relative;z-index:2;width:min(1180px,92vw);margin:54px auto 0;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
+  border-top:1px solid rgba(255,255,255,.07);padding-top:26px;
+}
+.hero-stats .st{display:flex;flex-direction:column;gap:2px}
+.hero-stats .st b{font-family:var(--mono);font-size:clamp(22px,2.4vw,30px);font-weight:700;letter-spacing:-.02em;
+  background:linear-gradient(120deg,#fff,#9BEAF3);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-stats .st span{font-size:12.5px;color:var(--muted);letter-spacing:.06em}
+
+.scroll-hint{
+  position:absolute;left:50%;bottom:76px;transform:translateX(-50%);z-index:3;
+  display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--muted);font-size:11px;letter-spacing:.22em;
+}
+.scroll-hint .mouse{width:20px;height:32px;border:1px solid rgba(160,200,240,.35);border-radius:12px;position:relative}
+.scroll-hint .mouse::after{content:"";position:absolute;left:50%;top:7px;width:3px;height:7px;margin-left:-1.5px;border-radius:2px;background:var(--cyan);animation:wheel 1.7s infinite}
+@keyframes wheel{0%{opacity:0;transform:translateY(0)}30%{opacity:1}100%{opacity:0;transform:translateY(9px)}}
+
+/* =========================================================
+   4. Section shell
+   ========================================================= */
+main{position:relative;z-index:1}
+.wrap{width:min(1180px,92vw);margin:0 auto}
+section.sec{position:relative;padding:96px 0 34px}
+section.sec + section.sec{padding-top:64px}
+.sec-head{margin-bottom:34px;max-width:860px}
+.kicker{display:inline-flex;align-items:center;gap:12px;font-size:11.5px;letter-spacing:.24em;text-transform:uppercase;color:#7FDDE9;margin-bottom:16px}
+.kicker .idx{
+  display:grid;place-items:center;width:38px;height:38px;border-radius:11px;font-family:var(--mono);
+  font-size:15px;font-weight:700;color:#8FF3FC;letter-spacing:0;
+  background:linear-gradient(145deg,rgba(34,225,240,.16),rgba(59,130,246,.06));
+  border:1px solid rgba(34,225,240,.32);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 0 24px -8px rgba(34,225,240,.7);
+}
+.sec h2{font-size:clamp(25px,3.3vw,40px);line-height:1.22;font-weight:800;letter-spacing:-.02em}
+.sec h2 em{font-style:normal;color:var(--cyan)}
+.sec .sec-sub{color:var(--text-2);margin-top:12px;font-size:15.5px;max-width:780px}
+.sec .sec-sub .tagline{color:#CFE3FF}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.chips span{
+  font-size:12px;color:#A9C7E6;padding:6px 12px;border-radius:8px;
+  border:1px solid rgba(110,170,255,.18);background:rgba(59,130,246,.07);
+}
+.chips span::before{content:"›";margin-right:6px;color:var(--cyan)}
+
+.card{
+  position:relative;border-radius:var(--r-lg);
+  background:linear-gradient(165deg,rgba(17,30,54,.9),rgba(7,13,26,.78));
+  border:1px solid var(--line);box-shadow:var(--shadow);
+  overflow:hidden;
+}
+.card::after{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;
+  background:radial-gradient(520px circle at var(--mx,50%) var(--my,0%),rgba(34,225,240,.14),transparent 62%);
+}
+.card.glass{background:linear-gradient(165deg,rgba(18,32,58,.6),rgba(7,13,26,.5));backdrop-filter:blur(14px)}
+
+[data-tilt]{transform-style:preserve-3d;will-change:transform;transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .4s}
+[data-tilt]:hover{box-shadow:0 44px 100px -40px rgba(0,0,0,1),0 0 60px -30px rgba(34,225,240,.6)}
+.tilt-lift{transform:translateZ(30px)}
+
+.reveal{opacity:0;transform:translateY(34px) rotateX(9deg) scale(.985);transform-origin:50% 100%;
+  transition:opacity .85s cubic-bezier(.2,.75,.2,1),transform .95s cubic-bezier(.2,.75,.2,1)}
+.reveal.in{opacity:1;transform:none}
+
+/* =========================================================
+   5. Overview / closed loop
+   ========================================================= */
+.overview{padding-top:34px}
+.ov-grid{display:grid;grid-template-columns:1.06fr .94fr;gap:22px;align-items:stretch}
+.ov-card{padding:26px 26px 24px}
+.ov-card h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:9px;margin-bottom:6px}
+.ov-card h3 .sq{width:7px;height:7px;border-radius:2px;background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+.ov-card .desc{color:var(--muted);font-size:13px;margin-bottom:18px}
+
+.flow{position:relative;display:flex;flex-direction:column;gap:0}
+.flow-step{position:relative;display:grid;grid-template-columns:34px 1fr auto;gap:14px;align-items:center;padding:11px 0}
+.flow-step + .flow-step{border-top:1px dashed rgba(110,170,255,.12)}
+.flow-step .fnum{
+  font-family:var(--mono);font-size:11.5px;color:#8FE9F4;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  border:1px solid rgba(34,225,240,.26);background:rgba(34,225,240,.07);
+}
+.flow-step .fmain{min-width:0}
+.flow-step .fname{font-size:14.5px;font-weight:600;color:#E4EEFF}
+.flow-step .fdesc{font-size:12px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.flow-step .fstages{display:flex;gap:5px}
+.flow-step .fstages b{
+  font-family:var(--mono);font-size:11px;font-weight:600;color:#A5C4E4;width:22px;height:22px;border-radius:7px;
+  display:grid;place-items:center;border:1px solid rgba(110,170,255,.2);background:rgba(255,255,255,.03);
+}
+.flow-step:hover .fstages b{border-color:rgba(34,225,240,.4);color:#BFF7FC}
+
+/* 9-node ring */
+.loop{position:relative;display:grid;place-items:center;min-height:420px;perspective:1200px}
+.loop-stage{position:relative;width:400px;height:400px;transform-style:preserve-3d;transform:rotateX(16deg)}
+.loop-ring{
+  position:absolute;inset:0;margin:auto;border-radius:50%;border:1px dashed rgba(34,225,240,.22);
+  transform:rotateX(66deg) translateZ(-10px);
+}
+.loop-ring.b{inset:38px;border-style:solid;border-color:rgba(99,102,241,.25);transform:rotateX(66deg) translateZ(-2px)}
+.loop-core{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) translateZ(40px);
+  width:132px;height:132px;border-radius:50%;display:grid;place-items:center;text-align:center;
+  background:radial-gradient(circle at 34% 28%,rgba(34,225,240,.34),rgba(11,22,42,.94) 62%);
+  border:1px solid rgba(34,225,240,.45);box-shadow:0 0 60px rgba(34,225,240,.32),inset 0 0 40px rgba(34,225,240,.16);
+  backdrop-filter:blur(6px);
+}
+.loop-core b{display:block;font-size:22px;font-weight:900;letter-spacing:-.02em;color:#fff;line-height:1.1}
+.loop-core span{display:block;font-size:10.5px;color:#8FE9F4;letter-spacing:.12em;margin-top:3px}
+.loop-node{
+  position:absolute;left:50%;top:50%;width:38px;height:38px;margin:-19px;border-radius:12px;
+  display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:700;color:#CFEFFF;
+  background:linear-gradient(150deg,rgba(20,44,74,.95),rgba(8,16,30,.9));
+  border:1px solid rgba(34,225,240,.34);box-shadow:0 10px 30px -12px #000,inset 0 1px 0 rgba(255,255,255,.18);
+  transform:rotate(calc(var(--i) * 40deg)) translateY(-150px) rotate(calc(var(--i) * -40deg));
+  transition:transform .4s cubic-bezier(.2,.7,.2,1),background .3s,border-color .3s;
+  cursor:pointer;
+}
+.loop-node:hover{background:linear-gradient(150deg,#22E1F0,#6366F1);color:#041318;border-color:#9BF6FF;transform:rotate(calc(var(--i) * 40deg)) translateY(-150px) rotate(calc(var(--i) * -40deg)) scale(1.18)}
+.loop-node::before{
+  content:attr(data-label);position:absolute;top:44px;left:50%;transform:translateX(-50%);
+  font-family:var(--sans);font-size:10.5px;font-weight:500;color:#7E93B3;white-space:nowrap;letter-spacing:.02em;
+}
+.loop-node:hover::before{color:#BFF7FC}
+.loop-caption{position:absolute;left:0;right:0;bottom:2px;text-align:center;font-size:11.5px;color:var(--muted);letter-spacing:.14em}
+@media (max-width:1000px){
+  .ov-grid{grid-template-columns:1fr}
+  .loop{min-height:440px;margin-top:8px}
+}
+/* =========================================================
+   6. Stage 1 — monitoring dashboard
+   ========================================================= */
+.dash{overflow:hidden}
+.dash-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--line);
+  background:linear-gradient(90deg,rgba(34,225,240,.09),rgba(99,102,241,.04) 46%,transparent)}
+.dash-bar .dev{display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:700;letter-spacing:.02em}
+.dash-bar .led{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:blink 2s infinite}
+.dash-bar .meta{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-left:auto}
+.dash-bar .meta b{color:#CFE3FF;font-weight:600}
+.dash-bar .clock{font-family:var(--mono);font-size:12.5px;color:#9BEAF3;letter-spacing:.06em}
+
+.dash-body{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;padding:14px}
+.tile{border-radius:14px;border:1px solid rgba(110,170,255,.13);background:rgba(255,255,255,.018);padding:13px 14px;position:relative;overflow:hidden}
+.tile-h{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10.5px;letter-spacing:.16em;color:#7287A6;text-transform:uppercase;margin-bottom:9px}
+.tile-h b{color:#9FB9DA;font-weight:600;letter-spacing:.04em;font-size:11px}
+
+.t-health{grid-column:span 4}
+.t-axes{grid-column:span 8;display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:0;border:0;background:none;overflow:visible}
+.t-tool{grid-column:span 4}
+.t-proc{grid-column:span 4}
+.t-env{grid-column:span 4}
+.t-oee{grid-column:span 12}
+
+.ring-health{display:flex;align-items:center;gap:14px}
+.gauge{
+  position:relative;width:92px;height:92px;border-radius:50%;flex:0 0 auto;
+  background:conic-gradient(from 200deg,var(--cyan) calc(var(--v) * 1%),rgba(255,255,255,.06) 0);
+  display:grid;place-items:center;
+  box-shadow:0 0 28px -8px rgba(34,225,240,.6);
+  transition:--v 1s;
+}
+.gauge::before{content:"";position:absolute;inset:7px;border-radius:50%;background:#080F1D;box-shadow:inset 0 0 20px rgba(34,225,240,.14)}
+.gauge i{position:relative;font-family:var(--mono);font-style:normal;font-size:23px;font-weight:700;color:#fff;letter-spacing:-.03em}
+.gauge i small{font-size:10px;color:#7FDDE9;margin-left:1px}
+.health-side{min-width:0}
+.health-side .lvl{font-size:12.5px;color:var(--green);font-weight:600;display:flex;align-items:center;gap:6px}
+.health-side .lvl::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.health-side .trend{font-size:11.5px;color:var(--muted);margin-top:4px}
+.subscores{margin-top:12px;display:grid;gap:6px}
+.subscores .s{display:grid;grid-template-columns:26px 1fr 28px;align-items:center;gap:8px;font-size:10.5px;color:#8194B2}
+.subscores .s b{font-family:var(--mono);color:#CFE3FF;font-weight:600;text-align:right}
+.subscores .bar{height:4px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}
+.subscores .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#22E1F0,#6366F1);width:0;transition:width 1.1s cubic-bezier(.2,.7,.2,1)}
+.subscores .s.warn b{color:#FFC46B}
+.subscores .s.warn .bar i{background:linear-gradient(90deg,#FFB020,#FF7A45)}
+
+.axis{border-radius:13px;border:1px solid rgba(110,170,255,.14);background:linear-gradient(170deg,rgba(18,34,60,.7),rgba(8,14,28,.5));padding:12px 13px;position:relative;overflow:hidden}
+.axis::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--green);opacity:.8}
+.axis.warn::before{background:var(--amber)}
+.axis .ax-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+.axis .ax-name{font-family:var(--mono);font-size:12px;font-weight:700;color:#DFF4FF;letter-spacing:.08em}
+.axis .ax-st{display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#3EE7A4;font-weight:600}
+.axis .ax-st::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+.axis.warn .ax-st{color:#FFC46B}
+.axis .ax-rows{display:grid;gap:3px;margin-top:7px}
+.axis .ax-row{display:flex;justify-content:space-between;gap:6px;font-size:11px;color:#8CA0BF}
+.axis .ax-row b{font-family:var(--mono);color:#E4F2FF;font-weight:600;font-size:11.5px}
+.axis .ax-row b.up{color:#FFC46B}
+.axis .ax-foot{margin-top:8px;display:flex;justify-content:space-between;font-size:10px;color:#6F84A3}
+.axis .ax-foot .mini{display:flex;align-items:center;gap:4px}
+.axis .ax-foot .mini::before{content:"";width:5px;height:5px;border-radius:50%;background:#3EE7A4}
+.axis.warn .ax-foot .mini::before{background:#FFB020}
+
+.kv{display:grid;gap:5px}
+.kv .r{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:#8CA0BF}
+.kv .r b{font-family:var(--mono);color:#E4F2FF;font-weight:600;font-size:12.5px;text-align:right}
+.kv .r b.am{color:#FFC46B}
+.kv .r b.ok{color:#3EE7A4}
+.meter{height:6px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden;margin:7px 0 3px}
+.meter i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#FF7A45,#FFB020);width:0;transition:width 1.2s cubic-bezier(.2,.7,.2,1)}
+.meter-lbl{display:flex;justify-content:space-between;font-size:10px;color:#6F84A3}
+
+.oee-wrap{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;align-items:center}
+.oee-nums{display:flex;gap:26px;flex-wrap:wrap}
+.oee-nums .o b{display:block;font-family:var(--mono);font-size:24px;font-weight:700;color:#fff;letter-spacing:-.02em;line-height:1.2}
+.oee-nums .o span{font-size:10.5px;color:#7287A6;letter-spacing:.08em}
+.spark{width:100%;height:74px;display:block}
+.spark-legend{display:flex;gap:14px;font-size:10.5px;color:#7287A6;margin-top:4px}
+.spark-legend i{display:inline-block;width:14px;height:2px;vertical-align:3px;margin-right:5px;background:var(--cyan)}
+.spark-legend .l2 i{background:var(--violet)}
+
+/* =========================================================
+   7. Stage 2 — alarm
+   ========================================================= */
+.alarm-grid{display:grid;grid-template-columns:.92fr 1.08fr;gap:18px}
+.alarm-card{
+  position:relative;padding:24px;border-radius:20px;overflow:hidden;
+  background:linear-gradient(165deg,rgba(58,12,26,.92),rgba(20,8,16,.86));
+  border:1px solid rgba(255,77,109,.4);
+  box-shadow:0 0 0 1px rgba(255,77,109,.08),0 34px 90px -40px #000,0 0 70px -30px rgba(255,77,109,.6);
+}
+.alarm-card::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(600px circle at 80% -10%,rgba(255,77,109,.22),transparent 60%)}
+.alarm-card.pulse{animation:alarmPulse 2.6s ease-in-out infinite}
+@keyframes alarmPulse{0%,100%{box-shadow:0 34px 90px -40px #000,0 0 70px -30px rgba(255,77,109,.5)}50%{box-shadow:0 34px 90px -40px #000,0 0 90px -20px rgba(255,77,109,.85)}}
+.alarm-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;position:relative}
+.badge{display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:999px;font-size:11.5px;font-weight:650;letter-spacing:.04em}
+.badge.sev{background:rgba(255,77,109,.16);color:#FF8FA3;border:1px solid rgba(255,77,109,.45)}
+.badge.sev::before{content:"";width:6px;height:6px;border-radius:50%;background:#FF4D6D;box-shadow:0 0 10px #FF4D6D;animation:blink 1.1s infinite}
+.badge.dim{background:rgba(255,255,255,.05);color:#9FB2CD;border:1px solid rgba(255,255,255,.1)}
+.alarm-card h3{position:relative;font-size:20px;font-weight:800;letter-spacing:-.01em;margin-bottom:4px}
+.alarm-card .sub{position:relative;font-size:12.5px;color:#C393A3;font-family:var(--mono)}
+.alarm-rows{position:relative;display:grid;gap:0;margin-top:16px}
+.alarm-rows .r{display:grid;grid-template-columns:84px 1fr;gap:10px;padding:9px 0;border-top:1px dashed rgba(255,77,109,.16);font-size:12.5px}
+.alarm-rows .r span{color:#A8869A;font-size:11.5px;letter-spacing:.04em}
+.alarm-rows .r b{color:#FFE3E8;font-weight:600;font-family:var(--mono);font-size:12px;text-align:right;overflow-wrap:anywhere}
+.alarm-rows .r b em{font-style:normal;color:#FFB3C0;font-family:var(--sans)}
+.alarm-impact{position:relative;margin-top:16px;padding:12px 14px;border-radius:12px;font-size:12.5px;line-height:1.75;
+  background:rgba(255,77,109,.09);border:1px solid rgba(255,77,109,.24);color:#FFD3DA}
+.alarm-impact b{color:#fff}
+.alarm-actions{position:relative;display:flex;flex-wrap:wrap;gap:9px;margin-top:18px}
+.btn-sm{padding:9px 15px;border-radius:10px;font-size:12.5px;font-weight:600;border:1px solid var(--line-2);color:#D8E8FA;background:rgba(255,255,255,.04);transition:.22s}
+.btn-sm:hover{border-color:rgba(34,225,240,.5);background:rgba(34,225,240,.1);color:#fff;transform:translateY(-1px)}
+.btn-danger{background:linear-gradient(135deg,#FF4D6D,#D9264B);color:#fff;border-color:transparent;box-shadow:0 14px 30px -14px rgba(255,77,109,.9)}
+.btn-danger:hover{background:linear-gradient(135deg,#FF6B85,#E7335A)}
+
+.ptable{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
+.ptable th{text-align:left;font-size:10.5px;letter-spacing:.12em;color:#6E83A2;font-weight:600;padding:0 10px 9px;border-bottom:1px solid rgba(110,170,255,.14);text-transform:uppercase}
+.ptable td{padding:11px 10px;border-bottom:1px solid rgba(110,170,255,.08);color:#C6D8EE;vertical-align:middle}
+.ptable tr:last-child td{border-bottom:0}
+.ptable tr:hover td{background:rgba(255,77,109,.045)}
+.ptable td.num{font-family:var(--mono);font-size:12.5px;color:#fff}
+.ptable td .over{color:#FF8FA3;font-weight:700}
+.ptable td .pct{display:inline-block;padding:1px 7px;border-radius:6px;font-size:10.5px;background:rgba(255,77,109,.16);color:#FF9DAE;border:1px solid rgba(255,77,109,.3);font-family:var(--mono)}
+.ptable caption{caption-side:top;text-align:left;font-size:11.5px;color:#7287A6;padding-bottom:10px;letter-spacing:.06em}
+
+.trend-box{margin-top:16px;padding:13px 14px 10px;border-radius:12px;border:1px solid rgba(255,77,109,.2);background:rgba(255,77,109,.045)}
+.trend-h{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:#C7A3AE;margin-bottom:8px}
+.trend-h b{font-family:var(--mono);color:#FFB020;font-weight:600;font-size:10px;letter-spacing:.06em;white-space:nowrap}
+.trend-svg{width:100%;height:104px;display:block}
+.trend-x{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9.5px;color:#96707E;margin-top:3px}
+
+/* =========================================================
+   8. Stage 3 — AI report
+   ========================================================= */
+.ai-grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:18px}
+.ai-left{padding:22px;display:flex;flex-direction:column;gap:16px}
+.conf-wrap{display:flex;align-items:center;gap:16px}
+.conf-ring{position:relative;width:112px;height:112px;flex:0 0 auto}
+.conf-ring svg{transform:rotate(-90deg)}
+.conf-ring .txt{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.conf-ring .txt b{font-family:var(--mono);font-size:26px;font-weight:800;color:#fff;line-height:1}
+.conf-ring .txt b small{font-size:12px;color:#7FDDE9}
+.conf-ring .txt span{font-size:9.5px;color:#7287A6;letter-spacing:.14em;margin-top:3px}
+.ai-verdict{padding:12px 14px;border-radius:12px;background:rgba(255,176,32,.08);border:1px solid rgba(255,176,32,.28);font-size:12.5px;color:#FFD9A0;line-height:1.7}
+.ai-verdict b{color:#FFE7C2}
+.prob-title{font-size:10.5px;letter-spacing:.16em;color:#6E83A2;text-transform:uppercase;margin-bottom:10px}
+.prob{display:grid;grid-template-columns:1fr 44px;gap:4px 10px;align-items:center;margin-bottom:11px}
+.prob .pname{font-size:12.5px;color:#CBDDF2;display:flex;align-items:center;gap:7px}
+.prob .pname i{width:6px;height:6px;border-radius:2px;background:var(--cyan)}
+.prob:nth-child(3) .pname i{background:#6E8BFF}
+.prob:nth-child(4) .pname i{background:#A855F7}
+.prob:nth-child(5) .pname i{background:#FFB020}
+.prob .pval{font-family:var(--mono);font-size:12.5px;color:#fff;text-align:right;font-weight:600}
+.prob .pbar{grid-column:1 / -1;height:5px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden}
+.prob .pbar i{display:block;height:100%;border-radius:99px;width:0;transition:width 1.2s cubic-bezier(.2,.7,.2,1);background:linear-gradient(90deg,#22E1F0,#6366F1)}
+
+.ai-right{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ai-block{padding:18px;border-radius:16px;border:1px solid rgba(110,170,255,.13);background:rgba(255,255,255,.02)}
+.ai-block.wide{grid-column:1 / -1}
+.ai-block h4{font-size:12px;letter-spacing:.1em;color:#8FE9F4;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.ai-block h4::before{content:"";width:3px;height:12px;border-radius:2px;background:linear-gradient(180deg,#22E1F0,#6366F1)}
+.ai-list{display:grid;gap:8px}
+.ai-list li{position:relative;padding-left:16px;font-size:12.5px;color:#B9CCE4;line-height:1.7}
+.ai-list li::before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%;background:rgba(34,225,240,.7)}
+.ai-list li b{color:#fff;font-weight:600}
+.ai-list li em{font-style:normal;font-family:var(--mono);color:#8FE9F4}
+.src-tags{display:flex;flex-wrap:wrap;gap:7px}
+.src-tags span{font-size:11px;padding:5px 10px;border-radius:7px;background:rgba(59,130,246,.1);border:1px solid rgba(110,170,255,.2);color:#A9C7E6}
+
+/* =========================================================
+   9. Stage 4 — human decision (flip cards)
+   ========================================================= */
+.decision-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;perspective:1400px}
+.dcard{position:relative;height:236px;transform-style:preserve-3d;transition:transform .85s cubic-bezier(.3,.8,.2,1);cursor:pointer}
+.dcard.flipped{transform:rotateY(180deg)}
+.dface{
+  position:absolute;inset:0;border-radius:20px;padding:24px;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  display:flex;flex-direction:column;justify-content:flex-start;gap:13px;overflow:hidden;
+  background:linear-gradient(165deg,rgba(17,30,54,.94),rgba(7,13,26,.9));border:1px solid var(--line);
+  box-shadow:var(--shadow);
+}
+.dface.back{transform:rotateY(180deg)}
+.dcard.yes .dface{border-color:rgba(34,225,240,.3)}
+.dcard.no .dface{border-color:rgba(255,255,255,.1)}
+.dface .dhead{display:flex;align-items:center;gap:12px}
+.dicon{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-size:19px;flex:0 0 auto}
+.dcard.yes .dicon{background:linear-gradient(140deg,rgba(34,225,240,.24),rgba(59,130,246,.1));border:1px solid rgba(34,225,240,.4);color:#9BF6FF;box-shadow:0 0 30px -10px rgba(34,225,240,.8)}
+.dcard.no .dicon{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#9FB2CD}
+.dhead h3{font-size:18px;font-weight:750;letter-spacing:-.01em}
+.dhead p{font-size:11px;color:#7287A6;letter-spacing:.14em;text-transform:uppercase}
+.dbody{font-size:13px;color:#B9CCE4;line-height:1.8}
+.dbody b{color:#fff}
+.dfoot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:#7287A6}
+.dfoot .hint{display:inline-flex;align-items:center;gap:6px}
+.dfoot .hint::after{content:"↻";font-size:14px}
+.dcard .dface.back .dbody{color:#CBE6F5}
+.dcta{font-size:11.5px;color:#9FB4D2;padding:8px 12px;border-radius:9px;border:1px dashed rgba(110,170,255,.22);
+  background:rgba(255,255,255,.025);display:flex;align-items:center;gap:8px;letter-spacing:.02em}
+.dcta::before{content:"→";color:var(--cyan);font-weight:700}
+.dcard.no .dcta::before{color:#8CA0BF}
+.dcard.yes .dface.back .dbody b{color:#9BF6FF}
+
+/* =========================================================
+   10. Stage 5 — workorder + plan
+   ========================================================= */
+.wo-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:18px;align-items:start}
+.wo-card{padding:22px}
+@media (min-width:1081px){.wo-card{position:sticky;top:84px}}
+.wo-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-bottom:14px;border-bottom:1px dashed rgba(110,170,255,.16);margin-bottom:14px}
+.wo-head .no{font-family:var(--mono);font-size:15px;font-weight:700;color:#fff;letter-spacing:.02em}
+.wo-head .st{font-size:10.5px;padding:4px 10px;border-radius:999px;background:rgba(255,176,32,.13);color:#FFC46B;border:1px solid rgba(255,176,32,.32);white-space:nowrap}
+.wo-head .st.ok{background:rgba(46,230,168,.12);color:#63F0BF;border-color:rgba(46,230,168,.3)}
+.wo-meta{display:grid;gap:7px;margin-bottom:16px}
+.wo-meta .r{display:grid;grid-template-columns:88px 1fr;gap:10px;font-size:12px}
+.wo-meta .r span{color:#7287A6;font-size:11.5px}
+.wo-meta .r b{color:#D8E8FA;font-weight:550;font-family:var(--mono);font-size:12px}
+.wo-meta .r b.p{font-family:var(--sans);font-weight:500;color:#C0D3EA}
+.wo-desc{font-size:12.5px;line-height:1.8;color:#B2C6DE;padding:12px 14px;border-radius:11px;background:rgba(255,255,255,.025);border-left:2px solid rgba(34,225,240,.5)}
+.wo-items{margin-top:16px}
+.wo-items h4,.wo-attach h4{font-size:11px;letter-spacing:.14em;color:#7FDDE9;text-transform:uppercase;margin-bottom:9px}
+.wo-items li{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;color:#C0D3EA;padding:5px 0}
+.wo-items li i{flex:0 0 auto;width:16px;height:16px;border-radius:5px;display:grid;place-items:center;font-size:9px;font-style:normal;
+  background:rgba(34,225,240,.12);border:1px solid rgba(34,225,240,.3);color:#9BF6FF;margin-top:4px}
+.wo-attach{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px}
+.wo-attach span{font-size:11px;padding:5px 10px;border-radius:7px;background:rgba(255,255,255,.03);border:1px solid rgba(110,170,255,.16);color:#9FB4D2}
+
+.plan{overflow:hidden}
+.plan-head{padding:18px 22px;background:linear-gradient(120deg,rgba(34,225,240,.14),rgba(99,102,241,.08) 60%,transparent);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.plan-head .l{display:flex;align-items:center;gap:11px}
+.plan-head .pk{font-size:10px;letter-spacing:.18em;color:#8FE9F4;text-transform:uppercase}
+.plan-head .pn{font-family:var(--mono);font-size:15px;font-weight:700;color:#fff}
+.plan-match{display:flex;align-items:center;gap:10px}
+.plan-match .mp{font-family:var(--mono);font-size:22px;font-weight:800;color:#63F0BF;letter-spacing:-.02em}
+.plan-match small{display:block;font-size:9.5px;color:#7287A6;letter-spacing:.12em}
+.plan-body{padding:18px 22px;display:grid;gap:16px}
+.plan-sec h4{font-size:11px;letter-spacing:.14em;color:#8FE9F4;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.plan-sec h4 .n{font-family:var(--mono);color:#5B739A;font-weight:500}
+.plan-sec p{font-size:12.5px;color:#B2C6DE;line-height:1.75}
+.plan-steps{counter-reset:ps;display:grid;gap:7px}
+.plan-steps li{position:relative;padding-left:30px;font-size:12.5px;color:#C0D3EA;line-height:1.65}
+.plan-steps li::before{counter-increment:ps;content:counter(ps,decimal-leading-zero);position:absolute;left:0;top:1px;
+  font-family:var(--mono);font-size:10px;color:#8FE9F4;width:20px;height:20px;border-radius:6px;display:grid;place-items:center;
+  background:rgba(34,225,240,.09);border:1px solid rgba(34,225,240,.22)}
+.parts{width:100%;border-collapse:collapse;font-size:12px}
+.parts th{text-align:left;font-size:10px;letter-spacing:.1em;color:#6E83A2;font-weight:600;padding:0 8px 7px;border-bottom:1px solid rgba(110,170,255,.14);text-transform:uppercase}
+.parts td{padding:7px 8px;border-bottom:1px solid rgba(110,170,255,.07);color:#C6D8EE}
+.parts tr:last-child td{border-bottom:0}
+.parts td:first-child{color:#E4F2FF;font-weight:550}
+.parts .stock{font-size:10.5px;padding:2px 8px;border-radius:6px;background:rgba(46,230,168,.12);color:#63F0BF;border:1px solid rgba(46,230,168,.26);white-space:nowrap}
+.parts .stock.q{background:rgba(255,176,32,.12);color:#FFC46B;border-color:rgba(255,176,32,.28)}
+.safety li{font-size:12.5px;color:#C0D3EA;display:flex;gap:8px;padding:3px 0}
+.safety li::before{content:"⚠";color:#FFB020;font-size:11px;line-height:1.7}
+.qa{display:flex;flex-wrap:wrap;gap:7px}
+.qa span{font-size:11px;padding:5px 10px;border-radius:7px;background:rgba(46,230,168,.08);border:1px solid rgba(46,230,168,.22);color:#8FEFC9}
+
+/* =========================================================
+   11. Stage 6 — review & dispatch
+   ========================================================= */
+.dispatch{padding:24px}
+.dispatch-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:20px}
+.dsec h4{font-size:11px;letter-spacing:.14em;color:#8FE9F4;text-transform:uppercase;margin-bottom:12px}
+.check-list{display:grid;gap:8px}
+.check-list li{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;color:#C0D3EA;padding:9px 12px;border-radius:10px;
+  border:1px solid rgba(110,170,255,.13);background:rgba(255,255,255,.022)}
+.check-list li .ck{flex:0 0 auto;width:17px;height:17px;border-radius:5px;display:grid;place-items:center;font-size:10px;
+  background:rgba(46,230,168,.14);border:1px solid rgba(46,230,168,.4);color:#63F0BF;margin-top:2px}
+.person{display:flex;align-items:center;gap:13px;padding:14px;border-radius:13px;border:1px solid rgba(34,225,240,.22);
+  background:linear-gradient(140deg,rgba(34,225,240,.09),rgba(255,255,255,.02))}
+.person .av{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-size:15px;font-weight:700;flex:0 0 auto;
+  background:linear-gradient(140deg,#22E1F0,#6366F1);color:#04121A;box-shadow:0 0 24px -6px rgba(34,225,240,.8)}
+.person .pn2{font-size:14.5px;font-weight:650;color:#fff}
+.person .pd{font-size:11px;color:#8CA0BF;margin-top:2px}
+.person .pstate{margin-left:auto;font-size:10.5px;padding:3px 9px;border-radius:999px;background:rgba(46,230,168,.13);color:#63F0BF;border:1px solid rgba(46,230,168,.3);white-space:nowrap}
+.skill{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.skill span{font-size:10.5px;padding:3px 9px;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid rgba(110,170,255,.16);color:#9FB4D2}
+.channels{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.channels .ch{display:flex;align-items:center;gap:8px;font-size:11.5px;padding:9px 11px;border-radius:9px;color:#B9CCE4;
+  border:1px solid rgba(110,170,255,.14);background:rgba(255,255,255,.022)}
+.channels .ch i{width:6px;height:6px;border-radius:50%;background:#3EE7A4;box-shadow:0 0 8px #3EE7A4;flex:0 0 auto}
+
+.dispatch-track{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:8px;padding-top:26px}
+.dispatch-track .tk{position:relative;text-align:center;font-size:11px;color:#7E93B3}
+.dispatch-track .tk b{display:block;color:#CFE3FF;font-size:11.5px;font-weight:600;margin-bottom:3px}
+.dispatch-track .tk .dot{position:absolute;left:50%;top:-26px;transform:translateX(-50%);width:11px;height:11px;border-radius:50%;
+  background:#0B1628;border:1px solid rgba(110,170,255,.4);transition:.4s}
+.dispatch-track .tk.done .dot{background:#22E1F0;border-color:#22E1F0;box-shadow:0 0 16px rgba(34,225,240,.9)}
+.dispatch-track .tk.done b{color:#fff}
+.dispatch-track::before{content:"";position:absolute;left:10%;right:10%;top:-1px;height:1px;background:rgba(110,170,255,.22)}
+.dispatch-track .beam{position:absolute;left:10%;top:-1.5px;height:3px;border-radius:99px;width:0;
+  background:linear-gradient(90deg,#22E1F0,#6366F1);box-shadow:0 0 16px rgba(34,225,240,.9);transition:width 1.4s cubic-bezier(.3,.8,.2,1)}
+.dispatch-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:22px;padding-top:18px;border-top:1px dashed rgba(110,170,255,.14)}
+.dispatch-actions .note{font-size:11.5px;color:#7287A6;margin-left:auto}
+
+/* =========================================================
+   12. Stage 7 — maintenance timeline
+   ========================================================= */
+.maint-grid{display:grid;grid-template-columns:1.12fr .88fr;gap:18px;align-items:start}
+.maint{padding:22px}
+.maint-top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.maint-state{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:650;color:#9BF6FF}
+.maint-state .sp{width:7px;height:7px;border-radius:50%;background:#22E1F0;box-shadow:0 0 10px #22E1F0;animation:blink 1.4s infinite}
+.progressline{height:7px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden;margin-bottom:6px}
+.progressline i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#22E1F0,#6366F1,#A855F7);width:0;
+  transition:width 1s cubic-bezier(.3,.8,.2,1);box-shadow:0 0 14px rgba(34,225,240,.7)}
+.pl-lbl{display:flex;justify-content:space-between;font-size:10.5px;color:#7287A6;letter-spacing:.06em;margin-bottom:18px}
+
+.tl{position:relative;display:grid;gap:0}
+.tl::before{content:"";position:absolute;left:15px;top:14px;bottom:14px;width:1px;background:linear-gradient(180deg,rgba(34,225,240,.4),rgba(34,225,240,.12) 60%,rgba(110,170,255,.1))}
+.tl-item{position:relative;display:grid;grid-template-columns:31px 1fr;gap:14px;padding:9px 0}
+.tl-item .dot{position:relative;z-index:1;width:31px;height:31px;border-radius:10px;display:grid;place-items:center;
+  font-family:var(--mono);font-size:10.5px;font-weight:700;
+  background:#0A1426;border:1px solid rgba(110,170,255,.24);color:#7E93B3;transition:.3s}
+.tl-item .tmain{min-width:0;padding-top:2px}
+.tl-item .ttime{font-family:var(--mono);font-size:11px;color:#7287A6;letter-spacing:.04em}
+.tl-item .ttitle{font-size:13.5px;font-weight:600;color:#DCE9F8;margin:1px 0 3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tl-item .tstat{font-size:9.5px;padding:1px 8px;border-radius:999px;border:1px solid rgba(110,170,255,.2);color:#8CA0BF;font-weight:500;letter-spacing:.04em}
+.tl-item .tdesc{font-size:12px;color:#8CA0BF;line-height:1.7}
+.tl-item.done .dot{background:rgba(46,230,168,.14);border-color:rgba(46,230,168,.45);color:#63F0BF}
+.tl-item.done .tstat{background:rgba(46,230,168,.1);color:#63F0BF;border-color:rgba(46,230,168,.28)}
+.tl-item.done .ttitle{color:#EAF6FF}
+.tl-item.active .dot{background:linear-gradient(140deg,#22E1F0,#6366F1);border-color:#9BF6FF;color:#04121A;
+  box-shadow:0 0 0 4px rgba(34,225,240,.12),0 0 24px rgba(34,225,240,.5)}
+.tl-item.active .tstat{background:rgba(34,225,240,.14);color:#9BF6FF;border-color:rgba(34,225,240,.4)}
+.tl-item.active .ttitle{color:#fff}
+.tl-item.todo{opacity:.62}
+.tl-item.todo .ttitle{color:#9FB4D2}
+
+.side-stack{display:grid;gap:16px}
+.side-card{padding:18px}
+.side-card h4{font-size:11px;letter-spacing:.14em;color:#8FE9F4;text-transform:uppercase;margin-bottom:11px}
+.side-card .kv .r{font-size:12px}
+.detects{display:grid;gap:11px}
+.detects .d .top{display:flex;justify-content:space-between;font-size:11.5px;color:#9FB4D2}
+.detects .d .top b{font-family:var(--mono);color:#fff;font-size:12.5px}
+.detects .d .top b.good{color:#63F0BF}
+.detects .d .bar{height:4px;border-radius:99px;background:rgba(255,255,255,.07);margin-top:5px;overflow:hidden}
+.detects .d .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#22E1F0,#3EE7A4);width:0;transition:width 1s}
+.detects .d .bar.warn i{background:linear-gradient(90deg,#FFB020,#FF7A45)}
+.notes li{font-size:11.5px;color:#9FB4D2;display:flex;gap:8px;padding:4px 0;line-height:1.65}
+.notes li::before{content:"·";color:#22E1F0;font-weight:800}
+.photo-row{display:flex;gap:8px;margin-top:10px}
+.photo{flex:1;aspect-ratio:4/3;border-radius:9px;border:1px solid rgba(110,170,255,.16);position:relative;overflow:hidden;
+  background:linear-gradient(150deg,rgba(34,225,240,.1),rgba(10,18,34,.9))}
+.photo::after{content:attr(data-l);position:absolute;left:6px;bottom:5px;font-size:8.5px;color:#7E93B3;letter-spacing:.06em}
+.photo::before{content:"";position:absolute;inset:0;background:
+  linear-gradient(135deg,transparent 46%,rgba(34,225,240,.35) 47%,transparent 48%),
+  linear-gradient(45deg,transparent 60%,rgba(99,102,241,.3) 61%,transparent 62%)}
+
+/* =========================================================
+   13. Stage 8 — verification
+   ========================================================= */
+.verify{padding:0;overflow:hidden}
+.vhead{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:20px 22px;border-bottom:1px solid var(--line);
+  background:linear-gradient(120deg,rgba(46,230,168,.12),rgba(34,225,240,.06) 55%,transparent)}
+.vhead .vi{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:18px;
+  background:rgba(46,230,168,.15);border:1px solid rgba(46,230,168,.4);color:#63F0BF;flex:0 0 auto}
+.vhead .vt{font-size:16.5px;font-weight:750;letter-spacing:-.01em}
+.vhead .vd{font-size:11.5px;color:#7E93B3;font-family:var(--mono)}
+.vhead .vbadge{margin-left:auto;font-size:12px;font-weight:700;padding:7px 15px;border-radius:999px;color:#63F0BF;
+  background:rgba(46,230,168,.12);border:1px solid rgba(46,230,168,.35);box-shadow:0 0 30px -10px rgba(46,230,168,.8)}
+.vtable{width:100%;border-collapse:collapse;font-size:12.5px}
+.vtable th{text-align:left;padding:11px 16px;font-size:10px;letter-spacing:.12em;color:#6E83A2;font-weight:600;text-transform:uppercase;
+  border-bottom:1px solid rgba(110,170,255,.13);background:rgba(255,255,255,.012)}
+.vtable td{padding:11px 16px;border-bottom:1px solid rgba(110,170,255,.06);color:#C6D8EE}
+.vtable tr:last-child td{border-bottom:0}
+.vtable tbody tr{transition:background .3s}
+.vtable tbody tr:hover{background:rgba(34,225,240,.04)}
+.vtable td.item{color:#E4F2FF;font-weight:550}
+.vtable td.std{font-family:var(--mono);color:#8CA0BF;font-size:12px}
+.vtable td.before{font-family:var(--mono);color:#FF9DAE;font-size:12.5px}
+.vtable td.after{font-family:var(--mono);color:#63F0BF;font-size:12.5px;font-weight:650}
+.vtable td.verdict{text-align:right}
+.pass{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:650;color:#63F0BF;
+  padding:3px 10px;border-radius:999px;background:rgba(46,230,168,.1);border:1px solid rgba(46,230,168,.3);white-space:nowrap}
+.pass::before{content:"✓";font-size:10px}
+.vfoot{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;padding:18px 22px;border-top:1px solid rgba(110,170,255,.1);background:rgba(255,255,255,.015)}
+.vfoot .vf{font-size:11.5px;color:#7287A6}
+.vfoot .vf b{display:block;font-size:13px;color:#E4F2FF;font-weight:600;margin-bottom:2px;font-family:var(--sans)}
+.vfoot .vf .sig{font-family:"Segoe Script","Bradley Hand",cursive;font-size:16px;color:#9BF6FF;letter-spacing:.02em}
+.vnote{font-size:11.5px;color:#8CA0BF;padding:12px 22px 18px;border-top:1px dashed rgba(255,176,32,.18);background:rgba(255,176,32,.03)}
+.vnote b{color:#FFC46B}
+
+/* =========================================================
+   14. Stage 9 — knowledge base
+   ========================================================= */
+.kb-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.kb-card{padding:22px}
+.kb-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px dashed rgba(110,170,255,.16);margin-bottom:14px}
+.kb-head .kbno{font-family:var(--mono);font-size:15px;font-weight:700;color:#fff}
+.kb-head .kbcat{font-size:10.5px;color:#9FB4D2;padding:4px 10px;border-radius:999px;background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.3)}
+.kb-meta{display:grid;gap:6px;margin-bottom:14px}
+.kb-meta .r{display:grid;grid-template-columns:92px 1fr;gap:10px;font-size:12px}
+.kb-meta .r span{color:#7287A6;font-size:11.5px}
+.kb-meta .r b{color:#D8E8FA;font-weight:550;font-family:var(--mono);font-size:11.5px}
+.doc-list{display:grid;gap:5px}
+.doc-list li{display:flex;gap:8px;font-size:11.5px;color:#A9BDD9;line-height:1.7}
+.doc-list li::before{content:"▪";color:#6366F1;font-size:10px;line-height:1.9}
+.know{display:grid;gap:11px}
+.know .krow{border-left:2px solid rgba(34,225,240,.4);padding-left:11px}
+.know .k{font-size:10.5px;letter-spacing:.1em;color:#7FDDE9;text-transform:uppercase;margin-bottom:2px}
+.know .v{font-size:12.5px;color:#C6D8EE;line-height:1.75}
+.know .v b{color:#fff;font-weight:600}
+.tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
+.tags span{font-size:11px;padding:4px 11px;border-radius:999px;color:#AFC9E6;background:rgba(59,130,246,.1);border:1px solid rgba(110,170,255,.2)}
+.tags span:nth-child(2n){background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.24)}
+.kb-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px;padding-top:16px;border-top:1px dashed rgba(110,170,255,.14)}
+.kb-stats .ks b{display:block;font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;letter-spacing:-.02em;line-height:1.2}
+.kb-stats .ks span{font-size:10.5px;color:#7287A6;letter-spacing:.04em}
+.feedback{display:grid;gap:9px}
+.feedback li{position:relative;padding:10px 12px 10px 32px;font-size:12px;line-height:1.7;color:#B9CCE4;
+  border-radius:10px;background:rgba(255,255,255,.022);border:1px solid rgba(110,170,255,.12)}
+.feedback li::before{content:"↑";position:absolute;left:12px;top:9px;color:#63F0BF;font-weight:800;font-size:11px}
+.kb-version{display:flex;align-items:center;justify-content:space-between;margin-top:14px;font-size:11px;color:#7287A6}
+.kb-version b{font-family:var(--mono);color:#9BF6FF}
+
+/* =========================================================
+   15. Capabilities + footer
+   ========================================================= */
+.caps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;perspective:1300px}
+.cap{position:relative;padding:26px 24px;border-radius:20px;overflow:hidden;
+  background:linear-gradient(165deg,rgba(17,30,54,.9),rgba(7,13,26,.8));border:1px solid var(--line);
+  transform-style:preserve-3d;transition:transform .5s cubic-bezier(.2,.7,.2,1),box-shadow .5s}
+.cap:hover{box-shadow:0 44px 100px -44px #000,0 0 60px -26px rgba(34,225,240,.5)}
+.cap .cn{font-family:var(--mono);font-size:34px;font-weight:800;letter-spacing:-.04em;line-height:1;
+  background:linear-gradient(150deg,rgba(34,225,240,.95),rgba(99,102,241,.5));-webkit-background-clip:text;background-clip:text;color:transparent}
+.cap h3{font-size:16.5px;font-weight:750;margin:14px 0 8px;letter-spacing:-.01em}
+.cap p{font-size:12.5px;color:#9FB4D2;line-height:1.85}
+.cap .glowline{position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(34,225,240,.7),transparent)}
+
+footer{position:relative;z-index:1;margin-top:70px;padding:44px 0 84px;border-top:1px solid rgba(110,170,255,.1);background:linear-gradient(180deg,transparent,rgba(6,12,24,.7))}
+.foot-inner{width:min(1180px,92vw);margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.foot-brand{display:flex;align-items:center;gap:12px}
+.foot-brand .fb{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:15px;font-weight:800;color:#04121A;
+  background:linear-gradient(140deg,#5FF0FA,#6366F1);box-shadow:0 0 30px -8px rgba(34,225,240,.9)}
+.foot-brand b{display:block;font-size:13.5px;letter-spacing:.02em}
+.foot-brand span{display:block;font-size:11px;color:#6E83A2;letter-spacing:.14em;text-transform:uppercase}
+.foot-note{font-size:11.5px;color:#5F7492;text-align:right;line-height:1.9}
+.foot-note b{color:#8CA0BF;font-weight:550}
+
+/* =========================================================
+   16. Responsive
+   ========================================================= */
+@media (max-width:1080px){
+  .hero-inner{grid-template-columns:1fr;gap:8px;text-align:left}
+  .hero-scene{min-height:400px;order:2;margin-top:10px}
+  .hero{padding-top:80px}
+  .ai-grid,.alarm-grid,.wo-grid,.maint-grid,.kb-grid,.decision-grid{grid-template-columns:1fr}
+  .dispatch-grid{grid-template-columns:1fr}
+  .t-health,.t-axes,.t-tool,.t-proc,.t-env{grid-column:span 12}
+  .t-axes{grid-template-columns:repeat(3,1fr)}
+  .oee-wrap{grid-template-columns:1fr}
+  .vfoot{grid-template-columns:1fr}
+  .caps{grid-template-columns:1fr}
+  .hero-stats{grid-template-columns:repeat(2,1fr);gap:18px}
+}
+@media (max-width:720px){
+  body{font-size:15px}
+  .hero h1{font-size:clamp(32px,9vw,44px)}
+  .hero-scene{min-height:340px}
+  .scene{width:min(380px,88vw)}
+  .holo{width:150px;min-height:100px;padding:10px 11px}
+  .h1{transform:translate(-50%,-50%) translate3d(-92px,-38px,-50px) rotateY(15deg) rotateX(5deg)}
+  .h2{transform:translate(-50%,-50%) translate3d(2px,24px,50px) rotateY(-2deg)}
+  .h3{transform:translate(-50%,-50%) translate3d(96px,-4px,-20px) rotateY(-15deg) rotateX(-4deg)}
+  .plate{width:260px;height:260px}
+  .ring-1{width:310px;height:310px}
+  .ring-2{width:360px;height:360px}
+  .loop-stage{width:300px;height:300px}
+  .loop-node{transform:rotate(calc(var(--i) * 40deg)) translateY(-124px) rotate(calc(var(--i) * -40deg));width:32px;height:32px;margin:-16px;font-size:11px}
+  .loop-node::before{font-size:9.5px;top:38px}
+  .loop-core{width:104px;height:104px}
+  .loop-core b{font-size:18px}
+  .t-axes{grid-template-columns:1fr}
+  .ai-right{grid-template-columns:1fr}
+  .dcard,.dcard.flipped{transform:none}
+  .dcard{height:auto;min-height:240px}
+  .dface{position:relative;height:100%}
+  .dcard.flipped .dface.front{display:none}
+  .dcard .dface.back{transform:none;display:none}
+  .dcard.flipped .dface.back{display:flex}
+  .channels{grid-template-columns:1fr}
+  .dispatch-track{grid-template-columns:repeat(5,1fr);font-size:9.5px}
+  .dispatch-track .tk b{font-size:10px}
+  .kb-stats{grid-template-columns:repeat(2,1fr)}
+  .section{padding:70px 0 20px}
+  .vtable{font-size:11.5px}
+  .vtable th,.vtable td{padding:9px 8px}
+  .vtable th:nth-child(2),.vtable td.std{display:none}
+  .dash-body{grid-template-columns:1fr;padding:10px}
+  .dash-bar .meta{margin-left:0;width:100%}
+  .foot-note{text-align:left}
+  .cursor-glow{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  html{scroll-behavior:auto}
+  .reveal{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<noscript>
+<style>
+  .reveal{opacity:1!important;transform:none!important}
+  .gauge{--v:86!important}
+  .subscores .bar i,.prob .pbar i,.meter i{width:72%!important}
+  .tl-item.todo{opacity:1}
+</style>
+</noscript>
+
+<!-- ============ background ============ -->
+<div class="bg-fx" aria-hidden="true">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="noise"></div>
+  <div class="vignette"></div>
+</div>
+<div class="cursor-glow" id="cursorGlow" aria-hidden="true"></div>
+<div class="progress" aria-hidden="true"><i id="progressBar"></i></div>
+
+<!-- ============ hero ============ -->
+<header class="hero" id="top">
+  <div class="hero-glow" aria-hidden="true"></div>
+  <div class="hero-floor" aria-hidden="true"></div>
+
+  <div class="hero-inner">
+    <div class="hero-copy">
+      <div class="eyebrow reveal"><span class="dot"></span>INDUSTRIAL AI · 智能运维 DEMO</div>
+      <h1 class="reveal">伺服轴生产<br><span class="line2"><em>智能运维</em>全闭环</span></h1>
+      <p class="lead reveal">
+        一条故障工单的完整生命周期：从<b>设备实时监测</b>到<b>异常报警</b>、<b>数字人分析</b>、<b>人工研判</b>，
+        再到<b>工单生成与方案匹配</b>、<b>派工下发</b>、<b>维修过程监控</b>、<b>完工校核</b>，
+        最终<b>知识沉淀迭代</b> —— 九环相扣，越用越准。
+      </p>
+      <div class="hero-actions reveal">
+        <a class="btn btn-primary" href="#s1">进入监控大屏 <span aria-hidden="true">→</span></a>
+        <a class="btn btn-ghost" href="#overview">查看闭环逻辑</a>
+      </div>
+      <ul class="hero-badges reveal">
+        <li><span>X / Y / Z 轴实时参数</span></li>
+        <li><span>刀具磨损 · 转速 · 抖动</span></li>
+        <li><span>AI + 人工双保险研判</span></li>
+        <li><span>工单数据反哺知识库</span></li>
+      </ul>
+    </div>
+
+    <div class="hero-scene reveal" id="heroScene">
+      <div class="scene">
+        <div class="scene-inner">
+          <div class="halo" aria-hidden="true"></div>
+          <div class="plate" aria-hidden="true"></div>
+          <div class="ring ring-1" aria-hidden="true"></div>
+          <div class="ring ring-2" aria-hidden="true"></div>
+          <div class="core" aria-hidden="true"></div>
+          <div class="scan" aria-hidden="true"></div>
+          <div class="floaters">
+            <div class="holo h1">
+              <div class="hl"><span>AXIS X</span><span>正常</span></div>
+              <div class="hv">0.011<small>mm</small></div>
+              <div class="hm"><span><i></i>负载 42%</span><span>38℃</span><span>1.6mm/s</span></div>
+            </div>
+            <div class="holo h2">
+              <div class="hl"><span>AXIS Y</span><span>正常</span></div>
+              <div class="hv">0.013<small>mm</small></div>
+              <div class="hm"><span><i></i>负载 45%</span><span>39℃</span><span>1.7mm/s</span></div>
+            </div>
+            <div class="holo h3 warn">
+              <div class="hl"><span>AXIS Z</span><span>波动</span></div>
+              <div class="hv">0.018<small>mm</small></div>
+              <div class="hm"><span><i></i>负载 58%</span><span>43℃</span><span>2.3mm/s</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-stats reveal">
+    <div class="st"><b>9</b><span>闭环环节 · 端到端</span></div>
+    <div class="st"><b data-count="92" data-suffix="%">92%</b><span>AI 分析置信度</span></div>
+    <div class="st"><b data-count="94" data-suffix="%">94%</b><span>知识库方案匹配度</span></div>
+    <div class="st"><b>4.2<span style="font-size:.5em">min</span></b><span>单件加工节拍</span></div>
+  </div>
+</header>
+
+<!-- ============ dock ============ -->
+<nav class="dock" id="dock" aria-label="章节导航">
+  <a href="#overview">概览</a>
+  <a href="#s1">① 监控大屏</a>
+  <a href="#s2">② 异常报警</a>
+  <a href="#s3">③ 数字人分析</a>
+  <a href="#s4">④ 人工研判</a>
+  <a href="#s5">⑤ 工单方案</a>
+  <a href="#s6">⑥ 审核下发</a>
+  <a href="#s7">⑦ 过程监控</a>
+  <a href="#s8">⑧ 完工校核</a>
+  <a href="#s9">⑨ 知识沉淀</a>
+</nav>
+
+<main>
+<!-- ============ overview ============ -->
+<section class="sec overview" id="overview">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="kicker"><span class="idx">◎</span>演示主线</div>
+      <h2>一条故障工单的<em>完整生命周期</em></h2>
+      <p class="sec-sub">整套 Demo 围绕一台伺服轴加工设备的一次异常展开，按「感知 → 预警 → 分析 → 决策 → 处置 → 验收 → 沉淀」七个环节串联，最终形成可持续进化的运维闭环。</p>
+    </div>
+
+    <div class="ov-grid">
+      <div class="card ov-card reveal" data-tilt>
+        <h3><span class="sq"></span>五个宏观阶段 · 九个能力环节</h3>
+        <p class="desc">点击右侧节点可直达对应演示环节</p>
+        <div class="flow">
+          <div class="flow-step">
+            <span class="fnum">1</span>
+            <div class="fmain">
+              <div class="fname">全域感知</div>
+              <div class="fdesc">大屏实时监测轴与刀具，毫秒级刷新</div>
+            </div>
+            <div class="fstages"><b>01</b></div>
+          </div>
+          <div class="flow-step">
+            <span class="fnum">2</span>
+            <div class="fmain">
+              <div class="fname">预警分析</div>
+              <div class="fdesc">阈值越限自动报警 · 数字人结构化解析</div>
+            </div>
+            <div class="fstages"><b>02</b><b>03</b></div>
+          </div>
+          <div class="flow-step">
+            <span class="fnum">3</span>
+            <div class="fmain">
+              <div class="fname">决策派工</div>
+              <div class="fdesc">人工确认发起维修 · 生成工单匹配方案</div>
+            </div>
+            <div class="fstages"><b>04</b><b>05</b></div>
+          </div>
+          <div class="flow-step">
+            <span class="fnum">4</span>
+            <div class="fmain">
+              <div class="fname">处置验收</div>
+              <div class="fdesc">审核下发 · 过程监管 · 多维数据校核闭环</div>
+            </div>
+            <div class="fstages"><b>06</b><b>07</b><b>08</b></div>
+          </div>
+          <div class="flow-step">
+            <span class="fnum">5</span>
+            <div class="fmain">
+              <div class="fname">沉淀进化</div>
+              <div class="fdesc">归档知识库 · AI 持续迭代、越用越准</div>
+            </div>
+            <div class="fstages"><b>09</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card ov-card reveal" data-tilt>
+        <div class="loop">
+          <div class="loop-stage">
+            <div class="loop-ring"></div>
+            <div class="loop-ring b"></div>
+            <div class="loop-core"><div><b>9</b><span>CLOSED LOOP</span></div></div>
+            <button class="loop-node" style="--i:0" data-goto="#s1" data-label="监控大屏">01</button>
+            <button class="loop-node" style="--i:1" data-goto="#s2" data-label="异常报警">02</button>
+            <button class="loop-node" style="--i:2" data-goto="#s3" data-label="数字人分析">03</button>
+            <button class="loop-node" style="--i:3" data-goto="#s4" data-label="人工研判">04</button>
+            <button class="loop-node" style="--i:4" data-goto="#s5" data-label="工单方案">05</button>
+            <button class="loop-node" style="--i:5" data-goto="#s6" data-label="审核下发">06</button>
+            <button class="loop-node" style="--i:6" data-goto="#s7" data-label="过程监控">07</button>
+            <button class="loop-node" style="--i:7" data-goto="#s8" data-label="完工校核">08</button>
+            <button class="loop-node" style="--i:8" data-goto="#s9" data-label="知识沉淀">09</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ stage 1 ============ -->
+<section class="sec" id="s1">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="kicker"><span class="idx">01</span>设备全域实时可视化监控大屏</div>
+      <h2>无人值守 · 全域可视 · <em>实时感知</em></h2>
+      <p class="sec-sub">覆盖车间核心加工设备，数据毫秒级刷新，以颜色区分设备工况：<span class="tagline">绿色正常、黄色波动、红色异常</span>。伺服轴精密加工场景突出「多轴 + 刀具」一体化采集，所有指标与工艺阈值、安全标准绑定，为后续自动报警提供判定依据。</p>
+    </div>
+
+    <div class="card dash reveal" data-tilt>
+      <div class="dash-bar">
+        <div class="dev"><span class="led"></span>CNC-012 加工单元</div>
+        <div class="meta">
+          <span>3 号工位 · <b>精镗孔</b></span>
+          <span>自动循环 · 白班</span>
+          <span>本次开机 <b>2h18m</b> / 累计 <b>12,680h</b></span>
+        </div>
+        <div class="clock" id="dashClock">14:31:56</div>
+      </div>
+
+      <div class="dash-body">
+        <!-- health -->
+        <div class="tile t-health">
+          <div class="tile-h"><span>健康度</span><b>HEALTH</b></div>
+          <div class="ring-health">
+            <div class="gauge" id="healthGauge" style="--v:0"><i>86<small>分</small></i></div>
+            <div class="health-side">
+              <div class="lvl">良好 · 健康</div>
+              <div class="trend">趋势：平稳 → 波动前兆</div>
+            </div>
+          </div>
+          <div class="subscores">
+            <div class="s"><span>X</span><div class="bar"><i data-w="90"></i></div><b>90</b></div>
+            <div class="s"><span>Y</span><div class="bar"><i data-w="88"></i></div><b>88</b></div>
+            <div class="s warn"><span>Z</span><div class="bar"><i data-w="82"></i></div><b>82</b></div>
+            <div class="s warn"><span>刀</span><div class="bar"><i data-w="78"></i></div><b>78</b></div>
+            <div class="s"><span>辅</span><div class="bar"><i data-w="92"></i></div><b>92</b></div>
+          </div>
+        </div>
+
+        <!-- axes -->
+        <div class="t-axes">
+          <div class="axis">
+            <div class="ax-top"><span class="ax-name">AXIS X</span><span class="ax-st">正常</span></div>
+            <div class="ax-rows">
+              <div class="ax-row"><span>位置</span><b>125.430<small>mm</small></b></div>
+              <div class="ax-row"><span>定位偏差</span><b>0.011mm</b></div>
+              <div class="ax-row"><span>进给 / 转速</span><b>1200 · 3000</b></div>
+              <div class="ax-row"><span>负载 / 扭矩</span><b>42% · 3.1N·m</b></div>
+              <div class="ax-row"><span>电机温度</span><b>38℃</b></div>
+              <div class="ax-row"><span>振动加速度</span><b>1.6mm/s</b></div>
+            </div>
+            <div class="ax-foot"><span class="mini">润滑正常</span><span>6.2A</span></div>
+          </div>
+          <div class="axis">
+            <div class="ax-top"><span class="ax-name">AXIS Y</span><span class="ax-st">正常</span></div>
+            <div class="ax-rows">
+              <div class="ax-row"><span>位置</span><b>88.215<small>mm</small></b></div>
+              <div class="ax-row"><span>定位偏差</span><b>0.013mm</b></div>
+              <div class="ax-row"><span>进给 / 转速</span><b>1200 · 3000</b></div>
+              <div class="ax-row"><span>负载 / 扭矩</span><b>45% · 3.4N·m</b></div>
+              <div class="ax-row"><span>电机温度</span><b>39℃</b></div>
+              <div class="ax-row"><span>振动加速度</span><b>1.7mm/s</b></div>
+            </div>
+            <div class="ax-foot"><span class="mini">润滑正常</span><span>6.5A</span></div>
+          </div>
+          <div class="axis warn">
+            <div class="ax-top"><span class="ax-name">AXIS Z</span><span class="ax-st">波动</span></div>
+            <div class="ax-rows">
+              <div class="ax-row"><span>位置</span><b>42.060<small>mm</small></b></div>
+              <div class="ax-row"><span>定位偏差</span><b class="up">0.018mm</b></div>
+              <div class="ax-row"><span>进给 / 转速</span><b>800 · 2400</b></div>
+              <div class="ax-row"><span>负载 / 扭矩</span><b class="up">58% · 4.6N·m</b></div>
+              <div class="ax-row"><span>电机温度</span><b class="up">43℃</b></div>
+              <div class="ax-row"><span>振动加速度</span><b class="up">2.3mm/s</b></div>
+            </div>
+            <div class="ax-foot"><span class="mini">润滑偏低</span><span>7.8A</span></div>
+          </div>
+        </div>
+
+        <!-- tool -->
+        <div class="tile t-tool">
+          <div class="tile-h"><span>刀具状态</span><b>2 号精镗刀</b></div>
+          <div class="kv">
+            <div class="r"><span>剩余寿命</span><b class="am">22%</b></div>
+            <div class="r"><span>后刀面磨损 VB</span><b class="am">0.14mm</b></div>
+            <div class="r"><span>切削参数</span><b>S3200 · F0.12</b></div>
+            <div class="r"><span>切削深度</span><b>1.8mm</b></div>
+            <div class="r"><span>累计加工 / 换刀</span><b>1,240 件 · 3 次</b></div>
+            <div class="r"><span>刀具振动</span><b class="am">2.0mm/s</b></div>
+          </div>
+          <div class="meter"><i data-w="22"></i></div>
+          <div class="meter-lbl"><span>寿命余量</span><span>接近换刀阈值</span></div>
+        </div>
+
+        <!-- process -->
+        <div class="tile t-proc">
+          <div class="tile-h"><span>工艺与质量</span><b>PROCESS</b></div>
+          <div class="kv">
+            <div class="r"><span>产品 / 批次</span><b>SA-207 / PC-261120-07</b></div>
+            <div class="r"><span>程序号 / 节拍</span><b>O0127 · 4.2min</b></div>
+            <div class="r"><span>当日产量</span><b>36 / 40 件</b></div>
+            <div class="r"><span>良率</span><b class="ok">97.2%</b></div>
+            <div class="r"><span>关键尺寸</span><b class="ok">φ20H7 合格</b></div>
+            <div class="r"><span>加工件序号</span><b>第 1,241 件</b></div>
+          </div>
+        </div>
+
+        <!-- env -->
+        <div class="tile t-env">
+          <div class="tile-h"><span>环境与辅助系统</span><b>AUX</b></div>
+          <div class="kv">
+            <div class="r"><span>环境温 / 湿度</span><b>24.5℃ · 52%RH</b></div>
+            <div class="r"><span>冷却液</span><b>0.35MPa · 26℃</b></div>
+            <div class="r"><span>液压油</span><b>5.2MPa · 41℃</b></div>
+            <div class="r"><span>气源压力</span><b>0.62MPa</b></div>
+            <div class="r"><span>辅助系统健康</span><b class="ok">92 分</b></div>
+            <div class="r"><span>运行模式</span><b>自动循环</b></div>
+          </div>
+        </div>
+
+        <!-- oee -->
+        <div class="tile t-oee">
+          <div class="tile-h"><span>运行统计 · 实时趋势</span><b>OEE / ALARM</b></div>
+          <div class="oee-wrap">
+            <div>
+              <div class="oee-nums">
+                <div class="o"><b>81.5%</b><span>设备综合效率 OEE</span></div>
+                <div class="o"><b>1 <small style="font-size:.5em;color:#FFC46B">次</small></b><span>当日报警（提示级）</span></div>
+                <div class="o"><b>97.2%</b><span>良率 / 合格率</span></div>
+              </div>
+              <div class="spark-legend"><span class="l1"><i></i>Z 轴定位偏差</span><span class="l2"><i></i>刀具磨损 VB</span></div>
+            </div>
+            <div>
+              <svg class="spark" viewBox="0 0 320 74" preserveAspectRatio="none" aria-label="趋势曲线">
+                <defs>
+                  <linearGradient id="gA" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#22E1F0" stop-opacity=".38"/>
+                    <stop offset="100%" stop-color="#22E1F0" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path id="sparkFill" fill="url(#gA)" d=""/>
+                <path id="sparkA" fill="none" stroke="#22E1F0" stroke-width="1.6" d=""/>
+                <path id="sparkB" fill="none" stroke="#A855F7" stroke-width="1.4" stroke-dasharray="4 4" d=""/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chips reveal">
+      <span>实时数据采集</span><span>多轴协同监测</span><span>工况颜色分级</span><span>工艺阈值绑定</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ stage 2 ============ -->
+<section class="sec" id="s2">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="kicker"><span class="idx">02</span>参数超标 · 系统自动触发报警</div>
+      <h2>异常触发 · 精准定位 · <em>有据可溯</em></h2>
+      <p class="sec-sub">某一伺服轴定位参数偏移、刀具磨损超出工业标准阈值，运行数据出现异常波动。平台监测到参数偏离预设阈值后即刻触发智能报警，异常设备模块在大屏上高亮闪烁并弹出报警弹窗。</p>
+    </div>
+
+    <div class="alarm-grid">
+      <div class="alarm-card reveal pulse" data-tilt id="alarmCard">
+        <div class="alarm-top">
+          <span class="badge sev">严重 · 红色报警</span>
+          <span class="badge dim">未确认</span>
+        </div>
+        <h3>Z 轴定位偏差 + 2 号刀具磨损</h3>
+        <div class="sub">ALM-20261120-037 · 2026-11-20 14:32:08</div>
+
+        <div class="alarm-rows">
+          <div class="r"><span>设备 / 工位</span><b>CNC-012 加工单元 · 3 号工位</b></div>
+          <div class="r"><span>报警来源</span><b>Z 轴 · 刀具 · 辅助系统</b></div>
+          <div class="r"><span>报警类别</span><b>定位偏差 + 刀具磨损</b></div>
+          <div class="r"><span>触发规则</span><b>固定阈值 + 趋势越限</b></div>
+          <div class="r"><span>持续时长</span><b>00:01:42（持续扩大）</b></div>
+          <div class="r"><span>关联批次</span><b>PC-261120-07 · 精镗伺服轴孔</b></div>
+          <div class="r"><span>历史同类</span><b>近 90 天 <em>1</em> 次</b></div>
+        </div>
+
+        <div class="alarm-impact">
+          <b>潜在影响：</b>可能造成同轴度与表面粗糙度超差，存在尺寸超差和批量报废风险，建议尽快停机研判。
+        </div>
+
+        <div class="alarm-actions">
+          <button class="btn-sm" type="button">确认报警</button>
+          <button class="btn-sm btn-danger" type="button" data-goto="#s3">触发数字人分析 →</button>
+          <button class="btn-sm" type="button" data-goto="#s8">查看趋势曲线</button>
+        </div>
+      </div>
+
+      <div class="card reveal" data-tilt style="padding:22px">
+        <div class="tile-h" style="margin-bottom:6px"><span>异常参数明细</span><b>THRESHOLD · ACTUAL</b></div>
+        <table class="ptable">
+          <caption>采集时刻逐项留存，偏差量与超限比例可追溯</caption>
+          <thead>
+            <tr><th>参数项</th><th>标准阈值</th><th>实测</th><th>超限</th><th>采集</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Z 轴定位偏差</td>
+              <td class="num">≤0.020mm</td>
+              <td class="num"><span class="over">0.042mm</span></td>
+              <td><span class="pct">+110%</span></td>
+              <td class="num">14:32:06</td>
+            </tr>
+            <tr>
+              <td>2 号刀后刀面磨损 VB</td>
+              <td class="num">≤0.15mm</td>
+              <td class="num"><span class="over">0.18mm</span></td>
+              <td><span class="pct">+20%</span></td>
+              <td class="num">14:32:07</td>
+            </tr>
+            <tr>
+              <td>刀具振动幅值</td>
+              <td class="num">≤3.0mm/s</td>
+              <td class="num"><span class="over">3.6mm/s</span></td>
+              <td><span class="pct">+20%</span></td>
+              <td class="num">14:32:07</td>
+            </tr>
+            <tr>
+              <td>Z 轴电机温升</td>
+              <td class="num">≤55℃</td>
+              <td class="num"><span class="over">58℃</span></td>
+              <td><span class="pct">+5.5%</span></td>
+              <td class="num">14:32:08</td>
+            </tr>
+            <tr>
+              <td>Z 轴润滑状态</td>
+              <td class="num">正常</td>
+              <td class="num"><span class="over">偏低</span></td>
+              <td><span class="pct">预警</span></td>
+              <td class="num">14:32:08</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="alarm-impact" style="background:rgba(34,225,240,.06);border-color:rgba(34,225,240,.2);color:#B9D7EA;margin-top:14px">
+          <b style="color:#9BF6FF">数据快照：</b>报警前 30 分钟趋势已连续上行，非瞬时波动；峰值出现在 14:31:58，当前值仍高于阈值。
+        </div>
+
+        <div class="trend-box">
+          <div class="trend-h"><span>报警前 30 分钟 · Z 轴定位偏差趋势</span><b>THRESHOLD 0.020mm</b></div>
+          <svg class="trend-svg" viewBox="0 0 420 104" preserveAspectRatio="none" aria-label="报警前定位偏差趋势曲线">
+            <defs>
+              <linearGradient id="gAlarm" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#FF4D6D" stop-opacity=".34"/>
+                <stop offset="100%" stop-color="#FF4D6D" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <line x1="0" y1="62" x2="420" y2="62" stroke="rgba(255,176,32,.55)" stroke-dasharray="5 5" stroke-width="1"/>
+            <text x="6" y="57" fill="#FFB020" font-size="9" font-family="monospace">阈值 0.020mm</text>
+            <path d="M0,92 L60,88 L110,84 L160,80 L200,74 L240,68 L270,63 L300,50 L330,40 L360,30 L390,21 L420,15 L420,104 L0,104 Z" fill="url(#gAlarm)"/>
+            <path d="M0,92 L60,88 L110,84 L160,80 L200,74 L240,68 L270,63 L300,50 L330,40 L360,30 L390,21 L420,15"
+                  fill="none" stroke="#FF6B85" stroke-width="1.8" stroke-linejoin="round"/>
+            <circle cx="420" cy="15" r="3.2" fill="#FF4D6D"/>
+            <circle cx="420" cy="15" r="7" fill="none" stroke="rgba(255,77,109,.5)" stroke-width="1"/>
+          </svg>
+          <div class="trend-x"><span>14:02</span><span>14:12</span><span>14:22</span><span>14:32 · 0.042</span></div>
+        </div>
+
+        <div class="chips" style="margin-top:14px">
+          <span>自动阈值判定</span><span>异常快照留存</span><span>风险分级</span><span>工序关联定位</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ stage 3 ============ -->
+<section class="sec" id="s3">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="kicker"><span class="idx">03</span>点击报警 · 数字人智能解析故障</div>
+      <h2>AI 分析 · 自动拆解故障 · <em>结构化结论</em></h2>
+      <p class="sec-sub">一键触发工业数字人分析引擎：自动调取该设备历史运行数据、工艺标准与同类故障案例，对本次报警进行全方位拆解，输出结构化诊断报告 —— 无需人工逐项翻台账。</p>
+    </div>
+
+    <div class="ai-grid">
+      <div class="card ai-left reveal" data-tilt>
+        <div class="conf-wrap">
+          <div class="conf-ring">
+            <svg width="112" height="112" viewBox="0 0 112 112">
+              <circle cx="56" cy="56" r="48" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="8"/>
+              <circle id="confArc" cx="56" cy="56" r="48" fill="none" stroke="url(#confGrad)" stroke-width="8"
+                      stroke-linecap="round" stroke-dasharray="301.6" stroke-dashoffset="301.6"/>
+              <defs>
+                <linearGradient id="confGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#22E1F0"/><stop offset="100%" stop-color="#A855F7"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="txt"><b data-count="92" data-suffix="%">92%</b><span>置信度</span></div>
+          </div>
+          <div>
+            <div style="font-size:10.5px;letter-spacing:.16em;color:#7287A6">报告编号</div>
+            <div style="font-family:var(--mono);font-size:13px;color:#E4F2FF">AIR-20261120-037</div>
+            <div style="font-size:11.5px;color:#8CA0BF;margin-top:4px">生成 14:32:25 · 92 分</div>
+          </div>
+        </div>
+
+        <div class="ai-verdict">
+          <b>严重 · 建议停机检修。</b>综合判定为 <b>Z 轴定位偏差 + 2 号刀具磨损</b> 的复合故障，不建议继续自动加工。
+        </div>
+
+        <div>
+          <div class="prob-title">诱因可能性排序</div>
+          <div class="prob"><span class="pname"><i></i>刀具到寿磨损</span><span class="pval">55%</span><div class="pbar"><i data-w="55"></i></div></div>
+          <div class="prob"><span class="pname"><i></i>丝杠 / 轴承磨损</span><span class="pval">28%</span><div class="pbar"><i data-w="28"></i></div></div>
+          <div class="prob"><span class="pname"><i></i>润滑不足</span><span class="pval">12%</span><div class="pbar"><i data-w="12"></i></div></div>
+          <div class="prob"><span class="pname"><i></i>装夹 / 对刀偏移</span><span class="pval">5%</span><div class="pbar"><i data-w="5"></i></div></div>
+        </div>
+
+        <div class="src-tags">
+          <span>实时传感数据</span><span>近 7 天历史</span><span>工艺标准库</span><span>同类案例库</span>
+        </div>
+      </div>
+
+      <div class="ai-right">
+        <div class="card ai-block reveal">
+          <h4>一、故障诊断拆解</h4>
+          <ul class="ai-list">
+            <li><b>故障类型：</b>Z 轴定位精度下降，叠加刀具到寿磨损</li>
+            <li><b>定位依据：</b>Z 轴偏差 <em>0.042mm</em>，超阈值约 <em>110%</em>；刀具 VB <em>0.18mm</em>，超限值约 <em>20%</em></li>
+            <li><b>趋势判断：</b>近 30 分钟偏差呈持续扩大趋势，非瞬时波动</li>
+            <li><b>案例匹配：</b>命中 <em>CASE-2026-0891</em>（同型号设备同类定位偏差）</li>
+          </ul>
+        </div>
+
+        <div class="card ai-block reveal">
+          <h4>三、影响评估</h4>
+          <ul class="ai-list">
+            <li><b>加工精度：</b>同轴度、孔位尺寸存在超差风险</li>
+            <li><b>表面质量：</b>表面粗糙度可能恶化</li>
+            <li><b>良率风险：</b>继续运行预估不合格率上升，存在批量报废隐患</li>
+            <li><b>生产安排：</b>建议停机检修，避免带病加工</li>
+          </ul>
+        </div>
+
+        <div class="card ai-block wide reveal">
+          <h4>四、处置建议</h4>
+          <ul class="ai-list" style="grid-template-columns:1fr 1fr;display:grid">
+            <li>立即暂停自动循环，设备转入待修状态</li>
+            <li>优先更换 2 号刀具，复核对刀与装夹</li>
+            <li>检修后复测 Z 轴定位精度、温升与振动</li>
+            <li>过渡阶段可降低进给 / 转速，不建议长时运行</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="chips reveal">
+      <span>数字人交互</span><span>历史数据关联</span><span>同类案例匹配</span><span>结构化报告</span>
+    </div>
+  </div>
+</section>
+<!-- ============ stage 4 ============ -->
+<section class="sec" id="s4">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="kicker"><span class="idx">04</span>人工研判 · 双保险确认是否发起维修</div>
+      <h2>人机协同 · AI 分析 + <em>人工复核</em></h2>
+      <p class="sec-sub">数字人分析完成后，界面进入人工研判确认端口。运维人员结合分析报告、现场工况与排产计划做综合判断 —— 保留人工决策权，避免纯自动化运维的误判和误停机；点击卡片可翻转查看决策后果（点击右侧面可翻回）。</p>
+    </div>
+
+    <div class="decision-grid reveal">
+      <div class="dcard no" data-flip tabindex="0" role="button" aria-label="无需维修方案说明">
+        <div class="dface front">
+          <div class="dhead">
+            <div class="dicon">✓</div>
+            <div>
+              <p>DECISION A</p>
+              <h3>无需维修</h3>
+            </div>
+          </div>
+          <div class="dbody">
+            判定为<b>轻微参数波动</b>，未构成生产隐患。<br>
+            可一键忽略报警，系统记录本次异常并纳入设备状态趋势分析。
+          </div>
+          <div class="dcta">处置：忽略报警 · 记录异常 · 纳入趋势</div>
+          <div class="dfoot"><span>适用：偏差在容差带内、趋势平稳</span><span class="hint">翻转</span></div>
+        </div>
+        <div class="dface back">
+          <div class="dhead">
+            <div class="dicon">✓</div>
+            <div><p>CONSEQUENCE</p><h3>忽略后的动作</h3></div>
+          </div>
+          <div class="dbody">
+            报警状态置为「已忽略」，<b>不丢弃</b>：<br>
+            · 本次异常写入设备健康趋势样本<br>
+            · AI 报告与快照留档，供后续比对<br>
+            · 同类报警累计达阈值时自动升级提醒
+          </div>
+          <div class="dfoot"><span>决策留痕 · 可回溯研判依据</span><span class="hint">翻回</span></div>
+        </div>
+      </div>
+
+      <div class="dcard yes" data-flip tabindex="0" role="button" aria-label="需要维修方案说明">
+        <div class="dface front">
+          <div class="dhead">
+            <div class="dicon">!</div>
+            <div>
+              <p>DECISION B</p>
+              <h3>需要维修</h3>
+            </div>
+          </div>
+          <div class="dbody">
+            判定存在<b>生产隐患、需停机检修</b>。<br>
+            点击确认生成维修工单，进入标准化运维流程：工单 → 方案 → 审核 → 派工。
+          </div>
+          <div class="dcta">处置：生成工单 · 匹配方案 · 审核下发</div>
+          <div class="dfoot"><span>适用：超限 + 趋势持续恶化</span><span class="hint">翻转</span></div>
+        </div>
+        <div class="dface back">
+          <div class="dhead">
+            <div class="dicon">!</div>
+            <div><p>CONSEQUENCE</p><h3>确认后的动作</h3></div>
+          </div>
+          <div class="dbody">
+            自动生成 <b>WO-20261120-037</b>，并匹配知识库方案：<br>
+            · 关联报警 ALM-20261120-037<br>
+            · 关联分析报告 AIR-20261120-037（92%）<br>
+            · 紧急程度：严重 · 当日班次内完成
+          </div>
+          <div class="dfoot"><span>值班运维 王工 · 14:35 确认</span><span class="hint">翻回</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chips reveal" style="margin-top:22px">
+      <span>人机协同</span><span>人工决策留痕</span><span>趋势数据留存</span><span>误判兜底</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ stage 5 ============ -->
+<section class="sec" id="s5">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="kicker"><span class="idx">05</span>自动生成工单 · 知识库匹配最优维修方案</div>
+      <h2>工单标准化生成 · <em>方案智能检索</em></h2>
+      <p class="sec-sub">基于报警数据、设备型号与故障类型自动标准化生成维修工单，信息自动填充；同时联动工业运维知识库，检索与本次故障高度适配的标准化维修方案，方案与工单关联留存。</p>
+    </div>
+
+    <div class="wo-grid">
+      <div class="card wo-card reveal" data-tilt>
+        <div class="wo-head">
+          <div>
+            <div class="no">WO-20261120-037</div>
+            <div style="font-size:11px;color:#7E93B3;letter-spacing:.06em;margin-top:3px">维修工单 · 自动填充</div>
+          </div>
+          <span class="st">待审核下发</span>
+        </div>
+
+        <div class="wo-meta">
+          <div class="r"><span>关联报警</span><b>ALM-20261120-037</b></div>
+          <div class="r"><span>分析报告</span><b>AIR-20261120-037 · 92%</b></div>
+          <div class="r"><span>设备 / 工位</span><b class="p">CNC-012 伺服轴加工单元 · 3 号工位</b></div>
+          <div class="r"><span>故障类型</span><b class="p">Z 轴定位偏差 + 2 号刀具磨损（复合）</b></div>
+          <div class="r"><span>紧急程度</span><b style="color:#FFC46B">严重 · 建议停机检修</b></div>
+          <div class="r"><span>完成时限</span><b>当日班次内</b></div>
+          <div class="r"><span>报修人 / 时间</span><b>值班运维 王工 · 14:35</b></div>
+          <div class="r"><span>加工批次</span><b>PC-261120-07</b></div>
+        </div>
+
+        <div class="wo-desc">
+          Z 轴定位偏差 0.042mm（阈值 ≤0.020mm），2 号刀后刀面磨损 VB 0.18mm（限值 0.15mm），伴随振动幅值偏高，存在同轴度与尺寸超差风险。
+        </div>
+
+        <div class="wo-items">
+          <h4>待维修事项</h4>
+          <ul>
+            <li><i>1</i>更换 2 号磨损刀具并完成对刀复核</li>
+            <li><i>2</i>检查 Z 轴丝杠、轴承与导轨润滑状态</li>
+            <li><i>3</i>复测 Z 轴定位精度、温升与振动</li>
+            <li><i>4</i>试加工首件并确认尺寸、粗糙度合格</li>
+          </ul>
+        </div>
+
+        <div class="wo-attach">
+          <h4 style="width:100%">工单附件</h4>
+          <span>报警前后快照</span><span>趋势曲线</span><span>数字人分析报告</span><span>历史案例</span><span>匹配维修方案</span>
+        </div>
+      </div>
+
+      <div class="card plan reveal" data-tilt>
+        <div class="plan-head">
+          <div class="l">
+            <div>
+              <div class="pk">知识库匹配方案</div>
+              <div class="pn">PLN-2026-0891-A</div>
+              <div style="font-size:10.5px;color:#7E93B3;margin-top:2px">版本 V2.3 · 标准案例 + 历史工单沉淀</div>
+            </div>
+          </div>
+          <div class="plan-match">
+            <div><div class="mp">94%</div><small>匹配度</small></div>
+          </div>
+        </div>
+
+        <div class="plan-body">
+          <div class="plan-sec">
+            <h4>适用范围</h4>
+            <p>同型号 CNC-012 伺服轴加工单元；Z 轴定位偏差叠加刀具磨损复合故障。</p>
+          </div>
+
+          <div class="plan-sec">
+            <h4>维修前准备</h4>
+            <div class="skill">
+              <span>持证机修工 1 名</span><span>调机 / 质检 1 名</span>
+              <span>扭矩扳手</span><span>百分表 / 千分表</span><span>对刀仪</span><span>润滑加注枪</span><span>振动测温仪</span>
+            </div>
+          </div>
+
+          <div class="plan-sec">
+            <h4>分步维修流程 <span class="n">6 STEPS</span></h4>
+            <ol class="plan-steps">
+              <li>停机断电挂牌，清理加工区域，确认冷却液与气源关闭。</li>
+              <li>拆卸 2 号刀具，检查刀杆与刀夹磨损，更换刀片并完成对刀复核。</li>
+              <li>检查 Z 轴导轨、丝杠润滑状态，补充润滑脂并清洁导轨。</li>
+              <li>百分表打表复测 Z 轴定位精度与反向间隙，记录温升、振动数据。</li>
+              <li>复装后手动低速试运行，确认无异响、无报警。</li>
+              <li>试加工首件，质检同轴度、孔径与表面粗糙度。</li>
+            </ol>
+          </div>
+
+          <div class="plan-sec">
+            <h4>配件 / 物料清单</h4>
+            <table class="parts">
+              <thead><tr><th>配件名称</th><th>规格 / 型号</th><th>数量</th><th>库存</th></tr></thead>
+              <tbody>
+                <tr><td>精镗刀片</td><td>涂层刀片 · 适配 2 号刀杆</td><td>2 片</td><td><span class="stock">有库存</span></td></tr>
+                <tr><td>导轨润滑脂</td><td>专用锂基脂</td><td>1 支</td><td><span class="stock">有库存</span></td></tr>
+                <tr><td>主轴密封件</td><td>同型号备件包</td><td>1 套</td><td><span class="stock q">待确认</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="plan-sec">
+            <h4>安全注意事项</h4>
+            <ul class="safety">
+              <li>检修前断电挂牌，严禁带电作业</li>
+              <li>防止拆卸刀具坠落，妥善收存刀片</li>
+              <li>复检完成前不得恢复自动循环</li>
+              <li>作业过程佩戴相应防护用品</li>
+            </ul>
+          </div>
+
+          <div class="plan-sec">
+            <h4>质量验收标准</h4>
+            <div class="qa">
+              <span>定位偏差 ≤0.020mm</span><span>温升 / 振动在阈值内</span><span>首件尺寸与粗糙度合格</span><span>连续加工无同类报警</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chips reveal">
+      <span>工单自动生成</span><span>知识库方案匹配</span><span>配件工具清单</span><span>验收标准内置</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ stage 6 ============ -->
+<section class="sec" id="s6">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="kicker"><span class="idx">06</span>工单审核 · 确认无误后精准指派下发</div>
+      <h2>二次核验 · 按技能排班<em>精准派单</em></h2>
+      <p class="sec-sub">对自动生成的工单与匹配方案进行二次核验，核对故障信息、维修步骤、所需物料与作业要求；确认无误后一键下发。结合人员排班、技能标签、地理位置精准指派，工单实时推送至移动端与 PC 端。</p>
+    </div>
+
+    <div class="card dispatch reveal" data-tilt>
+      <div class="dispatch-grid">
+        <div class="dsec">
+          <h4>审核核验项</h4>
+          <ul class="check-list">
+            <li><span class="ck">✓</span>故障信息与报警快照、分析报告一致，无矛盾项</li>
+            <li><span class="ck">✓</span>维修步骤覆盖全部待维修事项，无遗漏工序</li>
+            <li><span class="ck">✓</span>所需物料已核对库存，安全与验收标准已内置</li>
+          </ul>
+
+          <h4 style="margin-top:20px">技能 / 排班匹配</h4>
+          <div class="person">
+            <div class="av">李</div>
+            <div>
+              <div class="pn2">李师傅 · 持证机修工</div>
+              <div class="pd">3 号工位 · 距离 120m · 当前空闲</div>
+            </div>
+            <span class="pstate">在岗可派</span>
+          </div>
+          <div class="skill">
+            <span>伺服轴维修</span><span>精镗刀对刀</span><span>精度打表</span><span>润滑保养</span>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <h4>多端触达</h4>
+          <div class="channels">
+            <div class="ch"><i></i>移动端 · 工单推送</div>
+            <div class="ch"><i></i>PC 端 · 任务同步</div>
+            <div class="ch"><i></i>大屏 · 状态实时刷新</div>
+            <div class="ch"><i></i>消息中心 · 超时提醒</div>
+          </div>
+
+          <h4 style="margin-top:20px">提炼要点</h4>
+          <ul class="notes" style="margin-top:0">
+            <li>下发前设置审核关卡，确保工单与方案质量</li>
+            <li>派工匹配综合考虑技能与在岗状态，提升一次维修成功率</li>
+            <li>消息多端触达，任务状态实时同步</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="dispatch-track" id="dispatchTrack">
+        <span class="beam" id="dispatchBeam"></span>
+        <div class="tk done"><span class="dot"></span><b>生成</b>14:35</div>
+        <div class="tk done"><span class="dot"></span><b>审核</b>14:36</div>
+        <div class="tk" id="tkDispatch"><span class="dot"></span><b>派工下发</b>待执行</div>
+        <div class="tk" id="tkAccept"><span class="dot"></span><b>接单</b>—</div>
+        <div class="tk" id="tkArrive"><span class="dot"></span><b>进场</b>—</div>
+      </div>
+
+      <div class="dispatch-actions">
+        <button class="btn btn-primary" type="button" id="dispatchBtn">审核通过 · 一键下发</button>
+        <span class="note" id="dispatchNote">下发后工单状态将同步至移动端与 PC 端</span>
+      </div>
+    </div>
+
+    <div class="chips reveal">
+      <span>二次核验</span><span>技能排班匹配</span><span>多端触达</span><span>任务状态同步</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ stage 7 ============ -->
+<section class="sec" id="s7">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="kicker"><span class="idx">07</span>维修全过程可视化 · 实时追踪作业状态</div>
+      <h2>远程掌握进度 · <em>作业透明可追溯</em></h2>
+      <p class="sec-sub">维修人员接单进场后，作业全程纳入平台可视化监管：工单状态流转、人员与位置、阶段进度与耗时、配件领用、操作留痕、中间检测数据、停滞预警，管理人员无需现场巡查。</p>
+    </div>
+
+    <div class="maint-grid">
+      <div class="card maint reveal" data-tilt>
+        <div class="maint-top">
+          <div class="maint-state"><span class="sp"></span><span class="mstate-txt">维修中 · 精度复测</span></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn-sm" type="button" id="maintPlay">▶ 推进演示</button>
+          </div>
+        </div>
+        <div class="progressline"><i id="maintBar" style="width:65%"></i></div>
+        <div class="pl-lbl"><span id="maintPct">进度 65% · 已完成 4/6 步</span><span>已耗时 38 分钟 · 3 号工位 · 留痕 3 张</span></div>
+
+        <div class="tl" id="maintTl">
+          <div class="tl-item done">
+            <span class="dot">01</span>
+            <div class="tmain">
+              <div class="ttime">14:35</div>
+              <div class="ttitle">工单创建 · 待接单 <span class="tstat">已完成</span></div>
+              <div class="tdesc">系统依据报警与分析报告生成 WO-20261120-037，进入待接单队列。</div>
+            </div>
+          </div>
+          <div class="tl-item done">
+            <span class="dot">02</span>
+            <div class="tmain">
+              <div class="ttime">14:38</div>
+              <div class="ttitle">接单出发 <span class="tstat">已完成</span></div>
+              <div class="tdesc">李师傅接单，前往 3 号工位；接单响应耗时 3 分钟。</div>
+            </div>
+          </div>
+          <div class="tl-item done">
+            <span class="dot">03</span>
+            <div class="tmain">
+              <div class="ttime">14:44</div>
+              <div class="ttitle">到场开工 · 安全挂牌 <span class="tstat">已完成</span></div>
+              <div class="tdesc">断电挂牌、清理加工区域，确认冷却液与气源关闭。</div>
+            </div>
+          </div>
+          <div class="tl-item done">
+            <span class="dot">04</span>
+            <div class="tmain">
+              <div class="ttime">14:50</div>
+              <div class="ttitle">更换 2 号刀具并对刀复核 <span class="tstat">已完成</span></div>
+              <div class="tdesc">领用精镗刀片 2 片，更换后完成对刀与刀夹检查，现场拍照留痕。</div>
+            </div>
+          </div>
+          <div class="tl-item done">
+            <span class="dot">05</span>
+            <div class="tmain">
+              <div class="ttime">15:02</div>
+              <div class="ttitle">Z 轴润滑检查与加注 <span class="tstat">已完成</span></div>
+              <div class="tdesc">检查丝杠、轴承与导轨状态，补充导轨润滑脂 1 支，清洁导轨。</div>
+            </div>
+          </div>
+          <div class="tl-item active" data-step="6">
+            <span class="dot">06</span>
+            <div class="tmain">
+              <div class="ttime">15:13</div>
+              <div class="ttitle">复测 Z 轴定位精度 · 温升 · 振动 <span class="tstat">进行中</span></div>
+              <div class="tdesc">打表复测定位精度，记录温升与振动数据，等待数值稳定后确认。</div>
+            </div>
+          </div>
+          <div class="tl-item todo" data-step="7">
+            <span class="dot">07</span>
+            <div class="tmain">
+              <div class="ttime">待执行</div>
+              <div class="ttitle">手动低速试运行 <span class="tstat">未开始</span></div>
+              <div class="tdesc">复装后手动低速试运行，确认无异响、无报警。</div>
+            </div>
+          </div>
+          <div class="tl-item todo" data-step="8">
+            <span class="dot">08</span>
+            <div class="tmain">
+              <div class="ttime">待执行</div>
+              <div class="ttitle">首件试加工与质检 <span class="tstat">未开始</span></div>
+              <div class="tdesc">试加工首件，检验同轴度、孔径与表面粗糙度。</div>
+            </div>
+          </div>
+          <div class="tl-item todo" data-step="9">
+            <span class="dot">09</span>
+            <div class="tmain">
+              <div class="ttime">待执行</div>
+              <div class="ttitle">提交完工 · 进入待验收 <span class="tstat">未开始</span></div>
+              <div class="tdesc">作业完成后提交完工申请，工单转入待验收校核环节。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="side-stack">
+        <div class="card side-card reveal">
+          <h4>中间检测数据（复测中）</h4>
+          <div class="detects">
+            <div class="d">
+              <div class="top"><span>Z 轴定位偏差</span><b class="good">0.018mm</b></div>
+              <div class="bar"><i data-w="80"></i></div>
+            </div>
+            <div class="d">
+              <div class="top"><span>电机温升</span><b class="good">41℃</b></div>
+              <div class="bar"><i data-w="66"></i></div>
+            </div>
+            <div class="d">
+              <div class="top"><span>振动幅值</span><b>2.1mm/s</b></div>
+              <div class="bar warn"><i data-w="70"></i></div>
+            </div>
+          </div>
+          <div style="font-size:10.5px;color:#6E83A2;margin-top:10px">标准：≤0.020mm · ≤55℃ · ≤3.0mm/s，待数值稳定确认</div>
+        </div>
+
+        <div class="card side-card reveal">
+          <h4>配件领用记录</h4>
+          <div class="kv">
+            <div class="r"><span>精镗刀片 ×2</span><b>14:50 · 库存已扣减</b></div>
+            <div class="r"><span>导轨润滑脂 ×1</span><b>15:02 · 已领用</b></div>
+            <div class="r"><span>主轴密封件</span><b class="am">待检查确认</b></div>
+          </div>
+        </div>
+
+        <div class="card side-card reveal">
+          <h4>操作步骤留痕</h4>
+          <div class="kv">
+            <div class="r"><span>方案流程完成</span><b>4 / 6 步</b></div>
+            <div class="r"><span>现场照片</span><b>刀具 / 润滑 / 打表 各 1 张</b></div>
+          </div>
+          <div class="photo-row">
+            <div class="photo" data-l="刀具更换"></div>
+            <div class="photo" data-l="润滑加注"></div>
+            <div class="photo" data-l="打表复测"></div>
+          </div>
+          <ul class="notes" style="margin-top:10px">
+            <li>每步操作人、时间与备注自动归档</li>
+            <li>当前无停滞、无待件等待</li>
+            <li>15:05 核对润滑脂库存，账实一致</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="chips reveal">
+      <span>实时进度追踪</span><span>作业留痕</span><span>远程监管</span><span>时效干预</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ stage 8 ============ -->
+<section class="sec" id="s8">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="kicker"><span class="idx">08</span>完工校核验收 · 数据校验合格后方可关单</div>
+      <h2>多维数据校核 · <em>确认故障彻底修复</em></h2>
+      <p class="sec-sub">系统自动启动智能校核，采集维修后的实时运行参数，与维修前异常数据、工艺标准及设备出厂参数做多维度对比校验：验证 X / Y / Z 三轴参数恢复正常，刀具达标、无异常抖动与偏移，设备工况回归稳定。</p>
+    </div>
+
+    <div class="card verify reveal" data-tilt>
+      <div class="vhead">
+        <div class="vi">✓</div>
+        <div>
+          <div class="vt">完工校核验收报告单</div>
+          <div class="vd">WO-20261120-037 · CNC-012 · 3 号工位 · 15:48</div>
+        </div>
+        <span class="vbadge">全部合格 · 同意关单</span>
+      </div>
+
+      <table class="vtable">
+        <thead>
+          <tr><th>校核项目</th><th>验收标准</th><th>维修前异常值</th><th>维修后实测值</th><th style="text-align:right">判定</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="item">Z 轴定位偏差</td><td class="std">≤0.020mm</td><td class="before">0.042mm</td><td class="after">0.016mm</td><td class="verdict"><span class="pass">合格</span></td></tr>
+          <tr><td class="item">X 轴定位偏差</td><td class="std">≤0.020mm</td><td class="before">0.012mm</td><td class="after">0.011mm</td><td class="verdict"><span class="pass">合格</span></td></tr>
+          <tr><td class="item">Y 轴定位偏差</td><td class="std">≤0.020mm</td><td class="before">0.014mm</td><td class="after">0.013mm</td><td class="verdict"><span class="pass">合格</span></td></tr>
+          <tr><td class="item">电机温升</td><td class="std">≤55℃</td><td class="before">58℃（偏高）</td><td class="after">40℃</td><td class="verdict"><span class="pass">合格</span></td></tr>
+          <tr><td class="item">振动幅值</td><td class="std">≤3.0mm/s</td><td class="before">3.6mm/s</td><td class="after">1.8mm/s</td><td class="verdict"><span class="pass">合格</span></td></tr>
+          <tr><td class="item">刀具后刀面磨损 VB</td><td class="std">≤0.15mm</td><td class="before">0.18mm</td><td class="after">0.02mm（新刀片）</td><td class="verdict"><span class="pass">合格</span></td></tr>
+          <tr><td class="item">首件同轴度</td><td class="std">≤0.02mm</td><td class="before">—</td><td class="after">0.015mm</td><td class="verdict"><span class="pass">合格</span></td></tr>
+          <tr><td class="item">表面粗糙度 Ra</td><td class="std">≤1.6μm</td><td class="before">—</td><td class="after">Ra1.2μm</td><td class="verdict"><span class="pass">合格</span></td></tr>
+          <tr><td class="item">连续试运行</td><td class="std">无报警 / 无异响</td><td class="before">报警未消除</td><td class="after">30 分钟试运行正常</td><td class="verdict"><span class="pass">合格</span></td></tr>
+        </tbody>
+      </table>
+
+      <div class="vfoot">
+        <div class="vf"><b>首件质检</b>批次 PC-261120-07 · 首件 1 件 · 孔径 / 同轴度 / 粗糙度均合格</div>
+        <div class="vf"><b>质检确认</b><span class="sig">赵工</span> · 15:45</div>
+        <div class="vf"><b>关单核准</b><span class="sig">王工</span> · 值班负责人</div>
+      </div>
+
+      <div class="vnote">
+        <b>异常路径：</b>校核不通过则退回返工，记录不合格项并重新派工，直至验收合格 —— 工单闭环不以「已提交」为终点，而以「数据合格」为准绳。
+      </div>
+    </div>
+
+    <div class="chips reveal">
+      <span>多维数据校核</span><span>参数对比验收</span><span>不合格退回返工</span><span>工单闭环</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ stage 9 ============ -->
+<section class="sec" id="s9">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="kicker"><span class="idx">09</span>知识沉淀归档 · 知识库持续进化迭代</div>
+      <h2>工单数据反哺知识库 · <em>正向循环</em></h2>
+      <p class="sec-sub">工单正式关闭后，本次完整的故障运维全流程数据全部归档沉淀，自动录入工业运维知识库，提炼为可检索、可复用的故障案例与运维经验，补充伺服轴与刀具故障的知识条目。</p>
+    </div>
+
+    <div class="kb-grid">
+      <div class="card kb-card reveal" data-tilt>
+        <div class="kb-head">
+          <div>
+            <div class="kbno">KB-2026-0891</div>
+            <div style="font-size:11px;color:#7E93B3;margin-top:3px">归档 2026-11-20 15:52 · 知识版本 <b style="color:#9BF6FF">V1.0</b></div>
+          </div>
+          <span class="kbcat">设备故障案例 · 伺服轴 / 刀具磨损</span>
+        </div>
+
+        <div class="kb-meta">
+          <div class="r"><span>来源工单</span><b>WO-20261120-037</b></div>
+          <div class="r"><span>关联报警 / 报告</span><b>ALM-…-037 · AIR-…-037</b></div>
+          <div class="r"><span>适用设备</span><b>CNC-012 同型号伺服轴加工单元</b></div>
+          <div class="r"><span>知识类型</span><b>复合故障案例 + 标准维修方案</b></div>
+        </div>
+
+        <h4 style="font-size:11px;letter-spacing:.14em;color:#8FE9F4;text-transform:uppercase;margin:16px 0 9px">沉淀资料清单</h4>
+        <ul class="doc-list">
+          <li>原始故障数据与报警前后快照、趋势曲线</li>
+          <li>数字人故障分析报告与诱因排序</li>
+          <li>维修工单与待办事项记录</li>
+          <li>匹配维修方案 PLN-2026-0891-A</li>
+          <li>配件领用与更换记录</li>
+          <li>维修过程跟踪与现场留痕</li>
+          <li>完工校核报告与实测数据</li>
+          <li>首件质检结果与验收结论</li>
+        </ul>
+
+        <div class="tags">
+          <span>Z 轴定位偏差</span><span>刀具到寿</span><span>复合故障</span><span>润滑检查</span><span>首件验收</span>
+        </div>
+
+        <div class="kb-stats">
+          <div class="ks"><b data-count="12">12</b><span>累计被引用</span></div>
+          <div class="ks"><b data-count="4">4</b><span>同类故障命中</span></div>
+          <div class="ks"><b data-count="3">3</b><span>方案直接复用</span></div>
+          <div class="ks"><b>V1.0</b><span>知识版本</span></div>
+        </div>
+      </div>
+
+      <div class="side-stack">
+        <div class="card side-card reveal" data-tilt>
+          <h4>结构化知识内容（供检索复用）</h4>
+          <div class="know">
+            <div class="krow">
+              <div class="k">故障名称</div>
+              <div class="v">Z 轴定位偏差叠加刀具磨损复合故障</div>
+            </div>
+            <div class="krow">
+              <div class="k">故障征兆</div>
+              <div class="v">定位偏差持续扩大，伴随温升、振动偏高，刀具 VB 超限</div>
+            </div>
+            <div class="krow">
+              <div class="k">主要根因</div>
+              <div class="v"><b>刀具到寿磨损 55%</b> · 丝杠 / 轴承磨损 28% · 润滑不足 12%</div>
+            </div>
+            <div class="krow">
+              <div class="k">处置要点</div>
+              <div class="v">换刀对刀 → 润滑检查加注 → 精度 / 温升 / 振动复测 → 低速试运行 → 首件质检</div>
+            </div>
+            <div class="krow">
+              <div class="k">验收标准</div>
+              <div class="v">定位偏差 ≤0.020mm，温升 ≤55℃，振动 ≤3.0mm/s，首件尺寸与粗糙度合格</div>
+            </div>
+            <div class="krow">
+              <div class="k">关联方案</div>
+              <div class="v">PLN-2026-0891-A（匹配度 94%）</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card side-card reveal">
+          <h4>知识库进化记录</h4>
+          <ul class="feedback">
+            <li>本次案例入库后，同类复合故障的分析结论可直接关联该条目与维修方案，缩短研判与派单时间。</li>
+            <li>沉淀数据反哺刀具寿命预警规则：将该类刀片的提前更换量纳入阈值，降低到寿磨损引发的停机风险。</li>
+            <li>后续新工单持续校核、补充该条目案例，知识库随真实生产数据不断迭代，形成「故障 → 运维 → 沉淀 → 升级 → 赋能生产」的正向循环。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="chips reveal">
+      <span>全流程归档</span><span>知识库反哺</span><span>分析精度迭代</span><span>正向循环降本</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ capabilities ============ -->
+<section class="sec" id="caps">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="kicker"><span class="idx">★</span>Demo 核心能力总结</div>
+      <h2>九环相扣 · <em>越用越准</em></h2>
+      <p class="sec-sub">覆盖设备监测、风险预警、AI 分析、人工决策、智能派单、标准化维修、过程监管、闭环校核、知识迭代九大环节。</p>
+    </div>
+
+    <div class="caps">
+      <div class="cap reveal" data-tilt>
+        <div class="glowline"></div>
+        <div class="cn">01</div>
+        <h3>全链路闭环</h3>
+        <p>从监测到沉淀九大环节贯通，一条工单走完全程，不留断点。每个环节的数据都成为下一环节的输入。</p>
+      </div>
+      <div class="cap reveal" data-tilt>
+        <div class="glowline"></div>
+        <div class="cn">02</div>
+        <h3>人机协同可控</h3>
+        <p>AI 负责高效分析与方案匹配，人工保留研判、审核与验收决策权，兼顾效率与安全，避免误判误停机。</p>
+      </div>
+      <div class="cap reveal" data-tilt>
+        <div class="glowline"></div>
+        <div class="cn">03</div>
+        <h3>数据驱动进化</h3>
+        <p>每一次运维都沉淀为可复用知识，知识库持续迭代 —— 分析更准、派单更快、维修更规范，适配精密制造高稳定需求。</p>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="foot-inner">
+    <div class="foot-brand">
+      <div class="fb">智</div>
+      <div>
+        <b>汽车零部件伺服轴生产智能运维 Demo</b>
+        <span>Industrial AI · Closed Loop O&amp;M</span>
+      </div>
+    </div>
+    <div class="foot-note">
+      场景说明 · 一条故障工单的完整生命周期<br>
+      <b>数据为演示模拟值</b> · CNC-012 / ALM-20261120-037 / WO-20261120-037
+    </div>
+  </div>
+</footer>
+<script>
+(function () {
+  "use strict";
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var $  = function (s, c) { return (c || document).querySelector(s); };
+  var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
+
+  /* ---------------------------------------------------------
+     cursor glow + scroll progress
+     --------------------------------------------------------- */
+  var glow = $("#cursorGlow");
+  var bar  = $("#progressBar");
+  var pointerX = window.innerWidth / 2, pointerY = 240;
+
+  window.addEventListener("pointermove", function (e) {
+    pointerX = e.clientX; pointerY = e.clientY;
+    if (glow) {
+      glow.style.setProperty("--cx", pointerX + "px");
+      glow.style.setProperty("--cy", pointerY + "px");
+    }
+  }, { passive: true });
+
+  function onScroll() {
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    var p = h > 0 ? (window.scrollY / h) : 0;
+    if (bar) bar.style.width = (p * 100).toFixed(2) + "%";
+    spy();
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+
+  /* ---------------------------------------------------------
+     reveal
+     --------------------------------------------------------- */
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (!en.isIntersecting) return;
+      en.target.classList.add("in");
+      io.unobserve(en.target);
+    });
+  }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
+
+  $$(".reveal").forEach(function (el, i) {
+    el.style.transitionDelay = Math.min(i % 6, 4) * 60 + "ms";
+    io.observe(el);
+  });
+
+  /* ---------------------------------------------------------
+     3D tilt
+     --------------------------------------------------------- */
+  var canHover = window.matchMedia("(hover:hover) and (pointer:fine)").matches;
+  if (canHover && !reduce) {
+    $$("[data-tilt]").forEach(function (card) {
+      card.style.transformStyle = "preserve-3d";
+      card.addEventListener("pointermove", function (e) {
+        var r = card.getBoundingClientRect();
+        var px = (e.clientX - r.left) / r.width;
+        var py = (e.clientY - r.top) / r.height;
+        card.style.setProperty("--mx", (px * 100).toFixed(1) + "%");
+        card.style.setProperty("--my", (py * 100).toFixed(1) + "%");
+        card.style.transition = "transform .12s linear, box-shadow .4s";
+        card.style.transform =
+          "perspective(1100px) rotateX(" + ((0.5 - py) * 4.2).toFixed(2) + "deg) " +
+          "rotateY(" + ((px - 0.5) * 4.6).toFixed(2) + "deg) translateZ(6px)";
+        var after = card.style;
+        card.classList.add("tilted");
+      });
+      card.addEventListener("pointerleave", function () {
+        card.style.transition = "transform .6s cubic-bezier(.2,.7,.2,1), box-shadow .5s";
+        card.style.transform = "perspective(1100px) rotateX(0deg) rotateY(0deg) translateZ(0)";
+        card.classList.remove("tilted");
+      });
+    });
+    /* glare opacity on hover */
+    document.addEventListener("pointerenter", function () {}, true);
+  }
+  var styleTags = document.createElement("style");
+  styleTags.textContent = ".card.tilted::after{opacity:1}";
+  document.head.appendChild(styleTags);
+
+  /* ---------------------------------------------------------
+     scroll spy for dock
+     --------------------------------------------------------- */
+  var dockLinks = $$(".dock a");
+  var sections = dockLinks.map(function (a) {
+    return document.querySelector(a.getAttribute("href"));
+  });
+  function spy() {
+    var y = window.scrollY + window.innerHeight * 0.34;
+    var idx = -1;
+    sections.forEach(function (sec, i) {
+      if (!sec) return;
+      var top = sec.getBoundingClientRect().top + window.scrollY;
+      if (top <= y) idx = i;
+    });
+    if (idx < 0) idx = 0;
+    dockLinks.forEach(function (a, i) { a.classList.toggle("active", i === idx); });
+  }
+
+  /* ---------------------------------------------------------
+     smooth anchor + data-goto
+     --------------------------------------------------------- */
+  function goTo(sel) {
+    var t = document.querySelector(sel);
+    if (!t) return;
+    var top = t.getBoundingClientRect().top + window.scrollY - 18;
+    window.scrollTo({ top: top, behavior: reduce ? "auto" : "smooth" });
+  }
+  $$("[data-goto]").forEach(function (b) {
+    b.addEventListener("click", function () { goTo(b.getAttribute("data-goto")); });
+  });
+  dockLinks.forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      e.preventDefault();
+      goTo(a.getAttribute("href"));
+    });
+  });
+
+  /* ---------------------------------------------------------
+     counters / gauges / bars
+     --------------------------------------------------------- */
+  function ease(t) { return 1 - Math.pow(1 - t, 3); }
+
+  function animateValue(el, from, to, dur, fmt) {
+    if (reduce) { el.textContent = fmt(to); return; }
+    var t0 = performance.now();
+    function tick(now) {
+      var p = Math.min(1, (now - t0) / dur);
+      el.textContent = fmt(from + (to - from) * ease(p));
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  /* health gauge */
+  var gauge = $("#healthGauge");
+  function fireGauge() {
+    if (!gauge || gauge.dataset.fired) return;
+    gauge.dataset.fired = "1";
+    var t0 = performance.now(), dur = 1300;
+    (function tick(now) {
+      var p = Math.min(1, ((now || performance.now()) - t0) / dur);
+      gauge.style.setProperty("--v", (86 * ease(p)).toFixed(1));
+      if (p < 1) requestAnimationFrame(tick);
+    })();
+  }
+
+  /* bars */
+  function fireBars(scope) {
+    $$("[data-w]", scope).forEach(function (el) {
+      if (el.dataset.fired) return;
+      el.dataset.fired = "1";
+      el.style.width = el.getAttribute("data-w") + "%";
+    });
+  }
+
+  /* counters */
+  function fireCounters(scope) {
+    $$("[data-count]", scope).forEach(function (el) {
+      if (el.dataset.fired) return;
+      el.dataset.fired = "1";
+      var to = parseFloat(el.getAttribute("data-count"));
+      var suffix = el.getAttribute("data-suffix") || "";
+      var from = 0;
+      animateValue(el, from, to, 1500, function (v) { return Math.round(v) + suffix; });
+    });
+  }
+
+  /* confidence arc */
+  var arc = $("#confArc");
+  function fireArc() {
+    if (!arc || arc.dataset.fired) return;
+    arc.dataset.fired = "1";
+    var C = 2 * Math.PI * 48;
+    var t0 = performance.now(), dur = 1500;
+    (function tick(now) {
+      var p = Math.min(1, ((now || performance.now()) - t0) / dur);
+      arc.style.strokeDashoffset = (C * (1 - 0.92 * ease(p))).toFixed(2);
+      if (p < 1) requestAnimationFrame(tick);
+    })();
+  }
+
+  var io2 = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (!en.isIntersecting) return;
+      fireBars(en.target);
+      fireCounters(en.target);
+      if (en.target.contains(gauge)) fireGauge();
+      if (en.target.querySelector && en.target.querySelector("#confArc")) fireArc();
+      io2.unobserve(en.target);
+    });
+  }, { threshold: 0.2 });
+
+  $$(".card, .hero, .ov-grid, .caps, .kb-stats").forEach(function (n) { io2.observe(n); });
+
+  /* ---------------------------------------------------------
+     dashboard clock + sparklines
+     --------------------------------------------------------- */
+  var clock = $("#dashClock");
+  var base = new Date(2026, 10, 20, 14, 31, 56);
+  var t0 = Date.now();
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+  function tickClock() {
+    if (!clock) return;
+    var d = new Date(base.getTime() + (Date.now() - t0));
+    clock.textContent = pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  var sparkA = $("#sparkA"), sparkB = $("#sparkB"), sparkFill = $("#sparkFill");
+  var W = 320, H = 74, N = 28;
+  var dataA = [], dataB = [];
+  (function seed() {
+    for (var i = 0; i < N; i++) {
+      var driftA = Math.pow(i / (N - 1), 2.1) * 30;
+      var driftB = Math.pow(i / (N - 1), 1.7) * 20;
+      dataA.push(Math.max(4, Math.min(66, 14 + driftA + (Math.sin(i * 1.7) * 6) + (i % 3) * 1.4)));
+      dataB.push(Math.max(4, Math.min(60, 9 + driftB + (Math.cos(i * 1.2) * 5))));
+    }
+  })();
+
+  function smooth(points) {
+    if (!points.length) return "";
+    var d = "M" + points[0].x.toFixed(2) + "," + points[0].y.toFixed(2);
+    for (var i = 1; i < points.length; i++) {
+      var p0 = points[i - 1], p1 = points[i];
+      var mx = (p0.x + p1.x) / 2, my = (p0.y + p1.y) / 2;
+      d += " Q" + p0.x.toFixed(2) + "," + p0.y.toFixed(2) + " " + mx.toFixed(2) + "," + my.toFixed(2);
+    }
+    var last = points[points.length - 1];
+    d += " L" + last.x.toFixed(2) + "," + last.y.toFixed(2);
+    return d;
+  }
+  function drawSpark() {
+    if (!sparkA) return;
+    var pa = dataA.map(function (v, i) { return { x: i / (N - 1) * W, y: H - 6 - v }; });
+    var pb = dataB.map(function (v, i) { return { x: i / (N - 1) * W, y: H - 6 - v }; });
+    var dA = smooth(pa);
+    sparkA.setAttribute("d", dA);
+    sparkB.setAttribute("d", smooth(pb));
+    sparkFill.setAttribute("d", dA + " L" + W + "," + H + " L0," + H + " Z");
+  }
+  drawSpark();
+
+  if (!reduce) {
+    setInterval(function () {
+      var a = dataA.slice(1), b = dataB.slice(1);
+      var lastA = dataA[dataA.length - 1], lastB = dataB[dataB.length - 1];
+      a.push(Math.max(10, Math.min(70, lastA + (Math.random() - 0.52) * 7)));
+      b.push(Math.max(6, Math.min(62, lastB + (Math.random() - 0.5) * 5)));
+      dataA = a; dataB = b;
+      drawSpark();
+    }, 1700);
+  }
+
+  /* live jitter on a few axis numbers: subtle, feels alive */
+  if (!reduce) {
+    var jitterTargets = [
+      { sel: ".axis.warn .ax-row:nth-child(2) b", base: 0.018, fmt: function (v) { return v.toFixed(3) + "mm"; } },
+      { sel: ".axis.warn .ax-row:nth-child(6) b", base: 2.3, fmt: function (v) { return v.toFixed(1) + "mm/s"; } }
+    ];
+    setInterval(function () {
+      jitterTargets.forEach(function (t) {
+        var el = document.querySelector(t.sel);
+        if (!el) return;
+        var v = t.base + (Math.random() - 0.5) * 0.0012;
+        el.textContent = t.fmt(v);
+      });
+    }, 2600);
+  }
+
+  /* ---------------------------------------------------------
+     decision flip cards
+     --------------------------------------------------------- */
+  $$("[data-flip]").forEach(function (card) {
+    function flip() { card.classList.toggle("flipped"); }
+    card.addEventListener("click", flip);
+    card.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flip(); }
+    });
+  });
+
+  /* ---------------------------------------------------------
+     dispatch sequence
+     --------------------------------------------------------- */
+  var dBtn = $("#dispatchBtn"), beam = $("#dispatchBeam");
+  var note = $("#dispatchNote");
+  var tkD = $("#tkDispatch"), tkA = $("#tkAccept"), tkR = $("#tkArrive");
+  if (dBtn) {
+    dBtn.addEventListener("click", function () {
+      if (dBtn.dataset.done) return;
+      dBtn.dataset.done = "1";
+      dBtn.textContent = "已下发 · 等待接单";
+      dBtn.style.background = "linear-gradient(135deg,#2EE6A8,#0EA5A5)";
+      dBtn.style.color = "#04121A";
+      if (note) note.textContent = "工单已推送至移动端与 PC 端 · 已指派 李师傅";
+      if (beam) beam.style.width = "40%";
+      if (tkD) { tkD.classList.add("done"); tkD.lastChild.textContent = "14:36"; }
+      setTimeout(function () {
+        if (beam) beam.style.width = "60%";
+        if (tkA) { tkA.classList.add("done"); tkA.lastChild.textContent = "14:38"; }
+        if (note) note.textContent = "李师傅已接单，响应耗时 3 分钟，正在前往 3 号工位";
+      }, 1100);
+      setTimeout(function () {
+        if (beam) beam.style.width = "80%";
+        if (tkR) { tkR.classList.add("done"); tkR.lastChild.textContent = "14:41"; }
+        if (note) note.textContent = "已到场开工 · 工单进入「维修中」，过程监控已启动";
+        dBtn.textContent = "已到场开工 · 维修中";
+      }, 2400);
+    });
+  }
+
+  /* ---------------------------------------------------------
+     maintenance progress play
+     --------------------------------------------------------- */
+  var play = $("#maintPlay"), mBar = $("#maintBar"), mPct = $("#maintPct");
+  var tlItems = $$("#maintTl .tl-item");
+  var mStateTxt = $(".mstate-txt");
+  var mSub = $(".pl-lbl span:last-child");
+  var stepLabels = ["工单创建 · 待接单", "接单出发", "到场开工 · 安全挂牌", "更换刀具 · 对刀复核", "润滑检查与加注", "精度复测", "低速试运行", "首件质检", "提交完工 · 待验收"];
+  var plan = [75, 85, 100];
+  var doneCount = 4, stepIdx = 5;
+  function applyProgress(pct, done, active) {
+    if (mBar) mBar.style.width = pct + "%";
+    if (mPct) mPct.textContent = "进度 " + pct + "% · 已完成 " + Math.min(6, done) + "/6 步";
+    if (active != null && mStateTxt) {
+      mStateTxt.textContent = (active >= tlItems.length - 1 ? "待验收 · " : "维修中 · ") + stepLabels[active];
+    }
+    if (active != null && mSub) {
+      mSub.textContent = "已耗时 " + (38 + Math.max(0, active - 5) * 6) + " 分钟 · 3 号工位 · 留痕 3 张";
+    }
+    tlItems.forEach(function (it, i) {
+      it.classList.remove("done", "active", "todo");
+      if (i < done + 1) it.classList.add("done");
+      else if (i === done + 1) it.classList.add("active");
+      else it.classList.add("todo");
+      var st = it.querySelector(".tstat");
+      if (!st) return;
+      if (i < done + 1) st.textContent = "已完成";
+      else if (i === done + 1) st.textContent = "进行中";
+      else st.textContent = "未开始";
+    });
+  }
+  if (play) {
+    play.addEventListener("click", function () {
+      if (play.dataset.busy === "1") return;
+      if (stepIdx >= tlItems.length - 1) {
+        applyProgress(65, 4);
+        if (mStateTxt) mStateTxt.textContent = "维修中 · 精度复测";
+        if (mSub) mSub.textContent = "已耗时 38 分钟 · 3 号工位 · 留痕 3 张";
+        stepIdx = 5; doneCount = 4;
+        play.textContent = "▶ 推进演示";
+        return;
+      }
+      play.dataset.busy = "1";
+      var nextIdx = stepIdx + 1;
+      var pct = plan[Math.min(plan.length - 1, stepIdx - 5)] || 100;
+      var item = tlItems[nextIdx];
+      if (item) {
+        var tm = item.querySelector(".ttime");
+        if (tm && tm.textContent === "待执行") {
+          tm.textContent = "15:" + (20 + (nextIdx - 6) * 6);
+        }
+      }
+      stepIdx = nextIdx;
+      doneCount = Math.min(6, stepIdx - 1);
+      applyProgress(pct, doneCount, stepIdx);
+      if (item) item.scrollIntoView({ block: "nearest", behavior: reduce ? "auto" : "smooth" });
+      setTimeout(function () { play.dataset.busy = "0"; }, 500);
+      if (stepIdx >= tlItems.length - 1) {
+        play.textContent = "↺ 重置演示";
+        applyProgress(100, 6, stepIdx);
+      }
+    });
+  }
+
+  /* ---------------------------------------------------------
+     hero parallax
+     --------------------------------------------------------- */
+  var hero = $("#top"), scene = $("#heroScene");
+  if (hero && scene && canHover && !reduce) {
+    hero.addEventListener("pointermove", function (e) {
+      var r = hero.getBoundingClientRect();
+      var dx = (e.clientX - r.width / 2) / r.width;
+      var dy = (e.clientY - r.height / 2) / r.height;
+      scene.style.transform = "translate3d(" + (dx * -14).toFixed(1) + "px," + (dy * -10).toFixed(1) + "px,0) rotateZ(" + (dx * 1.6).toFixed(2) + "deg)";
+    });
+    hero.addEventListener("pointerleave", function () { scene.style.transform = ""; });
+  }
+
+  /* keyboard: arrow down between sections */
+  onScroll();
+})();
+</script>
+</body>
+</html>

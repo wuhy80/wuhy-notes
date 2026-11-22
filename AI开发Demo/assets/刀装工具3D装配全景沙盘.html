@@ -1,0 +1,2791 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>刀装工具 · 3D 装配全景沙盘（刀柄 / 夹持 / 预调 / 量测 一体化）</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body[data-theme="dark"] {
+    --background: #080d17;
+    --card: #101724;
+    --card-2: #0d1420;
+    --border: #243044;
+    --card-border: #1b2637;
+    --foreground: #eef2f8;
+    --muted-foreground: #8fa0b8;
+    --primary: #3b82f6;
+    --primary-foreground: #ffffff;
+    --secondary: #1a2436;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --chart-1: #3b82f6;
+    --chart-2: #10b981;
+    --chart-3: #f59e0b;
+    --chart-4: #a78bfa;
+    --chart-5: #ec4899;
+    --chart-6: #06b6d4;
+    --grid: rgba(110, 145, 190, 0.10);
+  }
+
+  body[data-theme="light"] {
+    --background: #eef2f7;
+    --card: #ffffff;
+    --card-2: #f7f9fc;
+    --border: #cbd5e1;
+    --card-border: #e2e8f0;
+    --foreground: #0f172a;
+    --muted-foreground: #4b5a70;
+    --primary: #2563eb;
+    --primary-foreground: #ffffff;
+    --secondary: #e8eef6;
+    --success: #059669;
+    --warning: #d97706;
+    --error: #dc2626;
+    --chart-1: #2563eb;
+    --chart-2: #059669;
+    --chart-3: #d97706;
+    --chart-4: #7c3aed;
+    --chart-5: #db2777;
+    --chart-6: #0891b2;
+    --grid: rgba(70, 100, 140, 0.12);
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    margin: 0;
+    padding: 12px;
+    background:
+      radial-gradient(1200px 600px at 18% -10%, rgba(59, 130, 246, 0.10), transparent 60%),
+      radial-gradient(900px 500px at 92% 4%, rgba(168, 85, 247, 0.08), transparent 55%),
+      var(--background);
+    color: var(--foreground);
+    font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+  }
+
+  button, input, select { font-family: inherit; }
+  .is-hidden { display: none !important; }
+
+  .shell {
+    max-width: 1680px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: calc(100vh - 24px);
+  }
+
+  /* ---------- 顶栏 ---------- */
+  .topbar {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 14px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+    flex: 0 0 auto;
+  }
+
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .brand-dot {
+    width: 10px; height: 10px; border-radius: 999px;
+    background: var(--primary);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.16);
+    flex-shrink: 0;
+  }
+  .brand-text { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; min-width: 0; }
+  .brand-title { font-size: 15px; font-weight: 700; letter-spacing: .2px; white-space: nowrap; }
+  .brand-sub { font-size: 12px; color: var(--muted-foreground); white-space: nowrap; }
+  .brand-stats {
+    font-size: 11.5px; color: var(--muted-foreground);
+    border-left: 1px solid var(--border);
+    padding-left: 10px; margin-left: 2px;
+    white-space: nowrap;
+  }
+  .brand-stats b { color: var(--primary); font-weight: 700; }
+
+  .view-nav { display: flex; flex-wrap: wrap; gap: 5px; }
+  .view-nav-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted-foreground);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: .16s ease;
+    white-space: nowrap;
+  }
+  .view-nav-btn:hover { color: var(--foreground); border-color: var(--primary); }
+  .view-nav-btn.is-active {
+    color: var(--primary-foreground);
+    background: var(--primary);
+    border-color: var(--primary);
+    font-weight: 600;
+    box-shadow: 0 2px 10px rgba(59, 130, 246, .30);
+  }
+
+  .toolbar { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+
+  .btn {
+    background: var(--card-2);
+    border: 1px solid var(--border);
+    color: var(--foreground);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: .16s ease;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .btn:hover { border-color: var(--primary); color: var(--primary); }
+  .btn.is-on {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(59, 130, 246, .10);
+    font-weight: 600;
+  }
+  .btn-compact { padding: 4px 8px; font-size: 11.5px; }
+  .dot-indicator {
+    width: 6px; height: 6px; border-radius: 999px;
+    background: var(--chart-2); display: inline-block;
+  }
+
+  /* ---------- 舞台 ---------- */
+  .stage {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 420px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background:
+      radial-gradient(900px 420px at 50% 8%, rgba(59, 130, 246, .10), transparent 70%),
+      var(--card-2);
+    overflow: hidden;
+  }
+  #sand-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
+  #sand-canvas:active { cursor: grabbing; }
+
+  .hud { position: absolute; z-index: 5; display: flex; align-items: center; gap: 7px; }
+  .hud-tl { top: 12px; left: 12px; flex-direction: column; align-items: flex-start; gap: 6px; }
+  .hud-tr { top: 12px; right: 12px; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .hud-bl { left: 12px; bottom: 12px; flex-wrap: wrap; max-width: 62%; }
+  .hud-br { right: 12px; bottom: 12px; }
+
+  .hud-bar {
+    background: color-mix(in srgb, var(--card) 86%, transparent);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 6px 9px;
+    font-size: 11.5px;
+    color: var(--muted-foreground);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    backdrop-filter: blur(6px);
+  }
+  .hud-bar b { color: var(--foreground); font-weight: 600; }
+
+  .legend-item { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .legend-dot { width: 7px; height: 7px; border-radius: 999px; display: inline-block; background: var(--primary); }
+  .legend-sep { width: 1px; height: 12px; background: var(--border); display: inline-block; }
+
+  .zoom-group { display: inline-flex; gap: 5px; }
+
+  /* ---------- 场景推演 ---------- */
+  .scenario-dock { display: flex; flex-wrap: wrap; gap: 5px; }
+  .scenario-dock .btn { background: color-mix(in srgb, var(--card) 80%, transparent); }
+
+  .hud-banner {
+    position: absolute; left: 50%; top: 66px; transform: translateX(-50%);
+    z-index: 8;
+    display: flex; align-items: flex-start; gap: 10px;
+    background: color-mix(in srgb, var(--card) 94%, transparent);
+    border: 1px solid var(--primary);
+    border-radius: 12px;
+    padding: 9px 12px;
+    max-width: min(760px, 82%);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+    backdrop-filter: blur(8px);
+  }
+  .hud-banner-title { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+  .hud-banner-desc { font-size: 11.5px; color: var(--muted-foreground); line-height: 1.55; }
+
+  /* ---------- 抽屉 ---------- */
+  .drawer {
+    position: absolute; top: 10px; right: 10px; bottom: 10px;
+    width: 350px; z-index: 9;
+    background: color-mix(in srgb, var(--card) 97%, transparent);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex; flex-direction: column;
+    box-shadow: -8px 0 40px rgba(0, 0, 0, .35);
+    backdrop-filter: blur(10px);
+    transform: translateX(calc(100% + 20px));
+    transition: transform .26s cubic-bezier(.4, 0, .2, 1);
+  }
+  .drawer.is-open { transform: translateX(0); }
+  .drawer-head {
+    padding: 9px 11px;
+    border-bottom: 1px solid var(--card-border);
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .drawer-title { font-size: 12.5px; font-weight: 700; letter-spacing: .3px; }
+  .drawer-tabs { display: flex; gap: 4px; }
+  .drawer-tab {
+    background: transparent; border: 1px solid transparent;
+    color: var(--muted-foreground);
+    font-size: 11.5px; padding: 3px 8px; border-radius: 7px; cursor: pointer;
+  }
+  .drawer-tab.is-active { color: var(--primary); border-color: var(--primary); background: rgba(59, 130, 246, .10); font-weight: 600; }
+  .drawer-scroll { overflow: auto; padding: 10px 11px; flex: 1 1 auto; }
+
+  .open-drawer-pill {
+    position: absolute; right: 12px; bottom: 56px; z-index: 7;
+    border-color: var(--primary); color: var(--primary);
+    background: color-mix(in srgb, var(--card) 90%, transparent);
+  }
+
+  /* ---------- 详情内容 ---------- */
+  .det-head { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+  .det-badge {
+    width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 700; color: #fff;
+  }
+  .det-title { font-size: 14px; font-weight: 700; line-height: 1.25; }
+  .det-code { font-size: 11px; color: var(--muted-foreground); font-family: ui-monospace, Consolas, monospace; margin-top: 2px; }
+
+  .chip-wrap { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip {
+    font-size: 10.5px; padding: 2px 7px; border-radius: 999px;
+    border: 1px solid var(--border); color: var(--muted-foreground);
+    white-space: nowrap;
+  }
+  .chip-strong { color: var(--primary); border-color: var(--primary); background: rgba(59, 130, 246, .08); }
+
+  .kv { display: grid; grid-template-columns: 76px 1fr; gap: 5px 8px; font-size: 12px; margin: 9px 0; }
+  .kv dt { color: var(--muted-foreground); }
+  .kv dd { margin: 0; color: var(--foreground); word-break: break-word; }
+
+  .sec-label {
+    font-size: 10.5px; letter-spacing: .10em; text-transform: uppercase;
+    color: var(--muted-foreground); margin: 12px 0 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .sec-label::after { content: ""; height: 1px; flex: 1; background: var(--card-border); }
+
+  .rel-row {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11.5px; padding: 5px 7px; border-radius: 7px;
+    border: 1px solid var(--card-border);
+    background: var(--card-2);
+    margin-bottom: 4px;
+    cursor: pointer;
+  }
+  .rel-row:hover { border-color: var(--primary); }
+  .rel-verb { color: var(--primary); font-size: 10.5px; white-space: nowrap; }
+  .rel-arrow { color: var(--muted-foreground); }
+  .rel-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .note-box {
+    font-size: 11.5px; line-height: 1.6; color: var(--muted-foreground);
+    border-left: 2px solid var(--chart-3);
+    padding: 2px 0 2px 8px; margin: 8px 0;
+  }
+  .note-box b { color: var(--chart-3); }
+
+  /* ---------- 目录 / 搜索 ---------- */
+  .search-input, .table-search {
+    width: 100%;
+    background: var(--card-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--foreground);
+    padding: 6px 9px;
+    font-size: 12px;
+    outline: none;
+    margin-bottom: 8px;
+  }
+  .search-input:focus, .table-search:focus { border-color: var(--primary); }
+
+  .cat-group { margin-bottom: 10px; }
+  .cat-group-title { font-size: 10.5px; letter-spacing: .08em; color: var(--muted-foreground); margin-bottom: 4px; }
+  .cat-item {
+    display: flex; align-items: center; gap: 7px;
+    width: 100%; text-align: left;
+    background: transparent; border: 1px solid transparent;
+    color: var(--foreground); font-size: 12px;
+    padding: 4px 6px; border-radius: 7px; cursor: pointer;
+  }
+  .cat-item:hover { background: var(--secondary); }
+  .cat-item.is-selected { border-color: var(--primary); background: rgba(59, 130, 246, .10); color: var(--primary); }
+  .cat-dot { width: 7px; height: 7px; border-radius: 999px; flex-shrink: 0; }
+  .cat-layer { margin-left: auto; font-size: 9.5px; color: var(--muted-foreground); font-family: ui-monospace, monospace; }
+
+  /* ---------- 文档视图 ---------- */
+  .doc-stage {
+    flex: 1 1 auto; min-height: 0;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--card);
+    padding: 16px 18px 22px;
+  }
+  .doc-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .doc-title { font-size: 16px; font-weight: 700; }
+  .doc-sub { font-size: 12px; color: var(--muted-foreground); margin-top: 3px; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 9px; margin-bottom: 16px; }
+  .kpi {
+    background: var(--card-2); border: 1px solid var(--card-border);
+    border-radius: 10px; padding: 10px 12px;
+  }
+  .kpi-num { font-size: 19px; font-weight: 800; letter-spacing: -.5px; }
+  .kpi-lbl { font-size: 11px; color: var(--muted-foreground); margin-top: 2px; }
+
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .data-table th {
+    text-align: left; font-weight: 600; color: var(--muted-foreground);
+    font-size: 11px; letter-spacing: .04em;
+    padding: 7px 9px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: var(--card); z-index: 1;
+  }
+  .data-table td { padding: 7px 9px; border-bottom: 1px solid var(--card-border); vertical-align: top; }
+  .data-table tbody tr:hover td { background: var(--card-2); }
+  .mono { font-family: ui-monospace, Consolas, monospace; font-size: 11.5px; }
+
+  .sop-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .sop-card {
+    background: var(--card-2); border: 1px solid var(--card-border);
+    border-radius: 12px; padding: 12px 13px;
+    border-top: 3px solid var(--primary);
+  }
+  .sop-step { font-size: 10.5px; letter-spacing: .12em; color: var(--muted-foreground); }
+  .sop-title { font-size: 14px; font-weight: 700; margin: 3px 0 8px; }
+  .sop-list { margin: 0; padding-left: 16px; font-size: 12px; line-height: 1.75; color: var(--foreground); }
+  .sop-list li::marker { color: var(--primary); }
+  .sop-warn {
+    margin-top: 9px; font-size: 11px; line-height: 1.55;
+    color: var(--chart-3); border-left: 2px solid var(--chart-3); padding-left: 8px;
+  }
+
+  .anti-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; }
+  .anti-card { background: var(--card-2); border: 1px solid var(--card-border); border-radius: 10px; padding: 11px 12px; }
+  .anti-title { font-size: 12.5px; font-weight: 700; margin-bottom: 6px; }
+  .anti-bad { font-size: 11.5px; color: var(--chart-5); line-height: 1.6; }
+  .anti-fix { font-size: 11.5px; color: var(--chart-2); line-height: 1.6; margin-top: 4px; }
+
+  .ghost-btn { border-style: dashed; color: var(--muted-foreground); }
+
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 9px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  @media (max-width: 1100px) {
+    .drawer { width: 320px; }
+    .brand-stats { display: none; }
+  }
+  @media (max-width: 860px) {
+    body { padding: 8px; }
+    .shell { height: calc(100vh - 16px); }
+    .drawer { width: calc(100% - 20px); }
+    .hud-bl { max-width: 100%; }
+  }
+
+  /* ---------- 质感微调 ---------- */
+  .topbar {
+    background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0) 60%), var(--card);
+    box-shadow: 0 10px 28px rgba(0,0,0,.20), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  body[data-theme="light"] .topbar {
+    background: linear-gradient(180deg, #ffffff, #f6f9fd);
+    box-shadow: 0 8px 22px rgba(15,23,42,.08), inset 0 1px 0 #fff;
+  }
+  .view-nav-btn, .btn { transition: transform .14s ease, box-shadow .14s ease, color .14s ease, border-color .14s ease; }
+  .view-nav-btn:hover, .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,.20); }
+  .stage {
+    box-shadow: inset 0 0 140px rgba(0,0,0,.42), 0 16px 40px rgba(0,0,0,.24);
+  }
+  body[data-theme="light"] .stage { box-shadow: inset 0 0 120px rgba(148,163,184,.18), 0 12px 30px rgba(15,23,42,.10); }
+  .hud-bar { box-shadow: 0 6px 18px rgba(0,0,0,.20); }
+  body[data-theme="light"] .hud-bar { box-shadow: 0 6px 18px rgba(15,23,42,.07); }
+  .legend-item { transition: color .14s ease; }
+  .legend-item:hover { color: var(--foreground); }
+  .drawer { box-shadow: -18px 0 50px rgba(0,0,0,.42); }
+  body[data-theme="light"] .drawer { box-shadow: -16px 0 40px rgba(15,23,42,.12); }
+
+  .step-dots { display: flex; gap: 4px; margin-top: 6px; }
+  .step-dot {
+    width: 18px; height: 4px; border-radius: 99px;
+    background: color-mix(in srgb, var(--muted-foreground) 30%, transparent);
+    transition: background .2s ease;
+  }
+  .step-dot.is-done { background: color-mix(in srgb, var(--primary) 55%, transparent); }
+  .step-dot.is-on { background: var(--sc-accent, var(--primary)); box-shadow: 0 0 8px var(--sc-accent, var(--primary)); }
+  .sc-controls { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+  .sc-controls .btn { min-width: 30px; justify-content: center; }
+  .sc-step-index { font-size: 10.5px; color: var(--muted-foreground); font-family: ui-monospace, Consolas, monospace; margin-left: 2px; }
+</style>
+<script>window.__errors=[];window.addEventListener("error",function(e){window.__errors.push(e.message+" @"+(e.lineno||0));document.title="ERR: "+e.message+" @"+(e.lineno||0);});</script>
+</head>
+<body data-theme="dark">
+<div class="shell">
+
+  <!-- ================= 顶栏 ================= -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <div class="brand-text">
+        <span class="brand-title">刀装工具 · 3D 装配全景沙盘</span>
+        <span class="brand-sub">主轴接口 / 刀柄 / 夹持单元 / 装刀工装 / 预调量测</span>
+        <span class="brand-stats" id="stats-summary"></span>
+      </div>
+    </div>
+
+    <nav class="view-nav" id="view-nav">
+      <button class="view-nav-btn is-active" data-view="canvas3d">🌐 1. 3D 装配沙盘</button>
+      <button class="view-nav-btn" data-view="matrix">📐 2. 接口规格矩阵</button>
+      <button class="view-nav-btn" data-view="sop">🔧 3. 装刀作业 SOP</button>
+      <button class="view-nav-btn" data-view="catalog">🗂 4. 零部件索引</button>
+    </nav>
+
+    <div class="toolbar">
+      <span id="canvas-tools-group" style="display:inline-flex;flex-wrap:wrap;gap:5px;">
+        <button id="toggle-zones" class="btn btn-compact is-on">🗺️ 分区底板</button>
+        <button id="toggle-interfaces" class="btn btn-compact"><span class="dot-indicator"></span><span>◎ 接口环</span></button>
+        <button id="toggle-labels" class="btn btn-compact">🏷️ 标签: 智能精简</button>
+        <button id="toggle-edges" class="btn btn-compact">🔗 连线: 周边高亮</button>
+        <button id="toggle-edge-labels" class="btn btn-compact">💬 关系动词</button>
+        <button id="reset-camera" class="btn btn-compact">🎥 视角复位</button>
+      </span>
+      <button id="toggle-theme" class="btn btn-compact" title="切换深浅色">🌗 深/浅</button>
+      <button id="toggle-fullscreen" class="btn btn-compact" title="全屏演示">⛶ 全屏</button>
+    </div>
+  </header>
+
+  <!-- ================= 视图 1：3D 沙盘 ================= -->
+  <main id="view-canvas3d" class="stage">
+    <canvas id="sand-canvas"></canvas>
+
+    <div class="hud hud-tl">
+      <div class="hud-bar" id="camera-badge">🖱 悬浮看连线与名称 · 拖拽旋转 · 滚轮缩放 · 双击聚焦</div>
+      <div class="hud-bar legend-bar" id="scope-legend"></div>
+    </div>
+
+    <div class="hud hud-tr">
+      <div class="hud-bar" id="count-badge"></div>
+      <div class="hud-bar" id="layer-legend"></div>
+    </div>
+
+    <div class="hud hud-bl">
+      <div class="hud-bar scenario-dock" id="scenario-dock"></div>
+    </div>
+
+    <div class="hud hud-br zoom-group">
+      <button id="zoom-out" class="btn btn-compact" style="font-family:monospace;" title="缩小">－</button>
+      <button id="zoom-in" class="btn btn-compact" style="font-family:monospace;" title="放大">＋</button>
+    </div>
+
+    <div id="scenario-banner" class="hud-banner is-hidden">
+      <div style="flex:1;min-width:0;">
+        <div id="scenario-title" class="hud-banner-title"></div>
+        <div id="scenario-steps" class="hud-banner-desc"></div>
+      </div>
+      <div class="sc-controls">
+        <button id="sc-prev" class="btn btn-compact" title="上一步">⏮</button>
+        <button id="sc-play" class="btn btn-compact" title="自动播放 / 暂停">⏸</button>
+        <button id="sc-next" class="btn btn-compact" title="下一步">⏭</button>
+      </div>
+      <button id="close-scenario" class="btn btn-compact" style="flex-shrink:0;">退出</button>
+    </div>
+
+    <button id="open-drawer-btn" class="btn open-drawer-pill is-hidden">◂ 展开装配视检</button>
+
+    <aside id="inspector-drawer" class="drawer is-open">
+      <div class="drawer-head">
+        <div class="drawer-title">装配视检</div>
+        <div class="drawer-tabs">
+          <button class="drawer-tab is-active" data-tab="detail">详情</button>
+          <button class="drawer-tab" data-tab="catalog">索引</button>
+        </div>
+        <button id="close-drawer-btn" class="btn btn-compact" title="收起以获取全屏视野">收起 ▸</button>
+      </div>
+      <div id="tab-detail-panel" class="drawer-scroll"></div>
+      <div id="tab-catalog-panel" class="drawer-scroll is-hidden">
+        <input id="catalog-search" class="search-input" placeholder="搜索零部件 / 型号 / 规格 / 工序…" />
+        <div id="catalog-list"></div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ================= 视图 2：接口规格矩阵 ================= -->
+  <section id="view-matrix" class="doc-stage is-hidden">
+    <div class="doc-head">
+      <div>
+        <div class="doc-title">刀柄接口与夹持方式规格矩阵</div>
+        <div class="doc-sub">按主轴接口选刀柄，按工序精度选夹持方式 —— 规格先定，装刀动作才有依据</div>
+      </div>
+      <button class="btn ghost-btn" data-goto="canvas3d">🌐 回到 3D 沙盘</button>
+    </div>
+
+    <div class="kpi-grid" id="matrix-kpis"></div>
+
+    <div style="overflow:auto;">
+      <table class="data-table" id="matrix-table">
+        <thead>
+          <tr>
+            <th style="width:120px;">接口 / 刀柄</th>
+            <th style="width:110px;">锥面形式</th>
+            <th style="width:130px;">夹持方式</th>
+            <th style="width:110px;">最高转速</th>
+            <th style="width:120px;">重复装夹精度</th>
+            <th style="width:110px;">典型径向跳动</th>
+            <th>适用工序与注意点</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="sec-label" style="margin-top:18px;">选型四问</div>
+    <div class="anti-grid" id="matrix-notes"></div>
+  </section>
+
+  <!-- ================= 视图 3：装刀作业 SOP ================= -->
+  <section id="view-sop" class="doc-stage is-hidden">
+    <div class="doc-head">
+      <div>
+        <div class="doc-title">装刀作业 SOP · 从拆包到放行</div>
+        <div class="doc-sub">四段十二步，每一步都对应沙盘里的实体与检测记录</div>
+      </div>
+      <button class="btn ghost-btn" data-goto="canvas3d">🌐 回到 3D 沙盘</button>
+    </div>
+    <div class="sop-grid" id="sop-grid"></div>
+
+    <div class="sec-label" style="margin-top:18px;">装刀常见失效与对策</div>
+    <div class="anti-grid" id="sop-failures"></div>
+  </section>
+
+  <!-- ================= 视图 4：零部件索引 ================= -->
+  <section id="view-catalog" class="doc-stage is-hidden">
+    <div class="doc-head">
+      <div>
+        <div class="doc-title">零部件与规格索引</div>
+        <div class="doc-sub">沙盘里的每个节点都在这里；点一行可直接跳回 3D 定位</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input id="index-search" class="table-search" style="width:260px;margin:0;" placeholder="搜索名称 / 编码 / 规格…" />
+        <button class="btn ghost-btn" data-goto="canvas3d">🌐 回到 3D 沙盘</button>
+      </div>
+    </div>
+    <div style="overflow:auto;">
+      <table class="data-table" id="index-table">
+        <thead>
+          <tr>
+            <th style="width:52px;">层</th>
+            <th style="width:96px;">分区</th>
+            <th style="width:190px;">零部件 / 概念</th>
+            <th style="width:150px;">编码 / 型号</th>
+            <th style="width:110px;">类型</th>
+            <th>关键规格</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+  <script>
+  "use strict";
+
+  /* =========================================================
+     刀装工具 · 3D 装配全景沙盘
+     —— 参考「汽车零部件 3D 本体全景沙盘」的视觉语言与交互模型：
+        纯 Canvas 2D + 手写透视投影（yaw / pitch / zoom），
+        分层平板 + 分区底板 + 胶囊标签 + 带动词关系线 + 视检抽屉。
+     数据是可替换的示例：换成你们真实刀具库 / 工艺规范即可。
+     ========================================================= */
+
+  /* ---------------- 1. 分层 ---------------- */
+  const LAYERS = [
+    { id: 'L1', y: -210, name: 'L1 物理装配层', sub: '谁夹着谁 · 一物一码', colorVar: '--chart-1' },
+    { id: 'L2', y: -70,  name: 'L2 规格约束层', sub: '锥度 / 夹持力 / 跳动 / 平衡', colorVar: '--chart-3' },
+    { id: 'L3', y: 70,   name: 'L3 装刀作业层', sub: '装刀单 · 预调 · 检测记录', colorVar: '--chart-4' },
+    { id: 'L4', y: 210,  name: 'L4 计算与放行层', sub: '悬伸校核 · 寿命预测 · 放行', colorVar: '--chart-5' },
+  ];
+
+  /* ---------------- 2. 分区 ---------------- */
+  const SCOPE_META = {
+    SPINDLE: { name: '主轴接口', short: '主轴', label: '主轴接口区 · 锥孔 / 拉钉 / 拉刀爪 / 端面', colorVar: '--chart-6', fallback: '#06b6d4',
+      desc: '刀柄与机床之间唯一的力与精度接口：锥面定心、端面定位、拉钉锁紧。这里的每一处脏污或磨损，都会变成刀尖上的跳动。' },
+    HOLDER: { name: '刀柄本体', short: '刀柄', label: '刀柄本体区 · BT / HSK / 热缩 / 液压', colorVar: '--chart-1', fallback: '#3b82f6',
+      desc: '把主轴扭矩传到刀具、把夹持力锁在刀具上的中间件。选型先看接口（BT 7:24 / HSK 1:10），再看转速与刚性。' },
+    CLAMP: { name: '夹持单元', short: '夹持', label: '夹持单元区 · 筒夹 / 螺母 / 刀具', colorVar: '--chart-2', fallback: '#10b981',
+      desc: '真正咬住刀具的部分。筒夹的清洁度、螺母的拧紧扭矩、刀具的悬伸，决定了这套刀装能不能稳定跑完一个班。' },
+    SETUP: { name: '装刀工装', short: '工装', label: '装刀工装区 · 锁刀座 / 热缩机 / 对刀仪', colorVar: '--chart-3', fallback: '#f59e0b',
+      desc: '让「装刀」从手感变成可复现动作的装备：锁得住、加得准、量得出，才有资格谈重复精度。' },
+    METRO: { name: '预调量测', short: '量测', label: '预调量测区 · 跳动 / 动平衡 / 清洁', colorVar: '--chart-5', fallback: '#ec4899',
+      desc: '装完不等于装对。跳动仪验几何精度，动平衡机验高速稳定性，清洁站决定这一切能保持多久。' },
+  };
+
+  /* ---------------- 3. 节点 ---------------- */
+  // archetype: PHYSICAL 实体 · SPEC 规格 · EVENT 作业记录 · FUNCTION 计算 · ACTION 受控动作
+  const NODES = [
+    /* ---------- L1 物理装配层 ---------- */
+    { id: 'n01', label: '主轴锥孔 (HSK-A63)', code: 'SP-HSK63-01', scope: 'SPINDLE', layer: 'L1', archetype: 'PHYSICAL', pos: [-452, -120, -170],
+      spec: '1:10 锥面 + 端面双面接触', params: '锥面接触率 ≥85% · 端面贴合 ≤2μm · 主轴转速 24000rpm',
+      note: '锥孔与端面必须同时贴合，缺一面就等于丢掉一半刚性。装刀前用无绒布 + 清洁剂擦拭，禁止用手直接摸锥面。',
+      tags: ['定心基准', '双面接触', '清洁敏感'] },
+    { id: 'n02', label: '拉钉 BT40-45°', code: 'PS-BT40-45', scope: 'SPINDLE', layer: 'L1', archetype: 'PHYSICAL', pos: [-452, -120, -50],
+      spec: '45° 拉紧面 · 拧紧扭矩 25N·m', params: '拉紧力 ≈14kN · 螺纹 M12 · 每 500 次检查磨损',
+      note: '拉钉是易损件：拉紧面出现压痕或直径减小就要换。扭矩不足会掉刀，过大会拉伤主轴拉爪。',
+      tags: ['易损件', '扭矩管理'] },
+    { id: 'n03', label: '拉刀爪 / 碟簧组', code: 'DB-CLAW-01', scope: 'SPINDLE', layer: 'L1', archetype: 'PHYSICAL', pos: [-452, -120, 70],
+      spec: '碟簧夹紧力 ≈18kN', params: '松刀气压 0.6MPa · 行程 4mm · 每年测夹紧力',
+      note: '夹紧力衰减是「用着用着就掉刀」的隐性原因。换季保养时用拉力计抽检，低于额定 80% 就换碟簧。',
+      tags: ['夹紧力', '保养项'] },
+    { id: 'n04', label: '主轴端面法兰', code: 'SP-FLG-63', scope: 'SPINDLE', layer: 'L1', archetype: 'PHYSICAL', pos: [-452, -120, 190],
+      spec: '端面平面度 ≤2μm', params: '与 HSK 刀柄端面配对 · 禁止磕碰',
+      note: '端面一旦有毛刺，刀柄就会「歪着进去」，跳动怎么调都下不来。发现磕痕要用油石顺纹修整。',
+      tags: ['端面定位'] },
+
+    { id: 'n05', label: 'BT40 刀柄 (ER32)', code: 'BT40-ER32-70', scope: 'HOLDER', layer: 'L1', archetype: 'PHYSICAL', pos: [-215, -120, -170],
+      spec: '7:24 锥度 · 悬伸 70mm', params: '动平衡 G6.3 @15000rpm · 本体跳动 ≤0.005',
+      note: '7:24 只靠锥面定心，靠拉钉拉紧；转速越高越要关注锥面贴合与动平衡。',
+      tags: ['通用主力', '7:24'] },
+    { id: 'n06', label: 'HSK-A63 刀柄', code: 'HSK63A-ER32', scope: 'HOLDER', layer: 'L1', archetype: 'PHYSICAL', pos: [-215, -120, -50],
+      spec: '1:10 锥度 · 双面定位', params: '最高 25000rpm · 重复装夹 ±0.002',
+      note: 'HSK 的空心薄壁靠端面贴合提升刚性，夹紧力不足时端面会「浮起来」，高速下表现为振纹。',
+      tags: ['高速', '双面'] },
+    { id: 'n07', label: '热缩刀柄 Φ12', code: 'HSK63-SHR-12', scope: 'HOLDER', layer: 'L1', archetype: 'PHYSICAL', pos: [-215, -120, 70],
+      spec: '加热 300–350℃ · 过盈夹持', params: '夹持力约为筒夹 3 倍 · 跳动 ≤0.003',
+      note: '一把刀一个孔，不能混用。加热不足装不进，过热会让刀柄退火、永久失去夹持力。',
+      tags: ['高刚性', '单刀专用'] },
+    { id: 'n08', label: '液压刀柄 Φ20', code: 'BT40-HYD-20', scope: 'HOLDER', layer: 'L1', archetype: 'PHYSICAL', pos: [-215, -120, 190],
+      spec: '胀套均压 · 跳动 ≤0.003', params: '拧紧扭矩 35N·m · 可重复装夹',
+      note: '适合精镗、铰孔这类怕振的工序；胀套内壁进铁屑会直接顶偏刀具，装前必须吹净。',
+      tags: ['减振', '精加工'] },
+
+    { id: 'n09', label: 'ER32 筒夹', code: 'ER32-12', scope: 'CLAMP', layer: 'L1', archetype: 'PHYSICAL', pos: [30, -120, -170],
+      spec: '夹持范围 3–20mm', params: '夹持力随扭矩上升 · 每 2000 次更换',
+      note: '筒夹是耗材：切槽磨损后夹持力断崖式下降。夹 12mm 刀就不要用 3–20mm 的「万能筒夹」凑合。',
+      tags: ['耗材', '夹持范围'] },
+    { id: 'n10', label: 'ER 夹持螺母 M40', code: 'ER-NUT-M40', scope: 'CLAMP', layer: 'L1', archetype: 'PHYSICAL', pos: [30, -120, -50],
+      spec: '标准扭矩 100N·m', params: '螺纹 M40×1.5 · 每次装刀复紧',
+      note: '扭矩靠猜是装刀最大的不确定性来源。用扭矩扳手，按筒夹厂家表值执行，别用加长杆「凭手感」。',
+      tags: ['扭矩', '关键工步'] },
+    { id: 'n11', label: '钻夹头 1–13', code: 'KEY-JC-13', scope: 'CLAMP', layer: 'L1', archetype: 'PHYSICAL', pos: [30, -120, 70],
+      spec: '三爪自定心', params: '跳动 ≤0.05 · 仅用于钻孔',
+      note: '钻夹头精度低，不要拿去铣削；侧向力会让三爪偏磨，越用越跳。',
+      tags: ['钻孔专用'] },
+    { id: 'n12', label: '立铣刀 Φ12 4刃', code: 'EM-D12-4F', scope: 'CLAMP', layer: 'L1', archetype: 'PHYSICAL', pos: [30, -120, 150],
+      spec: '硬质合金 · 悬伸 ≤2.5D', params: '刃长 30mm · 建议转速 8000–12000',
+      note: '悬伸每增加 1D，刚性大约掉一半。深腔加工宁可换加长刀柄，也别把刀伸得太长。',
+      tags: ['切削主体', '悬伸敏感'] },
+    { id: 'n13', label: '钻头 Φ8.5', code: 'DR-D8.5', scope: 'CLAMP', layer: 'L1', archetype: 'PHYSICAL', pos: [150, -120, 190],
+      spec: '高速钢 / 硬质合金 · 118°顶角', params: '钻深 ≤3D · 加注内冷',
+      note: '钻头对同轴度最敏感：偏 0.02mm，孔的直线度就肉眼可见地差。装钻头优先用液压或热缩刀柄。',
+      tags: ['孔加工', '同轴敏感'] },
+
+    { id: 'n14', label: '锁刀座 BT40', code: 'TS-BT40-STD', scope: 'SETUP', layer: 'L1', archetype: 'PHYSICAL', pos: [262, -120, -170],
+      spec: '夹持本体 · 防转销', params: '适配 BT40 键槽 · 台面固定',
+      note: '锁刀座是装刀的第一道基准：本体不晃、键槽咬住，拧螺母时刀柄才不会跟着转。',
+      tags: ['装刀基准'] },
+    { id: 'n15', label: '热缩机 3.5kW', code: 'SHR-3.5K', scope: 'SETUP', layer: 'L1', archetype: 'PHYSICAL', pos: [262, -120, -50],
+      spec: '感应加热 8–12s', params: '温控 ±10℃ · 配冷却套',
+      note: '加热时间要按刀柄直径查表，不是越久越好；冷却必须自然冷或冷风，禁止水冷急冷。',
+      tags: ['温控', '专用设备'] },
+    { id: 'n16', label: '对刀仪 / 预调台', code: 'PST-300', scope: 'SETUP', layer: 'L1', archetype: 'PHYSICAL', pos: [262, -120, 70],
+      spec: '测量范围 Ø300×400', params: '分辨率 0.001mm · 预热 15min',
+      note: '机外预调的价值：把「在机床上试切找刀长」的时间挪到机外，主轴有效切削时间直接涨。',
+      tags: ['机外预调', '精度'] },
+    { id: 'n17', label: '扭矩扳手 20–200N·m', code: 'TW-200', scope: 'SETUP', layer: 'L1', archetype: 'PHYSICAL', pos: [262, -120, 190],
+      spec: '精度 ±3% · 每季校准', params: '配 ER 专用套筒 · 咔哒式',
+      note: '扳手本身要校准：一把失准的扭矩扳手，比没有扳手更危险，因为它让你以为一切正常。',
+      tags: ['计量器具'] },
+
+    { id: 'n18', label: '跳动仪 0.001mm', code: 'TIR-DG-001', scope: 'METRO', layer: 'L1', archetype: 'PHYSICAL', pos: [462, -120, -170],
+      spec: '磁力座 + 千分表', params: '测点距刀尖 10mm · 转一圈取最大差值',
+      note: '跳动要在「装好之后、上机之前」测；上机后再测，量的是主轴 + 刀柄的总误差，归因就难了。',
+      tags: ['几何精度'] },
+    { id: 'n19', label: '动平衡机', code: 'BAL-2.5', scope: 'METRO', layer: 'L1', archetype: 'PHYSICAL', pos: [462, -120, -50],
+      spec: 'G2.5 @20000rpm', params: '双面校正 · 去重/配重',
+      note: '高速刀柄（>12000rpm）必须做动平衡；平衡后再拆装刀具，平衡状态就失效，要重做。',
+      tags: ['高速必备'] },
+    { id: 'n20', label: '清洁站 (超声波)', code: 'CLN-US-01', scope: 'METRO', layer: 'L1', archetype: 'PHYSICAL', pos: [462, -120, 70],
+      spec: '锥面 / 内孔清洁', params: '残油 ≤0.1mg · 无绒布擦拭',
+      note: '装刀失效里最常见、也最便宜的一类：锥面一粒铁屑 ≈ 几微米跳动。清洁 30 秒，省一次返工。',
+      tags: ['低成本高收益'] },
+
+    /* ---------- L2 规格约束层 ---------- */
+    { id: 'n21', label: 'BT 锥度 7:24 规格', code: 'SPEC-BT-724', scope: 'HOLDER', layer: 'L2', archetype: 'SPEC', pos: [-215, -40, -120],
+      spec: '锥角 16°35′39″ · 接触 ≥85%', params: '涂色法检查 · 大端接触优先',
+      note: '7:24 靠锥面自锁定心，锥面磨损后接触带上移，刚性下降但跳动可能仍「看起来正常」，要靠涂色检查发现。',
+      tags: ['接口标准'] },
+    { id: 'n22', label: 'HSK 1:10 双面接触', code: 'SPEC-HSK-110', scope: 'HOLDER', layer: 'L2', archetype: 'SPEC', pos: [-215, -40, 10],
+      spec: '锥面 + 端面同时贴合', params: '端面间隙 ≤2μm · 夹紧力 ≥10kN',
+      note: 'HSK 的精度红利全在端面：间隙超差时，转速越高振纹越明显，而不是「精度不够」。',
+      tags: ['高速接口'] },
+    { id: 'n23', label: '夹持力与拧紧扭矩', code: 'SPEC-CLAMP-TQ', scope: 'CLAMP', layer: 'L2', archetype: 'SPEC', pos: [30, -40, -120],
+      spec: '按螺纹规格查表取值', params: 'ER32 标准 100N·m · 超 120 会压溃筒夹',
+      note: '扭矩与夹持力不是线性越大越好：超过筒夹弹性极限后，夹持力反而下降，还会让螺母早期失效。',
+      tags: ['工艺参数'] },
+    { id: 'n24', label: '径向跳动 TIR 标准', code: 'SPEC-TIR-005', scope: 'METRO', layer: 'L2', archetype: 'SPEC', pos: [462, -40, -120],
+      spec: '精铣 ≤0.005 · 高精 ≤0.003', params: '测点距夹持面 10mm · 常温 20℃',
+      note: 'TIR 是全链路指标：主轴 + 刀柄 + 筒夹 + 刀具，任何一环超差都会体现在同一个读数上。',
+      tags: ['验收标准'] },
+    { id: 'n25', label: '动平衡等级 G2.5', code: 'SPEC-BAL-G25', scope: 'METRO', layer: 'L2', archetype: 'SPEC', pos: [462, -40, 10],
+      spec: '允许偏心 = G/(2πn/60)', params: '20000rpm 时约 1.2g·mm/kg',
+      note: '平衡等级跟转速挂钩：同一套刀柄，12000 转合格，24000 转可能就超了。',
+      tags: ['高速标准'] },
+    { id: 'n26', label: '悬伸与刚性规则', code: 'SPEC-OVERHANG', scope: 'SETUP', layer: 'L2', archetype: 'SPEC', pos: [262, -40, -120],
+      spec: '悬伸 ≤2.5–3D · 长径比越大降速', params: '超过 4D 建议减振刀柄',
+      note: '悬伸是最容易被忽略的「免费优化」：把刀往里推 5mm，往往比换一把更贵的刀更有效。',
+      tags: ['刚性问题'] },
+
+    /* ---------- L3 装刀作业层 ---------- */
+    { id: 'n27', label: '装刀作业单', code: 'JOB-SET-001', scope: 'SETUP', layer: 'L3', archetype: 'EVENT', pos: [262, 40, -120],
+      spec: '刀号 / 机床 / 工序 / 责任人', params: '一单一刀 · 扫码绑定',
+      note: '没有单据的装刀等于没有追溯：出了问题只能靠回忆，而回忆永远指向「不是我的班」。',
+      tags: ['追溯起点'] },
+    { id: 'n28', label: '预调测量记录', code: 'REC-PRESET', scope: 'SETUP', layer: 'L3', archetype: 'EVENT', pos: [262, 40, 10],
+      spec: '悬伸 / 直径 / 跳动实测', params: '对刀仪导出 · 精度 0.001mm',
+      note: '预调数据直接进机床刀补；记录缺失时，操作工只能用「试切 + 目测」，一致性无从谈起。',
+      tags: ['刀补来源'] },
+    { id: 'n29', label: '热缩加热记录', code: 'REC-SHRINK', scope: 'SETUP', layer: 'L3', archetype: 'EVENT', pos: [262, 40, 140],
+      spec: '温度 / 时间 / 冷却方式', params: '超温即报废 · 记录留存 1 年',
+      note: '热缩刀柄的寿命是一次性的：同一孔反复加热 3–5 次后，过盈量就回不来了。',
+      tags: ['一次性寿命'] },
+    { id: 'n30', label: '跳动 / 平衡检测记录', code: 'REC-TIR-BAL', scope: 'METRO', layer: 'L3', archetype: 'EVENT', pos: [462, 40, -60],
+      spec: 'TIR / G 值 / 测量转速', params: '双人复核 · 超差退回装配',
+      note: '检测记录是放行的唯一凭据；没有它，「装好了」只是一句话。',
+      tags: ['放行凭据'] },
+
+    /* ---------- L4 计算与放行层 ---------- */
+    { id: 'f01', label: '悬伸与刚性校核', code: 'fn_check_overhang', scope: 'CLAMP', layer: 'L4', archetype: 'FUNCTION', pos: [-215, 120, -60],
+      spec: '长径比 × 材料 × 切深', params: '输出：建议转速 / 切深 / 是否需减振',
+      note: '把老师傅「听声音判断」的经验变成公式：超过阈值就自动降参数，而不是等振纹出现再调。',
+      tags: ['工艺计算'] },
+    { id: 'f02', label: '刀具寿命预测', code: 'fn_tool_life', scope: 'CLAMP', layer: 'L4', archetype: 'FUNCTION', pos: [-215, 120, 80],
+      spec: '切削长度 × 材料系数', params: '输出：剩余寿命 / 换刀建议',
+      note: '寿命预测的目的不是「精确到分钟」，而是把换刀从「崩了再换」变成「计划内换」。',
+      tags: ['预测性维护'] },
+    { id: 'a01', label: '装刀放行', code: 'act_release_tool', scope: 'SETUP', layer: 'L4', archetype: 'ACTION', pos: [262, 120, -60],
+      spec: '前置：记录齐套 + 校核通过', params: '失败回滚 · 双人签核',
+      note: '放行是受控动作，不是按钮：记录不全、校核不过就不许上机，这才是装刀质量的门闩。',
+      tags: ['受控动作'] },
+    { id: 'a02', label: '刀具报废 / 返修', code: 'act_scrap_tool', scope: 'CLAMP', layer: 'L4', archetype: 'ACTION', pos: [262, 120, 80],
+      spec: '前置：寿命耗尽 / 崩刃', params: '残值登记 · 供应商反馈',
+      note: '报废数据回流给供应商，是降低刀具成本最直接的一条链路。',
+      tags: ['成本闭环'] },
+  ];
+
+  /* ---------------- 4. 关系 ---------------- */
+  const LINKS = [
+    // 主轴内部
+    { from: 'n04', to: 'n01', rel: '端面约束' },
+    { from: 'n03', to: 'n02', rel: '拉紧' },
+    { from: 'n02', to: 'n05', rel: '锁紧 BT40' },
+    { from: 'n02', to: 'n06', rel: '锁紧 HSK' },
+    // 刀柄 ↔ 夹持
+    { from: 'n01', to: 'n05', rel: '锥面定位' },
+    { from: 'n01', to: 'n06', rel: '双面定位' },
+    { from: 'n05', to: 'n10', rel: '螺纹连接' },
+    { from: 'n06', to: 'n10', rel: '螺纹连接' },
+    { from: 'n10', to: 'n09', rel: '轴向压紧' },
+    { from: 'n09', to: 'n12', rel: '夹持立铣刀' },
+    { from: 'n09', to: 'n13', rel: '夹持钻头' },
+    { from: 'n07', to: 'n12', rel: '热套夹持' },
+    { from: 'n08', to: 'n12', rel: '胀套夹持' },
+    { from: 'n11', to: 'n13', rel: '三爪夹持' },
+    // 工装
+    { from: 'n14', to: 'n05', rel: '固定本体' },
+    { from: 'n15', to: 'n07', rel: '感应加热' },
+    { from: 'n16', to: 'n12', rel: '预调测量' },
+    { from: 'n17', to: 'n10', rel: '施加扭矩' },
+    { from: 'n18', to: 'n05', rel: '检测跳动' },
+    { from: 'n19', to: 'n05', rel: '整机平衡' },
+    { from: 'n20', to: 'n01', rel: '清洁锥面' },
+    // 规格约束
+    { from: 'n21', to: 'n05', rel: '约束锥度' },
+    { from: 'n22', to: 'n06', rel: '约束接触' },
+    { from: 'n23', to: 'n10', rel: '约束扭矩' },
+    { from: 'n23', to: 'n09', rel: '约束夹持力' },
+    { from: 'n24', to: 'n18', rel: '约束判定' },
+    { from: 'n25', to: 'n19', rel: '约束判定' },
+    { from: 'n26', to: 'n07', rel: '约束悬伸' },
+    // 作业记录
+    { from: 'n27', to: 'n28', rel: '包含' },
+    { from: 'n27', to: 'n29', rel: '包含' },
+    { from: 'n27', to: 'n30', rel: '包含' },
+    { from: 'n28', to: 'n16', rel: '引用设备' },
+    { from: 'n29', to: 'n15', rel: '引用设备' },
+    { from: 'n30', to: 'n18', rel: '引用检具' },
+    { from: 'n28', to: 'n12', rel: '记录刀具' },
+    { from: 'n30', to: 'n06', rel: '记录刀柄' },
+    // 计算与动作
+    { from: 'f01', to: 'n26', rel: '读取规则' },
+    { from: 'f01', to: 'n28', rel: '读取悬伸' },
+    { from: 'f02', to: 'n12', rel: '预测寿命' },
+    { from: 'a01', to: 'n27', rel: '放行单据' },
+    { from: 'a01', to: 'f01', rel: '前置校验' },
+    { from: 'a01', to: 'f02', rel: '前置校验' },
+    { from: 'a01', to: 'n30', rel: '校验记录' },
+    { from: 'a02', to: 'n12', rel: '报废处理' },
+    { from: 'a02', to: 'f02', rel: '回写寿命' },
+  ];
+
+  /* ---------------- 5. 装刀推演 ---------------- */
+  const SCENARIOS = {
+    s_bt40: {
+      title: '① BT40 立铣刀标准装刀',
+      accent: '--chart-1',
+      nodeIds: ['n20', 'n01', 'n02', 'n14', 'n05', 'n09', 'n12', 'n10', 'n17', 'n16', 'n18', 'n27'],
+      stepsList: [
+        { text: '清洁主轴锥孔与刀柄锥面，检查磕碰', nodes: ['n20', 'n01'], edges: [['n20', 'n01']] },
+        { text: '装拉钉并按 25N·m 拧紧', nodes: ['n02', 'n17', 'n05'], edges: [['n02', 'n05']] },
+        { text: '锁刀座固定刀柄本体，键槽咬合', nodes: ['n14', 'n05'], edges: [['n14', 'n05']] },
+        { text: '装 ER32 筒夹与 Φ12 立铣刀', nodes: ['n09', 'n12'], edges: [['n10', 'n09'], ['n09', 'n12']] },
+        { text: '扭矩扳手按 100N·m 复紧夹持螺母', nodes: ['n10', 'n17', 'n23'], edges: [['n17', 'n10'], ['n23', 'n10']] },
+        { text: '对刀仪预调悬伸与直径，写刀补', nodes: ['n16', 'n28', 'n12'], edges: [['n16', 'n12'], ['n27', 'n28']] },
+        { text: '跳动复检 TIR ≤0.005（精铣）', nodes: ['n18', 'n24', 'n30'], edges: [['n30', 'n18'], ['n18', 'n05']] },
+        { text: '上机空跑确认，装刀单归档', nodes: ['n01', 'n05', 'n27'], edges: [['n01', 'n05'], ['n27', 'n28']] },
+      ],
+    },
+    s_hsk: {
+      title: '② HSK-A63 热缩刀柄装刀',
+      accent: '--chart-6',
+      nodeIds: ['n22', 'n06', 'n20', 'n15', 'n29', 'n07', 'n12', 'f01', 'n19', 'n25', 'n28'],
+      stepsList: [
+        { text: '核对 HSK 1:10 锥面 + 端面双面接触', nodes: ['n22', 'n06'], edges: [['n22', 'n06']] },
+        { text: '清洁锥孔与刀柄内孔，吹净残屑', nodes: ['n20', 'n01', 'n06'], edges: [['n20', 'n01']] },
+        { text: '热缩机感应加热 8–12s，控温 ±10℃', nodes: ['n15', 'n07', 'n29'], edges: [['n15', 'n07'], ['n15', 'n29']] },
+        { text: '装入 Φ12 立铣刀，自然冷却到位', nodes: ['n07', 'n12'], edges: [['n07', 'n12']] },
+        { text: '校核悬伸与长径比，超限降转速', nodes: ['f01', 'n26', 'n28'], edges: [['f01', 'n26'], ['f01', 'n28']] },
+        { text: '动平衡 G2.5 复检（>12000rpm 必做）', nodes: ['n19', 'n25', 'n05'], edges: [['n25', 'n19'], ['n19', 'n05']] },
+        { text: '预调记录归档，绑定刀号', nodes: ['n28', 'n27'], edges: [['n27', 'n28']] },
+      ],
+    },
+    s_er: {
+      title: '③ ER32 筒夹快速换刀',
+      accent: '--chart-2',
+      nodeIds: ['n10', 'n12', 'n20', 'n09', 'n17', 'n23', 'n18', 'n30', 'f02'],
+      stepsList: [
+        { text: '松开夹持螺母，取出旧刀', nodes: ['n10', 'n12'], edges: [['n10', 'n09'], ['n09', 'n12']] },
+        { text: '清理筒夹内腔与刀柄内孔', nodes: ['n09', 'n20'], edges: [['n20', 'n01']] },
+        { text: '更换同规格 ER32 筒夹，检查切槽磨损', nodes: ['n09', 'n23'], edges: [['n23', 'n09']] },
+        { text: '装入新刀，按 100N·m 复紧', nodes: ['n10', 'n17'], edges: [['n17', 'n10']] },
+        { text: '跳动复测，超差退回重装', nodes: ['n18', 'n30', 'n05'], edges: [['n30', 'n18'], ['n18', 'n05']] },
+        { text: '更新刀具寿命台账', nodes: ['f02', 'n12'], edges: [['f02', 'n12']] },
+      ],
+    },
+    s_release: {
+      title: '④ 预调合格 → 装刀放行',
+      accent: '--chart-5',
+      nodeIds: ['n28', 'n30', 'f01', 'f02', 'a01', 'n27', 'n05'],
+      stepsList: [
+        { text: '装刀单、预调记录、检测记录三者齐套', nodes: ['n27', 'n28', 'n30'], edges: [['n27', 'n28'], ['n27', 'n30']] },
+        { text: '悬伸与刀具寿命校核通过', nodes: ['f01', 'f02', 'n26'], edges: [['f01', 'n26'], ['f01', 'n28'], ['f02', 'n12']] },
+        { text: '双人复核：签字、留痕', nodes: ['a01', 'n30'], edges: [['a01', 'n30']] },
+        { text: '执行放行动作，写回装刀单', nodes: ['a01', 'n27'], edges: [['a01', 'n27']] },
+        { text: '上机首件确认，异常回写台账', nodes: ['n05', 'n12'], edges: [['n01', 'n05']] },
+      ],
+    },
+  };
+
+  /* ---------------- 6. 规格矩阵 ---------------- */
+  const MATRIX_ROWS = [
+    { name: 'BT30', taper: '7:24 锥面', clamp: 'ER16 / ER20', rpm: '≤12000', repeat: '±0.005', tir: '≤0.010', note: '小件钻孔、轻铣；锥面靠拉钉拉紧，重切削易让刀。' },
+    { name: 'BT40', taper: '7:24 锥面', clamp: 'ER32 / 侧固 / 液压', rpm: '≤15000', repeat: '±0.005', tir: '≤0.008', note: '通用加工中心主力；转速上限低，做高速精铣需换 HSK。' },
+    { name: 'BT50', taper: '7:24 锥面', clamp: 'ER40 / 侧固', rpm: '≤10000', repeat: '±0.005', tir: '≤0.010', note: '大扭矩重切削；本体自重大，换刀机构要匹配。' },
+    { name: 'HSK-A63', taper: '1:10 双面', clamp: 'ER32 / 热缩 / 液压', rpm: '≤25000', repeat: '±0.002', tir: '≤0.003', note: '高速精铣首选；端面贴合失效时高速振纹最先暴露。' },
+    { name: 'HSK-E40', taper: '1:10 双面', clamp: 'ER25 / 热缩', rpm: '≤40000', repeat: '±0.002', tir: '≤0.003', note: '精雕、高转速小径刀；对动平衡与清洁度极其敏感。' },
+    { name: '热缩刀柄', taper: '随接口', clamp: '热套过盈', rpm: '随接口', repeat: '—', tir: '≤0.003', note: '刚性最高；一把刀一个孔，同一孔反复加热 3–5 次后过盈量衰减。' },
+    { name: '液压刀柄', taper: '随接口', clamp: '胀套均压', rpm: '随接口', repeat: '—', tir: '≤0.003', note: '减振好，适合精镗/铰孔；内腔进屑会直接顶偏刀具。' },
+  ];
+
+  const MATRIX_NOTES = [
+    { title: '① 先定接口，再谈精度', bad: '先挑一把「看起来精度高」的刀柄，结果和主轴锥度对不上，只能加过渡套。', fix: '主轴是什么接口就配什么刀柄：BT 7:24 与 HSK 1:10 不可互换，过渡套会吃掉刚性。' },
+    { title: '② 转速决定是否需要动平衡', bad: '12000rpm 以下从不做动平衡，换了高速机仍照旧。', fix: '超过 12000rpm 一律按 G2.5 校正；平衡后再拆装刀具，平衡即失效，需重做。' },
+    { title: '③ 夹持方式跟着工序走', bad: '一把 ER32 刀柄从粗铣干到精镗，跳动不够就「多走一刀」。', fix: '粗加工用侧固/筒夹，精加工用热缩/液压；精度要求越高，越要减少中间环节。' },
+    { title: '④ 精度是链路指标', bad: '只测刀柄本体跳动，忽略筒夹与刀具，上机后仍超差。', fix: '按「主轴 → 刀柄 → 筒夹 → 刀具」逐段测，超差段先换，再谈整机验收。' },
+  ];
+
+  /* ---------------- 7. 装刀 SOP ---------------- */
+  const SOP_STAGES = [
+    { step: 'STEP 01', title: '准备与清洁', accent: '--chart-6', items: [
+      '核对装刀单：刀号 / 机床 / 工序 / 悬伸要求',
+      '擦拭主轴锥孔与刀柄锥面，检查有无磕碰、毛刺',
+      '筒夹、螺母、拉钉逐件检查磨损与裂纹',
+    ], warn: '锥面接触率 <85% 时先修磨或换刀柄，不要靠加大拉钉扭矩「压紧」' },
+    { step: 'STEP 02', title: '装配与夹紧', accent: '--chart-1', items: [
+      '锁刀座固定刀柄，拉钉按 25N·m 拧紧',
+      '装入筒夹与刀具，确认夹持范围匹配刀径',
+      '扭矩扳手按规格表复紧夹持螺母（ER32 ≈100N·m）',
+    ], warn: '超过筒夹弹性极限后夹持力反而下降，禁止用加长杆「凭手感」加力' },
+    { step: 'STEP 03', title: '预调与量测', accent: '--chart-3', items: [
+      '对刀仪测量悬伸、直径，数据写入刀补',
+      '跳动仪测 TIR，精铣 ≤0.005、高精 ≤0.003',
+      '高速刀柄做动平衡，记录 G 值与校正转速',
+    ], warn: '跳动要在上机前测；上机后测到的是「主轴 + 刀柄」总误差，归因会失真' },
+    { step: 'STEP 04', title: '放行与追溯', accent: '--chart-5', items: [
+      '装刀单、预调记录、检测记录三者齐套',
+      '悬伸与寿命校核通过，双人复核签核',
+      '放行后上机首件确认，异常回写刀具台账',
+    ], warn: '记录不全不许放行 —— 装刀质量的门闩在单据，不在手感' },
+  ];
+
+  const SOP_FAILURES = [
+    { title: '锥面未清洁 → 跳动超差', bad: '锥面残留铁屑/油膜，装上去「看着到位」，实测 TIR 0.02 以上。', fix: '装前 30 秒清洁 + 目视检查；把清洁站放在装刀工位伸手可及的位置。' },
+    { title: '扭矩不足 → 掉刀 / 让刀', bad: '凭手感拧螺母，重切削时筒夹回退，轻则让刀，重则掉刀打刀。', fix: '扭矩扳手定量执行，扳手每季校准；把规格表贴在工位上。' },
+    { title: '悬伸过长 → 振刀', bad: '深腔加工把刀伸到 4–5D，转速不变，结果振纹、崩刃。', fix: '悬伸 ≤2.5–3D；必须加长时按长径比降转速，或换减振刀柄。' },
+    { title: '热缩超温 → 刀柄退火', bad: '加热「多烤一会儿更稳」，实际让刀柄基体退火、夹持力永久衰减。', fix: '按直径查加热时间表，温控 ±10℃；同一孔累计加热次数登记管理。' },
+  ];
+  /* =========================================================
+     8. 运行状态 · 投影 · 渲染引擎
+     ========================================================= */
+  const state = {
+    activeView: 'canvas3d',
+    yaw: -0.58, pitch: 0.58, zoom: 0.96,
+    targetYaw: -0.58, targetPitch: 0.58, targetZoom: 0.96,
+    panX: 0, panY: 0, targetPanX: 0, targetPanY: 0,
+    focusX: 0, focusY: 0, focusZ: 0,
+    targetFocusX: 0, targetFocusY: 0, targetFocusZ: 0,
+    dragMode: null, lastX: 0, lastY: 0, moved: false,
+    selectedNodeId: null, hoveredNodeId: null,
+    hoverX: 0, hoverY: 0, hoverIn: false,
+    activeScenario: null,
+    scenarioStep: 0,
+    scenarioAuto: true,
+    scenarioTimer: 0,
+    scenarioLastAt: 0,
+    scopeFilter: 'all',
+    visibleLayers: { L1: true, L2: true, L3: true, L4: true },
+    showZones: true, showInterfaces: false,
+    labelMode: 'smart',
+    edgeMode: 'neighborhood',
+    showEdgeLabels: false,
+    drawerOpen: true, drawerTab: 'detail',
+    catalogQuery: '', indexQuery: '',
+    animPhase: 0, clock: 0,
+    camPreset: 'iso',
+  };
+
+  const FOV = 1320;
+  const CAM_DIST = 1520;
+  const SLAB_HALF_W = 560;
+  const SLAB_HALF_D = 285;
+  const FLOOR_Y = -268;
+
+  const canvas = document.getElementById('sand-canvas');
+  const ctx = canvas.getContext('2d');
+  const stageEl = document.getElementById('view-canvas3d');
+
+  let themePalette = {};
+  let projectedCache = [];
+  let hoverNeighborhood = new Set();
+  let frameVerbLabels = [];
+  let frameHoverDirs = new Map();
+  let frameStepNodes = new Set();
+  let frameStepEdges = new Set();
+  let frameDoneNodes = new Set();
+  let frameDoneEdges = new Set();
+  const DIR_UP = '#38bdf8';
+  const DIR_DOWN = '#fb923c';
+
+  /* ---------- 颜色工具 ---------- */
+  function readCssVar(name, fallback) {
+    const v = getComputedStyle(document.body).getPropertyValue(name).trim();
+    return v || fallback;
+  }
+
+  function hexOrRgbWithAlpha(colorStr, alpha) {
+    const c = (colorStr || '').trim();
+    const a = Math.max(0, Math.min(1, alpha));
+    if (c.startsWith('#')) {
+      let hex = c.slice(1);
+      if (hex.length === 3) hex = hex.split('').map(x => x + x).join('');
+      const num = parseInt(hex, 16);
+      return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${a})`;
+    }
+    const m = c.match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i);
+    if (m) return `rgba(${m[1]}, ${m[2]}, ${m[3]}, ${a})`;
+    return c;
+  }
+
+  /** 两个颜色按 t 混合（用于连线渐变） */
+  function mixColor(a, b, t, alpha) {
+    const parse = s => {
+      if (s.startsWith('#')) {
+        let h = s.slice(1);
+        if (h.length === 3) h = h.split('').map(x => x + x).join('');
+        const n = parseInt(h, 16);
+        return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+      }
+      const m = s.match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i);
+      return m ? [+m[1], +m[2], +m[3]] : [128, 128, 128];
+    };
+    const A = parse(a), B = parse(b);
+    const c = A.map((v, i) => Math.round(v + (B[i] - v) * t));
+    return `rgba(${c[0]}, ${c[1]}, ${c[2]}, ${alpha})`;
+  }
+
+  function refreshThemePalette() {
+    themePalette = {
+      isLight: document.body.dataset.theme === 'light',
+      bg: readCssVar('--background', '#080d17'),
+      card: readCssVar('--card', '#101724'),
+      border: readCssVar('--border', '#243044'),
+      fg: readCssVar('--foreground', '#eef2f8'),
+      muted: readCssVar('--muted-foreground', '#8fa0b8'),
+      primary: readCssVar('--primary', '#3b82f6'),
+      chart1: readCssVar('--chart-1', '#3b82f6'),
+      chart2: readCssVar('--chart-2', '#10b981'),
+      chart3: readCssVar('--chart-3', '#f59e0b'),
+      chart4: readCssVar('--chart-4', '#a78bfa'),
+      chart5: readCssVar('--chart-5', '#ec4899'),
+      chart6: readCssVar('--chart-6', '#06b6d4'),
+    };
+  }
+
+  const getScopeColor = scope => {
+    const m = SCOPE_META[scope];
+    return m ? readCssVar(m.colorVar, m.fallback) : themePalette.primary;
+  };
+
+  const getLayerColor = layerId => {
+    const l = LAYERS.find(x => x.id === layerId);
+    return l ? readCssVar(l.colorVar, themePalette.primary) : themePalette.primary;
+  };
+
+  const getNodeColor = node => {
+    if (node.archetype === 'FUNCTION' || node.archetype === 'ACTION') return themePalette.chart5;
+    if (node.archetype === 'EVENT') return themePalette.chart4;
+    if (node.archetype === 'SPEC') return themePalette.chart3;
+    return themePalette.chart1;
+  };
+
+  const ARCHETYPE_LABEL = {
+    PHYSICAL: '实体零部件',
+    SPEC: '规格约束',
+    EVENT: '作业记录',
+    FUNCTION: '计算算子',
+    ACTION: '受控动作',
+  };
+
+  /* ---------- 数据索引 ---------- */
+  NODES.forEach(n => {
+    const layer = LAYERS.find(l => l.id === n.layer);
+    if (layer) n.pos[1] = layer.y;
+  });
+
+  const NODE_MAP = new Map(NODES.map(n => [n.id, n]));
+  const LINK_INDEX = new Map();
+  NODES.forEach(n => LINK_INDEX.set(n.id, []));
+  LINKS.forEach(l => {
+    if (!LINK_INDEX.has(l.from) || !LINK_INDEX.has(l.to)) return;
+    LINK_INDEX.get(l.from).push({ link: l, dir: 'out' });
+    LINK_INDEX.get(l.to).push({ link: l, dir: 'in' });
+  });
+
+  /* ---------- 投影 ---------- */
+  function projectPoint(wx, wy, wz, cx, cy) {
+    const dx = wx - state.focusX;
+    const dy = wy - state.focusY;
+    const dz = wz - state.focusZ;
+    const cosY = Math.cos(state.yaw), sinY = Math.sin(state.yaw);
+    const cosP = Math.cos(state.pitch), sinP = Math.sin(state.pitch);
+    const x1 = dx * cosY + dz * sinY;
+    const z1 = -dx * sinY + dz * cosY;
+    const y2 = dy * cosP - z1 * sinP;
+    const z2 = dy * sinP + z1 * cosP;
+    const depth = Math.max(180, CAM_DIST - z2);
+    const scale = (FOV * state.zoom) / depth;
+    return { sx: cx + state.panX + x1 * scale, sy: cy + state.panY - y2 * scale, z2, scale, depth };
+  }
+
+  /* ---------- 选择 / 悬浮 / 场景集合 ---------- */
+  function getNeighbors(id) {
+    const set = new Set();
+    if (!id) return set;
+    set.add(id);
+    (LINK_INDEX.get(id) || []).forEach(({ link }) => {
+      set.add(link.from);
+      set.add(link.to);
+    });
+    return set;
+  }
+
+  function getFocusNodeId() {
+    return state.hoveredNodeId || state.selectedNodeId;
+  }
+
+  function getFocusSet() {
+    return state.hoveredNodeId ? hoverNeighborhood : getNeighbors(state.selectedNodeId);
+  }
+
+  function isScenarioNode(id) {
+    if (!state.activeScenario) return false;
+    return SCENARIOS[state.activeScenario].nodeIds.includes(id);
+  }
+
+  function isScenarioEdge(link) {
+    if (!state.activeScenario) return false;
+    return SCENARIOS[state.activeScenario].flowPaths.some(([a, b]) =>
+      (a === link.from && b === link.to) || (a === link.to && b === link.from));
+  }
+
+  function getScopeSet() {
+    if (state.scopeFilter === 'all') return null;
+    const primary = new Set(NODES.filter(n => n.scope === state.scopeFilter).map(n => n.id));
+    const neighbor = new Set();
+    LINKS.forEach(l => {
+      if (primary.has(l.from) && !primary.has(l.to)) neighbor.add(l.to);
+      if (primary.has(l.to) && !primary.has(l.from)) neighbor.add(l.from);
+    });
+    return { primary, neighbor };
+  }
+
+  const isLayerVisible = id => !!state.visibleLayers[id];
+
+  /* ---------- 画布尺寸 ---------- */
+  function resizeCanvas() {
+    if (state.activeView !== 'canvas3d') return;
+    const rect = stageEl.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.max(320, rect.width), h = Math.max(280, rect.height);
+    if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+    }
+  }
+
+  /* ---------- 几何辅助 ---------- */
+  function pathFromPoints(pts, close) {
+    ctx.beginPath();
+    ctx.moveTo(pts[0].sx, pts[0].sy);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].sx, pts[i].sy);
+    if (close) ctx.closePath();
+  }
+
+  /** 世界坐标里的圆角矩形，采样后投影（保证透视下也是圆角） */
+  function projectedRoundRect(x1, z1, x2, z2, y, r, cx, cy) {
+    const pts = [];
+    const corners = [
+      { x: x2 - r, z: z1 + r, a0: -Math.PI / 2, a1: 0 },
+      { x: x2 - r, z: z2 - r, a0: 0, a1: Math.PI / 2 },
+      { x: x1 + r, z: z2 - r, a0: Math.PI / 2, a1: Math.PI },
+      { x: x1 + r, z: z1 + r, a0: Math.PI, a1: Math.PI * 1.5 },
+    ];
+    corners.forEach(c => {
+      for (let i = 0; i <= 6; i++) {
+        const a = c.a0 + (c.a1 - c.a0) * (i / 6);
+        pts.push(projectPoint(c.x + Math.cos(a) * r, y, c.z + Math.sin(a) * r, cx, cy));
+      }
+    });
+    return pts;
+  }
+
+  /* ---------- 背景氛围 ---------- */
+  function drawAmbience(w, h) {
+    const l = themePalette;
+    const g1 = ctx.createRadialGradient(w * 0.42, h * 0.30, 0, w * 0.42, h * 0.30, Math.max(w, h) * 0.75);
+    g1.addColorStop(0, hexOrRgbWithAlpha(l.primary, l.isLight ? 0.05 : 0.10));
+    g1.addColorStop(0.55, hexOrRgbWithAlpha(l.chart4, l.isLight ? 0.02 : 0.04));
+    g1.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g1;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  function drawFloorGrid(cx, cy) {
+    const l = themePalette;
+    ctx.save();
+    for (let i = -7; i <= 7; i++) {
+      const p1 = projectPoint(i * 96, FLOOR_Y, -SLAB_HALF_D - 90, cx, cy);
+      const p2 = projectPoint(i * 96, FLOOR_Y, SLAB_HALF_D + 90, cx, cy);
+      ctx.beginPath(); ctx.moveTo(p1.sx, p1.sy); ctx.lineTo(p2.sx, p2.sy);
+      ctx.strokeStyle = hexOrRgbWithAlpha(l.muted, l.isLight ? 0.14 : 0.07);
+      ctx.lineWidth = 1; ctx.stroke();
+    }
+    for (let j = -5; j <= 5; j++) {
+      const p1 = projectPoint(-SLAB_HALF_W - 110, FLOOR_Y, j * 88, cx, cy);
+      const p2 = projectPoint(SLAB_HALF_W + 110, FLOOR_Y, j * 88, cx, cy);
+      ctx.beginPath(); ctx.moveTo(p1.sx, p1.sy); ctx.lineTo(p2.sx, p2.sy);
+      ctx.strokeStyle = hexOrRgbWithAlpha(l.muted, l.isLight ? 0.11 : 0.055);
+      ctx.lineWidth = 1; ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  /* ---------- 分区底板 ---------- */
+  function drawZonePads(layer, cx, cy, dimFactor) {
+    if (!state.showZones) return;
+    Object.keys(SCOPE_META).forEach(scope => {
+      const nodes = NODES.filter(n => n.layer === layer.id && n.scope === scope);
+      if (!nodes.length) return;
+      let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+      nodes.forEach(n => {
+        minX = Math.min(minX, n.pos[0]); maxX = Math.max(maxX, n.pos[0]);
+        minZ = Math.min(minZ, n.pos[2]); maxZ = Math.max(maxZ, n.pos[2]);
+      });
+      const x1 = Math.max(-SLAB_HALF_W + 14, minX - 52);
+      const x2 = Math.min(SLAB_HALF_W - 14, maxX + 52);
+      const z1 = Math.max(-SLAB_HALF_D + 14, minZ - 46);
+      const z2 = Math.min(SLAB_HALF_D - 14, maxZ + 46);
+
+      const pts = projectedRoundRect(x1, z1, x2, z2, layer.y + 0.8, 14, cx, cy);
+      const sColor = getScopeColor(scope);
+      const focused = state.scopeFilter === scope;
+      const dim = dimFactor ?? 1;
+
+      ctx.save();
+      pathFromPoints(pts, true);
+      const g = ctx.createLinearGradient(0, pts[0].sy, 0, pts[2].sy);
+      g.addColorStop(0, hexOrRgbWithAlpha(sColor, (focused ? 0.16 : 0.09) * dim));
+      g.addColorStop(1, hexOrRgbWithAlpha(sColor, (focused ? 0.05 : 0.02) * dim));
+      ctx.fillStyle = g;
+      ctx.fill();
+
+      ctx.setLineDash([6, 5]);
+      ctx.lineDashOffset = -(state.clock * 12) % 11;
+      ctx.lineWidth = focused ? 1.6 : 1.1;
+      ctx.strokeStyle = hexOrRgbWithAlpha(sColor, (focused ? 0.75 : 0.36) * dim);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 四角小刻度
+      const tint = hexOrRgbWithAlpha(sColor, 0.7 * dim);
+      ctx.strokeStyle = tint;
+      ctx.lineWidth = 1.6;
+      [[0, 0], [1, 0], [2, 0], [3, 0]].forEach(() => {});
+      const cornerIdx = [0, 6, 12, 18];
+      cornerIdx.forEach(i => {
+        const a = pts[i], b = pts[(i + 2) % pts.length];
+        ctx.beginPath();
+        ctx.moveTo(a.sx, a.sy);
+        ctx.lineTo((a.sx + b.sx) / 2, (a.sy + b.sy) / 2);
+        ctx.stroke();
+      });
+
+      if (layer.id === 'L1' && state.scopeFilter === scope) {
+        const lbl = projectPoint(x1 - 8, layer.y + 1.5, z1 + 10, cx, cy);
+        ctx.font = '700 11px system-ui, -apple-system, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = hexOrRgbWithAlpha(sColor, 0.9);
+        ctx.fillText(SCOPE_META[scope].name, lbl.sx, lbl.sy);
+      }
+      ctx.restore();
+    });
+  }
+
+  /* ---------- 层平板 ---------- */
+  function drawLayerSlab(layer, cx, cy) {
+    const bevel = 10;
+    const top = [
+      [-SLAB_HALF_W, layer.y, -SLAB_HALF_D],
+      [SLAB_HALF_W, layer.y, -SLAB_HALF_D],
+      [SLAB_HALF_W, layer.y, SLAB_HALF_D],
+      [-SLAB_HALF_W, layer.y, SLAB_HALF_D],
+    ].map(([x, y, z]) => projectPoint(x, y, z, cx, cy));
+    const bot = [
+      [-SLAB_HALF_W, layer.y - bevel, -SLAB_HALF_D],
+      [SLAB_HALF_W, layer.y - bevel, -SLAB_HALF_D],
+      [SLAB_HALF_W, layer.y - bevel, SLAB_HALF_D],
+      [-SLAB_HALF_W, layer.y - bevel, SLAB_HALF_D],
+    ].map(([x, y, z]) => projectPoint(x, y, z, cx, cy));
+
+    const lColor = getLayerColor(layer.id);
+    const visible = isLayerVisible(layer.id);
+    const isFocusLayer = state.hoveredNodeId
+      ? NODE_MAP.get(state.hoveredNodeId).layer === layer.id
+      : (state.selectedNodeId ? NODE_MAP.get(state.selectedNodeId).layer === layer.id : false);
+    const dimFactor = visible ? (state.hoveredNodeId ? (isFocusLayer ? 1.15 : 0.62) : 1) : 0.22;
+
+    ctx.save();
+    ctx.globalAlpha = visible ? 1 : 0.3;
+
+    // 地面投影（让平板有“浮起来”的重量感）
+    const shadowStrength = themePalette.isLight ? 0.045 : 0.30;
+    const shadow = ctx.createLinearGradient(0, top[2].sy, 0, top[2].sy + 46);
+    shadow.addColorStop(0, `rgba(0,0,0,${shadowStrength})`);
+    shadow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = shadow;
+    ctx.beginPath();
+    ctx.moveTo(top[2].sx, top[2].sy);
+    ctx.lineTo(top[3].sx, top[3].sy);
+    ctx.lineTo(bot[3].sx, bot[3].sy + 46);
+    ctx.lineTo(bot[2].sx, bot[2].sy + 46);
+    ctx.closePath();
+    ctx.fill();
+
+    // 顶面
+    pathFromPoints(top, true);
+    const g = ctx.createLinearGradient(0, top[0].sy, 0, top[2].sy);
+    g.addColorStop(0, hexOrRgbWithAlpha(lColor, (themePalette.isLight ? 0.09 : 0.075) * dimFactor));
+    g.addColorStop(1, hexOrRgbWithAlpha(lColor, (themePalette.isLight ? 0.035 : 0.022) * dimFactor));
+    ctx.fillStyle = g;
+    ctx.fill();
+
+    // 外框
+    ctx.lineWidth = isFocusLayer ? 1.9 : 1.2;
+    ctx.strokeStyle = hexOrRgbWithAlpha(lColor, (isFocusLayer ? 0.85 : 0.42) * Math.min(1, dimFactor));
+    ctx.stroke();
+
+    // 前沿高光
+    ctx.beginPath();
+    ctx.moveTo(top[3].sx, top[3].sy);
+    ctx.lineTo(top[2].sx, top[2].sy);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = hexOrRgbWithAlpha(lColor, 0.9 * Math.min(1, dimFactor));
+    ctx.shadowColor = hexOrRgbWithAlpha(lColor, 0.7);
+    ctx.shadowBlur = 14;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // 侧面厚度（前左 / 前右）
+    ctx.beginPath();
+    ctx.moveTo(top[3].sx, top[3].sy);
+    ctx.lineTo(top[2].sx, top[2].sy);
+    ctx.lineTo(bot[2].sx, bot[2].sy);
+    ctx.lineTo(bot[3].sx, bot[3].sy);
+    ctx.closePath();
+    const gs = ctx.createLinearGradient(0, top[3].sy, 0, bot[3].sy);
+    gs.addColorStop(0, hexOrRgbWithAlpha(lColor, 0.30));
+    gs.addColorStop(1, hexOrRgbWithAlpha(lColor, 0.06));
+    ctx.fillStyle = gs;
+    ctx.fill();
+
+    // 四角刻度
+    ctx.strokeStyle = hexOrRgbWithAlpha(lColor, 0.8);
+    ctx.lineWidth = 2;
+    [[0, 1], [1, 2], [2, 3], [3, 0]].forEach(([a, b]) => {
+      const pa = top[a], pb = top[b];
+      const t = 0.08;
+      ctx.beginPath();
+      ctx.moveTo(pa.sx, pa.sy);
+      ctx.lineTo(pa.sx + (pb.sx - pa.sx) * t, pa.sy + (pb.sy - pa.sy) * t);
+      ctx.stroke();
+    });
+
+    // 左侧层标签
+    const anchor = projectPoint(-SLAB_HALF_W - 18, layer.y, 40, cx, cy);
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+
+    ctx.font = '700 13px system-ui, -apple-system, sans-serif';
+    ctx.fillStyle = hexOrRgbWithAlpha(lColor, 0.95);
+    ctx.fillText(layer.name, anchor.sx, anchor.sy - 8);
+
+    ctx.font = '400 10.5px system-ui, -apple-system, sans-serif';
+    ctx.fillStyle = hexOrRgbWithAlpha(themePalette.muted, 0.85);
+    ctx.fillText(layer.sub, anchor.sx, anchor.sy + 8);
+
+    ctx.restore();
+
+    if (visible) drawZonePads(layer, cx, cy, dimFactor);
+  }
+
+  /** 悬浮方向：上游（谁支撑/约束我）与下游（我支撑/作用谁） */
+  function getDirectionMap(focusId) {
+    const map = new Map();
+    (LINK_INDEX.get(focusId) || []).forEach(({ link }) => {
+      const other = link.from === focusId ? link.to : link.from;
+      const dir = link.from === focusId ? 'down' : 'up';
+      const cur = map.get(other);
+      if (!cur) map.set(other, dir);
+      else if (cur !== dir) map.set(other, 'both');
+    });
+    return map;
+  }
+
+  function currentScenarioStep() {
+    if (!state.activeScenario) return null;
+    const sc = SCENARIOS[state.activeScenario];
+    const steps = sc.stepsList || [];
+    if (!steps.length) return null;
+    return steps[Math.min(state.scenarioStep, steps.length - 1)];
+  }
+
+  /** 每帧重算：当前步 / 已完成步 的节点与连线集合 */
+  function computeScenarioSets() {
+    frameStepNodes = new Set();
+    frameStepEdges = new Set();
+    frameDoneNodes = new Set();
+    frameDoneEdges = new Set();
+    if (!state.activeScenario) return;
+    const steps = SCENARIOS[state.activeScenario].stepsList || [];
+    const cur = Math.min(state.scenarioStep, steps.length - 1);
+    steps.forEach((st, k) => {
+      if (k > cur) return;
+      const nodes = k === cur ? frameStepNodes : frameDoneNodes;
+      const edges = k === cur ? frameStepEdges : frameDoneEdges;
+      (st.nodes || []).forEach(id => nodes.add(id));
+      (st.edges || []).forEach(([a, b]) => edges.add(a + '>' + b));
+    });
+  }
+
+  function dirStroke(dir, alpha) {
+    const c = dir === 'up' ? DIR_UP : dir === 'down' ? DIR_DOWN : themePalette.muted;
+    return hexOrRgbWithAlpha(c, alpha);
+  }
+
+  /* ---------- 关系线 ---------- */
+  function drawLinks(cx, cy, projMap, cardRect) {
+    const focusId = state.hoveredNodeId || state.selectedNodeId;
+    const scenario = state.activeScenario;
+
+    LINKS.forEach((link, linkIdx) => {
+      const a = projMap.get(link.from);
+      const b = projMap.get(link.to);
+      if (!a || !b) return;
+      if (!isLayerVisible(NODE_MAP.get(link.from).layer) || !isLayerVisible(NODE_MAP.get(link.to).layer)) return;
+
+      const key = link.from + '>' + link.to;
+      const revKey = link.to + '>' + link.from;
+      const isFocusEdge = focusId && (link.from === focusId || link.to === focusId);
+      const dir = isFocusEdge ? (link.from === focusId ? 'down' : 'up') : null;
+      const dirColor = dir === 'up' ? DIR_UP : dir === 'down' ? DIR_DOWN : null;
+
+      const stepEdge = scenario && (frameStepEdges.has(key) || frameStepEdges.has(revKey));
+      const doneEdge = scenario && (frameDoneEdges.has(key) || frameDoneEdges.has(revKey));
+
+      const crossScope = NODE_MAP.get(link.from).scope !== NODE_MAP.get(link.to).scope;
+      const crossLayer = NODE_MAP.get(link.from).layer !== NODE_MAP.get(link.to).layer;
+
+      let alpha = 0.10;
+      let width = 1.1;
+      let dashed = crossLayer;
+      let colored = false;
+      let colorStart = getScopeColor(NODE_MAP.get(link.from).scope);
+      let colorEnd = getScopeColor(NODE_MAP.get(link.to).scope);
+
+      if (state.edgeMode === 'all') alpha = 0.17;
+      if (state.edgeMode === 'cross') {
+        alpha = crossScope ? 0.24 : 0.045;
+        colored = crossScope;
+      }
+      if (focusId && !isFocusEdge) alpha = 0.03;
+      if (isFocusEdge) {
+        alpha = 0.95;
+        width = 2.1;
+        dashed = false;
+        colored = true;
+        if (dirColor) { colorStart = dirColor; colorEnd = dirColor; }
+      }
+      if (scenario) {
+        const acc = readCssVar(SCENARIOS[scenario].accent, themePalette.primary);
+        alpha = stepEdge ? 0.95 : doneEdge ? 0.34 : 0.02;
+        width = stepEdge ? 2.2 : doneEdge ? 1.5 : 1;
+        colored = stepEdge || doneEdge;
+        dashed = false;
+        colorStart = acc;
+        colorEnd = acc;
+      }
+
+      const mx = (a.sx + b.sx) / 2;
+      const my = (a.sy + b.sy) / 2 - Math.abs(a.sx - b.sx) * 0.07 - 18;
+
+      if (colored) {
+        const segs = 14;
+        for (let i = 0; i < segs; i++) {
+          const t0 = i / segs, t1 = (i + 1) / segs;
+          const p0 = quadPoint(a, { sx: mx, sy: my }, b, t0);
+          const p1 = quadPoint(a, { sx: mx, sy: my }, b, t1);
+          ctx.beginPath();
+          ctx.moveTo(p0.x, p0.y);
+          ctx.lineTo(p1.x, p1.y);
+          ctx.strokeStyle = mixColor(colorStart, colorEnd, i / segs, alpha * (0.72 + 0.28 * (1 - t0)));
+          ctx.lineWidth = width;
+          ctx.stroke();
+        }
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(a.sx, a.sy);
+        ctx.quadraticCurveTo(mx, my, b.sx, b.sy);
+        ctx.strokeStyle = hexOrRgbWithAlpha(themePalette.muted, alpha);
+        ctx.lineWidth = width;
+        if (dashed) ctx.setLineDash([4, 5]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      if (isFocusEdge || stepEdge) {
+        const p1 = quadPoint(a, { sx: mx, sy: my }, b, 0.93);
+        const p2 = quadPoint(a, { sx: mx, sy: my }, b, 1);
+        const ang = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+        ctx.beginPath();
+        ctx.moveTo(b.sx, b.sy);
+        ctx.lineTo(b.sx - Math.cos(ang - 0.42) * 9, b.sy - Math.sin(ang - 0.42) * 9);
+        ctx.lineTo(b.sx - Math.cos(ang + 0.42) * 9, b.sy - Math.sin(ang + 0.42) * 9);
+        ctx.closePath();
+        ctx.fillStyle = colored ? hexOrRgbWithAlpha(colorEnd, alpha) : hexOrRgbWithAlpha(themePalette.muted, alpha);
+        ctx.fill();
+      }
+
+      if (isFocusEdge || stepEdge) {
+        const t = (state.clock * 0.55 + (linkIdx % 5) * 0.17) % 1;
+        const p = quadPoint(a, { sx: mx, sy: my }, b, t);
+        const gc = colored ? mixColor(colorStart, colorEnd, t, 1) : themePalette.muted;
+        const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 7);
+        grd.addColorStop(0, hexOrRgbWithAlpha(gc, 0.95));
+        grd.addColorStop(1, hexOrRgbWithAlpha(gc, 0));
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
+        ctx.fillStyle = grd;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2.1, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.fill();
+      }
+
+      // 关系动词不在这里画，交给标签统一落位，避免压字
+      const showLabel = isFocusEdge || (state.showEdgeLabels && stepEdge);
+      if (showLabel) {
+        const segLen = Math.hypot(b.sx - a.sx, b.sy - a.sy);
+        if (segLen >= 82) {
+          const tPos = 0.52 + (linkIdx % 3) * 0.11;
+          const qp = quadPoint(a, { sx: mx, sy: my }, b, tPos);
+          // 沿法线往外挪一点，别骑在节点标签上
+          const dxs = b.sx - a.sx, dys = b.sy - a.sy;
+          const segL = Math.hypot(dxs, dys) || 1;
+          const nx = -dys / segL, ny = dxs / segL;
+          const off = 13;
+          ctx.font = '600 10.5px system-ui, -apple-system, sans-serif';
+          const tw = ctx.measureText(link.rel).width;
+          frameVerbLabels.push({
+            text: link.rel,
+            x: qp.x + nx * off,
+            y: qp.y + ny * off,
+            w: tw + 12,
+            h: 17,
+            stroke: colored
+              ? hexOrRgbWithAlpha(dirColor || readCssVar(scenario ? SCENARIOS[scenario].accent : '--primary', themePalette.primary), 0.65)
+              : hexOrRgbWithAlpha(themePalette.border, 0.85),
+            priority: 92,
+          });
+        }
+      }
+    });
+  }
+
+  function quadPoint(a, c, b, t) {
+    const inv = 1 - t;
+    return {
+      x: inv * inv * a.sx + 2 * inv * t * c.sx + t * t * b.sx,
+      y: inv * inv * a.sy + 2 * inv * t * c.sy + t * t * b.sy,
+    };
+  }
+
+  /* ---------- 节点 ---------- */
+  function drawNodeShadow(node, p) {
+    const floor = projectPoint(node.pos[0], node.pos[1] - 0.5, node.pos[2], 0, 0);
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(p.sx, p.sy + 3, 12 * p.scale, 4.5 * p.scale, 0, 0, Math.PI * 2);
+    const g = ctx.createRadialGradient(p.sx, p.sy + 3, 0, p.sx, p.sy + 3, 13 * p.scale);
+    g.addColorStop(0, themePalette.isLight ? 'rgba(15,23,42,0.14)' : 'rgba(0,0,0,0.38)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawNodeShape(node, p, radius, baseColor, alpha, focused, hovered, dir) {
+    const { sx, sy } = p;
+    const isSelected = node.id === state.selectedNodeId;
+    const sColor = getScopeColor(node.scope);
+
+    // 上游 / 下游：方向色外环（一眼看出“谁供给谁”）
+    if (dir) {
+      const dc = dir === 'up' ? DIR_UP : dir === 'down' ? DIR_DOWN : themePalette.muted;
+      const ringR = radius + 5;
+      const rg = ctx.createRadialGradient(sx, sy, radius * 0.6, sx, sy, ringR + 13);
+      rg.addColorStop(0, hexOrRgbWithAlpha(dc, 0.30));
+      rg.addColorStop(0.5, hexOrRgbWithAlpha(dc, 0.12));
+      rg.addColorStop(1, hexOrRgbWithAlpha(dc, 0));
+      ctx.beginPath();
+      ctx.arc(sx, sy, ringR + 13, 0, Math.PI * 2);
+      ctx.fillStyle = rg;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(sx, sy, ringR, 0, Math.PI * 2);
+      ctx.strokeStyle = hexOrRgbWithAlpha(dc, 0.95);
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+    }
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // 接口环
+    if (state.showInterfaces && alpha > 0.3) {
+      const deg = Math.min(3, LINK_INDEX.get(node.id).length);
+      const tiltY = 0.45 + 0.55 * (1 - Math.abs(Math.sin(state.pitch)));
+      for (let i = 0; i < deg; i++) {
+        const r = radius + 5 + i * 4.6;
+        ctx.beginPath();
+        ctx.ellipse(sx, sy, r, r * tiltY, 0, 0, Math.PI * 2);
+        ctx.lineWidth = isSelected ? 2 : 1.3;
+        ctx.strokeStyle = hexOrRgbWithAlpha(sColor, 0.75);
+        ctx.stroke();
+      }
+    }
+
+    // 光晕
+    if (focused || hovered) {
+      const glowR = radius * (hovered ? 3.4 : 2.6);
+      const grad = ctx.createRadialGradient(sx, sy, radius * 0.2, sx, sy, glowR);
+      grad.addColorStop(0, hexOrRgbWithAlpha(baseColor, hovered ? 0.55 : 0.40));
+      grad.addColorStop(0.5, hexOrRgbWithAlpha(baseColor, 0.14));
+      grad.addColorStop(1, hexOrRgbWithAlpha(baseColor, 0));
+      ctx.beginPath();
+      ctx.arc(sx, sy, glowR, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+
+    // 悬浮脉冲环
+    if (hovered) {
+      const t = (state.clock * 0.9) % 1;
+      ctx.beginPath();
+      ctx.arc(sx, sy, radius + 6 + t * 14, 0, Math.PI * 2);
+      ctx.strokeStyle = hexOrRgbWithAlpha(baseColor, 0.55 * (1 - t));
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // 形状
+    ctx.beginPath();
+    if (node.archetype === 'SPEC') {
+      const r = radius * 1.22;
+      ctx.moveTo(sx, sy - r); ctx.lineTo(sx + r, sy); ctx.lineTo(sx, sy + r); ctx.lineTo(sx - r, sy);
+      ctx.closePath();
+    } else if (node.archetype === 'EVENT') {
+      const r = radius * 1.12;
+      ctx.roundRect(sx - r, sy - r, r * 2, r * 2, r * 0.34);
+    } else if (node.archetype === 'FUNCTION' || node.archetype === 'ACTION') {
+      const r = radius * 1.2;
+      for (let i = 0; i < 6; i++) {
+        const ang = (Math.PI / 3) * i - Math.PI / 6;
+        const px = sx + Math.cos(ang) * r, py = sy + Math.sin(ang) * r;
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+    } else {
+      ctx.arc(sx, sy, radius, 0, Math.PI * 2);
+    }
+
+    // 主体：左上打光
+    const g = ctx.createRadialGradient(sx - radius * 0.4, sy - radius * 0.45, radius * 0.08, sx, sy, radius * 1.45);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(0.16, hexOrRgbWithAlpha(baseColor, 1));
+    g.addColorStop(0.72, hexOrRgbWithAlpha(baseColor, 0.9));
+    g.addColorStop(1, hexOrRgbWithAlpha(baseColor, 0.5));
+    ctx.fillStyle = g;
+    ctx.fill();
+
+    // 内圈 + 外描边
+    ctx.lineWidth = focused || hovered ? 2.4 : 1.3;
+    ctx.strokeStyle = hexOrRgbWithAlpha(hovered ? '#ffffff' : sColor, hovered ? 0.95 : 0.75);
+    ctx.stroke();
+
+    if (radius > 8) {
+      ctx.beginPath();
+      ctx.arc(sx, sy, radius * 0.78, 0, Math.PI * 2);
+      ctx.strokeStyle = hexOrRgbWithAlpha('#ffffff', 0.14);
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    // 字形
+    const glyph = node.archetype === 'FUNCTION' ? 'ƒ'
+      : node.archetype === 'ACTION' ? 'A'
+        : node.archetype === 'EVENT' ? '·' : '';
+    if (glyph && radius > 7.5) {
+      ctx.font = `700 ${Math.max(8, radius * 0.85)}px system-ui, -apple-system, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(255,255,255,0.95)';
+      ctx.fillText(glyph, sx, sy + 0.5);
+    }
+
+    ctx.restore();
+  }
+
+  /* ---------- 标签 ---------- */
+  function drawNodeLabel(node, p, radius, isPill, alpha, emphasized, dir) {
+    const { sx, sy } = p;
+    const sColor = getScopeColor(node.scope);
+    const dirColor = dir === 'up' ? DIR_UP : dir === 'down' ? DIR_DOWN : null;
+    const labelY = sy + radius + (state.showInterfaces ? 17 : 13);
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    if (isPill) {
+      ctx.font = emphasized
+        ? '700 12.5px system-ui, -apple-system, sans-serif'
+        : '500 11.5px system-ui, -apple-system, sans-serif';
+      const tw = ctx.measureText(node.label).width;
+      const bw = tw + (dirColor ? 26 : 14), bh = emphasized ? 20 : 18;
+      ctx.beginPath();
+      ctx.roundRect(sx - bw / 2, labelY - bh / 2, bw, bh, 6);
+      ctx.fillStyle = hexOrRgbWithAlpha(themePalette.card, 0.95);
+      ctx.fill();
+      ctx.lineWidth = emphasized ? 1.4 : 1;
+      ctx.strokeStyle = hexOrRgbWithAlpha(dirColor || sColor, emphasized ? 0.95 : (dirColor ? 0.9 : 0.5));
+      ctx.stroke();
+      // 小尖角指向节点
+      ctx.beginPath();
+      ctx.moveTo(sx - 4, labelY - bh / 2 + 0.5);
+      ctx.lineTo(sx, labelY - bh / 2 - 4.5);
+      ctx.lineTo(sx + 4, labelY - bh / 2 + 0.5);
+      ctx.closePath();
+      ctx.fillStyle = hexOrRgbWithAlpha(themePalette.card, 0.95);
+      ctx.fill();
+      if (dirColor) {
+        // 小箭头：↑ 上游供给 / ↓ 下游作用
+        const ax = sx - bw / 2 + 9;
+        ctx.beginPath();
+        if (dir === 'up') {
+          ctx.moveTo(ax, labelY + 3.6);
+          ctx.lineTo(ax + 6, labelY + 3.6);
+          ctx.lineTo(ax + 3, labelY - 2.4);
+        } else {
+          ctx.moveTo(ax, labelY - 2.4);
+          ctx.lineTo(ax + 6, labelY - 2.4);
+          ctx.lineTo(ax + 3, labelY + 3.6);
+        }
+        ctx.closePath();
+        ctx.fillStyle = dirColor;
+        ctx.fill();
+      }
+      ctx.fillStyle = emphasized ? (dirColor || sColor) : hexOrRgbWithAlpha(themePalette.fg, 0.94);
+      ctx.fillText(node.label, sx + (dirColor ? 4 : 0), labelY + 0.5);
+      ctx.restore();
+      return { x: sx - bw / 2, y: labelY - bh / 2 - 5, w: bw, h: bh + 5 };
+    }
+
+    ctx.font = '500 10.5px system-ui, -apple-system, sans-serif';
+    const tw = ctx.measureText(node.label).width;
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = hexOrRgbWithAlpha(themePalette.card, themePalette.isLight ? 0.92 : 0.88);
+    ctx.lineWidth = 3.2;
+    ctx.strokeText(node.label, sx, labelY);
+    ctx.fillStyle = hexOrRgbWithAlpha(themePalette.fg, themePalette.isLight ? 0.72 : 0.7);
+    ctx.fillText(node.label, sx, labelY);
+    ctx.restore();
+    return { x: sx - tw / 2, y: labelY - 7, w: tw, h: 14 };
+  }
+
+  /** 悬浮浮卡：名称 + 编码 + 规格，带指向节点的引线 */
+  function drawHoverCard(node, p, radius, w, h, rect) {
+    const sColor = getScopeColor(node.scope);
+    const lColor = getLayerColor(node.layer);
+
+    ctx.save();
+    ctx.font = '700 13px system-ui, -apple-system, sans-serif';
+    const titleW = ctx.measureText(node.label).width;
+    ctx.font = '500 10.5px ui-monospace, Consolas, monospace';
+    const codeW = ctx.measureText(node.code).width;
+    ctx.font = '400 11px system-ui, -apple-system, sans-serif';
+    const specW = ctx.measureText(node.spec).width;
+
+    const stats = hoverDirStats();
+    const cw = rect ? rect.w - 12 : Math.min(285, Math.max(titleW, codeW, Math.min(specW, 250)) + 30);
+    const ch = rect ? rect.h - 12 : (stats.total ? 86 : 64);
+    let x = rect ? rect.x + 6 : p.sx - cw / 2;
+    let y = rect ? rect.y + 6 : p.sy - radius - ch - 34;
+
+    // 引线：从卡片最近的一条边连到节点
+    const cardBottom = y + ch;
+    const anchorX = Math.max(x + 10, Math.min(x + cw - 10, p.sx));
+    const anchorY = cardBottom < p.sy ? cardBottom : y;
+    ctx.beginPath();
+    ctx.moveTo(anchorX, anchorY);
+    ctx.lineTo(p.sx, p.sy - (cardBottom < p.sy ? radius + 2 : -(radius + 2)));
+    ctx.strokeStyle = hexOrRgbWithAlpha(sColor, 0.8);
+    ctx.lineWidth = 1.4;
+    ctx.setLineDash([4, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 卡片
+    ctx.beginPath();
+    ctx.roundRect(x, y, cw, ch, 9);
+    ctx.fillStyle = hexOrRgbWithAlpha(themePalette.card, 0.97);
+    ctx.fill();
+    ctx.lineWidth = 1.4;
+    ctx.strokeStyle = hexOrRgbWithAlpha(sColor, 0.8);
+    ctx.stroke();
+    // 左侧色条
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(x, y, 4, ch, [9, 0, 0, 9]);
+    ctx.fillStyle = sColor;
+    ctx.fill();
+    ctx.restore();
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    ctx.font = '700 13px system-ui, -apple-system, sans-serif';
+    ctx.fillStyle = themePalette.fg;
+    ctx.fillText(node.label, x + 14, y + 16);
+
+    ctx.font = '500 10.5px ui-monospace, Consolas, monospace';
+    ctx.fillStyle = hexOrRgbWithAlpha(themePalette.muted, 0.95);
+    ctx.fillText(node.code, x + 14, y + 32);
+
+    ctx.font = '400 11px system-ui, -apple-system, sans-serif';
+    ctx.fillStyle = hexOrRgbWithAlpha(themePalette.fg, 0.8);
+    ctx.fillText(node.spec, x + 14, y + 47);
+
+    // 右上角层级
+    ctx.font = '700 10px ui-monospace, Consolas, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = hexOrRgbWithAlpha(lColor, 0.95);
+    ctx.fillText(node.layer, x + cw - 12, y + 16);
+
+    // 上下游统计（悬浮时按方向染色，和画面里的环一致）
+    if (stats.total) {
+      ctx.textAlign = 'left';
+      ctx.font = '600 10.5px system-ui, -apple-system, sans-serif';
+      const fy = y + ch - 15;
+
+      ctx.beginPath();
+      ctx.arc(x + 17, fy, 3.2, 0, Math.PI * 2);
+      ctx.fillStyle = DIR_UP;
+      ctx.fill();
+      ctx.fillStyle = hexOrRgbWithAlpha(themePalette.fg, 0.86);
+      ctx.fillText('上游 ' + stats.up, x + 25, fy);
+
+      const gap = 64;
+      ctx.beginPath();
+      ctx.arc(x + 14 + gap + 3, fy, 3.2, 0, Math.PI * 2);
+      ctx.fillStyle = DIR_DOWN;
+      ctx.fill();
+      ctx.fillStyle = hexOrRgbWithAlpha(themePalette.fg, 0.86);
+      ctx.fillText('下游 ' + stats.down, x + 14 + gap + 11, fy);
+
+
+    }
+
+    ctx.restore();
+    return { x: x - 6, y: y - 6, w: cw + 12, h: ch + 12 };
+  }
+
+  function hoverDirStats() {
+    let up = 0, down = 0;
+    frameHoverDirs.forEach(v => {
+      if (v === 'up' || v === 'both') up++;
+      if (v === 'down' || v === 'both') down++;
+    });
+    return { up, down, total: up + down };
+  }
+
+  /** 与 drawHoverCard 相同的排版计算，只求矩形，用于提前避让 */
+  function estimateCardRect(node, p, radius, w, h) {
+    ctx.save();
+    ctx.font = '700 13px system-ui, -apple-system, sans-serif';
+    const titleW = ctx.measureText(node.label).width;
+    ctx.font = '500 10.5px ui-monospace, Consolas, monospace';
+    const codeW = ctx.measureText(node.code).width;
+    ctx.font = '400 11px system-ui, -apple-system, sans-serif';
+    const specW = ctx.measureText(node.spec).width;
+    ctx.restore();
+    const cw = Math.min(285, Math.max(titleW, codeW, Math.min(specW, 250)) + 30);
+    const ch = hoverDirStats().total ? 86 : 64;
+    let x = p.sx - cw / 2;
+    let y = p.sy - radius - ch - 30;
+    if (y < 10) y = p.sy + radius + 30;
+    x = Math.max(12, Math.min(w - cw - 12, x));
+    y = Math.max(10, Math.min(h - ch - 12, y));
+    return { x: x - 6, y: y - 6, w: cw + 12, h: ch + 12 };
+  }
+
+  /* ---------- 主渲染 ---------- */
+  function rectsOverlap(a, b, pad) {
+    const p = pad === undefined ? 8 : pad;
+    return a.x < b.x + b.w + p && a.x + a.w + p > b.x
+      && a.y < b.y + b.h + p && a.y + a.h + p > b.y;
+  }
+
+  function drawVerbLabel(v, r) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(r.x, r.y, r.w, r.h, 5);
+    ctx.fillStyle = hexOrRgbWithAlpha(themePalette.card, 0.96);
+    ctx.fill();
+    ctx.strokeStyle = v.stroke;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.font = '600 10.5px system-ui, -apple-system, sans-serif';
+    ctx.fillStyle = hexOrRgbWithAlpha(themePalette.fg, 0.94);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(v.text, r.x + r.w / 2, r.y + r.h / 2 + 0.5);
+    ctx.restore();
+  }
+
+  function render() {
+    if (state.activeView !== 'canvas3d') return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = canvas.width / dpr;
+    const h = canvas.height / dpr;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    const cx = state.drawerOpen && w > 900 ? (w - 360) / 2 + 26 : w / 2 + 18;
+    const cy = h * 0.455;
+
+    if (state.hoveredNodeId) hoverNeighborhood = getNeighbors(state.hoveredNodeId);
+    else hoverNeighborhood = new Set();
+    frameHoverDirs = state.hoveredNodeId ? getDirectionMap(state.hoveredNodeId) : new Map();
+
+    computeScenarioSets();
+
+    const focusId = getFocusNodeId();
+    const focusSet = focusId ? (state.hoveredNodeId ? hoverNeighborhood : getNeighbors(focusId)) : new Set();
+
+    frameVerbLabels = [];
+
+    drawAmbience(w, h);
+    drawFloorGrid(cx, cy);
+
+    [...LAYERS].reverse().forEach(layer => drawLayerSlab(layer, cx, cy));
+
+    const projMap = new Map();
+    NODES.forEach(n => {
+      if (!isLayerVisible(n.layer)) return;
+      projMap.set(n.id, projectPoint(n.pos[0], n.pos[1], n.pos[2], cx, cy));
+    });
+
+    let cardRect = null;
+    if (state.hoveredNodeId && projMap.get(state.hoveredNodeId)) {
+      const hp = projMap.get(state.hoveredNodeId);
+      const hr = Math.max(9.5, Math.min(18, 13.2 * hp.scale));
+      cardRect = estimateCardRect(NODE_MAP.get(state.hoveredNodeId), hp, hr, w, h);
+    }
+
+    drawLinks(cx, cy, projMap, cardRect);
+
+    const ordered = NODES.filter(n => projMap.has(n.id))
+      .map(n => ({ node: n, p: projMap.get(n.id) }))
+      .sort((a, b) => a.p.z2 - b.p.z2);
+
+    ordered.forEach(({ node, p }) => drawNodeShadow(node, p));
+
+    projectedCache = [];
+    const labelCandidates = [];
+    const inScenarioMode = !!state.activeScenario;
+
+    ordered.forEach(({ node, p }) => {
+      const isHovered = node.id === state.hoveredNodeId;
+      const isSelected = node.id === state.selectedNodeId;
+      const inFocus = focusSet.has(node.id);
+      const isStepNode = inScenarioMode && frameStepNodes.has(node.id);
+      const isDoneNode = inScenarioMode && frameDoneNodes.has(node.id);
+
+      let alpha = 1;
+      if (inScenarioMode) {
+        alpha = isStepNode ? 1 : isDoneNode ? 0.6 : 0.11;
+      } else if (state.hoveredNodeId) {
+        alpha = inFocus ? 1 : 0.42;
+      } else if (state.selectedNodeId) {
+        alpha = inFocus ? 1 : 0.36;
+      } else if (state.scopeFilter !== 'all') {
+        const ss = getScopeSet();
+        alpha = ss.primary.has(node.id) ? 1 : (ss.neighbor.has(node.id) ? 0.5 : 0.16);
+      }
+
+      const fog = Math.max(0.72, Math.min(1, 1.18 - p.depth / 3400));
+      alpha *= fog;
+
+      const dir = state.hoveredNodeId ? (frameHoverDirs.get(node.id) || null) : null;
+      const radius = Math.max(9.5, Math.min(18, 13.2 * p.scale));
+
+      const showPill = !isHovered && (
+        state.labelMode === 'all' || isSelected || isStepNode
+        || (inScenarioMode && isDoneNode)
+        || (!inScenarioMode && state.hoveredNodeId && inFocus)
+        || (node.layer === 'L1' && p.scale >= 0.60 && alpha > 0.55));
+      const showMicro = !showPill && !isHovered && alpha >= 0.45 && p.scale >= 0.62;
+
+      drawNodeShape(node, p, radius, getNodeColor(node), alpha, isSelected || isStepNode, isHovered, dir);
+      projectedCache.push({ id: node.id, sx: p.sx, sy: p.sy, r: radius });
+
+      if (showPill || showMicro) {
+        labelCandidates.push({
+          node, p, radius, isPill: showPill, alpha, dir,
+          emphasized: isHovered || isStepNode,
+          priority: isHovered ? 100 : isSelected ? 95 : isStepNode ? 88 : (isDoneNode ? 60 : (inFocus ? 70 : 10)) + p.scale,
+        });
+      }
+    });
+
+    // 节点标签 + 关系动词统一落位：按优先级，撞车跳过
+    const items = labelCandidates
+      .map(c => ({ kind: 'node', c, priority: c.priority }))
+      .concat(frameVerbLabels.map(v => ({ kind: 'verb', v, priority: v.priority })))
+      .sort((a, b) => b.priority - a.priority);
+
+    const placed = cardRect ? [cardRect] : [];
+    items.forEach(it => {
+      if (it.kind === 'verb') {
+        const v = it.v;
+        const r = { x: v.x - v.w / 2, y: v.y - v.h / 2, w: v.w, h: v.h };
+        if (placed.some(q => rectsOverlap(r, q))) return;
+        placed.push(r);
+        drawVerbLabel(v, r);
+        return;
+      }
+      const c = it.c;
+      const r = drawNodeLabel(c.node, c.p, c.radius, c.isPill, c.alpha, c.emphasized, c.dir);
+      if (!r) return;
+      if (placed.some(q => rectsOverlap(r, q))) return;
+      placed.push(r);
+    });
+
+    if (state.hoveredNodeId) {
+      const node = NODE_MAP.get(state.hoveredNodeId);
+      const p = projMap.get(state.hoveredNodeId);
+      if (node && p) {
+        const radius = Math.max(9.5, Math.min(18, 13.2 * p.scale));
+        drawHoverCard(node, p, radius, w, h, cardRect);
+      }
+    }
+
+    if (!NODES.some(n => isLayerVisible(n.layer))) {
+      ctx.font = '500 13px system-ui, -apple-system, sans-serif';
+      ctx.fillStyle = hexOrRgbWithAlpha(themePalette.muted, 0.8);
+      ctx.textAlign = 'center';
+      ctx.fillText('所有层都已隐藏 —— 用右上角层开关重新打开', w / 2, h / 2);
+    }
+  }
+
+  /* ---------- 动画循环 ---------- */
+  function tick() {
+    state.clock += 1 / 60;
+
+    // 装刀推演自动播放：每 2.6s 走一步，到最后一步停住
+    if (state.activeScenario && state.scenarioAuto) {
+      const now = performance.now();
+      if (!state.scenarioLastAt) state.scenarioLastAt = now;
+      if (now - state.scenarioLastAt >= 2600) {
+        state.scenarioLastAt = now;
+        const steps = SCENARIOS[state.activeScenario].stepsList || [];
+        if (state.scenarioStep < steps.length - 1) {
+          state.scenarioStep += 1;
+          updateControlStyles();
+        } else {
+          state.scenarioAuto = false;
+          updateControlStyles();
+        }
+      }
+    }
+    state.animPhase += 0.011;
+    state.yaw += (state.targetYaw - state.yaw) * 0.14;
+    state.pitch += (state.targetPitch - state.pitch) * 0.14;
+    state.zoom += (state.targetZoom - state.zoom) * 0.14;
+    state.panX += (state.targetPanX - state.panX) * 0.14;
+    state.panY += (state.targetPanY - state.panY) * 0.14;
+    state.focusX += (state.targetFocusX - state.focusX) * 0.14;
+    state.focusY += (state.targetFocusY - state.focusY) * 0.14;
+    state.focusZ += (state.targetFocusZ - state.focusZ) * 0.14;
+
+    render();
+    requestAnimationFrame(tick);
+  }
+
+  /* ---------------- 9. 视检面板 / 索引 / 文档视图 ---------------- */
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function renderInspector() {
+    const panel = document.getElementById('tab-detail-panel');
+    const node = NODE_MAP.get(state.selectedNodeId);
+
+    if (!node) {
+      const rows = Object.keys(SCOPE_META).map(scope => {
+        const count = NODES.filter(n => n.scope === scope).length;
+        const c = getScopeColor(scope);
+        return `<div class="rel-row" data-scope-pick="${scope}">
+          <span class="cat-dot" style="background:${c}"></span>
+          <span class="rel-name">${SCOPE_META[scope].name}</span>
+          <span class="rel-verb">${count}</span>
+        </div>`;
+      }).join('');
+      panel.innerHTML = `
+        <div class="det-head">
+          <div class="det-badge" style="background:${themePalette.primary}">Σ</div>
+          <div>
+            <div class="det-title">刀装系统总览</div>
+            <div class="det-code">${NODES.length} 节点 · ${LINKS.length} 关系 · 5 分区 · 4 层</div>
+          </div>
+        </div>
+        <div class="note-box">点沙盘里的任一零部件查看规格与装配关系；也可以从下面的分区进入，或直接用「索引」搜索型号。<br/>当前为示例数据（BT/HSK 通用规格），可整体替换为你们真实刀具库与工艺规范。</div>
+        <div class="sec-label">按分区浏览</div>
+        ${rows}
+        <div class="sec-label">怎么看这张图</div>
+        <div style="font-size:11.5px;line-height:1.7;color:var(--muted-foreground)">
+          竖直方向是抽象层级：<b style="color:var(--foreground)">L1 实物 → L2 规格 → L3 记录 → L4 计算/放行</b>；
+          水平方向是五个装配分区。虚线是跨层引用，实线是同级装配关系。
+        </div>`;
+      return;
+    }
+
+    const sColor = getScopeColor(node.scope);
+    const lColor = getLayerColor(node.layer);
+    const out = LINK_INDEX.get(node.id).filter(x => x.dir === 'out');
+    const inc = LINK_INDEX.get(node.id).filter(x => x.dir === 'in');
+
+    const relRow = (x, dir) => {
+      const otherId = dir === 'out' ? x.link.to : x.link.from;
+      const other = NODE_MAP.get(otherId);
+      if (!other) return '';
+      const oc = getScopeColor(other.scope);
+      return `<div class="rel-row" data-rel-id="${otherId}">
+        <span class="cat-dot" style="background:${oc}"></span>
+        <span class="rel-verb">${dir === 'out' ? esc(x.link.rel) : '被 ' + esc(x.link.rel)}</span>
+        <span class="rel-arrow">${dir === 'out' ? '→' : '←'}</span>
+        <span class="rel-name">${esc(other.label)}</span>
+      </div>`;
+    };
+
+    panel.innerHTML = `
+      <div class="det-head">
+        <div class="det-badge" style="background:${sColor}">${node.layer}</div>
+        <div style="min-width:0">
+          <div class="det-title">${esc(node.label)}</div>
+          <div class="det-code">${esc(node.code)}</div>
+        </div>
+      </div>
+
+      <div class="chip-wrap">
+        <span class="chip chip-strong" style="color:${sColor};border-color:${sColor}">${esc(SCOPE_META[node.scope].name)}</span>
+        <span class="chip" style="color:${lColor};border-color:${lColor}">${esc(node.layer)} · ${LAYERS.find(l => l.id === node.layer).name.slice(3)}</span>
+        <span class="chip">${esc(ARCHETYPE_LABEL[node.archetype] || node.archetype)}</span>
+      </div>
+
+      <dl class="kv">
+        <dt>规格</dt><dd>${esc(node.spec)}</dd>
+        <dt>关键参数</dt><dd>${esc(node.params)}</dd>
+        <dt>装配关系</dt><dd>出 ${out.length} · 入 ${inc.length}</dd>
+      </dl>
+
+      <div class="note-box"><b>工艺要点 · </b>${esc(node.note)}</div>
+
+      ${out.length ? `<div class="sec-label">往外连（装配 / 支撑）</div>${out.map(x => relRow(x, 'out')).join('')}` : ''}
+      ${inc.length ? `<div class="sec-label">被谁引用（约束 / 记录）</div>${inc.map(x => relRow(x, 'in')).join('')}` : ''}
+
+      <div style="display:flex;gap:6px;margin-top:12px">
+        <button class="btn btn-compact" id="btn-focus-node" style="flex:1">🎯 聚焦这个零件</button>
+        <button class="btn btn-compact" id="btn-clear-sel">清除选择</button>
+      </div>
+
+      <div class="sec-label">标签</div>
+      <div class="chip-wrap">${(node.tags || []).map(t => `<span class="chip">#${esc(t)}</span>`).join('')}</div>
+    `;
+  }
+
+  function renderCatalog() {
+    const listEl = document.getElementById('catalog-list');
+    const q = state.catalogQuery.trim().toLowerCase();
+    const match = n => !q || [n.label, n.code, n.spec, n.params, n.scope, SCOPE_META[n.scope].name, ...(n.tags || [])]
+      .join(' ').toLowerCase().includes(q);
+
+    listEl.innerHTML = Object.keys(SCOPE_META).map(scope => {
+      const nodes = NODES.filter(n => n.scope === scope && match(n));
+      if (!nodes.length) return '';
+      const c = getScopeColor(scope);
+      return `<div class="cat-group">
+        <div class="cat-group-title">${esc(SCOPE_META[scope].name)} · ${nodes.length}</div>
+        ${nodes.map(n => `
+          <button class="cat-item ${n.id === state.selectedNodeId ? 'is-selected' : ''}" data-cat-id="${n.id}">
+            <span class="cat-dot" style="background:${getNodeColor(n)}"></span>
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n.label)}</span>
+            <span class="cat-layer">${n.layer}</span>
+          </button>`).join('')}
+      </div>`;
+    }).join('') || `<div style="font-size:12px;color:var(--muted-foreground);padding:8px 2px">没有匹配的零部件</div>`;
+  }
+
+  function renderMatrixView() {
+    document.getElementById('matrix-kpis').innerHTML = [
+      { n: '5', l: '装配分区' },
+      { n: NODES.length, l: '沙盘节点' },
+      { n: LINKS.length, l: '装配关系' },
+      { n: MATRIX_ROWS.length, l: '接口 / 刀柄形态' },
+    ].map(k => `<div class="kpi"><div class="kpi-num">${k.n}</div><div class="kpi-lbl">${k.l}</div></div>`).join('');
+
+    const tbody = document.querySelector('#matrix-table tbody');
+    tbody.innerHTML = MATRIX_ROWS.map(r => `
+      <tr>
+        <td><b>${esc(r.name)}</b></td>
+        <td>${esc(r.taper)}</td>
+        <td>${esc(r.clamp)}</td>
+        <td class="mono">${esc(r.rpm)}</td>
+        <td class="mono">${esc(r.repeat)}</td>
+        <td class="mono">${esc(r.tir)}</td>
+        <td>${esc(r.note)}</td>
+      </tr>`).join('');
+
+    document.getElementById('matrix-notes').innerHTML = MATRIX_NOTES.map(x => `
+      <div class="anti-card">
+        <div class="anti-title">${esc(x.title)}</div>
+        <div class="anti-bad">✗ ${esc(x.bad)}</div>
+        <div class="anti-fix">✓ ${esc(x.fix)}</div>
+      </div>`).join('');
+  }
+
+  function renderSopView() {
+    document.getElementById('sop-grid').innerHTML = SOP_STAGES.map(s => {
+      const c = readCssVar(s.accent, themePalette.primary);
+      return `<div class="sop-card" style="border-top-color:${c}">
+        <div class="sop-step" style="color:${c}">${esc(s.step)}</div>
+        <div class="sop-title">${esc(s.title)}</div>
+        <ol class="sop-list">${s.items.map(i => `<li>${esc(i)}</li>`).join('')}</ol>
+        <div class="sop-warn" style="border-left-color:${c};color:${c}">${esc(s.warn)}</div>
+      </div>`;
+    }).join('');
+
+    document.getElementById('sop-failures').innerHTML = SOP_FAILURES.map(x => `
+      <div class="anti-card">
+        <div class="anti-title">${esc(x.title)}</div>
+        <div class="anti-bad">✗ ${esc(x.bad)}</div>
+        <div class="anti-fix">✓ ${esc(x.fix)}</div>
+      </div>`).join('');
+  }
+
+  function renderIndexView() {
+    const q = state.indexQuery.trim().toLowerCase();
+    const rows = NODES.filter(n => !q || [n.label, n.code, n.spec, n.params, SCOPE_META[n.scope].name, n.layer]
+      .join(' ').toLowerCase().includes(q));
+
+    document.querySelector('#index-table tbody').innerHTML = rows.map(n => {
+      const sColor = getScopeColor(n.scope);
+      return `<tr data-index-id="${n.id}" style="cursor:pointer">
+        <td class="mono" style="color:${getLayerColor(n.layer)}">${n.layer}</td>
+        <td><span class="cat-dot" style="background:${sColor};display:inline-block;margin-right:5px"></span>${esc(SCOPE_META[n.scope].name)}</td>
+        <td><b>${esc(n.label)}</b></td>
+        <td class="mono">${esc(n.code)}</td>
+        <td>${esc(ARCHETYPE_LABEL[n.archetype] || n.archetype)}</td>
+        <td>${esc(n.spec)}</td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="6" style="color:var(--muted-foreground)">没有匹配项</td></tr>`;
+  }
+
+  /* ---------------- 10. HUD 构建 ---------------- */
+  function buildHud() {
+    document.getElementById('stats-summary').innerHTML =
+      `<b>${NODES.length}</b> 节点 · <b>${LINKS.length}</b> 关系 · <b>5</b> 分区 · <b>4</b> 层 · <b>${Object.keys(SCENARIOS).length}</b> 套装刀推演`;
+
+    document.getElementById('count-badge').innerHTML =
+      `节点 <b>${NODES.length}</b> · 关系 <b>${LINKS.length}</b> · 当前层 <b>${Object.values(state.visibleLayers).filter(Boolean).length}/4</b>`;
+
+    const legend = document.getElementById('scope-legend');
+    legend.innerHTML = Object.keys(SCOPE_META).map(scope => {
+      const c = getScopeColor(scope);
+      const count = NODES.filter(n => n.scope === scope).length;
+      return `<span class="legend-item" data-scope-pick="${scope}" style="cursor:pointer">
+        <i class="legend-dot" style="background:${c}"></i>${esc(SCOPE_META[scope].short)} <span style="opacity:.65">${count}</span>
+      </span>`;
+    }).join('<span class="legend-sep"></span>')
+      + '<span class="legend-sep"></span>'
+      + '<span class="legend-item" title="实体零部件"><b style="color:' + themePalette.chart1 + '">●</b>实体</span>'
+      + '<span class="legend-item" title="规格约束"><b style="color:' + themePalette.chart3 + '">◆</b>规格</span>'
+      + '<span class="legend-item" title="作业记录"><b style="color:' + themePalette.chart4 + '">■</b>记录</span>'
+      + '<span class="legend-item" title="计算算子 / 受控动作"><b style="color:' + themePalette.chart5 + '">⬡</b>计算</span>';
+
+    document.getElementById('layer-legend').innerHTML = LAYERS.map(l => {
+      const c = readCssVar(l.colorVar, themePalette.primary);
+      const on = state.visibleLayers[l.id];
+      return `<button class="btn btn-compact" data-layer="${l.id}" style="${on ? '' : 'opacity:.4'};border-color:${on ? c : 'var(--border)'};color:${on ? c : 'var(--muted-foreground)'}">${l.id}</button>`;
+    }).join('');
+
+    const dock = document.getElementById('scenario-dock');
+    dock.innerHTML = `<span style="font-size:11px;color:var(--muted-foreground);padding-right:2px">装刀推演</span>` +
+      Object.keys(SCENARIOS).map(k => {
+        const sc = SCENARIOS[k];
+        const c = readCssVar(sc.accent, themePalette.primary);
+        const active = state.activeScenario === k;
+        return `<button class="btn btn-compact" data-scenario="${k}" style="${active ? `border-color:${c};color:${c};background:${hexOrRgbWithAlpha(c, 0.12)};font-weight:600` : ''}">${esc(sc.title.split('（')[0])}</button>`;
+      }).join('');
+  }
+
+  function updateControlStyles() {
+    document.querySelectorAll('.view-nav-btn').forEach(btn => {
+      btn.classList.toggle('is-active', btn.getAttribute('data-view') === state.activeView);
+    });
+
+    const zonesBtn = document.getElementById('toggle-zones');
+    zonesBtn.classList.toggle('is-on', state.showZones);
+
+    const ifBtn = document.getElementById('toggle-interfaces');
+    ifBtn.classList.toggle('is-on', state.showInterfaces);
+
+    const labelBtn = document.getElementById('toggle-labels');
+    labelBtn.textContent = state.labelMode === 'all' ? '🏷️ 标签: 全部展开' : '🏷️ 标签: 智能精简';
+    labelBtn.classList.toggle('is-on', state.labelMode === 'all');
+
+    const edgeBtn = document.getElementById('toggle-edges');
+    const modeTxt = state.edgeMode === 'all' ? '🔗 连线: 全显'
+      : state.edgeMode === 'cross' ? '🔗 连线: 只看跨区' : '🔗 连线: 周边高亮';
+    edgeBtn.textContent = modeTxt;
+    edgeBtn.classList.toggle('is-on', state.edgeMode !== 'neighborhood');
+
+    const elBtn = document.getElementById('toggle-edge-labels');
+    elBtn.classList.toggle('is-on', state.showEdgeLabels);
+
+    document.querySelectorAll('[data-layer]').forEach(btn => {
+      const id = btn.getAttribute('data-layer');
+      const on = state.visibleLayers[id];
+      const c = getLayerColor(id);
+      btn.style.opacity = on ? '1' : '.4';
+      btn.style.borderColor = on ? c : 'var(--border)';
+      btn.style.color = on ? c : 'var(--muted-foreground)';
+    });
+
+    const drawer = document.getElementById('inspector-drawer');
+    drawer.classList.toggle('is-open', state.drawerOpen);
+    document.getElementById('open-drawer-btn').classList.toggle('is-hidden', state.drawerOpen);
+
+    document.querySelectorAll('.drawer-tab').forEach(t => {
+      t.classList.toggle('is-active', t.getAttribute('data-tab') === state.drawerTab);
+    });
+    document.getElementById('tab-detail-panel').classList.toggle('is-hidden', state.drawerTab !== 'detail');
+    document.getElementById('tab-catalog-panel').classList.toggle('is-hidden', state.drawerTab !== 'catalog');
+
+    renderScenarioBanner();
+  }
+
+  function renderScenarioBanner() {
+    const banner = document.getElementById('scenario-banner');
+    if (!state.activeScenario) {
+      banner.classList.add('is-hidden');
+      return;
+    }
+    const sc = SCENARIOS[state.activeScenario];
+    const steps = sc.stepsList || [];
+    const i = Math.min(state.scenarioStep, steps.length - 1);
+    const c = readCssVar(sc.accent, themePalette.primary);
+
+    banner.style.borderColor = c;
+    banner.style.setProperty('--sc-accent', c);
+    banner.classList.remove('is-hidden');
+
+    const titleEl = document.getElementById('scenario-title');
+    titleEl.style.color = c;
+    titleEl.innerHTML = esc(sc.title)
+      + '<span class="sc-step-index">STEP ' + (i + 1) + ' / ' + steps.length + '</span>';
+
+    const step = steps[i] || { text: '' };
+    document.getElementById('scenario-steps').innerHTML =
+      '<div style="font-weight:600;color:var(--foreground);margin-bottom:5px">' + esc(step.text) + '</div>'
+      + '<div class="step-dots">' + steps.map((st, k) =>
+        '<i class="step-dot ' + (k < i ? 'is-done' : '') + (k === i ? ' is-on' : '') + '"></i>').join('') + '</div>';
+
+    const playBtn = document.getElementById('sc-play');
+    if (playBtn) {
+      playBtn.textContent = state.scenarioAuto ? '⏸' : '▶';
+      playBtn.style.borderColor = c;
+      playBtn.style.color = c;
+    }
+  }
+
+  /* ---------------- 11. 视角与跳转 ---------------- */
+  function applyCameraPreset(preset) {
+    state.camPreset = preset;
+    if (preset === 'iso') { state.targetYaw = -0.60; state.targetPitch = 0.50; state.targetZoom = 1; }
+    if (preset === 'front') { state.targetYaw = 0; state.targetPitch = 0.10; state.targetZoom = 1.05; }
+    if (preset === 'top') { state.targetYaw = -0.02; state.targetPitch = 1.32; state.targetZoom = 0.92; }
+    if (preset === 'side') { state.targetYaw = -1.45; state.targetPitch = 0.22; state.targetZoom = 1.0; }
+    state.targetFocusX = 0; state.targetFocusY = 0; state.targetFocusZ = 0;
+    state.targetPanX = 0; state.targetPanY = 0;
+  }
+
+  function focusCameraOnNode(nodeId) {
+    const node = NODE_MAP.get(nodeId);
+    if (!node) return;
+    state.visibleLayers[node.layer] = true;
+    state.targetFocusX = node.pos[0] * 0.72;
+    state.targetFocusY = node.pos[1] * 0.55;
+    state.targetFocusZ = node.pos[2] * 0.72;
+    state.targetZoom = Math.max(1.25, state.targetZoom);
+    state.targetPanX = 0; state.targetPanY = 0;
+    state.camPreset = 'focus';
+    updateControlStyles();
+    buildHud();
+  }
+
+  function selectNode(nodeId, opts) {
+    state.selectedNodeId = nodeId;
+    if (opts && opts.openDrawer) {
+      state.drawerOpen = true;
+      state.drawerTab = 'detail';
+    }
+    renderInspector();
+    renderCatalog();
+    updateControlStyles();
+  }
+
+  function jumpToNode(nodeId) {
+    state.activeView = 'canvas3d';
+    state.activeScenario = null;
+    state.visibleLayers = { L1: true, L2: true, L3: true, L4: true };
+    state.scopeFilter = 'all';
+    selectNode(nodeId, { openDrawer: true });
+    focusCameraOnNode(nodeId);
+    switchView('canvas3d');
+  }
+
+  function clearSelection() {
+    state.selectedNodeId = null;
+    renderInspector();
+    renderCatalog();
+  }
+
+  /* ---------------- 12. 视图切换 ---------------- */
+  function switchView(view) {
+    state.activeView = view;
+    document.getElementById('view-canvas3d').classList.toggle('is-hidden', view !== 'canvas3d');
+    document.getElementById('view-matrix').classList.toggle('is-hidden', view !== 'matrix');
+    document.getElementById('view-sop').classList.toggle('is-hidden', view !== 'sop');
+    document.getElementById('view-catalog').classList.toggle('is-hidden', view !== 'catalog');
+
+    document.querySelectorAll('.view-nav-btn').forEach(btn => {
+      btn.classList.toggle('is-active', btn.getAttribute('data-view') === view);
+    });
+    const tools = document.getElementById('canvas-tools-group');
+    if (tools) tools.style.display = view === 'canvas3d' ? 'inline-flex' : 'none';
+
+    if (view === 'matrix') renderMatrixView();
+    if (view === 'sop') renderSopView();
+    if (view === 'catalog') renderIndexView();
+    if (view === 'canvas3d') resizeCanvas();
+  }
+
+  /* ---------------- 13. 交互 ---------------- */
+  function getCanvasPoint(e) {
+    const rect = canvas.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }
+
+  function hitTest(x, y) {
+    for (let i = projectedCache.length - 1; i >= 0; i--) {
+      const it = projectedCache[i];
+      const dx = x - it.sx, dy = y - it.sy;
+      if (dx * dx + dy * dy <= (it.r + 7) * (it.r + 7)) return it.id;
+    }
+    return null;
+  }
+
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+  canvas.addEventListener('mousedown', e => {
+    const pt = getCanvasPoint(e);
+    state.dragMode = 'orbit';
+    state.lastX = pt.x; state.lastY = pt.y;
+    state.moved = false;
+    canvas.style.cursor = 'grabbing';
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (state.dragMode === 'orbit') {
+      const pt = getCanvasPoint(e);
+      const dx = pt.x - state.lastX, dy = pt.y - state.lastY;
+      if (Math.abs(dx) + Math.abs(dy) > 2) state.moved = true;
+      state.targetYaw += dx * 0.0065;
+      state.targetPitch = Math.max(-0.12, Math.min(1.34, state.targetPitch + dy * 0.005));
+      state.lastX = pt.x; state.lastY = pt.y;
+      return;
+    }
+    if (state.activeView !== 'canvas3d') return;
+    const rect = canvas.getBoundingClientRect();
+    if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) return;
+    const pt = getCanvasPoint(e);
+    const hit = hitTest(pt.x, pt.y);
+    if (hit !== state.hoveredNodeId) {
+      state.hoveredNodeId = hit;
+      canvas.style.cursor = hit ? 'pointer' : 'grab';
+    }
+    state.hoverX = pt.x;
+    state.hoverY = pt.y;
+    state.hoverIn = true;
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (state.dragMode === 'orbit') {
+      const wasDrag = state.moved;
+      state.dragMode = null;
+      canvas.style.cursor = state.hoveredNodeId ? 'pointer' : 'grab';
+      if (!wasDrag) {
+        const pt = { x: state.lastX, y: state.lastY };
+        const hit = hitTest(pt.x, pt.y);
+        if (hit) selectNode(hit, { openDrawer: true });
+        else clearSelection();
+      }
+    }
+  });
+
+  canvas.addEventListener('dblclick', e => {
+    const pt = getCanvasPoint(e);
+    const hit = hitTest(pt.x, pt.y);
+    if (hit) { selectNode(hit, { openDrawer: true }); focusCameraOnNode(hit); }
+  });
+
+  canvas.addEventListener('mouseleave', () => { state.hoveredNodeId = null; canvas.style.cursor = 'grab'; });
+
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    const factor = e.deltaY > 0 ? 0.9 : 1.1;
+    state.targetZoom = Math.max(0.45, Math.min(3.2, state.targetZoom * factor));
+  }, { passive: false });
+
+  window.addEventListener('resize', () => { resizeCanvas(); });
+
+  /* ---------------- 14. 事件绑定与初始化 ---------------- */
+  function bindEvents() {
+    // 视图切换
+    document.getElementById('view-nav').addEventListener('click', e => {
+      const btn = e.target.closest('.view-nav-btn');
+      if (btn) switchView(btn.getAttribute('data-view'));
+    });
+    document.querySelectorAll('[data-goto]').forEach(btn => {
+      btn.addEventListener('click', () => switchView(btn.getAttribute('data-goto')));
+    });
+
+    // 画布工具
+    document.getElementById('toggle-zones').addEventListener('click', () => {
+      state.showZones = !state.showZones; updateControlStyles();
+    });
+    document.getElementById('toggle-interfaces').addEventListener('click', () => {
+      state.showInterfaces = !state.showInterfaces; updateControlStyles();
+    });
+    document.getElementById('toggle-labels').addEventListener('click', () => {
+      state.labelMode = state.labelMode === 'all' ? 'smart' : 'all'; updateControlStyles();
+    });
+    document.getElementById('toggle-edges').addEventListener('click', () => {
+      const order = ['neighborhood', 'all', 'cross'];
+      state.edgeMode = order[(order.indexOf(state.edgeMode) + 1) % order.length];
+      updateControlStyles();
+    });
+    document.getElementById('toggle-edge-labels').addEventListener('click', () => {
+      state.showEdgeLabels = !state.showEdgeLabels; updateControlStyles();
+    });
+    document.getElementById('reset-camera').addEventListener('click', () => {
+      applyCameraPreset('iso'); updateControlStyles();
+    });
+
+    document.getElementById('zoom-in').addEventListener('click', () => {
+      state.targetZoom = Math.min(3.2, state.targetZoom * 1.18);
+    });
+    document.getElementById('zoom-out').addEventListener('click', () => {
+      state.targetZoom = Math.max(0.45, state.targetZoom / 1.18);
+    });
+
+    // 层开关
+    document.getElementById('layer-legend').addEventListener('click', e => {
+      const btn = e.target.closest('[data-layer]');
+      if (!btn) return;
+      const id = btn.getAttribute('data-layer');
+      state.visibleLayers[id] = !state.visibleLayers[id];
+      updateControlStyles(); buildHud();
+    });
+
+    // 分区图例 → 过滤
+    document.getElementById('scope-legend').addEventListener('click', e => {
+      const item = e.target.closest('[data-scope-pick]');
+      if (!item) return;
+      const scope = item.getAttribute('data-scope-pick');
+      state.scopeFilter = state.scopeFilter === scope ? 'all' : scope;
+      state.selectedNodeId = null;
+      renderInspector();
+    });
+
+    // 抽屉
+    document.getElementById('close-drawer-btn').addEventListener('click', () => {
+      state.drawerOpen = false; updateControlStyles();
+    });
+    document.getElementById('open-drawer-btn').addEventListener('click', () => {
+      state.drawerOpen = true; updateControlStyles();
+    });
+    document.querySelectorAll('.drawer-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        state.drawerTab = tab.getAttribute('data-tab');
+        updateControlStyles();
+      });
+    });
+
+    // 详情面板内的关系跳转 / 分区浏览 / 聚焦
+    document.getElementById('tab-detail-panel').addEventListener('click', e => {
+      const rel = e.target.closest('[data-rel-id]');
+      if (rel) { jumpToNode(rel.getAttribute('data-rel-id')); return; }
+      const scope = e.target.closest('[data-scope-pick]');
+      if (scope) {
+        state.scopeFilter = scope.getAttribute('data-scope-pick');
+        state.selectedNodeId = null;
+        renderInspector();
+        return;
+      }
+      if (e.target.id === 'btn-focus-node' && state.selectedNodeId) {
+        focusCameraOnNode(state.selectedNodeId);
+      }
+      if (e.target.id === 'btn-clear-sel') clearSelection();
+    });
+
+    // 索引目录
+    document.getElementById('catalog-search').addEventListener('input', e => {
+      state.catalogQuery = e.target.value;
+      renderCatalog();
+    });
+    document.getElementById('catalog-list').addEventListener('click', e => {
+      const item = e.target.closest('[data-cat-id]');
+      if (!item) return;
+      jumpToNode(item.getAttribute('data-cat-id'));
+    });
+
+    // 索引表
+    document.getElementById('index-search').addEventListener('input', e => {
+      state.indexQuery = e.target.value;
+      renderIndexView();
+    });
+    document.querySelector('#index-table tbody').addEventListener('click', e => {
+      const tr = e.target.closest('[data-index-id]');
+      if (!tr) return;
+      jumpToNode(tr.getAttribute('data-index-id'));
+    });
+
+    // 装刀推演
+    document.getElementById('scenario-dock').addEventListener('click', e => {
+      const btn = e.target.closest('[data-scenario]');
+      if (!btn) return;
+      const key = btn.getAttribute('data-scenario');
+      const same = state.activeScenario === key;
+      state.activeScenario = same ? null : key;
+      if (state.activeScenario) {
+        state.selectedNodeId = null;
+        state.scenarioStep = 0;
+        state.scenarioAuto = true;
+        state.scenarioTimer = 0;
+      state.scenarioLastAt = 0;
+        renderInspector();
+      } else {
+        state.scenarioAuto = false;
+      }
+      buildHud();
+      updateControlStyles();
+      renderCatalog();
+    });
+    document.getElementById('close-scenario').addEventListener('click', () => {
+      state.activeScenario = null;
+      state.scenarioAuto = false;
+      buildHud(); updateControlStyles();
+    });
+
+    // 推演步进控制
+    function stepScenario(delta) {
+      if (!state.activeScenario) return;
+      const steps = SCENARIOS[state.activeScenario].stepsList || [];
+      state.scenarioStep = Math.max(0, Math.min(steps.length - 1, state.scenarioStep + delta));
+      state.scenarioTimer = 0;
+      state.scenarioLastAt = 0;
+      updateControlStyles();
+    }
+    document.getElementById('sc-prev').addEventListener('click', () => stepScenario(-1));
+    document.getElementById('sc-next').addEventListener('click', () => stepScenario(1));
+    document.getElementById('sc-play').addEventListener('click', () => {
+      if (!state.activeScenario) return;
+      const steps = SCENARIOS[state.activeScenario].stepsList || [];
+      if (!state.scenarioAuto && state.scenarioStep >= steps.length - 1) {
+        state.scenarioStep = 0; // 播完再按：从头重播
+      }
+      state.scenarioAuto = !state.scenarioAuto;
+      state.scenarioTimer = 0;
+      state.scenarioLastAt = 0;
+      updateControlStyles();
+    });
+
+    // 主题
+    document.getElementById('toggle-theme').addEventListener('click', () => {
+      const isDark = document.body.dataset.theme !== 'light';
+      document.body.dataset.theme = isDark ? 'light' : 'dark';
+      refreshThemePalette();
+      buildHud(); updateControlStyles(); renderInspector(); renderCatalog();
+      if (state.activeView === 'matrix') renderMatrixView();
+      if (state.activeView === 'sop') renderSopView();
+      if (state.activeView === 'catalog') renderIndexView();
+    });
+
+    // 全屏
+    document.getElementById('toggle-fullscreen').addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().then(resizeCanvas).catch(() => {});
+      } else {
+        document.exitFullscreen().then(resizeCanvas).catch(() => {});
+      }
+    });
+  }
+
+  // 键盘：推演内 ← → 单步，空格 播放/暂停
+  window.addEventListener('keydown', e => {
+    if (state.activeView !== 'canvas3d' || !state.activeScenario) return;
+    const steps = SCENARIOS[state.activeScenario].stepsList || [];
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      state.scenarioStep = Math.max(0, Math.min(steps.length - 1, state.scenarioStep + (e.key === 'ArrowRight' ? 1 : -1)));
+      state.scenarioTimer = 0;
+      state.scenarioLastAt = 0;
+      state.scenarioAuto = false;
+      updateControlStyles();
+      e.preventDefault();
+    } else if (e.key === ' ') {
+      if (document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+      state.scenarioAuto = !state.scenarioAuto;
+      state.scenarioTimer = 0;
+      state.scenarioLastAt = 0;
+      updateControlStyles();
+      e.preventDefault();
+    }
+  });
+
+  function init() {
+    if (!document.body.dataset.theme) document.body.dataset.theme = 'dark';
+    refreshThemePalette();
+    buildHud();
+    updateControlStyles();
+    renderInspector();
+    renderCatalog();
+    renderMatrixView();
+    renderSopView();
+    renderIndexView();
+    bindEvents();
+    resizeCanvas();
+    requestAnimationFrame(tick);
+  }
+
+  init();
+  </script>
+</body>
+</html>

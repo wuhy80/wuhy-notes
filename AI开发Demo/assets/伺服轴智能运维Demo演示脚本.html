@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>伺服轴生产智能运维 · Demo 场景说明</title>
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;900&display=swap">
+<style>
+  :root{
+    --blue-900:#0E2A55;
+    --blue-700:#1B5FE4;
+    --blue-600:#2563EB;
+    --blue-100:#E7F0FE;
+    --blue-50:#F3F8FF;
+    --ink-900:#16233A;
+    --ink-600:#46587A;
+    --ink-400:#7E8CA8;
+    --line:#E3EBF5;
+    --bg:#F5F8FC;
+    --card:#FFFFFF;
+    --ok:#16A34A;
+    --warn:#E8920C;
+    --danger:#E5484D;
+    --radius:16px;
+    --shadow:0 6px 24px rgba(14,42,85,.08);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:"Noto Sans SC",-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--ink-900);line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px}
+
+  /* ===== 顶部 Hero ===== */
+  header.hero{
+    background:linear-gradient(135deg,#0E2A55 0%,#1B5FE4 62%,#3B82F6 100%);
+    color:#fff;padding:56px 0 64px;position:relative;overflow:hidden;
+  }
+  header.hero::after{
+    content:"";position:absolute;right:-120px;top:-120px;width:380px;height:380px;
+    border-radius:50%;background:rgba(255,255,255,.08);
+  }
+  header.hero::before{
+    content:"";position:absolute;left:-80px;bottom:-160px;width:300px;height:300px;
+    border-radius:50%;background:rgba(255,255,255,.06);
+  }
+  .hero-tag{
+    display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;
+    letter-spacing:.12em;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);
+    padding:6px 14px;border-radius:999px;margin-bottom:22px;
+  }
+  .hero h1{font-size:34px;font-weight:900;letter-spacing:.02em;margin-bottom:16px}
+  .hero p.sub{font-size:16px;color:rgba(255,255,255,.86);max-width:760px}
+  .hero-meta{display:flex;flex-wrap:wrap;gap:14px;margin-top:28px}
+  .hero-meta .m{
+    background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+    border-radius:12px;padding:12px 18px;font-size:14px;
+  }
+  .hero-meta .m b{display:block;font-size:18px;font-weight:700;margin-bottom:2px}
+
+  /* ===== 导航条 ===== */
+  nav.toc{
+    position:sticky;top:0;z-index:30;background:#fff;border-bottom:1px solid var(--line);
+    box-shadow:0 2px 10px rgba(14,42,85,.05);
+  }
+  .toc-inner{display:flex;gap:4px;overflow-x:auto;padding:12px 0;scrollbar-width:none}
+  .toc-inner::-webkit-scrollbar{display:none}
+  .toc-inner a{
+    flex:0 0 auto;text-decoration:none;color:var(--ink-600);font-size:13.5px;font-weight:500;
+    padding:8px 14px;border-radius:10px;white-space:nowrap;transition:.2s;
+  }
+  .toc-inner a:hover{background:var(--blue-50);color:var(--blue-700)}
+  .toc-inner a.active{background:var(--blue-700);color:#fff}
+
+  /* ===== 概览闭环 ===== */
+  .overview{margin-top:-36px;position:relative;z-index:10}
+  .ov-card{
+    background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:30px 32px;border:1px solid var(--line);
+  }
+  .ov-card h2{font-size:20px;font-weight:700;margin-bottom:8px;color:var(--blue-900)}
+  .ov-card p{color:var(--ink-600);font-size:14.5px;margin-bottom:22px}
+  .loop{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+  .loop-step{
+    border:1px solid var(--line);border-radius:14px;padding:16px 14px;text-align:center;
+    background:var(--blue-50);position:relative;
+  }
+  .loop-step .n{
+    width:30px;height:30px;border-radius:50%;background:var(--blue-700);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;margin:0 auto 10px;
+  }
+  .loop-step .t{font-weight:600;font-size:14px;color:var(--ink-900)}
+  .loop-step .d{font-size:12.5px;color:var(--ink-400);margin-top:4px}
+
+  /* ===== 场景卡片 ===== */
+  section.scene{margin-top:40px}
+  .scene-card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow:hidden;scroll-margin-top:84px;
+  }
+  .scene-head{
+    display:flex;align-items:flex-start;gap:20px;padding:28px 32px 22px;
+    border-bottom:1px solid var(--line);background:linear-gradient(180deg,var(--blue-50),#fff);
+  }
+  .scene-num{
+    flex:0 0 52px;height:52px;border-radius:14px;background:var(--blue-700);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;
+  }
+  .scene-head .tt h3{font-size:20px;font-weight:700;color:var(--blue-900);margin-bottom:6px}
+  .scene-head .tt .role{font-size:13px;color:var(--blue-700);font-weight:500}
+  .scene-body{padding:26px 32px;display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  .block h4{
+    font-size:13px;font-weight:600;color:var(--ink-400);letter-spacing:.08em;
+    text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;
+  }
+  .block h4::before{content:"";width:14px;height:2px;background:var(--blue-700);border-radius:2px}
+  .block p{font-size:14.5px;color:var(--ink-600);margin-bottom:10px}
+  .block ul{list-style:none}
+  .block ul li{
+    font-size:14.5px;color:var(--ink-600);padding-left:20px;position:relative;margin-bottom:8px;
+  }
+  .block ul li::before{
+    content:"";position:absolute;left:2px;top:11px;width:7px;height:7px;border-radius:50%;
+    background:var(--blue-600);
+  }
+  .data-group{margin-bottom:18px}
+  .data-group:last-child{margin-bottom:0}
+  .data-group .gt{font-size:13.5px;font-weight:600;color:var(--blue-900);margin:0 0 8px;display:flex;align-items:center;gap:8px}
+  .data-group .gt::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--blue-700)}
+  .data-group .gt .unit{font-size:12px;font-weight:400;color:var(--ink-400)}
+  .axis-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .axis-col{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#FCFDFE}
+  .axis-col .ax{font-weight:700;font-size:13.5px;color:var(--blue-700);margin-bottom:6px}
+  .axis-col ul{list-style:none}
+  .axis-col li{font-size:13px;color:var(--ink-600);padding-left:0;position:relative;margin-bottom:5px}
+  .kpi-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+  .alarm-demo{border:1px solid #F3C2C4;background:#FDF3F3;border-radius:14px;padding:18px 20px;margin-top:16px}
+  .alarm-demo .ad-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .alarm-demo .ad-title{font-weight:700;color:var(--danger);font-size:15px}
+  .alarm-demo .ad-tag{font-size:12px;font-weight:600;color:#fff;background:var(--danger);padding:3px 10px;border-radius:999px}
+  .alarm-demo dl{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 18px}
+  .alarm-demo dt{font-size:12px;color:var(--ink-400);margin-bottom:2px}
+  .alarm-demo dd{font-size:13.5px;color:var(--ink-900);font-weight:500}
+  .alarm-demo dd.wide{grid-column:1/-1}
+  .ai-report{border:1px solid var(--blue-100);background:#F6F9FF;border-radius:14px;padding:18px 20px;margin-top:16px}
+  .ai-report .ar-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .ai-report .ar-title{font-weight:700;color:var(--blue-900);font-size:15px}
+  .ai-report .ar-meta{font-size:12px;color:var(--ink-400)}
+  .verdict{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+  .verdict .v-tag{font-size:12px;font-weight:600;color:#fff;background:var(--blue-700);padding:3px 10px;border-radius:999px}
+  .verdict .v-tag.warn{background:var(--warn)}
+  .verdict p{font-size:14px;color:var(--ink-900);font-weight:500}
+  .ar-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .ar-mod{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .ar-mod h6{font-size:13px;font-weight:600;color:var(--blue-900);margin-bottom:8px}
+  .ar-mod ul{list-style:none}
+  .ar-mod li{font-size:13px;color:var(--ink-600);padding-left:16px;position:relative;margin-bottom:6px}
+  .ar-mod li::before{content:"";position:absolute;left:2px;top:10px;width:6px;height:6px;border-radius:50%;background:var(--blue-600)}
+  .ar-mod li b{color:var(--ink-900)}
+  .prob{display:flex;align-items:center;gap:8px}
+  .prob .bar{flex:0 0 76px;height:6px;border-radius:3px;background:var(--blue-100);overflow:hidden}
+  .prob .bar i{display:block;height:100%;background:var(--blue-700);border-radius:3px}
+  .work-order{border:1px solid var(--blue-100);background:#F6F9FF;border-radius:14px;padding:18px 20px;margin-top:16px}
+  .wo-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .wo-title{font-weight:700;color:var(--blue-900);font-size:15px}
+  .wo-meta{font-size:12px;color:var(--ink-400)}
+  .wo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 18px}
+  .wo-grid dt{font-size:12px;color:var(--ink-400);margin-bottom:2px}
+  .wo-grid dd{font-size:13.5px;color:var(--ink-900);font-weight:500}
+  .wo-grid dd.wide{grid-column:1/-1}
+  .wo-tasks{margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .wo-tasks h6{font-size:13px;font-weight:600;color:var(--blue-900);margin-bottom:8px}
+  .wo-tasks ul{list-style:none}
+  .wo-tasks li{font-size:13px;color:var(--ink-600);padding-left:18px;position:relative;margin-bottom:6px}
+  .wo-tasks li::before{content:"☐";position:absolute;left:0;color:var(--blue-600)}
+  .plan{border:1px solid #BFE6D2;background:#F3FBF6;border-radius:14px;padding:18px 20px;margin-top:16px}
+  .pl-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .pl-title{font-weight:700;color:#146C43;font-size:15px}
+  .pl-meta{font-size:12px;color:var(--ink-400)}
+  .match-tag{font-size:12px;font-weight:600;color:#fff;background:var(--ok);padding:3px 10px;border-radius:999px}
+  .pl-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .pl-mod{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .pl-mod h6{font-size:13px;font-weight:600;color:#146C43;margin-bottom:8px}
+  .pl-mod ol{padding-left:18px}
+  .pl-mod ol li{font-size:13px;color:var(--ink-600);margin-bottom:6px}
+  .pl-mod ul{list-style:none}
+  .pl-mod ul li{font-size:13px;color:var(--ink-600);padding-left:16px;position:relative;margin-bottom:6px}
+  .pl-mod ul li::before{content:"";position:absolute;left:2px;top:10px;width:6px;height:6px;border-radius:50%;background:var(--ok)}
+  .part-table{width:100%;border-collapse:collapse;font-size:13px}
+  .part-table th,.part-table td{border:1px solid var(--line);padding:8px 10px;text-align:left}
+  .part-table th{background:#F3FBF6;color:#146C43;font-weight:600}
+  .part-table td{color:var(--ink-600)}
+  .track{border:1px solid var(--blue-100);background:#F6F9FF;border-radius:14px;padding:18px 20px;margin-top:16px}
+  .tr-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .tr-title{font-weight:700;color:var(--blue-900);font-size:15px}
+  .tr-meta{font-size:12px;color:var(--ink-400)}
+  .tr-status{font-size:12px;font-weight:600;color:#fff;background:var(--warn);padding:3px 10px;border-radius:999px}
+  .tr-overview{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+  .tr-ov{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}
+  .tr-ov .k{font-size:12px;color:var(--ink-400)}
+  .tr-ov .v{font-size:15px;font-weight:700;color:var(--blue-900);margin-top:2px}
+  .timeline{list-style:none}
+  .tl-item{display:grid;grid-template-columns:120px 1fr;gap:14px;padding:12px 0;border-top:1px dashed var(--line)}
+  .tl-item:first-child{border-top:none}
+  .tl-time{font-size:12.5px;color:var(--ink-400);font-weight:500}
+  .tl-body{position:relative;padding-left:18px}
+  .tl-body::before{content:"";position:absolute;left:0;top:6px;width:9px;height:9px;border-radius:50%;background:var(--line)}
+  .tl-item.done .tl-body::before{background:var(--ok)}
+  .tl-item.active .tl-body::before{background:var(--warn);box-shadow:0 0 0 4px rgba(232,146,12,.18)}
+  .tl-body .tt{font-size:13.5px;font-weight:600;color:var(--ink-900)}
+  .tl-body .td{font-size:12.5px;color:var(--ink-600);margin-top:2px}
+  .tl-tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;margin-left:6px}
+  .tl-tag.done{background:#EAF6EF;color:var(--ok)}
+  .tl-tag.active{background:#FDF1E0;color:var(--warn)}
+  .tl-tag.todo{background:#EEF1F6;color:var(--ink-400)}
+  .tr-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+  .tr-mod{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .tr-mod h6{font-size:13px;font-weight:600;color:var(--blue-900);margin-bottom:8px}
+  .tr-mod ul{list-style:none}
+  .tr-mod li{font-size:13px;color:var(--ink-600);padding-left:16px;position:relative;margin-bottom:6px}
+  .tr-mod li::before{content:"";position:absolute;left:2px;top:10px;width:6px;height:6px;border-radius:50%;background:var(--blue-600)}
+  .accept{border:1px solid #BFE6D2;background:#F3FBF6;border-radius:14px;padding:18px 20px;margin-top:16px}
+  .ac-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .ac-title{font-weight:700;color:#146C43;font-size:15px}
+  .ac-meta{font-size:12px;color:var(--ink-400)}
+  .ac-verdict{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+  .ac-verdict .v-tag{font-size:12px;font-weight:600;color:#fff;background:var(--ok);padding:3px 10px;border-radius:999px}
+  .ac-verdict p{font-size:14px;color:var(--ink-900);font-weight:500}
+  .ac-table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:12px;overflow:hidden}
+  .ac-table th,.ac-table td{border:1px solid var(--line);padding:9px 10px;text-align:left}
+  .ac-table th{background:#F3FBF6;color:#146C43;font-weight:600}
+  .ac-table td{color:var(--ink-600)}
+  .pass{color:var(--ok);font-weight:600}
+  .fail{color:var(--danger);font-weight:600}
+  .ac-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+  .ac-mod{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .ac-mod h6{font-size:13px;font-weight:600;color:#146C43;margin-bottom:8px}
+  .ac-mod ul{list-style:none}
+  .ac-mod li{font-size:13px;color:var(--ink-600);padding-left:16px;position:relative;margin-bottom:6px}
+  .ac-mod li::before{content:"";position:absolute;left:2px;top:10px;width:6px;height:6px;border-radius:50%;background:var(--ok)}
+  .kb{border:1px solid var(--blue-100);background:#F6F9FF;border-radius:14px;padding:18px 20px;margin-top:16px}
+  .kb-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .kb-title{font-weight:700;color:var(--blue-900);font-size:15px}
+  .kb-meta{font-size:12px;color:var(--ink-400)}
+  .kb-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .kb-mod{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .kb-mod h6{font-size:13px;font-weight:600;color:var(--blue-900);margin-bottom:8px}
+  .kb-mod ul{list-style:none}
+  .kb-mod li{font-size:13px;color:var(--ink-600);padding-left:16px;position:relative;margin-bottom:6px}
+  .kb-mod li::before{content:"";position:absolute;left:2px;top:10px;width:6px;height:6px;border-radius:50%;background:var(--blue-600)}
+  .kb-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+  .kb-stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}
+  .kb-stat .k{font-size:12px;color:var(--ink-400)}
+  .kb-stat .v{font-size:15px;font-weight:700;color:var(--blue-900);margin-top:2px}
+  .kb-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .sd-demo{border:1px solid var(--blue-100);background:#fff;border-radius:12px;padding:16px 18px;margin-top:16px}
+  .sd-demo .sd-title{font-size:13.5px;font-weight:600;color:var(--blue-900);margin-bottom:12px}
+  .sd-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .sd-m{background:var(--blue-50);border:1px solid var(--blue-100);border-radius:10px;padding:10px 12px}
+  .sd-m .mk{font-size:11.5px;color:var(--ink-400)}
+  .sd-m .mv{font-size:14px;font-weight:700;color:var(--ink-900);margin-top:2px}
+  .sd-m .mv.warn{color:var(--warn)}
+  .sd-m .mv.ok{color:var(--ok)}
+  .sd-axis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+  .sd-ac{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#FCFDFE}
+  .sd-ac .ax{font-weight:700;font-size:13.5px;color:var(--blue-700);margin-bottom:6px}
+  .sd-ac ul{list-style:none}
+  .sd-ac li{font-size:12.5px;color:var(--ink-600);margin-bottom:4px}
+  .kpi{
+    background:var(--blue-50);border:1px solid var(--blue-100);border-radius:10px;
+    padding:8px 14px;font-size:13px;color:var(--blue-900);font-weight:500;
+  }
+  .scene-foot{
+    padding:16px 32px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:10px;
+    background:#FCFDFE;
+  }
+  .chip{
+    font-size:12.5px;font-weight:500;padding:6px 12px;border-radius:999px;
+    border:1px solid var(--line);color:var(--ink-600);background:#fff;
+  }
+  .chip.b{border-color:var(--blue-100);background:var(--blue-50);color:var(--blue-700)}
+
+  /* 状态色 */
+  .st-ok{color:var(--ok)} .st-warn{color:var(--warn)} .st-danger{color:var(--danger)}
+
+  /* ===== 亮点总结 ===== */
+  .summary{margin:48px 0 20px}
+  .sum-card{background:var(--blue-900);border-radius:var(--radius);padding:36px 38px;color:#fff}
+  .sum-card h2{font-size:22px;font-weight:800;margin-bottom:20px}
+  .sum-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .sum-item{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:20px}
+  .sum-item .ic{font-size:20px;font-weight:800;color:#7FB3FF;margin-bottom:8px}
+  .sum-item h5{font-size:15px;font-weight:600;margin-bottom:6px}
+  .sum-item p{font-size:13.5px;color:rgba(255,255,255,.78)}
+
+  footer{padding:30px 0 44px;text-align:center;color:var(--ink-400);font-size:13px}
+
+  @media (max-width:900px){
+    .loop{grid-template-columns:repeat(2,1fr)}
+    .scene-body{grid-template-columns:1fr}
+    .axis-cols{grid-template-columns:1fr}
+    .alarm-demo dl{grid-template-columns:1fr}
+    .ar-grid{grid-template-columns:1fr}
+    .wo-grid{grid-template-columns:1fr}
+    .pl-grid{grid-template-columns:1fr}
+    .part-table{display:block;overflow-x:auto}
+    .tr-overview{grid-template-columns:repeat(2,1fr)}
+    .tr-grid{grid-template-columns:1fr}
+    .tl-item{grid-template-columns:1fr;gap:4px}
+    .ac-grid{grid-template-columns:1fr}
+    .ac-table{display:block;overflow-x:auto}
+    .kb-grid{grid-template-columns:1fr}
+    .kb-stats{grid-template-columns:repeat(2,1fr)}
+    .sd-grid{grid-template-columns:repeat(2,1fr)}
+    .sd-axis{grid-template-columns:1fr}
+    .sum-grid{grid-template-columns:1fr}
+    .hero h1{font-size:26px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Hero ===== -->
+<header class="hero">
+  <div class="wrap">
+    <span class="hero-tag">INDUSTRIAL AI · 智能运维 Demo</span>
+    <h1>汽车零部件伺服轴生产 · 智能运维全闭环 Demo</h1>
+    <p class="sub">完整呈现从设备实时监测、异常报警、数字人分析、人工研判、工单生成与方案匹配、派工下发、维修过程监控、完工校核到知识沉淀迭代的端到端流程。</p>
+    <div class="hero-meta">
+      <div class="m"><b>X / Y / Z 轴</b>伺服轴实时参数监测</div>
+      <div class="m"><b>刀具状态</b>磨损 / 转速 / 抖动同步感知</div>
+      <div class="m"><b>AI + 人工</b>双保险研判机制</div>
+      <div class="m"><b>闭环迭代</b>工单数据反哺知识库</div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== 导航 ===== -->
+<nav class="toc">
+  <div class="wrap toc-inner" id="toc">
+    <a href="#s1">① 监控大屏</a>
+    <a href="#s2">② 异常报警</a>
+    <a href="#s3">③ 数字人分析</a>
+    <a href="#s4">④ 人工研判</a>
+    <a href="#s5">⑤ 工单与方案匹配</a>
+    <a href="#s6">⑥ 审核下发</a>
+    <a href="#s7">⑦ 维修过程监控</a>
+    <a href="#s8">⑧ 完工校核</a>
+    <a href="#s9">⑨ 知识沉淀进化</a>
+  </div>
+</nav>
+
+<!-- ===== 概览 ===== -->
+<div class="wrap overview">
+  <div class="ov-card">
+    <h2>演示主线：一条故障工单的完整生命周期</h2>
+    <p>整套 Demo 围绕一台伺服轴加工设备的一次异常展开，按「感知 → 预警 → 分析 → 决策 → 处置 → 验收 → 沉淀」七个环节串联，最终形成可持续进化的运维闭环。</p>
+    <div class="loop">
+      <div class="loop-step"><div class="n">1</div><div class="t">全域感知</div><div class="d">大屏实时监测轴与刀具</div></div>
+      <div class="loop-step"><div class="n">2</div><div class="t">预警分析</div><div class="d">报警触发 · 数字人解析</div></div>
+      <div class="loop-step"><div class="n">3</div><div class="t">决策派工</div><div class="d">人工确认 · 生成工单匹配方案</div></div>
+      <div class="loop-step"><div class="n">4</div><div class="t">处置验收</div><div class="d">过程监控 · 数据校核闭环</div></div>
+      <div class="loop-step"><div class="n">5</div><div class="t">沉淀进化</div><div class="d">归档知识库 · AI 持续迭代</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ① 监控大屏 -->
+  <section class="scene" id="s1">
+    <div class="scene-card">
+      <div class="scene-head">
+        <div class="scene-num">1</div>
+        <div class="tt">
+          <h3>设备全域实时可视化监控大屏</h3>
+          <div class="role">场景开场 · 无人值守、全域可视、实时感知</div>
+        </div>
+      </div>
+      <div class="scene-body">
+        <div class="block" style="grid-column:1/-1">
+          <h4>大屏画面与数据清单</h4>
+          <p>初始界面为汽车零部件伺服轴加工产线的专属监控大屏，覆盖车间核心加工设备，数据毫秒级刷新，以颜色区分设备工况：<span class="st-ok">绿色正常</span>、<span class="st-warn">黄色波动</span>、<span class="st-danger">红色异常</span>。大屏分区展示以下六类设备数据：</p>
+
+          <div class="data-group">
+            <div class="gt">一、设备基础信息</div>
+            <div class="kpi-row">
+              <span class="kpi">设备编号 / 名称型号</span>
+              <span class="kpi">所属产线 / 工位</span>
+              <span class="kpi">当前工序</span>
+              <span class="kpi">运行模式：自动 / 手动 / 待机 / 停机</span>
+              <span class="kpi">班次 / 操作人员</span>
+              <span class="kpi">累计运行时长</span>
+              <span class="kpi">本次开机时长</span>
+            </div>
+          </div>
+
+          <div class="data-group">
+            <div class="gt">二、设备整体健康度 <span class="unit">（综合各轴、刀具与辅助系统加权评估）</span></div>
+            <div class="kpi-row">
+              <span class="kpi">综合健康度评分（0–100）</span>
+              <span class="kpi">健康等级：健康 / 关注 / 预警 / 报警</span>
+              <span class="kpi">健康趋势：上升 / 平稳 / 下降</span>
+              <span class="kpi">X / Y / Z 轴分项健康值</span>
+              <span class="kpi">刀具健康值 / 剩余寿命占比</span>
+              <span class="kpi">辅助系统健康值</span>
+              <span class="kpi">近期健康评分走势曲线</span>
+            </div>
+          </div>
+
+          <div class="data-group">
+            <div class="gt">三、伺服轴 X / Y / Z 实时参数 <span class="unit">（每轴同口径采集）</span></div>
+            <div class="axis-cols">
+              <div class="axis-col">
+                <div class="ax">X 轴</div>
+                <ul>
+                  <li>坐标位置 / 定位精度</li>
+                  <li>跟随误差 / 定位偏差</li>
+                  <li>进给速度 / 伺服转速</li>
+                  <li>负载率 / 扭矩</li>
+                  <li>电机 · 丝杠 · 轴承温度</li>
+                  <li>振动：加速度 / 振幅 / 频率</li>
+                  <li>电流 / 电压</li>
+                  <li>润滑状态</li>
+                </ul>
+              </div>
+              <div class="axis-col">
+                <div class="ax">Y 轴</div>
+                <ul>
+                  <li>坐标位置 / 定位精度</li>
+                  <li>跟随误差 / 定位偏差</li>
+                  <li>进给速度 / 伺服转速</li>
+                  <li>负载率 / 扭矩 · 同轴度</li>
+                  <li>电机 · 丝杠 · 轴承温度</li>
+                  <li>振动：加速度 / 振幅 / 频率</li>
+                  <li>电流 / 电压</li>
+                  <li>润滑状态</li>
+                </ul>
+              </div>
+              <div class="axis-col">
+                <div class="ax">Z 轴</div>
+                <ul>
+                  <li>坐标位置 / 定位精度</li>
+                  <li>跟随误差 / 定位偏差</li>
+                  <li>进给速度 / 伺服转速</li>
+                  <li>负载率 / 扭矩</li>
+                  <li>电机 · 丝杠 · 轴承温度</li>
+                  <li>振动：加速度 / 振幅 / 频率</li>
+                  <li>电流 / 电压</li>
+                  <li>润滑状态</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="data-group">
+            <div class="gt">四、刀具参数</div>
+            <div class="kpi-row">
+              <span class="kpi">刀具编号 / 型号</span>
+              <span class="kpi">剩余寿命 / 磨损量</span>
+              <span class="kpi">后刀面磨损 VB</span>
+              <span class="kpi">主轴转速 S</span>
+              <span class="kpi">进给量 F</span>
+              <span class="kpi">切削深度</span>
+              <span class="kpi">累计加工件数 / 切削时长</span>
+              <span class="kpi">刀具振动 / 异常抖动</span>
+              <span class="kpi">累计换刀次数</span>
+            </div>
+          </div>
+
+          <div class="data-group">
+            <div class="gt">五、工艺与质量数据</div>
+            <div class="kpi-row">
+              <span class="kpi">加工产品型号 / 批次号</span>
+              <span class="kpi">当前加工程序号</span>
+              <span class="kpi">单件加工节拍</span>
+              <span class="kpi">当日产量 / 计划产量</span>
+              <span class="kpi">良率 / 合格率</span>
+              <span class="kpi">关键尺寸公差</span>
+            </div>
+          </div>
+
+          <div class="data-group">
+            <div class="gt">六、环境与辅助系统</div>
+            <div class="kpi-row">
+              <span class="kpi">环境温度 / 湿度</span>
+              <span class="kpi">冷却液压力 / 温度</span>
+              <span class="kpi">液压油压力 / 温度</span>
+              <span class="kpi">气源压力</span>
+            </div>
+          </div>
+
+          <div class="data-group">
+            <div class="gt">七、运行状态与统计</div>
+            <div class="kpi-row">
+              <span class="kpi">设备综合效率 OEE</span>
+              <span class="kpi">当日报警次数 / 风险等级</span>
+              <span class="kpi">各轴工况颜色标识</span>
+              <span class="kpi">实时趋势曲线（轴参数 / 刀具磨损）</span>
+            </div>
+          </div>
+
+          <div class="sd-demo">
+            <div class="sd-title">大屏实时数据样例（模拟实时刷新 · 设备 CNC-012）</div>
+
+            <div class="sd-grid">
+              <div class="sd-m"><div class="mk">设备编号 / 名称</div><div class="mv">CNC-012 加工单元</div></div>
+              <div class="sd-m"><div class="mk">工位 / 当前工序</div><div class="mv">3 号工位 · 精镗孔</div></div>
+              <div class="sd-m"><div class="mk">运行模式 / 班次</div><div class="mv ok">自动循环 · 白班</div></div>
+              <div class="sd-m"><div class="mk">本次开机 / 累计运行</div><div class="mv">2h18m / 12,680h</div></div>
+            </div>
+
+            <div class="sd-grid" style="margin-top:10px">
+              <div class="sd-m"><div class="mk">综合健康度</div><div class="mv">86 分 · 良好</div></div>
+              <div class="sd-m"><div class="mk">健康趋势</div><div class="mv ok">平稳</div></div>
+              <div class="sd-m"><div class="mk">分项健康值</div><div class="mv">X90 · Y88 · Z82 · 刀78</div></div>
+              <div class="sd-m"><div class="mk">辅助系统健康</div><div class="mv">92 分</div></div>
+            </div>
+
+            <div class="sd-axis">
+              <div class="sd-ac">
+                <div class="ax">X 轴 <span class="st-ok">● 正常</span></div>
+                <ul>
+                  <li>位置 125.430mm · 偏差 0.011mm</li>
+                  <li>进给 1200mm/min · 负载 42%</li>
+                  <li>温度 38℃ · 振动 1.6mm/s</li>
+                  <li>电流 6.2A · 润滑正常</li>
+                </ul>
+              </div>
+              <div class="sd-ac">
+                <div class="ax">Y 轴 <span class="st-ok">● 正常</span></div>
+                <ul>
+                  <li>位置 88.215mm · 偏差 0.013mm</li>
+                  <li>进给 1200mm/min · 负载 45%</li>
+                  <li>温度 39℃ · 振动 1.7mm/s</li>
+                  <li>电流 6.5A · 润滑正常</li>
+                </ul>
+              </div>
+              <div class="sd-ac">
+                <div class="ax">Z 轴 <span class="st-warn">● 波动</span></div>
+                <ul>
+                  <li>位置 42.060mm · 偏差 0.018mm</li>
+                  <li>进给 800mm/min · 负载 58%</li>
+                  <li>温度 43℃ · 振动 2.3mm/s</li>
+                  <li>电流 7.8A · 润滑偏低</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="sd-grid" style="margin-top:10px">
+              <div class="sd-m"><div class="mk">2 号精镗刀</div><div class="mv warn">剩余寿命 22% · VB 0.14mm</div></div>
+              <div class="sd-m"><div class="mk">切削参数</div><div class="mv">S3200 · F0.12 · 切深 1.8mm</div></div>
+              <div class="sd-m"><div class="mk">加工件数 / 换刀</div><div class="mv">1,240 件 · 换刀 3 次</div></div>
+              <div class="sd-m"><div class="mk">刀具振动</div><div class="mv warn">2.0mm/s</div></div>
+            </div>
+
+            <div class="sd-grid" style="margin-top:10px">
+              <div class="sd-m"><div class="mk">产品 / 批次</div><div class="mv">SA-207 伺服轴 · PC-261120-07</div></div>
+              <div class="sd-m"><div class="mk">程序号 / 节拍</div><div class="mv">O0127 · 4.2min/件</div></div>
+              <div class="sd-m"><div class="mk">产量 / 良率</div><div class="mv">36/40 件 · 97.2%</div></div>
+              <div class="sd-m"><div class="mk">关键尺寸</div><div class="mv ok">孔径 φ20H7 合格</div></div>
+            </div>
+
+            <div class="sd-grid" style="margin-top:10px">
+              <div class="sd-m"><div class="mk">环境温湿度</div><div class="mv">24.5℃ · 52%RH</div></div>
+              <div class="sd-m"><div class="mk">冷却液</div><div class="mv">0.35MPa · 26℃</div></div>
+              <div class="sd-m"><div class="mk">液压油 / 气源</div><div class="mv">5.2MPa · 0.62MPa</div></div>
+              <div class="sd-m"><div class="mk">OEE / 今日报警</div><div class="mv">81.5% · 1 次（提示级）</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="block">
+          <h4>场景说明</h4>
+          <ul>
+            <li>大屏聚焦伺服轴精密加工场景，突出多轴 + 刀具的一体化参数采集。</li>
+            <li>所有指标与工艺阈值、安全标准绑定，为后续自动报警提供判定依据。</li>
+            <li>先呈现平稳运行状态，为下一步异常波动做对比铺垫。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="scene-foot">
+        <span class="chip b">实时数据采集</span><span class="chip b">多轴协同监测</span><span class="chip">工况颜色分级</span><span class="chip">工艺阈值绑定</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ② 异常报警 -->
+  <section class="scene" id="s2">
+    <div class="scene-card">
+      <div class="scene-head">
+        <div class="scene-num">2</div>
+        <div class="tt">
+          <h3>参数超标 · 系统自动触发报警</h3>
+          <div class="role">异常触发 · 精准定位、有据可溯</div>
+        </div>
+      </div>
+      <div class="scene-body">
+        <div class="block" style="grid-column:1/-1">
+          <h4>大屏画面与报警内容</h4>
+          <p>模拟生产工况异常：某一伺服轴定位参数偏移、刀具磨损超出工业标准阈值，运行数据出现异常波动。平台监测到参数偏离预设阈值后，即刻触发智能报警，异常设备模块在大屏上高亮闪烁并弹出报警弹窗。弹窗与报警记录包含以下内容：</p>
+
+          <div class="data-group">
+            <div class="gt">一、报警基本信息</div>
+            <div class="kpi-row">
+              <span class="kpi">报警编号</span>
+              <span class="kpi">报警时间（精确到秒）</span>
+              <span class="kpi">设备编号 / 名称型号</span>
+              <span class="kpi">所属产线 / 工位</span>
+              <span class="kpi">当前加工工序</span>
+              <span class="kpi">报警来源部位（X / Y / Z 轴 · 刀具 · 辅助系统）</span>
+              <span class="kpi">报警状态：未确认 / 处理中 / 已恢复</span>
+            </div>
+          </div>
+
+          <div class="data-group">
+            <div class="gt">二、报警类型与等级</div>
+            <div class="kpi-row">
+              <span class="kpi">报警类别：定位偏差 / 振动超限 / 温度过高 / 刀具磨损 / 负载过载 / 润滑异常</span>
+              <span class="kpi">风险等级：提示 / 一般 / 严重 / 紧急</span>
+              <span class="kpi">触发规则：固定阈值 / 趋势越限 / AI 模型判定</span>
+              <span class="kpi">本次发生次数 / 持续时长</span>
+            </div>
+          </div>
+
+          <div class="data-group">
+            <div class="gt">三、异常参数明细</div>
+            <div class="kpi-row">
+              <span class="kpi">异常参数项名称</span>
+              <span class="kpi">标准阈值 / 工艺允许范围</span>
+              <span class="kpi">实测值</span>
+              <span class="kpi">偏差量 / 超限比例</span>
+              <span class="kpi">所属轴号 / 刀具编号</span>
+              <span class="kpi">参数采集时刻</span>
+            </div>
+          </div>
+
+          <div class="data-group">
+            <div class="gt">四、数据快照与影响范围</div>
+            <div class="kpi-row">
+              <span class="kpi">报警前运行趋势曲线</span>
+              <span class="kpi">报警时刻峰值 / 当前值</span>
+              <span class="kpi">关联产品型号 / 批次号</span>
+              <span class="kpi">影响工序与加工件</span>
+              <span class="kpi">潜在影响：加工精度 / 表面质量 / 良率 / 停机风险</span>
+              <span class="kpi">历史同类报警次数</span>
+            </div>
+          </div>
+
+          <div class="data-group">
+            <div class="gt">五、处置入口</div>
+            <div class="kpi-row">
+              <span class="kpi">确认报警</span>
+              <span class="kpi">触发数字人分析</span>
+              <span class="kpi">查看参数趋势曲线</span>
+              <span class="kpi">关联 / 生成维修工单</span>
+            </div>
+          </div>
+
+          <div class="alarm-demo">
+            <div class="ad-head">
+              <div class="ad-title">示例报警（模拟数据）</div>
+              <div class="ad-tag">严重 · 红色报警</div>
+            </div>
+            <dl>
+              <div><dt>报警编号</dt><dd>ALM-20261120-037</dd></div>
+              <div><dt>报警时间</dt><dd>2026-11-20 14:32:08</dd></div>
+              <div><dt>设备 / 工位</dt><dd>CNC-012 伺服轴加工单元 · 3 号工位</dd></div>
+              <div><dt>报警来源</dt><dd>Z 轴定位偏差 + 2 号刀具磨损</dd></div>
+              <div><dt>异常参数</dt><dd>Z 轴定位偏差 0.042mm（阈值 ≤0.020mm）</dd></div>
+              <div><dt>刀具参数</dt><dd>2 号刀后刀面磨损 VB 0.18mm（限值 0.15mm），振动幅值偏高</dd></div>
+              <div><dt>关联批次</dt><dd>零件批次 PC-261120-07，当前工序：精镗伺服轴孔</dd></div>
+              <div><dt>报警状态</dt><dd>未确认</dd></div>
+              <dd class="wide">潜在影响：可能造成同轴度与表面粗糙度超差，存在尺寸超差和批量报废风险，建议尽快停机研判。</dd>
+            </dl>
+          </div>
+        </div>
+        <div class="block">
+          <h4>场景说明</h4>
+          <ul>
+            <li>对比上一阶段的平稳曲线，直观呈现参数越限的过程。</li>
+            <li>报警信息结构化、可追溯，解决传统产线故障发现滞后、原因模糊的痛点。</li>
+            <li>风险等级区分轻重缓急，为后续是否停机维修提供参考。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="scene-foot">
+        <span class="chip b">自动阈值判定</span><span class="chip b">异常快照留存</span><span class="chip">风险分级</span><span class="chip">工序关联定位</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ③ 数字人分析 -->
+  <section class="scene" id="s3">
+    <div class="scene-card">
+      <div class="scene-head">
+        <div class="scene-num">3</div>
+        <div class="tt">
+          <h3>点击报警 · 数字人智能解析故障</h3>
+          <div class="role">AI 分析 · 自动拆解故障、输出结构化结论</div>
+        </div>
+      </div>
+      <div class="scene-body">
+        <div class="block" style="grid-column:1/-1">
+          <h4>交互动作与分析样例</h4>
+          <p>点击大屏上的异常报警条目，一键触发工业数字人智能分析引擎。数字人自动调取该设备的历史运行数据、工艺标准与同类故障案例，对本次报警进行全方位拆解分析，输出结构化诊断报告。以下为对应报警 <b>ALM-20261120-037</b> 的分析样例：</p>
+
+          <div class="ai-report">
+            <div class="ar-head">
+              <div class="ar-title">数字人故障分析报告</div>
+              <div class="ar-meta">报告编号 AIR-20261120-037 · 生成时间 14:32:25 · 置信度 92%</div>
+            </div>
+
+            <div class="verdict">
+              <span class="v-tag warn">严重 · 建议停机检修</span>
+              <p>综合判定为 <b>Z 轴定位偏差 + 2 号刀具磨损</b> 的复合故障，不建议继续自动加工。</p>
+            </div>
+
+            <div class="ar-grid">
+              <div class="ar-mod">
+                <h6>一、故障诊断拆解</h6>
+                <ul>
+                  <li><b>故障类型：</b>Z 轴定位精度下降，叠加刀具到寿磨损</li>
+                  <li><b>定位依据：</b>Z 轴偏差 0.042mm，超阈值约 110%；刀具 VB 0.18mm，超限值约 20%</li>
+                  <li><b>趋势判断：</b>近 30 分钟偏差呈持续扩大趋势，非瞬时波动</li>
+                  <li><b>案例匹配：</b>命中历史案例 CASE-2026-0891（同型号设备同类定位偏差）</li>
+                </ul>
+              </div>
+              <div class="ar-mod">
+                <h6>二、诱因可能性排序</h6>
+                <ul>
+                  <li class="prob"><span>刀具到寿磨损</span><span class="bar"><i style="width:55%"></i></span><b>55%</b></li>
+                  <li class="prob"><span>丝杠 / 轴承磨损</span><span class="bar"><i style="width:28%"></i></span><b>28%</b></li>
+                  <li class="prob"><span>润滑不足</span><span class="bar"><i style="width:12%"></i></span><b>12%</b></li>
+                  <li class="prob"><span>装夹 / 对刀偏移</span><span class="bar"><i style="width:5%"></i></span><b>5%</b></li>
+                </ul>
+              </div>
+              <div class="ar-mod">
+                <h6>三、影响评估</h6>
+                <ul>
+                  <li><b>加工精度：</b>同轴度、孔位尺寸存在超差风险</li>
+                  <li><b>表面质量：</b>表面粗糙度可能恶化</li>
+                  <li><b>良率风险：</b>继续运行预估不合格率上升，存在批量报废隐患</li>
+                  <li><b>生产安排：</b>建议停机检修，避免带病加工</li>
+                </ul>
+              </div>
+              <div class="ar-mod">
+                <h6>四、处置建议</h6>
+                <ul>
+                  <li>立即暂停自动循环，设备转入待修状态</li>
+                  <li>优先更换 2 号刀具，复核对刀与装夹</li>
+                  <li>检修后复测 Z 轴定位精度、温升与振动</li>
+                  <li>过渡阶段可降低进给 / 转速，不建议长时运行</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="ar-mod" style="margin-top:14px">
+              <h6>分析依据来源</h6>
+              <ul>
+                <li>设备实时传感数据（轴参数 · 刀具参数 · 温度振动）</li>
+                <li>近 7 天历史运行数据与健康度趋势</li>
+                <li>工艺标准库与设备出厂参数</li>
+                <li>运维知识库同类故障案例与处置记录</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="block">
+          <h4>场景说明</h4>
+          <ul>
+            <li>数字人输出结构化分析报告，并给出临时防控建议。</li>
+            <li>AI 自动翻阅台账与历史数据，无需人工逐项排查，快速形成决策依据。</li>
+            <li>分析结论与报警快照、历史案例相互印证，提升可信度。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="scene-foot">
+        <span class="chip b">数字人交互</span><span class="chip b">历史数据关联</span><span class="chip">同类案例匹配</span><span class="chip">结构化报告</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ④ 人工研判 -->
+  <section class="scene" id="s4">
+    <div class="scene-card">
+      <div class="scene-head">
+        <div class="scene-num">4</div>
+        <div class="tt">
+          <h3>人工研判 · 双保险确认是否发起维修</h3>
+          <div class="role">人机协同 · AI 分析 + 人工复核，规避误判</div>
+        </div>
+      </div>
+      <div class="scene-body">
+        <div class="block">
+          <h4>研判界面</h4>
+          <p>数字人分析完成后，界面进入人工研判确认端口。运维人员结合分析报告、现场工况与排产计划做综合判断，实现“AI 分析 + 人工复核”的双保险模式。</p>
+          <ul>
+            <li><b>无需维修：</b>判定为轻微参数波动，可一键忽略报警，系统记录本次异常，纳入设备状态趋势分析。</li>
+            <li><b>需要维修：</b>判定存在生产隐患、需停机检修，人工点击确认生成维修工单，进入标准化运维流程。</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>场景说明</h4>
+          <ul>
+            <li>保留人工决策权，避免纯自动化运维的误判和误停机。</li>
+            <li>忽略的报警不丢弃，沉淀为设备健康趋势的分析素材。</li>
+            <li>决策过程留痕，后续可回溯研判依据。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="scene-foot">
+        <span class="chip b">人机协同</span><span class="chip b">人工决策留痕</span><span class="chip">趋势数据留存</span><span class="chip">误判兜底</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑤ 工单与方案匹配 -->
+  <section class="scene" id="s5">
+    <div class="scene-card">
+      <div class="scene-head">
+        <div class="scene-num">5</div>
+        <div class="tt">
+          <h3>自动生成工单 · 知识库匹配最优维修方案</h3>
+          <div class="role">智能处置 · 工单标准化生成 + 方案智能检索</div>
+        </div>
+      </div>
+      <div class="scene-body">
+        <div class="block" style="grid-column:1/-1">
+          <h4>工单生成与方案匹配说明</h4>
+          <p>人工确认发起维修后，平台基于报警数据、设备型号与故障类型自动标准化生成维修工单，信息自动填充；同时联动工业运维知识库，检索匹配与本次故障高度适配的标准化维修方案。在工单详情页点击「查看匹配方案」即可调阅对应方案，方案与工单关联留存。以下为工单样例及关联方案样例：</p>
+        </div>
+
+        <!-- 工单样例 -->
+        <div class="block" style="grid-column:1/-1">
+          <div class="work-order">
+            <div class="wo-head">
+              <div class="wo-title">维修工单样例</div>
+              <div class="wo-meta">工单编号 WO-20261120-037 · 状态：待审核下发</div>
+            </div>
+            <dl class="wo-grid">
+              <div><dt>关联报警</dt><dd>ALM-20261120-037</dd></div>
+              <div><dt>关联分析报告</dt><dd>AIR-20261120-037（置信度 92%）</dd></div>
+              <div><dt>设备 / 工位</dt><dd>CNC-012 伺服轴加工单元 · 3 号工位</dd></div>
+              <div><dt>故障类型</dt><dd>Z 轴定位偏差 + 2 号刀具磨损（复合故障）</dd></div>
+              <div><dt>紧急程度</dt><dd>严重 · 建议停机检修</dd></div>
+              <div><dt>要求完成时限</dt><dd>当日班次内</dd></div>
+              <div><dt>报修人 / 时间</dt><dd>值班运维 王工 · 2026-11-20 14:35</dd></div>
+              <div><dt>加工批次</dt><dd>PC-261120-07（精镗伺服轴孔）</dd></div>
+              <dd class="wide"><dt>故障描述</dt><dd>Z 轴定位偏差 0.042mm（阈值 ≤0.020mm），2 号刀后刀面磨损 VB 0.18mm（限值 0.15mm），伴随振动幅值偏高，存在同轴度与尺寸超差风险。</dd></div>
+            </dl>
+            <div class="wo-tasks">
+              <h6>待维修事项</h6>
+              <ul>
+                <li>更换 2 号磨损刀具并完成对刀复核</li>
+                <li>检查 Z 轴丝杠、轴承与导轨润滑状态</li>
+                <li>复测 Z 轴定位精度、温升与振动</li>
+                <li>试加工首件并确认尺寸、粗糙度合格</li>
+              </ul>
+            </div>
+            <div class="wo-tasks" style="margin-top:10px">
+              <h6>工单附件</h6>
+              <ul>
+                <li>报警前后数据快照与趋势曲线</li>
+                <li>数字人故障分析报告</li>
+                <li>历史同类故障案例记录</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- 维修方案样例 -->
+        <div class="block" style="grid-column:1/-1">
+          <div class="plan">
+            <div class="pl-head">
+              <div class="pl-title">关联维修方案样例（知识库匹配）</div>
+              <div class="pl-meta"><span class="match-tag">匹配度 94%</span> · 方案编号 PLN-2026-0891-A · 版本 V2.3</div>
+            </div>
+            <div class="pl-grid">
+              <div class="pl-mod">
+                <h6>适用范围</h6>
+                <ul>
+                  <li>适用设备：同型号 CNC-012 伺服轴加工单元</li>
+                  <li>适用故障：Z 轴定位偏差叠加刀具磨损复合故障</li>
+                  <li>方案来源：知识库标准案例 + 历史工单沉淀</li>
+                </ul>
+              </div>
+              <div class="pl-mod">
+                <h6>维修前准备</h6>
+                <ul>
+                  <li>人员：持证机修工 1 名，调机 / 质检 1 名配合</li>
+                  <li>工具：扭矩扳手、百分表 / 千分表、对刀仪、润滑加注枪、振动测温仪</li>
+                  <li>备件：精镗刀片、导轨润滑脂、密封件（见配件清单）</li>
+                </ul>
+              </div>
+              <div class="pl-mod" style="grid-column:1/-1">
+                <h6>分步维修流程</h6>
+                <ol>
+                  <li>停机断电挂牌，清理加工区域，确认冷却液与气源关闭。</li>
+                  <li>拆卸 2 号刀具，检查刀杆与刀夹磨损，更换刀片并完成对刀复核。</li>
+                  <li>检查 Z 轴导轨、丝杠润滑状态，补充润滑脂并清洁导轨。</li>
+                  <li>百分表打表复测 Z 轴定位精度与反向间隙，记录温升、振动数据。</li>
+                  <li>复装后手动低速试运行，确认无异响、无报警。</li>
+                  <li>试加工首件，质检同轴度、孔径与表面粗糙度。</li>
+                </ol>
+              </div>
+              <div class="pl-mod" style="grid-column:1/-1">
+                <h6>配件 / 物料清单</h6>
+                <table class="part-table">
+                  <thead><tr><th>配件名称</th><th>规格 / 型号</th><th>数量</th><th>库存状态</th></tr></thead>
+                  <tbody>
+                    <tr><td>精镗刀片</td><td>涂层刀片 · 适配 2 号刀杆</td><td>2 片</td><td>有库存</td></tr>
+                    <tr><td>导轨润滑脂</td><td>专用锂基脂</td><td>1 支</td><td>有库存</td></tr>
+                    <tr><td>主轴密封件</td><td>同型号备件包</td><td>1 套</td><td>待确认</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="pl-mod">
+                <h6>安全注意事项</h6>
+                <ul>
+                  <li>检修前断电挂牌，严禁带电作业</li>
+                  <li>防止拆卸刀具坠落，妥善收存刀片</li>
+                  <li>复检完成前不得恢复自动循环</li>
+                  <li>作业过程佩戴相应防护用品</li>
+                </ul>
+              </div>
+              <div class="pl-mod">
+                <h6>质量验收标准</h6>
+                <ul>
+                  <li>Z 轴定位偏差 ≤0.020mm</li>
+                  <li>温升、振动值处于阈值范围内</li>
+                  <li>首件尺寸与表面粗糙度合格</li>
+                  <li>连续加工无同类报警</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="scene-foot">
+        <span class="chip b">工单自动生成</span><span class="chip b">知识库方案匹配</span><span class="chip">配件工具清单</span><span class="chip">验收标准内置</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑥ 审核下发 -->
+  <section class="scene" id="s6">
+    <div class="scene-card">
+      <div class="scene-head">
+        <div class="scene-num">6</div>
+        <div class="tt">
+          <h3>工单审核 · 确认无误后精准指派下发</h3>
+          <div class="role">派工环节 · 二次核验 + 按技能排班精准派单</div>
+        </div>
+      </div>
+      <div class="scene-body">
+        <div class="block">
+          <h4>审核与下发</h4>
+          <p>运维人员对自动生成的工单与匹配方案进行二次核验，核对故障信息、维修步骤、所需物料与作业要求，确认信息准确、方案适配、无遗漏问题后，一键下发维修工单。</p>
+          <ul>
+            <li>结合人员排班、技能标签、地理位置，精准指派对应维修人员。</li>
+            <li>工单实时推送至工作人员移动端与 PC 端。</li>
+            <li>维修人员接单后进场开展设备检修。</li>
+          </ul>
+        </div>
+        <div class="block">
+          <h4>场景说明</h4>
+          <ul>
+            <li>下发前设置审核关卡，确保工单与方案质量。</li>
+            <li>派工匹配综合考虑技能与在岗状态，提升一次维修成功率。</li>
+            <li>消息多端触达，任务状态实时同步。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="scene-foot">
+        <span class="chip b">二次核验</span><span class="chip b">技能排班匹配</span><span class="chip">多端触达</span><span class="chip">任务状态同步</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑦ 过程监控 -->
+  <section class="scene" id="s7">
+    <div class="scene-card">
+      <div class="scene-head">
+        <div class="scene-num">7</div>
+        <div class="tt">
+          <h3>维修全过程可视化 · 实时追踪作业状态</h3>
+          <div class="role">过程监管 · 远程掌握进度，作业透明可追溯</div>
+        </div>
+      </div>
+      <div class="scene-body">
+        <div class="block" style="grid-column:1/-1">
+          <h4>跟踪要素说明</h4>
+          <p>维修人员接单进场后，作业全程纳入平台可视化监管体系。大屏围绕维修工单实时跟踪以下要素，管理人员无需现场巡查即可远程掌握全部运维进展：</p>
+          <div class="kpi-row">
+            <span class="kpi">工单状态流转：待接单 / 已接单 / 维修中 / 待验收 / 已完工</span>
+            <span class="kpi">维修人员与在岗位置</span>
+            <span class="kpi">各阶段进度与耗时</span>
+            <span class="kpi">配件领用与更换记录</span>
+            <span class="kpi">操作步骤勾选与现场留痕</span>
+            <span class="kpi">中间检测数据</span>
+            <span class="kpi">停滞 / 异常预警</span>
+          </div>
+        </div>
+
+        <div class="block" style="grid-column:1/-1">
+          <div class="track">
+            <div class="tr-head">
+              <div class="tr-title">工单执行跟踪样例 · WO-20261120-037</div>
+              <div class="tr-meta"><span class="tr-status">维修中 · 精度复测</span> &nbsp;机修工 李师傅（持证） · 配合 调机 赵工</div>
+            </div>
+
+            <div class="tr-overview">
+              <div class="tr-ov"><div class="kpi">当前进度</div><div class="v">65%</div></div>
+              <div class="tr-ov"><div class="kpi">已耗时</div><div class="v">38 分钟</div></div>
+              <div class="tr-ov"><div class="kpi">所在工位</div><div class="v">3 号工位</div></div>
+              <div class="tr-ov"><div class="kpi">现场留痕</div><div class="v">照片 3 张</div></div>
+            </div>
+
+            <ul class="timeline">
+              <li class="tl-item done">
+                <div class="tl-time">14:35</div>
+                <div class="tl-body">
+                  <div class="tt">工单创建 · 待接单 <span class="tl-tag done">已完成</span></div>
+                  <div class="td">系统依据报警与分析报告生成 WO-20261120-037，进入待接单队列。</div>
+                </div>
+              </li>
+              <li class="tl-item done">
+                <div class="tl-time">14:38</div>
+                <div class="tl-body">
+                  <div class="tt">接单出发 <span class="tl-tag done">已完成</span></div>
+                  <div class="td">李师傅接单，前往 3 号工位；接单响应耗时 3 分钟。</div>
+                </div>
+              </li>
+              <li class="tl-item done">
+                <div class="tl-time">14:44</div>
+                <div class="tl-body">
+                  <div class="tt">到场开工 · 安全挂牌 <span class="tl-tag done">已完成</span></div>
+                  <div class="td">断电挂牌、清理加工区域，确认冷却液与气源关闭。</div>
+                </div>
+              </li>
+              <li class="tl-item done">
+                <div class="tl-time">14:50</div>
+                <div class="tl-body">
+                  <div class="tt">更换 2 号刀具并对刀复核 <span class="tl-tag done">已完成</span></div>
+                  <div class="td">领用精镗刀片 2 片，更换后完成对刀与刀夹检查，现场拍照留痕。</div>
+                </div>
+              </li>
+              <li class="tl-item done">
+                <div class="tl-time">15:02</div>
+                <div class="tl-body">
+                  <div class="tt">Z 轴润滑检查与加注 <span class="tl-tag done">已完成</span></div>
+                  <div class="td">检查丝杠、轴承与导轨状态，补充导轨润滑脂 1 支，清洁导轨。</div>
+                </div>
+              </li>
+              <li class="tl-item active">
+                <div class="tl-time">15:13</div>
+                <div class="tl-body">
+                  <div class="tt">复测 Z 轴定位精度 · 温升 · 振动 <span class="tl-tag active">进行中</span></div>
+                  <div class="td">打表复测定位精度，记录温升与振动数据，等待数值稳定后确认。</div>
+                </div>
+              </li>
+              <li class="tl-item">
+                <div class="tl-time">待执行</div>
+                <div class="tl-body">
+                  <div class="tt">手动低速试运行 <span class="tl-tag todo">未开始</span></div>
+                  <div class="td">复装后手动低速试运行，确认无异响、无报警。</div>
+                </div>
+              </li>
+              <li class="tl-item">
+                <div class="tl-time">待执行</div>
+                <div class="tl-body">
+                  <div class="tt">首件试加工与质检 <span class="tl-tag todo">未开始</span></div>
+                  <div class="td">试加工首件，检验同轴度、孔径与表面粗糙度。</div>
+                </div>
+              </li>
+              <li class="tl-item">
+                <div class="tl-time">待执行</div>
+                <div class="tl-body">
+                  <div class="tt">提交完工 · 进入待验收 <span class="tl-tag todo">未开始</span></div>
+                  <div class="td">作业完成后提交完工申请，工单转入待验收校核环节。</div>
+                </div>
+              </li>
+            </ul>
+
+            <div class="tr-grid">
+              <div class="tr-mod">
+                <h6>配件领用记录</h6>
+                <ul>
+                  <li>精镗刀片 ×2（14:50 领用，库存已扣减）</li>
+                  <li>导轨润滑脂 ×1 支（15:02 领用）</li>
+                  <li>主轴密封件：待本次检查后确认是否更换</li>
+                </ul>
+              </div>
+              <div class="tr-mod">
+                <h6>中间检测数据（复测中）</h6>
+                <ul>
+                  <li>Z 轴定位偏差：0.018mm（标准 ≤0.020mm，待稳定确认）</li>
+                  <li>电机温升：41℃（阈值 ≤55℃）</li>
+                  <li>振动幅值：2.1mm/s（阈值 ≤3.0mm/s）</li>
+                </ul>
+              </div>
+              <div class="tr-mod">
+                <h6>操作步骤留痕</h6>
+                <ul>
+                  <li>对应方案流程已勾选完成 4 / 6 步</li>
+                  <li>现场照片：刀具更换、润滑加注、打表复测各 1 张</li>
+                  <li>每步操作人、时间与备注自动归档</li>
+                </ul>
+              </div>
+              <div class="tr-mod">
+                <h6>异常与停滞记录</h6>
+                <ul>
+                  <li>当前无停滞、无待件等待</li>
+                  <li>15:05 核对一次润滑脂库存，账实一致</li>
+                  <li>若阶段超时未推进，大屏自动弹出预警提醒介入</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="block">
+          <h4>场景说明</h4>
+          <ul>
+            <li>维修过程透明化、可监管，杜绝推诿怠工与违规作业。</li>
+            <li>过程数据持续记录，为后续校核和知识沉淀提供素材。</li>
+            <li>异常停滞可及时介入干预，保障维修时效。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="scene-foot">
+        <span class="chip b">实时进度追踪</span><span class="chip b">作业留痕</span><span class="chip">远程监管</span><span class="chip">时效干预</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑧ 完工校核 -->
+  <section class="scene" id="s8">
+    <div class="scene-card">
+      <div class="scene-head">
+        <div class="scene-num">8</div>
+        <div class="tt">
+          <h3>完工校核验收 · 数据校验合格后方可关单</h3>
+          <div class="role">闭环验收 · 多维数据校核，确认故障彻底修复</div>
+        </div>
+      </div>
+      <div class="scene-body">
+        <div class="block" style="grid-column:1/-1">
+          <h4>校核机制说明</h4>
+          <p>维修人员完成检修、配件更换与设备调试后，在平台提交工单完工申请。系统自动启动智能校核，采集维修后的实时运行参数，与维修前异常数据、工艺标准及设备出厂参数做多维度对比校验：验证 X / Y / Z 三轴参数恢复正常，刀具参数达标、无异常抖动与偏移，设备工况回归稳定、具备投产条件。以下为工单 <b>WO-20261120-037</b> 的验收校核样例：</p>
+        </div>
+
+        <div class="block" style="grid-column:1/-1">
+          <div class="accept">
+            <div class="ac-head">
+              <div class="ac-title">完工校核验收报告单</div>
+              <div class="ac-meta">关联工单 WO-20261120-037 · 设备 CNC-012 · 3 号工位 · 验收时间 15:48</div>
+            </div>
+
+            <div class="ac-verdict">
+              <span class="v-tag">全部合格 · 同意关单</span>
+              <p>9 项校核全部达标，故障彻底修复，设备具备正常投产条件。</p>
+            </div>
+
+            <table class="ac-table">
+              <thead>
+                <tr><th>校核项目</th><th>验收标准</th><th>维修前异常值</th><th>维修后实测值</th><th>判定</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Z 轴定位偏差</td><td>≤0.020mm</td><td>0.042mm</td><td>0.016mm</td><td class="pass">合格</td></tr>
+                <tr><td>X 轴定位偏差</td><td>≤0.020mm</td><td>0.012mm</td><td>0.011mm</td><td class="pass">合格</td></tr>
+                <tr><td>Y 轴定位偏差</td><td>≤0.020mm</td><td>0.014mm</td><td>0.013mm</td><td class="pass">合格</td></tr>
+                <tr><td>电机温升</td><td>≤55℃</td><td>58℃（偏高）</td><td>40℃</td><td class="pass">合格</td></tr>
+                <tr><td>振动幅值</td><td>≤3.0mm/s</td><td>3.6mm/s</td><td>1.8mm/s</td><td class="pass">合格</td></tr>
+                <tr><td>刀具后刀面磨损 VB</td><td>≤0.15mm</td><td>0.18mm</td><td>0.02mm（新刀片）</td><td class="pass">合格</td></tr>
+                <tr><td>首件同轴度</td><td>≤0.02mm</td><td>—</td><td>0.015mm</td><td class="pass">合格</td></tr>
+                <tr><td>表面粗糙度 Ra</td><td>≤1.6μm</td><td>—</td><td>Ra1.2μm</td><td class="pass">合格</td></tr>
+                <tr><td>连续试运行</td><td>无报警 / 无异响</td><td>报警未消除</td><td>30 分钟试运行正常</td><td class="pass">合格</td></tr>
+              </tbody>
+            </table>
+
+            <div class="ac-grid">
+              <div class="ac-mod">
+                <h6>首件质检结果</h6>
+                <ul>
+                  <li>加工批次 PC-261120-07，首件 1 件</li>
+                  <li>孔径尺寸、同轴度、表面粗糙度均合格</li>
+                  <li>质检：赵工 · 15:45 确认</li>
+                </ul>
+              </div>
+              <div class="ac-mod">
+                <h6>关单确认</h6>
+                <ul>
+                  <li>维修人员：李师傅（完工提交）</li>
+                  <li>质检确认：赵工</li>
+                  <li>值班负责人：王工（最终核准关单）</li>
+                  <li>校核不通过则退回返工，记录不合格项并重新派工，直至验收合格</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="scene-foot">
+        <span class="chip b">多维数据校核</span><span class="chip b">参数对比验收</span><span class="chip">不合格退回返工</span><span class="chip">工单闭环</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑨ 知识沉淀 -->
+  <section class="scene" id="s9">
+    <div class="scene-card">
+      <div class="scene-head">
+        <div class="scene-num">9</div>
+        <div class="tt">
+          <h3>知识沉淀归档 · 知识库持续进化迭代</h3>
+          <div class="role">能力进化 · 工单数据反哺知识库，正向循环</div>
+        </div>
+      </div>
+      <div class="scene-body">
+        <div class="block" style="grid-column:1/-1">
+          <h4>沉淀说明</h4>
+          <p>工单正式关闭后，本次完整的故障运维全流程数据全部归档沉淀，自动录入工业运维知识库，提炼为可检索、可复用的故障案例与运维经验，补充伺服轴与刀具故障的知识条目。以下为工单 <b>WO-20261120-037</b> 关闭后生成的知识条目样例：</p>
+        </div>
+
+        <div class="block" style="grid-column:1/-1">
+          <div class="kb">
+            <div class="kb-head">
+              <div class="kb-title">知识库条目样例 · KB-2026-0891</div>
+              <div class="kb-meta">归档时间 2026-11-20 15:52 · 分类：设备故障案例 · 伺服轴 / 刀具磨损</div>
+            </div>
+
+            <div class="kb-grid">
+              <div class="kb-mod">
+                <h6>条目基础信息</h6>
+                <ul>
+                  <li>来源工单：WO-20261120-037</li>
+                  <li>关联报警：ALM-20261120-037</li>
+                  <li>关联分析报告：AIR-20261120-037</li>
+                  <li>适用设备：CNC-012 同型号伺服轴加工单元</li>
+                  <li>知识类型：复合故障案例 + 标准维修方案</li>
+                </ul>
+              </div>
+              <div class="kb-mod">
+                <h6>沉淀资料清单</h6>
+                <ul>
+                  <li>原始故障数据与报警前后快照、趋势曲线</li>
+                  <li>数字人故障分析报告与诱因排序</li>
+                  <li>维修工单与待办事项记录</li>
+                  <li>匹配维修方案 PLN-2026-0891-A</li>
+                  <li>配件领用与更换记录</li>
+                  <li>维修过程跟踪与现场留痕</li>
+                  <li>完工校核报告与实测数据</li>
+                  <li>首件质检结果与验收结论</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="kb-mod" style="margin-top:14px">
+              <h6>结构化知识内容（供后续检索复用）</h6>
+              <div class="kb-grid">
+                <div>
+                  <ul>
+                    <li><b>故障名称：</b>Z 轴定位偏差叠加刀具磨损复合故障</li>
+                    <li><b>故障征兆：</b>定位偏差持续扩大，伴随温升、振动偏高，刀具 VB 超限</li>
+                    <li><b>主要根因：</b>刀具到寿磨损 55%，丝杠 / 轴承磨损 28%，润滑不足 12%</li>
+                  </ul>
+                </div>
+                <div>
+                  <ul>
+                    <li><b>处置要点：</b>换刀对刀 → 润滑检查加注 → 精度 / 温升 / 振动复测 → 低速试运行 → 首件质检</li>
+                    <li><b>验收标准：</b>定位偏差 ≤0.020mm，温升 ≤55℃，振动 ≤3.0mm/s，首件尺寸与粗糙度合格</li>
+                    <li><b>关联方案：</b>PLN-2026-0891-A（匹配度 94%）</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="kb-tags">
+                <span class="kpi">Z 轴定位偏差</span>
+                <span class="kpi">刀具到寿</span>
+                <span class="kpi">复合故障</span>
+                <span class="kpi">润滑检查</span>
+                <span class="kpi">首件验收</span>
+              </div>
+            </div>
+
+            <div class="kb-stats">
+              <div class="kb-stat"><div class="k">累计被引用</div><div class="v">12 次</div></div>
+              <div class="kb-stat"><div class="k">同类故障命中</div><div class="v">4 次</div></div>
+              <div class="kb-stat"><div class="k">方案直接复用</div><div class="v">3 次</div></div>
+              <div class="kb-stat"><div class="k">知识版本</div><div class="v">V1.0</div></div>
+            </div>
+
+            <div class="kb-mod" style="margin-top:14px">
+              <h6>知识库进化记录</h6>
+              <ul>
+                <li>本次案例入库后，同类复合故障的分析结论可直接关联该条目与维修方案，缩短研判与派单时间。</li>
+                <li>沉淀数据反哺刀具寿命预警规则：将该类刀片的提前更换量纳入阈值，降低到寿磨损引发的停机风险。</li>
+                <li>后续新工单持续校核、补充该条目案例，知识库随真实生产数据不断迭代，形成“故障 → 运维 → 沉淀 → 升级 → 赋能生产”的正向循环。</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="scene-foot">
+        <span class="chip b">全流程归档</span><span class="chip b">知识库反哺</span><span class="chip">分析精度迭代</span><span class="chip">正向循环降本</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 总结 -->
+  <section class="summary">
+    <div class="sum-card">
+      <h2>Demo 核心能力总结</h2>
+      <div class="sum-grid">
+        <div class="sum-item">
+          <div class="ic">01</div>
+          <h5>全链路闭环</h5>
+          <p>覆盖设备监测、风险预警、AI 分析、人工决策、智能派单、标准化维修、过程监管、闭环校核、知识迭代九大环节。</p>
+        </div>
+        <div class="sum-item">
+          <div class="ic">02</div>
+          <h5>人机协同可控</h5>
+          <p>AI 负责高效分析与方案匹配，人工保留研判、审核与验收决策权，兼顾效率与安全，避免误判误停机。</p>
+        </div>
+        <div class="sum-item">
+          <div class="ic">03</div>
+          <h5>数据驱动进化</h5>
+          <p>每一次运维都沉淀为可复用知识，知识库持续迭代，分析更准、派单更快、维修更规范，适配精密制造高稳定需求。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  汽车零部件伺服轴生产智能运维 Demo · 场景说明
+</footer>
+
+<script>
+  // 导航高亮：滚动到对应场景时激活目录项
+  const links = Array.from(document.querySelectorAll('#toc a'));
+  const sections = links.map(a => document.querySelector(a.getAttribute('href')));
+  const onScroll = () => {
+    let idx = 0;
+    sections.forEach((sec, i) => {
+      if (sec && sec.getBoundingClientRect().top <= 120) idx = i;
+    });
+    links.forEach((a, i) => a.classList.toggle('active', i === idx));
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+</script>
+</body>
+</html>
