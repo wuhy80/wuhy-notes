@@ -20,9 +20,12 @@ status: active
 
 ## 快速入口
 
-打开 `assets/demo-site.html` —— 一个本地入口页，把下面 5 个 Demo 聚合在一起，`1`–`5` 键可直接打开对应演示。
+前两个 Demo 可以在线直接看：
 
-> [!tip] 在线版入口：<https://wuhy-notes.pages.dev/static/demos/> —— 部署后可用，5 个 Demo 都能直接在浏览器里打开。
+- 刀装工具 3D 装配沙盘：<https://wuhy-notes.pages.dev/static/demos/knife-assembly.html>
+- 伺服轴数字孪生 CNC-012：<https://wuhy-notes.pages.dev/static/demos/cnc-twin.html>
+
+其余是本地文件，双击 `assets/` 下的 HTML 即可。
 
 | # | Demo | 一句话 | 技术看点 | 文件 |
 | --- | --- | --- | --- | --- |
@@ -62,13 +65,12 @@ AI开发Demo/
 ├── 伺服轴智能运维-Demo套件.md                 # ④ 产线叙事页 + 演示脚本
 ├── pdoom-代码渲染MV.md                     # ⑤ 代码渲染 MV（本地项目）
 └── assets/
-    ├── demo-site.html                     # 入口页（聚合 5 个 Demo）
     ├── 刀装工具3D装配全景沙盘.html
     ├── demo-twin.html
     ├── 汽车零部件3D本体全景沙盘.html
     ├── demo-3d.html
     ├── 伺服轴智能运维Demo演示脚本.html
-    └── *.jpg / demo-site-预览.png          # 笔记里引用的截图
+    └── *.jpg                              # 笔记里引用的截图
 ```
 
 ## 更新记录

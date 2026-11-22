@@ -21,7 +21,7 @@ status: done
 
 | 文件 | 作用 | 体积 |
 | --- | --- | --- |
-| `assets/demo-3d.html` | 产线 3D 全闭环叙事页：订单 → 排程 → 加工 → 质量 → 能耗 → 复盘（[在线版](https://wuhy-notes.pages.dev/static/demos/servo-line.html)） | 132 KB |
+| `assets/demo-3d.html` | 产线 3D 全闭环叙事页：订单 → 排程 → 加工 → 质量 → 能耗 → 复盘 | 132 KB |
 | `assets/伺服轴智能运维Demo演示脚本.html` | 七幕场景说明：每屏在说什么、谁来讲、讲给谁听 | 71 KB |
 
 ## 一、demo-3d.html：产线级的「全景图」
