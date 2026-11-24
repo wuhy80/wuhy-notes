@@ -87,20 +87,26 @@ jobs:
         run: node scripts/verify-reader.mjs https://wuhy-notes.pages.dev/ _site/md-reader/index.json
       - name: 准备国内静态镜像
         run: node scripts/prepare-site-mirror.mjs
+      # 国内镜像：失败必须让整条流水线标红（不再 continue-on-error），并做三重校验：
+      #   1. 传输：tar 管道失败自动重试 3 次；
+      #   2. 内容：远端 index.json / BUILD.json 的 sha256 必须与本地一致（防止半包）；
+      #   3. 切换后：再验一次 /var/www/wuhy-notes/index.json，并核对 BUILD.json 的 runId。
       - name: 同步国内镜像
-        continue-on-error: true
         shell: bash
         env:
           WUHY_SSH_KEY: ${{ secrets.WUHY_SERVER_SSH_KEY }}
           WUHY_KNOWN_HOSTS: ${{ secrets.WUHY_SERVER_KNOWN_HOSTS }}
         run: |
           set -euo pipefail
-          if [ -z "$WUHY_SSH_KEY" ] || [ -z "$WUHY_KNOWN_HOSTS" ]; then
-            echo "未配置国内镜像凭据，跳过同步"
-            exit 0
-          fi
+          fail() { echo "::error::$*"; exit 1; }
+
+          [ -n "${WUHY_SSH_KEY:-}" ] && [ -n "${WUHY_KNOWN_HOSTS:-}" ] || fail "未配置国内镜像凭据（WUHY_SERVER_SSH_KEY / WUHY_SERVER_KNOWN_HOSTS）"
           WS="$(cygpath -u "$GITHUB_WORKSPACE" 2>/dev/null || echo "$GITHUB_WORKSPACE")"
           PUB="$WS/_site/mirror"
+          [ -s "$PUB/index.html" ] || fail "镜像产物缺少 index.html"
+          [ -s "$PUB/index.json" ] || fail "镜像产物缺少 index.json"
+          [ -s "$PUB/BUILD.json" ] || fail "镜像产物缺少 BUILD.json"
+
           mkdir -p ~/.ssh
           printf '%s\n' "$WUHY_SSH_KEY" > ~/.ssh/wuhy_deploy_key
           printf '%s\n' "$WUHY_KNOWN_HOSTS" > ~/.ssh/wuhy_deploy_known_hosts
@@ -108,11 +114,39 @@ jobs:
           SSH_OPTS=(-i "$HOME/.ssh/wuhy_deploy_key" -o IdentitiesOnly=yes
                     -o UserKnownHostsFile="$HOME/.ssh/wuhy_deploy_known_hosts"
                     -o StrictHostKeyChecking=yes -o ConnectTimeout=20
+                    -o ServerAliveInterval=15 -o ServerAliveCountMax=4
                     -o ControlMaster=auto -o "ControlPath=$HOME/.ssh/wuhy_cm_%r@%h:%p" -o ControlPersist=180)
           HOST=root@47.100.85.94
           NEW="/var/www/wuhy-notes.new-$GITHUB_RUN_ID"
-          tar czf - -C "$PUB" . | ssh "${SSH_OPTS[@]}" "$HOST" "mkdir -p '$NEW' && tar xzf - -C '$NEW'"
-          ssh "${SSH_OPTS[@]}" "$HOST" "test -s '$NEW/index.html' && test -s '$NEW/index.json' && if [ -d /var/www/wuhy-notes ]; then mv /var/www/wuhy-notes /var/www/wuhy-notes.old-$GITHUB_RUN_ID; fi && mv '$NEW' /var/www/wuhy-notes && rm -rf /var/www/wuhy-notes.old-$GITHUB_RUN_ID"
+
+          LOCAL_JSON_SHA="$(sha256sum "$PUB/index.json" | awk '{print $1}')"
+          LOCAL_BUILD_SHA="$(sha256sum "$PUB/BUILD.json" | awk '{print $1}')"
+
+          ok=0
+          for attempt in 1 2 3; do
+            echo "---- 传输尝试 $attempt/3 ----"
+            if tar czf - -C "$PUB" . | ssh "${SSH_OPTS[@]}" "$HOST" "rm -rf '$NEW' && mkdir -p '$NEW' && tar xzf - -C '$NEW'"; then
+              ok=1
+              break
+            fi
+            echo "尝试 $attempt 失败，10 秒后重试"
+            sleep 10
+          done
+          [ "$ok" = 1 ] || fail "三次传输均失败：GitHub Runner 到 47.100.85.94 的 SSH 不可用"
+
+          ssh "${SSH_OPTS[@]}" "$HOST" "test -s '$NEW/index.html' && test -s '$NEW/index.json' && test -s '$NEW/BUILD.json'" || fail "远端解包后缺少 index.html / index.json / BUILD.json"
+
+          REMOTE_JSON_SHA="$(ssh "${SSH_OPTS[@]}" "$HOST" "sha256sum '$NEW/index.json'" | awk '{print $1}')"
+          REMOTE_BUILD_SHA="$(ssh "${SSH_OPTS[@]}" "$HOST" "sha256sum '$NEW/BUILD.json'" | awk '{print $1}')"
+          [ "$REMOTE_JSON_SHA" = "$LOCAL_JSON_SHA" ] || fail "传输校验失败：远端 index.json sha256 与本地不一致"
+          [ "$REMOTE_BUILD_SHA" = "$LOCAL_BUILD_SHA" ] || fail "传输校验失败：远端 BUILD.json sha256 与本地不一致"
+
+          ssh "${SSH_OPTS[@]}" "$HOST" "if [ -d /var/www/wuhy-notes ]; then mv /var/www/wuhy-notes /var/www/wuhy-notes.old-$GITHUB_RUN_ID; fi && mv '$NEW' /var/www/wuhy-notes && rm -rf /var/www/wuhy-notes.old-$GITHUB_RUN_ID" || fail "原子切换 /var/www/wuhy-notes 失败"
+
+          FINAL_JSON_SHA="$(ssh "${SSH_OPTS[@]}" "$HOST" "sha256sum /var/www/wuhy-notes/index.json" | awk '{print $1}')"
+          [ "$FINAL_JSON_SHA" = "$LOCAL_JSON_SHA" ] || fail "切换后校验失败：/var/www/wuhy-notes/index.json sha256 不一致"
+
+          echo "国内镜像同步成功：run=${GITHUB_RUN_ID:-local} index.json sha256=$FINAL_JSON_SHA"
       - name: 写入运行摘要
         if: always()
         shell: pwsh
