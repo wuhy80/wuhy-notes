@@ -13,11 +13,7 @@ fs.mkdirSync(output, { recursive: true });
 fs.cpSync(source, output, { recursive: true, filter: file => !['.md-reader-build.json', '_worker.js', '_routes.json', '_headers'].includes(path.basename(file)) });
 fs.writeFileSync(path.join(output, 'index.html'), shell);
 for (const note of manifest.notes) {
-  // 非目录入口统一落成 .html：普通静态服务器（nginx）用 try_files $uri.html 命中，
-  // 能正确返回 text/html；写成无扩展名文件会被当成 text/plain，页面直接变成源码。
-  const relative = note.url.endsWith('/')
-    ? note.url.replace(/^\//, '') + 'index.html'
-    : note.url.replace(/^\//, '') + '.html';
+  const relative = note.url.replace(/^\//, '') + (note.url.endsWith('/') ? 'index.html' : '');
   const target = path.resolve(output, relative);
   if (!target.startsWith(output + path.sep)) throw new Error('镜像路由越界：' + note.url);
   fs.mkdirSync(path.dirname(target), { recursive: true });

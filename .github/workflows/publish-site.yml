@@ -22,6 +22,7 @@ on:
       - "scripts/build-md-reader.mjs"
       - "scripts/preview-md-reader.mjs"
       - "scripts/prepare-site-mirror.mjs"
+      - "deploy/**"
       - "scripts/verify-reader.mjs"
       - "scripts/export-public.ps1"
       - "scripts/fix-cjk-emphasis.cjs"
@@ -145,6 +146,20 @@ jobs:
 
           FINAL_JSON_SHA="$(ssh "${SSH_OPTS[@]}" "$HOST" "sha256sum /var/www/wuhy-notes/index.json" | awk '{print $1}')"
           [ "$FINAL_JSON_SHA" = "$LOCAL_JSON_SHA" ] || fail "切换后校验失败：/var/www/wuhy-notes/index.json sha256 不一致"
+
+          # 安装站点 Nginx 配置：文章入口是无扩展名文件，必须 default_type text/html
+          CONF_B64="$(base64 -w0 "$WS/deploy/nginx-wuhy-notes.conf")"
+          ssh "${SSH_OPTS[@]}" "$HOST" "echo '$CONF_B64' | base64 -d > /etc/nginx/sites-available/wuhy-notes && ln -sf /etc/nginx/sites-available/wuhy-notes /etc/nginx/sites-enabled/wuhy-notes && rm -f /etc/nginx/sites-enabled/default && nginx -t && systemctl reload nginx" \
+            || fail "Nginx 配置安装或 reload 失败"
+
+          HOME_CODE="$(ssh "${SSH_OPTS[@]}" "$HOST" "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/")"
+          [ "$HOME_CODE" = "200" ] || fail "本机自测首页返回 $HOME_CODE（应为 200）"
+          HOME_TYPE="$(ssh "${SSH_OPTS[@]}" "$HOST" "curl -sI http://127.0.0.1:8080/ | grep -i '^content-type:' | tr -d '\r'")"
+          case "$HOME_TYPE" in
+            *text/html*) ;;
+            *) fail "首页 Content-Type=$HOME_TYPE（应为 text/html，否则文章会显示成源码）" ;;
+          esac
+          echo "Nginx 已安装新配置并自测通过：$HOME_TYPE"
 
           echo "国内镜像同步成功：run=${GITHUB_RUN_ID:-local} index.json sha256=$FINAL_JSON_SHA"
       - name: 写入运行摘要
