@@ -1,137 +1,142 @@
 # AGENTS.md
 
-本文件为 Codex 在此 Obsidian 知识库中工作时提供指导。
+> **本文件是本仓库唯一的 AI 协作指令。** 2026-11-24 起 `CLAUDE.md` 已删除，**不要再新建同名文件**——两份指令必然漂移，漂移的指令比没有指令更危险。
+>
+> 本文在 2026-11-24 按 `origin/main` 实测校正：远端/分支/用户配置、目录清单、`.gitignore`、发布流水线均已核对。标「已失效」的是历史做法，不要再照做。
 
-## 语言与风格
+## 0. 仓库定位（先读这一节）
 
-- 默认使用中文进行对话、说明和文档编写。
-- 技术术语可保留英文，例如 Dataview、Templater、QuickAdd、Git、Ollama。
-- 修改 Markdown 内容时保持原有写作风格、标题层级和链接格式。
-- 文件名可以使用中文或英文；优先遵循所在目录已有命名方式。
+- 本仓库是**个人知识库主库**，同时是**公开站点的内容源**。
+- 站点是**自研 Markdown 阅读器**：正文以 `.md` 原样发布，浏览器按需解析渲染。**已不再使用 Quartz 或任何主题包**。
+- 发布链：push → `publish-site.yml` → 脱敏导出 + 构建阅读器 → `wrangler pages deploy` → `verify-reader.mjs` 校验 → 同步国内镜像。D1 全文索引由**独立工作流** `sync-search-index.yml` 在发布成功后同步。
+- 日记、公司项目、个人信息等私密内容在**另一个独立仓库**，不在本仓库。该库在本机当前位于 `E:\Obsidian`（历史文档常写作 `E:\Obsidian\wuhy80_private`，**已失效**）。**动手前先确认目录里有 `.git`，找不到就停下来问人，绝不按记忆猜路径**——猜错会覆盖别人的库。
+- 本机已**没有 Obsidian 工作区**：`.obsidian/` 不存在，且被 `.gitignore` 排除。唯一真相源是 git 仓库里的 Markdown，编辑器是 ZCode / DSH。
 
-## 仓库概览
+## 1. 目录与关键文件（实测）
 
-这是一个中英双语的 Obsidian 个人知识管理库，主要包含技术文档、项目资料、日常记录、任务管理和 LLM 研究内容。
+| 路径 | 内容 |
+|---|---|
+| `技术笔记/` | 按技术分类的笔记（Kubernetes、Linux、Python、数据库、网络等） |
+| `大模型/` | LLM、MCP、本地部署、论文；`10-新闻/` 下是 AI 早报日报与周报归档 |
+| `Ontology/` | Palantir Ontology、资源模型、Action、权限治理、Agent 应用 |
+| `英语学习/` `数学学习/` | 双语精读与数学专题；生词聚合页 `英语学习/我的生词本.md` |
+| `AI开发Demo/` | 交互式 Demo（含 3D/可视化组件），随站点发布 |
+| `Golang编程/` `Rust编程/` `读书笔记/` `网址收藏/` | 语言专题、阅读记录、书签 |
+| `附件/` | 默认附件目录 |
+| `template/` | Templater 模板**存量保留、不再新增**（Obsidian 已退役） |
+| `scripts/` | 导出、构建、校验脚本（见第 6 节） |
+| `.github/workflows/` | `publish-site.yml`、`sync-search-index.yml`、`cloudflare-secrets-sync.yml`、`ai-daily-archive.yml`、`gitleaks.yml` |
+| `.github/scripts/` | `fetch-ai-daily.mjs`、`generate-ai-weekly.mjs`、`rank-ai-daily.mjs` |
+| `cloudflare/` | `_worker.js`、`embeddings.json`、`plotly.min.js`（站点 Worker 与语义搜索） |
+| `docs/` | `d1-search-setup.md`（D1 搜索）、`markdown-reader-preview.md`（阅读器本地使用） |
+| `_reports/` | 本地审计与临时产物，**不纳入版本控制** |
 
-主要目录：
+根目录关键文件：`Home.md`、`Home-分析面板.md`（Dataview 仪表盘）、`README.md`（站点与流水线概览）、`start-reader.cmd`（本地预览）、`deploy-reader.cmd`（一键提交+推送+发布）、`package.json` / `package-lock.json`（阅读器依赖与 npm scripts）。
 
-- `技术笔记/`：按技术分类的笔记，如 Kubernetes、Linux、Python、数据库、网络等。
-- `专项项目/`：工作项目资料，如 AI 工作台、KaiwuDB、OAMMP、光闸、协议开发、网关任务等。
-- `大模型/`：LLM、AutoGen、MCP、本地部署、模型训练、论文学习等资料。
-- `Ontology/`：Palantir Ontology、资源模型、Action、权限治理和 Agent 应用资料。
-- `template/`：Templater 模板。
-- **已迁出的目录**：`我的日记/`、`个人信息/`、`投资管理/`、`专项项目/客户档案信息/`、`任务管理/`、`Inbox/`、`网址收藏/账号信息.md`、`技术笔记/虚拟机/`、`技术笔记/安全/`、`专项学习/孩子学业学习规划/（原名已脱敏）`、`专项项目/`、`极客时间/`、`浏览剪切/`、`网络剪切/`、`网关开发/`、`网络资料/`、`我的任务.md` 均已迁至**私密库** `E:\Obsidian\wuhy80_private`，本库不再包含。不要在本库重建这些目录：`我的日记/` 等在 `.gitignore` 中排除；`技术笔记/虚拟机/`、`技术笔记/安全/` 则由导出脚本 `scripts/export-public.ps1` 的 `$ExcludeDirs` 护栏保护，不会被公开。
-- `Golang编程/`、`Rust编程/`：编程语言专题资料。
-- `读书笔记/`、`网址收藏/`、`Clippings/`、`浏览剪切/`、`网络剪切/`：阅读、书签和网页剪藏。
-- `附件/`：Obsidian 当前配置的默认附件目录。
+> [!warning] 明确**不存在**的目录与文件
+> `我的日记/`、`专项项目/`、`Inbox/`、`任务管理/`、`个人信息/`、`投资管理/`、`极客时间/`、`浏览剪切/`、`网络剪切/`、`网关开发/`、`网络资料/`、`Clippings/`、`Excalidraw/`、`我的任务.md` 都**已不在本库**（在私密库）。历史文档把它们列为主目录，不要再去找，也不要在本库重建。
+>
+> `Makefile` 仍是旧 Quartz 流程的遗留，**已不再使用**；本地预览走 `start-reader.cmd` 或 `npm run reader:preview`。
 
-关键文件：
+## 2. 文档地图（想深挖看这些，不要写进本文）
 
-- `Home.md`：知识库仪表板，包含 Dataview 统计、贡献图、标签云和最近文件。
-- `我的任务.md`：主要任务跟踪文件。
-- `CLAUDE.md`：更完整的历史协作说明，可作为本文件的补充参考。
-- `scripts/DESIGN.md`：**站点视觉契约**。改动 Markdown 阅读站点的**样式、颜色、字体、布局前必读**；token 源为 `scripts/site-custom.scss`，阅读器布局适配位于 `scripts/reader/layout.css`。不再使用 Quartz 或主题包。
+| 主题 | 去哪看 |
+|---|---|
+| 阅读器本地预览、保存后自动刷新 | `docs/markdown-reader-preview.md` |
+| 站点视觉契约（改样式/颜色/字体/布局**前必读**） | `scripts/DESIGN.md`；token 源 `scripts/site-custom.scss`，阅读器布局适配 `scripts/reader/layout.css` |
+| D1 全文搜索 | `docs/d1-search-setup.md` |
+| 双仓库拆分、多机同步、Git 故障处理 | [[技术笔记/版本管理/知识库双仓库拆分与多机同步]] |
+| 流水线概览 | `README.md` |
 
-## Git 与工作区约束
+**本文只放「必须每次都遵守的约束」**。背景、原理、历史决策写进对应笔记，本文用链接指过去——指令文件越长，模型遵从度越低。
 
-- **本仓库已无自动备份调度**（2026-10-03 起）：Windows 计划任务 `ObsidianVaultBackup` 与 DSH 看板卡的定时**都已停用**。改为**由 DSH 在每次完成改动后顺手提交并推送**；备份脚本 `scripts/backup-vaults.mjs`（Node 版，等价于旧的 `backup-vaults.ps1`）可在需要时手动运行。提交信息用描述性中文。原自托管 Gitea 与 obsidian-git 插件均已停用。
-- 不要回滚、删除或覆盖用户已有改动，尤其是大量 `.smart-env/`、日记、附件和个人信息变更。
-- 执行修改前先确认目标文件内容，避免误改自动生成文件。
-- 当前 `.gitignore` 已排除整个 `.obsidian/`、recent-files 相关路径和 `.smart-connections`；`.smart-env`、`.smtcmp_json_db` 等状态目录未必被排除，且历史上可能已有文件被跟踪，处理前必须以 `git check-ignore` / `git status` 和实际文件为准。
-- 当前 `.gitignore` 实际排除了整个 `.obsidian/`；不要依据 `CLAUDE.md` 中“跟踪 `.obsidian/`”的历史描述修改 Git 规则。
-- **提交与推送约定（2026-10-03 起）**：内容变更使用描述性的中文提交信息；**DSH 完成一批改动后顺手提交并推送**（`node scripts/backup-vaults.mjs` 或标准 git 命令），因为已无定时任务兜底。推送前先 `git fetch` + `git pull --ff-only`；**绝不 force push**。
-- **路径约定（2026-10-18 起）**：知识库根目录一律**按脚本自身位置推导**（`scripts/` 的上一级，可用 `VAULT_DIR` / `SITE_ROOT` 覆盖），脚本里不写死任何本机绝对路径；找不到就直接报错，不回退到猜测的目录。历史上用过的旧主库克隆已全部弃用，不要再引用、也不要重新加回任何回退分支。
-- **⚠️ `scripts/*.ps1` 必须保留 UTF-8 BOM**：Windows PowerShell 5.1 在文件无 BOM 时按 GBK 解码，脚本里的中文注释会让**整个脚本解析失败**（报 `Unexpected token '<乱码>'`）。很多编辑器和补丁动作会顺手吞掉 BOM，改过 `.ps1` 后务必用 `node scripts/check-bom.mjs` 校验（发布流水线第 0 步也会自动查）。
+## 3. 语言与风格
 
-## Obsidian 内容规范
+- 默认中文对话、说明与文档；技术术语保留英文（Dataview、Ontology、Git、Reader 等）。
+- 修改 Markdown 时保持原有写作风格、标题层级和链接格式；不要顺手「优化」措辞。
+- 文件名可用中文或英文，优先遵循所在目录的既有命名。
 
-- 本仓库是 Obsidian vault，生成或整理文档时优先使用 Obsidian 友好的 Markdown，而不是通用网页文章格式。
-- 内部笔记优先使用 WikiLinks：`[[页面]]`、`[[页面|别名]]`；不要把内部链接改写成 URL 编码的 Markdown 路径。
-- 保持标题、块和嵌入链接：`[[页面#标题]]`、`[[页面#^块ID]]`、`![[页面#标题]]`、`![[附件名]]`。修改标题、块 ID 或文件名之前必须搜索引用方。
-- WikiLink 目标存在重名或歧义时使用 vault 相对路径，例如 `[[大模型/11-知识管理/GBrain|GBrain]]`；路径不包含 `.md`，统一使用 `/`。
-- 外部链接使用标准 Markdown 链接：`[标题](https://example.com)`。不要把外部 URL 写成 WikiLink。
-- 保持 Obsidian Callout 格式：`> [!type] 标题`，后续内容继续使用 `>`；可折叠 Callout 使用 `> [!type]+` 或 `> [!type]-`。修改现有 Callout 时保持原文件的空格和嵌套风格。
-- 保持 Dataview、DataviewJS、Templater、Tasks、Query、Charts 等插件代码块语法，不随意改写查询或把插件代码块当普通代码格式化。
-- 保持 Obsidian 注释 `%% ... %%`、块 ID `^block-id`、脚注、数学公式、HTML 块和 Mermaid 代码块，不因通用 Markdown 格式化而破坏它们。
-- 新建较完整的主题笔记时，优先添加简洁 frontmatter，例如 `tags`、`created`、`updated`、`source`、`status`；字段名保持英文小写，便于 Dataview 查询。
-- Frontmatter 必须位于文件首行并由成对的 `---` 包围；使用合法 YAML，日期优先写成 `YYYY-MM-DD`，多值 `tags`、`aliases`、`source` 优先使用 YAML 列表。
-- 不要随意改变既有 frontmatter 字段的类型，例如把列表改成字符串、把日期改成自由文本；新增字段前先检查同目录笔记和 `.obsidian/types.json` 中的属性约定。
-- 标签使用 Obsidian 标签语法，如 `#技术/数据库`、`#大模型/论文`；避免在同一篇笔记中混用大量近义标签。
-- Frontmatter 中的标签写作 `技术/数据库`，正文标签才写作 `#技术/数据库`；不要在 YAML `tags` 中混入不必要的 `#`。
-- 适合沉淀为长期知识的概念、人物、项目、工具和主题，应优先使用 `[[内部链接]]` 连接到已有或潜在笔记；首次出现可使用 `[[页面|显示文本]]`。
-- 引用外部资料时保留原始链接，优先使用 Markdown 链接；需要集中列出处时使用 `## 参考资料` 或 `## 延伸阅读`。
-- **`网址收藏/` 的条目约定**：统一写作 `- [名称](URL)：说明`；**说明要写得稍微详细一些**——至少讲清「这是什么 + 有什么特点或适合什么场景」，不要只写站名或一句空话。遇到原有说明过短的条目，应顺手扩充。新增条目前先按 URL 和域名双重去重（脚本见 `scripts/check-links.ps1` 与历史做法）。
-- 对重要判断、注意事项、风险和总结，优先使用 Obsidian callout，例如 `>[!summary]`、`>[!note]`、`>[!warning]`、`>[!question]`。
-- 插入附件或图片时使用 Obsidian 嵌入语法 `![[附件名]]`；附件默认放入 `附件/` 或所在主题已有附件目录。
-- 新增附件前检查是否存在同名文件，避免 `![[附件名]]` 解析到错误目标；不要仅凭文件名覆盖已有附件。
-- 任务使用 Obsidian 任务语法 `- [ ]` / `- [x]`；不要把普通列表误写成任务列表。
-- 已有 Tasks 插件任务中的日期、重复规则、优先级符号、块 ID和行尾 metadata 必须原样保留，除非任务本身就是修改目标。
-- 表格可用于对比信息，但避免制作过宽表格；移动端或阅读视图不友好的内容优先改为分节列表。
-- 代码、命令、配置和查询使用带语言标识的 fenced code block，例如 ```bash、```sql、```dataview。
-- 新建日记属于**私密库**（`E:\Obsidian\wuhy80_private\我的日记\YYYY\YYYY-MM\YYYY-MM-DD.md`），本库不再新建日记。
-- 新建技术笔记优先放入 `技术笔记/[技术]/[子主题]/`。
-- 新建项目文档优先放入 `专项项目/[项目名称]/`。
-- 新建跨学科、暂不明确分类的知识文档，可暂放 `技术笔记/无法归类/`，但应通过标签和内部链接增强可发现性。
-- 不要随意改写已有笔记的标题层级、块引用、块 ID、脚注、嵌入链接或别名链接，避免破坏 Obsidian 反向链接和引用关系。
+## 4. Git 与路径约束（按实测配置写）
 
-## 链接、重命名与附件
+- **远端只有一个 `origin`**；本地分支 `main`，远端 `origin/main`。历史文档里的 `remote.github.push` refspec、`master → main` 映射**均已失效**。
+- **没有定时备份**（2026-10-03 起计划任务与看板卡定时全部停用）：DSH 完成一批改动后**顺手提交并推送**，提交信息用描述性中文。不要指望兜底任务。
+- 推送前 `git fetch` + `git pull --ff-only`；一旦分叉用 `git pull --rebase origin main` 再 push；**绝不 force push**（仅首次建仓例外）。
+- 提交身份：本机 `user.email` 当前为 `haiyan.wu@zw.com`。若推送被 `GH007` 拒绝（GitHub 禁止命令行暴露隐私邮箱），临时改用 `384918+wuhy80@users.noreply.github.com`，**不要反过来先改全局配置**。
+- 单文件不得超过 100 MB（GitHub 硬限制）。附件默认只发布图片类；PDF/压缩包/音视频不发布。
+- `.gitignore` 实际排除：`_site/quartz/`、`_site/_reports/`、`.obsidian/`、`.smart-connections/`、`.smart-env/`、`.smtcmp_json_db/`、`.smtcmp_vector_db.tar.gz`、`.trash/`、`.claude/`、`.wrangler/`、`/temp_api_data.json`、`/openrouter_state_of_ai.html`。**不要假定私密目录被 `.gitignore` 保护**——它们已迁出，不是靠忽略规则兜底。
+- **路径一律按脚本自身位置推导**（`scripts/` 的上一级），可用 `VAULT_DIR` / `SITE_ROOT` 覆盖；找不到就直接报错，**不回退到任何写死的旧路径**（猜错目录比报错危险）。
+- 不要回滚、删除或覆盖用户已有改动，尤其是附件、大段新建内容和他人并发修改。
+- 改动前先读目标文件；不要改自动生成产物与 `_reports/`。
 
-- 当前 Obsidian 配置启用了 `alwaysUpdateLinks`，但它只保证在 Obsidian 应用内重命名时更新链接；通过终端或补丁移动/重命名文件后，必须使用 `rg` 搜索旧文件名和旧路径并手动修复引用。
-- 除非用户明确要求，不批量移动或重命名已有笔记。确需移动时，同时检查 WikiLinks、Markdown 链接、嵌入、Dataview 路径条件、Templater 脚本和 Canvas/Excalidraw 引用。
-- 新建笔记前先搜索同名文件；Obsidian 允许不同目录同名，但裸 `[[页面]]` 可能产生歧义。
-- 链接显示文本与目标分离：重命名显示文案时优先改别名部分，例如 `[[稳定目标|新的显示文本]]`，不要无意改变目标。
-- 引用具体章节时使用真实标题文本；修改被引用标题后搜索 `#旧标题`。
-- 附件链接可使用 `![[文件.pdf#page=3]]`、`![[图片.png|400]]` 等 Obsidian 语法，整理时保持页码、尺寸等参数。
+## 5. 内容规范
 
-## 特殊文件与插件内容
+### 5.1 存量保护（改旧文件时不许弄坏）
 
-- `.canvas`、`.loom`、Excalidraw 文件和插件生成的 JSON/Markdown 属于结构化或半结构化数据，不按普通 Markdown 重排；除非用户明确要求并理解其格式，否则只读不改。
-- Excalidraw Markdown 中的 frontmatter、压缩场景数据、`excalidraw-plugin` 字段和嵌入引用不可随意编辑。
-- `Home.md` 中的 Dataview、贡献图、标签云和 Charts 配置属于仪表盘逻辑，修改时需保持 fenced code block、查询路径和插件字段。
-- `template/` 中的 Templater 表达式和 JavaScript 执行块必须逐字符保留；不要自动转义 `<% ... %>`、改变 trim 标记 `<%*` / `-%>` 或格式化模板代码。
-- `.smart-env/`、`.smart-connections/`、`.smtcmp_json_db/`、`.smtcmp_vector_db.tar.gz`、`.trash/` 和插件状态属于缓存、向量、运行状态或回收内容，默认不读取、不索引、不编辑。
+- 内部链接用 WikiLinks：`[[页面]]`、`[[页面|别名]]`、`[[页面#标题]]`、`[[页面#^块ID]]`、`![[附件名]]`；不要把内部链接改写成 URL 编码的 Markdown 路径。
+- 保持 Callout（`> [!type]`，可折叠用 `+`/`-`）、块 ID `^id`、`%%注释%%`、脚注、数学公式、HTML 块、Mermaid、Tasks 行尾 metadata 原样。
+- 保持 Dataview / DataviewJS / Templater / Charts 代码块语法，不按普通代码格式化。
+- 重名或歧义时用 vault 相对路径（不含 `.md`，分隔符 `/`），例如 `[[大模型/11-知识管理/GBrain|GBrain]]`。
+- 外部链接用标准 Markdown；不要把外部 URL 写成 WikiLink。
+- `.canvas`、`.loom`、Excalidraw、插件生成的 JSON/Markdown **只读不改**，除非用户明确要求并理解格式。
+- `Home.md` 与 `Home-分析面板.md` 的 Dataview、贡献图、标签云配置是仪表盘逻辑，改动要保住 fenced block、查询路径和插件字段。
+- **表格单元格里的 WikiLink 别名必须写成 `\|`**：`| 列 | [[笔记\|别名]] |`。未转义会把链接切成两格，`scripts/export-public.ps1` 第 5.5 步校验不过会**直接中止构建**。图片嵌入同理（`![[图.png\|300]]`）。
 
-## Markdown 编辑与校验
+### 5.2 新增内容约定
 
-- 不对整库或整篇旧笔记运行通用 Markdown formatter；它可能改坏 WikiLinks、Callout、Tasks、Dataview、嵌入和硬换行。
-- 编辑前后保持原文件换行风格和字符集；本库 Markdown 默认按 UTF-8 读取和写入。
-- 新建或修改笔记后至少检查：frontmatter 分隔符成对、fenced code block 成对、WikiLink 括号完整、Callout 引用符连续、文件末尾有换行。
-- 对新建的内部链接，优先用 `rg --files` 或文件搜索确认目标存在；有意创建的“未来链接”应在内容上明确，而不是由拼写错误产生。
-- 涉及重命名、标题修改或附件移动时，使用 `rg` 检查旧名称、目标名称、`![[...]]` 和 `[[...]]` 的引用。
-- 不把 Markdown 检查工具的通用规范凌驾于 Obsidian 语法；只修复确实影响 Obsidian 解析或阅读的错误。
-- **表格单元格里的 WikiLink 别名必须写成 `\|`**：`| 列 | [[笔记|别名]] |` 里的 `|` 是列分隔符，会把链接切成两个格子（Obsidian 和发布站都会显示成 `[[笔记` 和 `别名]]`）；正确写法是 `| 列 | [[笔记\|别名]] |`，图片嵌入同理（`![[图.png\|300]]`）。`scripts/export-public.ps1` 的第 5.5 步会校验，发现未转义**直接中止构建**，不用等站上肉眼发现。
+- **不再新建日记**（日记在私密库）；**不再新增 Templater 模板**、不再按模板建笔记——新笔记直接写正文 + frontmatter。
+- frontmatter 是**入库元数据**：`tags / created / updated / source / status / type`，字段名英文小写。发布成功后由独立工作流灌入 Cloudflare D1（`scripts/build-d1-index.mjs`），缺字段或类型混乱会直接拉低 `/api/search` 质量。
+- frontmatter 必须在首行、成对 `---`，合法 YAML；日期 `YYYY-MM-DD`；多值字段用 YAML 列表。
+- frontmatter 里标签写 `技术/数据库`，正文标签才写 `#技术/数据库`；不要混入多余 `#`。
+- 不要改变既有 frontmatter 字段的类型（列表↔字符串、日期↔自由文本）。
+- 新笔记落位：技术类 `技术笔记/[技术]/[子主题]/`；跨学科且暂不分类 `技术笔记/无法归类/`（靠标签与内部链接补可发现性）。项目类内容属于私密库，不要在本库建 `专项项目/`。
+- 适合长期沉淀的概念、人物、工具、主题，优先建 `[[内部链接]]`；引外部资料保留原始链接，集中列在 `## 参考资料` / `## 延伸阅读`。
+- `网址收藏/` 条目统一 `- [名称](URL)：说明`，说明要讲清「是什么 + 特点/适用场景」，不要只写站名；新增前按 URL 与域名双重去重（`scripts/check-links.ps1`）。
+- 重要判断、风险、结论用 Callout（`>[!summary]`、`>[!warning]`、`>[!note]`）。
+- 附件用 `![[附件名]]`，默认放 `附件/`；新增前检查同名文件，不要凭文件名覆盖；保持 `#page=`、尺寸等参数。
+- 任务用 `- [ ]` / `- [x]`；不要把普通列表写成任务列表。
+- 避免过宽表格；代码/命令/查询用带语言标识的 fenced block。
+- 不批量移动或重命名已有笔记；确需移动时先 `rg` 查旧名、`![[...]]`、`[[...]]`、Dataview 路径条件与 Canvas 引用。
 
-## 模板与自动化
+## 6. 站点与发布流水线
 
-- 默认模板目录是 `template/`。
-- 常用模板包括 `日志模板.md`、`周报模板.md`、`月报模板.md`、`年报模板.md`、`默认模板.md`、`豆瓣图书.md`。
-- Templater 语法示例：
-  - `<% tp.file.creation_date("YYYY-MM-DD") %>`
-  - `<% tp.date.now("YYYY-MM-DD", -1) %>`
-  - `<%* ... -%>`
-- 日记 frontmatter 可能使用表情符号字段，如 `🌻日期🌻`、`🌙星期🌙`、`⌚️时间⌚️`。
+| 组件 | 作用 |
+|---|---|
+| `.github/workflows/publish-site.yml` | 主链：`npm ci` → `check-bom` + `npm test` → `npm run reader:build` → 双语/Dataview 校验 → `wrangler pages deploy` → `verify-reader.mjs` → `prepare-site-mirror.mjs` 同步国内镜像（47.100.85.94） |
+| `.github/workflows/sync-search-index.yml` | 发布成功后独立同步 D1 全文索引，可手动刷新语义向量 |
+| `.github/workflows/cloudflare-secrets-sync.yml` | 同步 Cloudflare 密钥配置 |
+| `.github/workflows/ai-daily-archive.yml` | 抓取 AI 早报 → 归档日报 → 聚合周报（每天 4 次） |
+| `.github/workflows/gitleaks.yml` | 每次 push 扫密钥泄露 |
+| `scripts/export-public.ps1` | 导出公开子集 + 脱敏 + 报表；`$PublicDirs` 定范围，`$ExcludeDirs` 是护栏 |
+| `scripts/build-md-reader.mjs` / `preview-md-reader.mjs` | 构建阅读器站点；生成 `/static/vault-meta.json` 供 Dataview 渲染器用 |
+| `scripts/reader/*` | 阅读器前端（`app.mjs`、`markdown.mjs`、`navigation.mjs`、`worker.mjs`、`layout.css`、`reader.css` 等） |
+| `scripts/prepare-site-mirror.mjs` / `verify-reader.mjs` | 生成国内镜像产物；发布后校验线上站点 |
+| `scripts/site-assets/*` | 阅读器注入件与内嵌 Demo（`dataview-lite.cjs`、`bilingual-reader.cjs`、`mobile-nav.cjs`） |
+| `scripts/build-vocab.mjs` | 生成 `/static/vocab.json`（生词聚合页数据源） |
+| `scripts/build-d1-index.mjs` / `build-embeddings.mjs` | D1 索引与语义搜索向量 |
+| `scripts/check-bilingual.mjs` / `check-bom.mjs` / `check-links.ps1` | 双语格式、BOM、书签去重校验 |
+| npm scripts | `test`（reader + indexing 单测）、`reader:build`、`reader:preview`、`reader:test`（Playwright） |
 
-## 操作原则
+## 7. 平台与操作约束
 
-- 优先做最小必要修改，避免批量格式化整个笔记库。
-- 普通常规操作由 Codex 自行处理，不需要反复人工确认，包括工作区内的文件读取、搜索、少量 Markdown 编辑、内容整理、格式校验和差异检查。
-- 仅在高风险或平台强制授权场景再向用户确认，例如网络访问、安装依赖、删除或批量移动文件、改动个人敏感信息、执行破坏性 Git 操作、提交/推送代码，或沙箱限制导致必须请求提升权限。
-- **本机 DSH 沙箱在受限模式下不可用（2026-10-03 诊断确认）**：受限令牌下 `pwsh`、`powershell.exe`、`bash.exe`、`git.exe` 全部以 `0xC0000142`（DLL 初始化失败）启动失败，而 `cmd`、`node` 正常；已排除 360 拦截、.NET 与原生之别、配置文件访问权三种假设（实测受限令牌能正常读取 `C:\Users\Administrator` 与 `System32`）。
-  - **绕过方式**：执行命令时显式带 `danger-full-access` 升级（每次需用户授权一次）。这是当前唯一可用通道。
-  - **更新不能解决**：本机已是官方最新 nightly `0.2.0-rc.2`（2026-09-29），缓存安装器与官方源 SHA512 一致。
-  - **`pwshPath` 补丁是承重墙**：pwsh 7 未安装，profile 补丁 `desktop\cordis.patch.yml` 把 shell 指向 `C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe`（5.1）。**删掉它会导致完全没有 shell 通道。**
-  - 相关上游报告：deepseek-harness discussions #810、#1847、#1344（均未覆盖本机的“受限令牌下多种 shell 全挂”这一形态）。
-- 对个人信息、账户、证书、财务记录等内容保持谨慎，不在最终回复中暴露敏感细节。
-- 搜索文件时优先使用 `rg` / `rg --files`；Windows PowerShell 环境下注意中文路径编码。
-- 如果 PowerShell 输出乱码，使用 `Get-Content -Encoding UTF8` 重新读取。
-- PowerShell 输出中文文件名乱码时，同时设置 `$OutputEncoding` 和 `[Console]::OutputEncoding` 为 UTF-8 后再读取。
-- 对自动生成缓存、向量数据、插件状态文件的修改需谨慎，除非用户明确要求。
+- **`scripts/*.ps1` 必须保留 UTF-8 BOM**：Windows PowerShell 5.1 在无 BOM 时按 GBK 解码，脚本里的中文注释会让整个脚本解析失败（`Unexpected token '<乱码>'`）。改过 `.ps1` 后必须 `node scripts/check-bom.mjs` 复验——很多编辑器会把 BOM 悄悄吞掉。
+- 本机 pwsh 为 **Windows PowerShell 5.1**；profile 补丁 `desktop\cordis.patch.yml` 把 shell 指向 `C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe`，**这是承重墙，删掉会完全没有 shell 通道**。
+- 本机在受限沙箱下 `pwsh` / `git` 会以 `0xC0000142`（DLL 初始化失败）启动失败，而 `cmd`、`node` 正常——这是环境限制，不是命令写错，需以 `danger-full-access` 运行。已排除 360 拦截、.NET 与原生之别、配置文件访问权三种假设。
+- 编码：Markdown 一律 UTF-8；PowerShell 输出中文乱码时，`Get-Content -Encoding UTF8` 重读，并把 `$OutputEncoding` 与 `[Console]::OutputEncoding` 设为 UTF-8。
+- 搜索优先 `rg` / `rg --files`；Windows 下注意中文路径编码。
+- 最小必要修改；**不要对整库或整篇旧笔记跑通用 Markdown formatter**——它会改坏 WikiLinks、Callout、Dataview、嵌入和硬换行。
 
-## 维护模式变化（2026-10-26 起：Obsidian 退役，ZCode 是唯一编辑器）
+## 8. 操作原则
 
-- 本库不再通过 Obsidian 应用编辑。内容的唯一真相源是本 git 仓库，由 ZCode/DSH 直接增改并提交；发布由 `publish-site.yml` 的 push 触发自动完成，不需要也不应该手动等定时。
-- **Dataview 块在站点上由渲染器现场渲染**（2026-10-31 起）：`scripts/site-assets/dataview-lite.cjs` 在浏览器里执行 ```dataview / ```dataviewjs / ```tagcloud 代码块，元数据来自构建期生成的 `/static/vault-meta.json`（`scripts/build-md-reader.mjs`），导出脚本不再剥离 `00-*` 索引页的查询块。渲染器只支持本库现有的查询方言（TABLE/LIST/TASK + FROM/WHERE/GROUP BY/SORT/LIMIT + dateformat/date/length/max/min，dataviewjs 支持 pages/where/sort/groupBy/table/paragraph/header）；**新增查询前先确认方言在渲染器支持范围内**（单测：`node scripts/test-dataview-lite.mjs`），能用脚本生成纯 Markdown 列表仍优先脚本。Obsidian 教学笔记（`技术笔记/编辑器/Obsidian/`）的查询块豁免渲染、保留原文。
-- **双语精读有格式校验与生成模板**（2026-11-01 起）：新精读笔记按 `scripts/templates/bilingual-prompt.md` 的提示词生成，发布前 `scripts/check-bilingual.mjs` 自动校验（对照表两列必须成对、词汇注释 callout 三种合法形态：`**词条** /IPA/ —— 释义`、`*短语* —— 说明`、纯中文说明行；单词条目缺 IPA 计警告）。全站生词聚合页为 `英语学习/我的生词本.md`（构建期 `scripts/build-vocab.mjs` 生成 `/static/vocab.json`，站点端由 dataview-lite 渲染；「已掌握」标记与精读页词卡共享 localStorage 键 `gzb-bil-known`，支持导出 CSV / Anki；生词带词频段标签，覆盖率条按 COCA/Google 高频表前 10000 分级）。精读文末的「输出练习」callout 由阅读器注入写作批改组件（POST `/api/write-grade`，Workers AI LLM；AI 绑定不可用时降级为复制批改提示词），朗读支持语速切换（常速/慢速/更慢，存偏好）与整篇连播；另有「难词提示」开关（标注高频表外的小写词）与每段「影子跟读」录音对比（录音只存浏览器内存，不上传）。词频表入库于 `scripts/data/english-top10k.txt`（github.com/first20hours/google-10000-english，MIT License）。
-- `template/`（Templater 模板）进入退役状态：不再新增模板、不再按模板建笔记；新笔记直接写正文 + frontmatter。
-- frontmatter 约定升级为「入库元数据」：`tags / created / updated / source / status / type` 字段名保持英文小写——正式发布成功后，独立工作流将公开内容同步到 Cloudflare D1（`scripts/build-d1-index.mjs`），字段缺失或类型混乱会直接降低 `/api/search` 的质量。
-- 上一节里关于 Dataview、Templater、Callout、WikiLink 的「保护性条款」对存量内容继续有效（改旧文件时不要弄坏），只是不再约束新增内容。
+- 常规操作自行处理，不必反复确认：读文件、搜索、少量 Markdown 编辑、内容整理、格式校验、差异检查。
+- 需要先问的高风险场景：删除或批量移动文件、改个人敏感信息、破坏性 Git 操作（`reset --hard`、`filter-repo`、force push）、安装依赖、越界网络访问。
+- 对个人信息、账户、证书、财务记录保持谨慎，不在回复中暴露细节；涉及脱敏先看 `scripts/export-public.ps1` 的排除规则。
+- Dataview 渲染器只支持本库现有方言（TABLE/LIST/TASK + FROM/WHERE/GROUP BY/SORT/LIMIT + `dateformat`/`date`/`length`/`max`/`min`；dataviewjs 支持 `pages`/`where`/`sort`/`groupBy`/`table`/`paragraph`/`header`）。**新增查询前先确认方言在支持范围内**，能用脚本生成纯 Markdown 列表就优先脚本。Obsidian 教学笔记（`技术笔记/编辑器/Obsidian/`）的查询块豁免渲染、保留原文。
+
+## 9. 提交前自检
+
+1. `node scripts/check-bom.mjs` —— 动过 `.ps1` 必跑。
+2. `npm test` —— 改过 `scripts/reader/`、导出或索引逻辑必跑。
+3. `node scripts/test-dataview-lite.mjs _site/md-reader/static/vault-meta.json _site/md-reader/notes` —— 改过 Dataview 查询或渲染器时跑（需先 `npm run reader:build`）。
+4. `node scripts/check-bilingual.mjs _site/md-reader/notes/英语学习` —— 改过双语精读必跑。
+5. 人工检查：frontmatter 分隔符成对、fenced block 成对、WikiLink 括号完整、Callout 引用符连续、表格内别名已转义、文件末尾有换行。
+6. 最后再提交推送（见第 4 节）。

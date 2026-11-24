@@ -35,7 +35,7 @@ $Node     = Get-EnvOr 'NODE_EXE' 'node'
 #   · 公司工作内容（专项项目、网关开发、我的任务）
 #   · 付费课程笔记与第三方文章剪藏（版权）
 #   · 非技术个人兴趣清单
-#   · AI 协作指令文件（CLAUDE.md / AGENTS.md，含内部路径与架构）
+#   · AI 协作指令文件（AGENTS.md，含内部路径与架构）
 #   · Dataview 仪表盘（Home*.md，静态站不执行 Dataview，会显示成代码）
 $PublicDirs = @(
   '技术笔记', '大模型', 'Ontology',
@@ -44,7 +44,7 @@ $PublicDirs = @(
   '网址收藏', 'AI开发Demo'
 )
 # 文件名级排除（任何层级）
-$ExcludeFileNames = @('CLAUDE.md', 'AGENTS.md')
+$ExcludeFileNames = @('AGENTS.md')
 # 根目录散装笔记一律不发布
 $PublicRootFiles = @()
 # 附件白名单：只发布图片类。
