@@ -88,80 +88,32 @@ jobs:
         run: node scripts/verify-reader.mjs https://wuhy-notes.pages.dev/ _site/md-reader/index.json
       - name: 准备国内静态镜像
         run: node scripts/prepare-site-mirror.mjs
-      # 国内镜像：失败必须让整条流水线标红（不再 continue-on-error），并做三重校验：
-      #   1. 传输：tar 管道失败自动重试 3 次；
-      #   2. 内容：远端 index.json / BUILD.json 的 sha256 必须与本地一致（防止半包）；
-      #   3. 切换后：再验一次 /var/www/wuhy-notes/index.json，并核对 BUILD.json 的 runId。
-      - name: 同步国内镜像
+      # 国内镜像改「拉取模式」：CI 只把产物推到 site-mirror 分支，服务器上的
+      # systemd timer（deploy/wuhy-site-sync.sh）拉取、校验、原子切换并 reload nginx。
+      # 不再依赖 GitHub Runner 主动 SSH 进服务器，Runner 出口 IP 变化不会导致同步失败。
+      - name: 发布国内镜像产物（site-mirror 分支）
         shell: bash
         env:
-          WUHY_SSH_KEY: ${{ secrets.WUHY_SERVER_SSH_KEY }}
-          WUHY_KNOWN_HOSTS: ${{ secrets.WUHY_SERVER_KNOWN_HOSTS }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          fail() { echo "::error::$*"; exit 1; }
-
-          [ -n "${WUHY_SSH_KEY:-}" ] && [ -n "${WUHY_KNOWN_HOSTS:-}" ] || fail "未配置国内镜像凭据（WUHY_SERVER_SSH_KEY / WUHY_SERVER_KNOWN_HOSTS）"
           WS="$(cygpath -u "$GITHUB_WORKSPACE" 2>/dev/null || echo "$GITHUB_WORKSPACE")"
           PUB="$WS/_site/mirror"
-          [ -s "$PUB/index.html" ] || fail "镜像产物缺少 index.html"
-          [ -s "$PUB/index.json" ] || fail "镜像产物缺少 index.json"
-          [ -s "$PUB/BUILD.json" ] || fail "镜像产物缺少 BUILD.json"
+          [ -s "$PUB/index.html" ] || { echo "::error::镜像产物缺少 index.html"; exit 1; }
+          [ -s "$PUB/index.json" ] || { echo "::error::镜像产物缺少 index.json"; exit 1; }
+          [ -s "$PUB/BUILD.json" ] || { echo "::error::镜像产物缺少 BUILD.json"; exit 1; }
+          cd "$PUB"
+          git init -q
+          git checkout -q -b site-mirror
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config http.postBuffer 524288000
+          git add -A
+          git commit -q -m "mirror build run=${GITHUB_RUN_ID} sha=${GITHUB_SHA}"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push -q --force origin site-mirror
+          echo "已发布 site-mirror：$(git rev-parse --short HEAD)"
 
-          mkdir -p ~/.ssh
-          printf '%s\n' "$WUHY_SSH_KEY" > ~/.ssh/wuhy_deploy_key
-          printf '%s\n' "$WUHY_KNOWN_HOSTS" > ~/.ssh/wuhy_deploy_known_hosts
-          chmod 600 ~/.ssh/wuhy_deploy_key ~/.ssh/wuhy_deploy_known_hosts
-          SSH_OPTS=(-i "$HOME/.ssh/wuhy_deploy_key" -o IdentitiesOnly=yes
-                    -o UserKnownHostsFile="$HOME/.ssh/wuhy_deploy_known_hosts"
-                    -o StrictHostKeyChecking=yes -o ConnectTimeout=20
-                    -o ServerAliveInterval=15 -o ServerAliveCountMax=4
-                    -o ControlMaster=auto -o "ControlPath=$HOME/.ssh/wuhy_cm_%r@%h:%p" -o ControlPersist=180)
-          HOST=root@47.100.85.94
-          NEW="/var/www/wuhy-notes.new-$GITHUB_RUN_ID"
-
-          LOCAL_JSON_SHA="$(sha256sum "$PUB/index.json" | awk '{print $1}')"
-          LOCAL_BUILD_SHA="$(sha256sum "$PUB/BUILD.json" | awk '{print $1}')"
-
-          ok=0
-          for attempt in 1 2 3; do
-            echo "---- 传输尝试 $attempt/3 ----"
-            if tar czf - -C "$PUB" . | ssh "${SSH_OPTS[@]}" "$HOST" "rm -rf '$NEW' && mkdir -p '$NEW' && tar xzf - -C '$NEW'"; then
-              ok=1
-              break
-            fi
-            echo "尝试 $attempt 失败，10 秒后重试"
-            sleep 10
-          done
-          [ "$ok" = 1 ] || fail "三次传输均失败：GitHub Runner 到 47.100.85.94 的 SSH 不可用"
-
-          ssh "${SSH_OPTS[@]}" "$HOST" "test -s '$NEW/index.html' && test -s '$NEW/index.json' && test -s '$NEW/BUILD.json'" || fail "远端解包后缺少 index.html / index.json / BUILD.json"
-
-          REMOTE_JSON_SHA="$(ssh "${SSH_OPTS[@]}" "$HOST" "sha256sum '$NEW/index.json'" | awk '{print $1}')"
-          REMOTE_BUILD_SHA="$(ssh "${SSH_OPTS[@]}" "$HOST" "sha256sum '$NEW/BUILD.json'" | awk '{print $1}')"
-          [ "$REMOTE_JSON_SHA" = "$LOCAL_JSON_SHA" ] || fail "传输校验失败：远端 index.json sha256 与本地不一致"
-          [ "$REMOTE_BUILD_SHA" = "$LOCAL_BUILD_SHA" ] || fail "传输校验失败：远端 BUILD.json sha256 与本地不一致"
-
-          ssh "${SSH_OPTS[@]}" "$HOST" "if [ -d /var/www/wuhy-notes ]; then mv /var/www/wuhy-notes /var/www/wuhy-notes.old-$GITHUB_RUN_ID; fi && mv '$NEW' /var/www/wuhy-notes && rm -rf /var/www/wuhy-notes.old-$GITHUB_RUN_ID" || fail "原子切换 /var/www/wuhy-notes 失败"
-
-          FINAL_JSON_SHA="$(ssh "${SSH_OPTS[@]}" "$HOST" "sha256sum /var/www/wuhy-notes/index.json" | awk '{print $1}')"
-          [ "$FINAL_JSON_SHA" = "$LOCAL_JSON_SHA" ] || fail "切换后校验失败：/var/www/wuhy-notes/index.json sha256 不一致"
-
-          # 安装站点 Nginx 配置：文章入口是无扩展名文件，必须 default_type text/html
-          CONF_B64="$(base64 -w0 "$WS/deploy/nginx-wuhy-notes.conf")"
-          ssh "${SSH_OPTS[@]}" "$HOST" "echo '$CONF_B64' | base64 -d > /etc/nginx/sites-available/wuhy-notes && ln -sf /etc/nginx/sites-available/wuhy-notes /etc/nginx/sites-enabled/wuhy-notes && rm -f /etc/nginx/sites-enabled/default && nginx -t && systemctl reload nginx" \
-            || fail "Nginx 配置安装或 reload 失败"
-
-          HOME_CODE="$(ssh "${SSH_OPTS[@]}" "$HOST" "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/")"
-          [ "$HOME_CODE" = "200" ] || fail "本机自测首页返回 $HOME_CODE（应为 200）"
-          HOME_TYPE="$(ssh "${SSH_OPTS[@]}" "$HOST" "curl -sI http://127.0.0.1:8080/ | grep -i '^content-type:' | tr -d '\r'")"
-          case "$HOME_TYPE" in
-            *text/html*) ;;
-            *) fail "首页 Content-Type=$HOME_TYPE（应为 text/html，否则文章会显示成源码）" ;;
-          esac
-          echo "Nginx 已安装新配置并自测通过：$HOME_TYPE"
-
-          echo "国内镜像同步成功：run=${GITHUB_RUN_ID:-local} index.json sha256=$FINAL_JSON_SHA"
       - name: 写入运行摘要
         if: always()
         shell: pwsh
