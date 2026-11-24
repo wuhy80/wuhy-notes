@@ -45,7 +45,7 @@
 | 阅读器本地预览、保存后自动刷新 | `docs/markdown-reader-preview.md` |
 | 站点视觉契约（改样式/颜色/字体/布局**前必读**） | `scripts/DESIGN.md`；token 源 `scripts/site-custom.scss`，阅读器布局适配 `scripts/reader/layout.css` |
 | D1 全文搜索 | `docs/d1-search-setup.md` |
-| 双仓库拆分、多机同步、Git 故障处理 | [[技术笔记/版本管理/知识库双仓库拆分与多机同步]] |
+| Git 使用与常见故障处理 | [[技术笔记/版本管理/GIT使用]] |
 | 流水线概览 | `README.md` |
 
 **本文只放「必须每次都遵守的约束」**。背景、原理、历史决策写进对应笔记，本文用链接指过去——指令文件越长，模型遵从度越低。

@@ -65,7 +65,6 @@ $ExcludeDirs = @(
   '技术笔记\虚拟机', '技术笔记\安全',                          # 2026-10-01/02 迁至私密库
   '专项学习\*学习规划',                                        # 孩子的个人学业资料（姓名/学校/成绩/家校沟通），通配排除
   '专项项目', '极客时间', '浏览剪切', '网络剪切', '网关开发', '网络资料'   # 2026-10-02 迁至私密库
-  '技术笔记\版本管理\知识库双仓库拆分与多机同步.md'                 # 内部运维文档：含内部路径、备份架构、家庭信息，绝不发布
   # 2026-10-18 该目录曾因「第三方教程全文（轩辕），版权归原作者」被列入本清单；
   # 2026-10-18 晚按用户要求解除排除，教程随站点发布（正文 38 篇 + 94 张 SVG）。
   # 需要回退时：把 '大模型\07-教程与课程\AI大模型原理教程-轩辕' 加回本数组末尾即可。
@@ -337,7 +336,7 @@ foreach ($f in $expFiles) {
 Write-Host "  共脱敏 $($maskLog.Count) 处，涉及文件 $(($maskLog | ForEach-Object { ($_ -split '\|')[1] } | Sort-Object -Unique).Count) 篇" -ForegroundColor Green
 
 # 清理内部用语：链接修复留下的「私密库：」前缀会暴露库结构
-$internalMap = @{ '私密库：' = ''; '私密库（' = '（'; '私密库' = '内部库'; 'wuhy80_private' = '内部库'; 'zhanwan' = 'internal'; '知识库双仓库拆分与多机同步' = '知识库运维' }
+$internalMap = @{ '私密库：' = ''; '私密库（' = '（'; '私密库' = '内部库'; 'wuhy80_private' = '内部库'; 'zhanwan' = 'internal' }
 $phraseFiles = 0
 foreach ($f in $expFiles) {
   $txt = [System.IO.File]::ReadAllText($f.FullName, [System.Text.Encoding]::UTF8)

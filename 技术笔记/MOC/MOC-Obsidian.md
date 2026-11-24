@@ -48,7 +48,6 @@ type: MOC
 > [!note] 口径说明
 > 以下文件有 Obsidian/知识管理实质内容，但没有出链指向编辑器技巧或方法论笔记。仅建议，不代改。
 
-- 技术笔记/版本管理/知识库双仓库拆分与多机同步.md —— 未链 [[知识库方案对比]] 或 [[GBrain]]
 - 大模型/11-知识管理/GBrain.md、LLMWiki.md —— 未链 [[知识库方案对比]]
 - 技术笔记/算法/算法学习导航.md —— 使用 Mermaid/Callout 但未链 [[Obsidian callout使用]] 或 [[Mermaid图]]
 - 技术笔记/C++/Windows XP.md —— 提及笔记工具演进，可链 [[一些小技巧]]

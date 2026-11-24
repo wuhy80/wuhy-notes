@@ -17,6 +17,7 @@
 .trash/
 .claude/
 .wrangler/
+_reports/
 /temp_api_data.json
 /openrouter_state_of_ai.html
 node_modules

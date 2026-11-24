@@ -36,7 +36,7 @@ function openBrowser(url) {
 }
 function allowed(file, publishedImages = new Set(), imageCounts = new Map()) {
   if (/(?:^|\/)(?:AGENTS|CLAUDE)\.md$/i.test(file)) return false;
-  if (/^技术笔记\/(?:虚拟机|安全)\//.test(file) || file === '技术笔记/版本管理/知识库双仓库拆分与多机同步.md') return false;
+  if (/^技术笔记\/(?:虚拟机|安全)\//.test(file)) return false;
   if (/^(?:技术笔记|大模型|Ontology|Golang编程|Rust编程|读书笔记|英语学习|数学学习|网址收藏)\/.*\.md$/i.test(file)) return true;
   if (/^(?:附件|技术笔记|大模型|Ontology|Golang编程|Rust编程|读书笔记|英语学习|数学学习|网址收藏)\/.*\.(?:svg|png|jpe?g|gif|webp)$/i.test(file)) {
     const name = path.posix.basename(file).toLowerCase();
