@@ -1,7 +1,7 @@
 ---
 version: 2
 name: 格物志 Markdown 阅读站点
-updated: 2026-11-14
+updated: 2026-11-25
 sources:
   tokens: scripts/site-custom.scss
   layout: scripts/reader/layout.css
@@ -45,9 +45,9 @@ typography:
     fontSize: 0.875rem
     lineHeight: 1.75
 layout:
-  container: 2034px
-  columns: clamp(240px,26vw,500px) minmax(0,1fr) clamp(200px,20.3vw,390px)
-  article: 980px
+  container: 100%（左右各 20px 留白）
+  columns: clamp(220px,20vw,380px) minmax(0,1fr) clamp(200px,15vw,300px)
+  article: 流式（填满中列，无固定上限）
   article-padding: 24px
   navbar: 64px
   mobile-breakpoint: 1199px
@@ -75,7 +75,7 @@ rounded:
 
 ## 布局与导航
 
-- 三栏布局保留原站比例；1440px 视口正文约 715px，宽屏正文上限 980px。侧栏回缩不能挤窄正文。
+- 三栏铺满视口，页面左右各留 20px；左 220–380、右 200–300 按视口回缩，正文填满中列。2026-11-25 起取消 2034px 外壳与 980px 正文上限，宽屏行宽更大，靠 17px/1.95 行高与段距缓解视线回扫。
 - 左右栏与正文用 1px 边线分隔，不增加底色分区或大阴影。
 - 顶栏高 64px，显示一级分区与搜索、专注阅读、皮肤菜单。小屏隐藏分区导航，目录通过抽屉展开。
 - 左栏只显示当前分区，按卷折叠；当前卷展开，罗马卷号、文章两位序号、篇数和当前项样式保留。

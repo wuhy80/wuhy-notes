@@ -21,7 +21,7 @@ input[type=search]{width:100%;min-width:0;background:var(--card);border:1px soli
 .topbar nav{display:flex;gap:16px;align-items:center;font-size:14px}
 kbd{font:11px var(--code);color:var(--ink-faint);margin-left:12px}
 .mobile-menu{display:none}
-#quartz-body{display:grid;grid-template-columns:clamp(240px,24vw,500px) minmax(0,1028px) clamp(200px,18vw,390px);max-width:2034px;margin:auto;min-height:calc(100dvh - 160px)}
+#quartz-body{display:grid;grid-template-columns:clamp(220px,20vw,380px) minmax(0,1fr) clamp(200px,15vw,300px);max-width:none;margin:0;padding-inline:20px;box-sizing:border-box;min-height:calc(100dvh - 160px)}
 .sidebar{position:sticky;top:64px;height:calc(100dvh - 64px);overflow:auto;font-size:14px;padding:28px 22px 48px}
 .left{border-right:1px solid var(--line)}
 .right{border-left:1px solid var(--line)}
@@ -40,7 +40,7 @@ kbd{font:11px var(--code);color:var(--ink-faint);margin-left:12px}
 .article-tools>div{display:flex;align-items:center;gap:8px}
 .article-tools button{font-size:12px;padding:3px 10px}
 #status{color:var(--ink-soft);font-size:14px}
-article{overflow-wrap:anywhere;max-width:980px;margin:auto}
+article{overflow-wrap:anywhere;max-width:none;margin:0}
 article p,article li,article td{font-family:var(--body)}
 article p{margin:20px 0}
 article ul,article ol{padding-left:1.6em}

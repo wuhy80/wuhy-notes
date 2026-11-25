@@ -787,24 +787,27 @@ html body article p:has(> em:only-child) {
 // 不让正文被侧栏挤窄。
 @media all and (min-width: 1200px) {
   html body div#quartz-root.page div#quartz-body {
-    max-width: 2034px !important;
+    max-width: none !important;
+    width: 100% !important;
     min-width: 0 !important; // 早期规则里的 min-width:100% 会压住 max-width，必须一起改
-    margin-inline: auto !important;
-    // 左栏给得比右栏多（用户要求「尤其左边栏」）：26vw / 20.3vw，宽屏封顶 500 / 390
+    margin-inline: 0 !important;
+    padding-inline: 20px !important; // 页面左右只保留 20px 留白
+    box-sizing: border-box !important;
+    // 侧栏按视口比例回缩，中间正文列吃掉剩余宽度
     grid-template-columns:
-      clamp(240px, 26vw, 500px)
+      clamp(220px, 20vw, 380px)
       minmax(0, 1fr)
-      clamp(200px, 20.3vw, 390px) !important;
+      clamp(200px, 15vw, 300px) !important;
     padding-top: 64px !important; // 给固定顶栏让位
   }
 
-  // 中列上限 = 正文 860 + 左右各 24 的呼吸位
+  // 中列不再限宽：正文随视口铺开（2026-11-25：用户要求去掉 2034/1028/980 三层限宽）
   html body div#quartz-root.page div#quartz-body .center {
-    max-width: 1028px !important; // 正文 980 + 左右各 24
+    max-width: none !important;
     width: 100% !important;
     min-width: 0 !important;
-    margin-inline: auto !important;
-    padding-inline: 24px !important;
+    margin-inline: 0 !important;
+    padding-inline: 20px !important;
     box-sizing: border-box !important;
   }
 

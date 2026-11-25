@@ -54,8 +54,8 @@ test('Mermaid、公式与附件可以在浏览器解析', async ({ page }) => {
   await expect(page.locator('article [data-callout="abstract"] > .callout-title').first()).toBeHidden();
   const style = await page.locator('article').evaluate(el => ({ color: getComputedStyle(document.body).backgroundColor, width: el.getBoundingClientRect().width }));
   expect(style.color).toBe('rgb(255, 255, 255)');
-  expect(style.width).toBeGreaterThan(700);
-  expect(style.width).toBeLessThan(730);
+  expect(style.width).toBeGreaterThan(800);
+  expect(style.width).toBeLessThan(900);
   await page.locator('.gz-skin-dd summary').click();
   await page.locator('button[data-gz-skin="paper"]').click();
   await expect(page.locator('html')).toHaveAttribute('data-gz-skin', 'paper');
@@ -170,6 +170,10 @@ test('双语精读模式、词卡与源码往返正常，切到普通笔记清�
   await expect(page.locator('html')).toHaveClass(/bil-mode-en/);
   const word = page.locator('.bil-w').first();
   if (await word.count()) {
+    // 词卡在滚动时自动关闭（document scroll → closePop）；先滚到位并等滚动结束，
+    // 避免 Playwright 点击后触发的补偿滚动把刚打开的弹层立刻关掉。
+    await word.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(400);
     await word.click();
     await expect(page.locator('.bil-pop')).toBeVisible();
     await page.keyboard.press('Escape');
