@@ -107,7 +107,6 @@ export async function buildReader({ content, out }) {
   generated.add('static/vocab.json');
   const skinBoot = fs.readFileSync(path.join(VAULT, 'scripts/reader/skin.html'), 'utf8');
   const shell = fs.readFileSync(path.join(VAULT, 'scripts/reader/index.html'), 'utf8').replace('<head>', '<head>\n' + skinBoot);
-  write('index.html', shell);
   write('assets/reader.css', fs.readFileSync(path.join(VAULT, 'scripts/reader/reader.css')));
   write('static/dataview-lite.js', fs.readFileSync(path.join(VAULT, 'scripts/site-assets/dataview-lite.cjs')));
   write('static/bilingual-reader.js', fs.readFileSync(path.join(VAULT, 'scripts/site-assets/bilingual-reader.cjs')));
@@ -142,12 +141,20 @@ export async function buildReader({ content, out }) {
   const custom = fs.readFileSync(path.join(VAULT, 'scripts/site-custom.scss'), 'utf8');
   write('assets/site-custom.css', compileString(custom, { style: 'compressed', logger: { warn() {}, debug() {} } }).css);
   write('assets/reader-layout.css', fs.readFileSync(path.join(VAULT, 'scripts/reader/layout.css')));
+  // 静态资源带内容哈希：避免部署后浏览器继续用旧 CSS/JS（2026-11-25 线上布局不生效的根因）。
+  const assetVersion = rel => hash(fs.readFileSync(path.join(out, rel)));
+  const versionedShell = shell
+    .replace('/assets/reader.css"', `/assets/reader.css?v=${assetVersion('assets/reader.css')}"`)
+    .replace('/assets/site-custom.css"', `/assets/site-custom.css?v=${assetVersion('assets/site-custom.css')}"`)
+    .replace('/assets/reader-layout.css"', `/assets/reader-layout.css?v=${assetVersion('assets/reader-layout.css')}"`)
+    .replace('/assets/app.js"', `/assets/app.js?v=${assetVersion('assets/app.js')}"`);
+  write('index.html', versionedShell);
   const worker = await build({ absWorkingDir: VAULT, entryPoints: ['scripts/reader/worker.mjs'], bundle: true, format: 'esm', platform: 'browser', target: ['es2022'], write: false, minify: true });
   write('_worker.js', worker.outputFiles[0].contents);
   write('404.html', '<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>未找到文件</title><p>此文件未随站点发布。</p><a href="/">返回知识库</a></html>\n');
   const vectors = path.join(VAULT, 'cloudflare/embeddings.json');
   if (fs.existsSync(vectors)) write('embeddings.json', fs.readFileSync(vectors));
-  write('_headers', '/index.html\n  Cache-Control: no-cache\n/index.json\n  Cache-Control: no-cache\n/assets/*\n  Cache-Control: public, max-age=3600\n/assets/chunks/*\n  Cache-Control: public, max-age=31536000, immutable\n/notes/*\n  Cache-Control: public, max-age=0, must-revalidate\n  X-Content-Type-Options: nosniff\n/static/*.json\n  Cache-Control: no-cache\n');
+  write('_headers', '/index.html\n  Cache-Control: no-cache\n/index.json\n  Cache-Control: no-cache\n/assets/*\n  Cache-Control: no-cache\n/assets/chunks/*\n  Cache-Control: public, max-age=31536000, immutable\n/notes/*\n  Cache-Control: public, max-age=0, must-revalidate\n  X-Content-Type-Options: nosniff\n/static/*.json\n  Cache-Control: no-cache\n');
   write('_routes.json', JSON.stringify({ version: 1, include: ['/*'], exclude: ['/assets/*', '/static/*', '/notes/*', '/index.json', '/plotly.min.js'] }));
   for (const rel of previousFiles) if (!generated.has(rel)) removeManaged(rel);
   fs.writeFileSync(previousPath, JSON.stringify({ revision: stamp, files: [...generated].sort() }));
