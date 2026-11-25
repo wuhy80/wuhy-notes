@@ -81,8 +81,8 @@ flowchart TB
 | --- | --- | --- |
 | **React 19 + TypeScript** | UI 运行时 | 生态最大、AI 训练数据最多、类型系统能兜住 AI 生成代码的错误 |
 | **Vite** | 开发与构建 | 启动快、配置少、产物是标准静态资源，部署无侵入 |
-| **Refine** | 数据/认证/路由/CRUD 框架 | headless，不绑定 UI；用 data provider / auth provider 两个适配器即可接任意后端 |
-| **shadcn/ui** | 组件基座 | 不是 npm 黑盒依赖，组件源码复制进仓库，可任意改；Radix 保证无障碍，Tailwind 保证主题化 |
+| **Refine** | 数据/认证/路由/CRUD 框架 | headless，不绑定 UI；v5 起基于 React 19 + TanStack Query v5，用 data provider / auth provider 两个适配器即可接任意后端 |
+| **shadcn/ui** | 组件基座 | 不是 npm 黑盒依赖，组件源码复制进仓库，可任意改；2026-07 起默认基座为 Base UI（Radix 仍可选），Tailwind v4 保证主题化 |
 | **Tailwind CSS 4** | 样式方案 | 原子类 + CSS 变量主题，适合品牌化与暗色模式 |
 | **TanStack Query** | 服务端状态 | 缓存、重试、失效策略成熟（Refine 已内置） |
 
@@ -98,12 +98,16 @@ Refine 是 **React 的 headless 应用框架**，只提供逻辑层，不提供�
 | hooks | `useTable`、`useForm`、`useList`、`useCreate` 等，处理分页/筛选/提交 |
 | UI 无关 | 可配 shadcn/ui、AntD、MUI，也可纯手写 |
 
+> [!note] 版本状态
+> Refine 当前主线为 **v5**（2025-09 发布）：基于 React 19 + TanStack Query v5，重写了 hooks 接口、清理了废弃 API；v4 → v5 有官方 codemod 迁移。
+
 ### 3.2 shadcn/ui 是什么
 
 - **不是组件库依赖**，而是“把组件源码复制进仓库”（`components/ui/*.tsx`）；
-- 基于 **Radix UI**（无样式、无障碍交互原语）+ **Tailwind CSS**（样式）；
+- 基座原语：**Base UI**（2026-07 起默认）+ **Tailwind CSS v4**（样式）；Radix 基座仍可选；
 - 组件代码归项目所有，可任意改造，不存在“覆盖第三方样式”的问题；
-- 主题用 CSS 变量，品牌化成本低。
+- 主题用 CSS 变量，品牌化成本低；
+- 2026 年生态补充：`shadcn` CLI（原 `shadcn-ui` 已更名）、Registry 可自建/分发组件、Charts/Blocks/AI Elements 可直接安装。
 
 ## 4. 接入 Ontology
 
