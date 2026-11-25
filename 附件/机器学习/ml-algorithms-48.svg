@@ -1,0 +1,258 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1100" viewBox="0 0 1600 1100" font-family="Microsoft YaHei, Segoe UI, PingFang SC, sans-serif">
+  <rect x="0" y="0" width="1600" height="1100" rx="18" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <text x="40" y="50" font-size="24" font-weight="700" fill="#0f172a">机器学习常用算法地图 · 48 个 / 8 类</text>
+  <text x="40" y="76" font-size="13" fill="#64748b">从经典监督学习到 2026 前沿：自监督、生成、图与状态空间、对齐、因果</text>
+
+  <!-- ========== A 监督学习 ========== -->
+  <rect x="40" y="104" width="365" height="468" rx="14" fill="#f8fbff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="58" y="140" font-size="16.5" font-weight="700" fill="#1e40af">A · 监督学习</text>
+  <text x="387" y="140" font-size="11.5" fill="#3b82f6" text-anchor="end">6 个</text>
+  <text x="58" y="160" font-size="10.5" fill="#475569">带标签 (x, y)，学输入到输出的映射</text>
+
+  <rect x="58" y="176" width="329" height="42" rx="8" fill="#eff6ff" stroke="#93c5fd"/>
+  <text x="70" y="194" font-size="13" font-weight="700" fill="#1e3a8a">01 线性回归</text>
+  <text x="70" y="210" font-size="9.8" fill="#475569">最小二乘拟合连续值（Ridge / Lasso）</text>
+
+  <rect x="58" y="224" width="329" height="42" rx="8" fill="#eff6ff" stroke="#93c5fd"/>
+  <text x="70" y="242" font-size="13" font-weight="700" fill="#1e3a8a">02 逻辑回归</text>
+  <text x="70" y="258" font-size="9.8" fill="#475569">sigmoid / softmax，二分类与多分类基线</text>
+
+  <rect x="58" y="272" width="329" height="42" rx="8" fill="#eff6ff" stroke="#93c5fd"/>
+  <text x="70" y="290" font-size="13" font-weight="700" fill="#1e3a8a">03 KNN</text>
+  <text x="70" y="306" font-size="9.8" fill="#475569">距离投票，惰性学习，必须标准化</text>
+
+  <rect x="58" y="320" width="329" height="42" rx="8" fill="#eff6ff" stroke="#93c5fd"/>
+  <text x="70" y="338" font-size="13" font-weight="700" fill="#1e3a8a">04 朴素贝叶斯</text>
+  <text x="70" y="354" font-size="9.8" fill="#475569">条件独立假设，文本分类经典基线</text>
+
+  <rect x="58" y="368" width="329" height="42" rx="8" fill="#eff6ff" stroke="#93c5fd"/>
+  <text x="70" y="386" font-size="13" font-weight="700" fill="#1e3a8a">05 决策树</text>
+  <text x="70" y="402" font-size="9.8" fill="#475569">基尼 / 信息增益递归划分，规则可解释</text>
+
+  <rect x="58" y="416" width="329" height="42" rx="8" fill="#eff6ff" stroke="#93c5fd"/>
+  <text x="70" y="434" font-size="13" font-weight="700" fill="#1e3a8a">06 支持向量机</text>
+  <text x="70" y="450" font-size="9.8" fill="#475569">最大间隔 + 核技巧，小样本高维</text>
+
+  <text x="58" y="498" font-size="9.5" fill="#64748b">先建基线：线性模型 + 决策树，再上复杂模型</text>
+
+  <!-- ========== B 集成学习 ========== -->
+  <rect x="425" y="104" width="365" height="468" rx="14" fill="#f8f9ff" stroke="#c7d2fe" stroke-width="1.5"/>
+  <text x="443" y="140" font-size="16.5" font-weight="700" fill="#3730a3">B · 集成学习</text>
+  <text x="772" y="140" font-size="11.5" fill="#6366f1" text-anchor="end">5 个</text>
+  <text x="443" y="160" font-size="10.5" fill="#475569">多个弱模型组合成强模型</text>
+
+  <rect x="443" y="176" width="329" height="42" rx="8" fill="#eef2ff" stroke="#a5b4fc"/>
+  <text x="455" y="194" font-size="13" font-weight="700" fill="#3730a3">07 随机森林</text>
+  <text x="455" y="210" font-size="9.8" fill="#475569">Bagging + 特征随机，稳、抗过拟合</text>
+
+  <rect x="443" y="224" width="329" height="42" rx="8" fill="#eef2ff" stroke="#a5b4fc"/>
+  <text x="455" y="242" font-size="13" font-weight="700" fill="#3730a3">08 AdaBoost</text>
+  <text x="455" y="258" font-size="9.8" fill="#475569">加权错分样本，串行提升</text>
+
+  <rect x="443" y="272" width="329" height="42" rx="8" fill="#eef2ff" stroke="#a5b4fc"/>
+  <text x="455" y="290" font-size="13" font-weight="700" fill="#3730a3">09 GBDT</text>
+  <text x="455" y="306" font-size="9.8" fill="#475569">拟合残差 / 梯度，表格数据主力</text>
+
+  <rect x="443" y="320" width="329" height="42" rx="8" fill="#eef2ff" stroke="#a5b4fc"/>
+  <text x="455" y="338" font-size="13" font-weight="700" fill="#3730a3">10 XGBoost / LightGBM</text>
+  <text x="455" y="354" font-size="9.8" fill="#475569">工程优化 + 直方图 + 正则，竞赛常用</text>
+
+  <rect x="443" y="368" width="329" height="42" rx="8" fill="#eef2ff" stroke="#a5b4fc"/>
+  <text x="455" y="386" font-size="13" font-weight="700" fill="#3730a3">11 Stacking / Blending</text>
+  <text x="455" y="402" font-size="9.8" fill="#475569">多层模型融合，用元学习器加权</text>
+
+  <text x="443" y="498" font-size="9.5" fill="#64748b">三条路线：Bagging / Boosting / Stacking</text>
+
+  <!-- ========== C 无监督与降维 ========== -->
+  <rect x="810" y="104" width="365" height="468" rx="14" fill="#f7fdfa" stroke="#a7f3d0" stroke-width="1.5"/>
+  <text x="828" y="140" font-size="16.5" font-weight="700" fill="#065f46">C · 无监督与降维</text>
+  <text x="1157" y="140" font-size="11.5" fill="#10b981" text-anchor="end">7 个</text>
+  <text x="828" y="160" font-size="10.5" fill="#475569">只有 x：找簇、找密度、找低维结构</text>
+
+  <rect x="828" y="176" width="329" height="42" rx="8" fill="#ecfdf5" stroke="#6ee7b7"/>
+  <text x="840" y="194" font-size="13" font-weight="700" fill="#065f46">12 K-Means</text>
+  <text x="840" y="210" font-size="9.8" fill="#475569">质心迭代，硬聚类，要先定 K</text>
+
+  <rect x="828" y="224" width="329" height="42" rx="8" fill="#ecfdf5" stroke="#6ee7b7"/>
+  <text x="840" y="242" font-size="13" font-weight="700" fill="#065f46">13 层次聚类</text>
+  <text x="840" y="258" font-size="9.8" fill="#475569">树状图，不必先定 K，O(n²)</text>
+
+  <rect x="828" y="272" width="329" height="42" rx="8" fill="#ecfdf5" stroke="#6ee7b7"/>
+  <text x="840" y="290" font-size="13" font-weight="700" fill="#065f46">14 DBSCAN / HDBSCAN</text>
+  <text x="840" y="306" font-size="9.8" fill="#475569">密度聚类，抗噪声，任意形状簇</text>
+
+  <rect x="828" y="320" width="329" height="42" rx="8" fill="#ecfdf5" stroke="#6ee7b7"/>
+  <text x="840" y="338" font-size="13" font-weight="700" fill="#065f46">15 GMM / EM</text>
+  <text x="840" y="354" font-size="9.8" fill="#475569">软聚类 + 概率密度，EM 估参</text>
+
+  <rect x="828" y="368" width="329" height="42" rx="8" fill="#ecfdf5" stroke="#6ee7b7"/>
+  <text x="840" y="386" font-size="13" font-weight="700" fill="#065f46">16 PCA</text>
+  <text x="840" y="402" font-size="9.8" fill="#475569">方差最大方向，线性降维 / 去噪</text>
+
+  <rect x="828" y="416" width="329" height="42" rx="8" fill="#ecfdf5" stroke="#6ee7b7"/>
+  <text x="840" y="434" font-size="13" font-weight="700" fill="#065f46">17 t-SNE / UMAP</text>
+  <text x="840" y="450" font-size="9.8" fill="#475569">非线性降维，可视化与邻域结构</text>
+
+  <rect x="828" y="464" width="329" height="42" rx="8" fill="#ecfdf5" stroke="#6ee7b7"/>
+  <text x="840" y="482" font-size="13" font-weight="700" fill="#065f46">18 关联规则</text>
+  <text x="840" y="498" font-size="9.8" fill="#475569">Apriori / FP-Growth，频繁项集</text>
+
+  <!-- ========== D 表示学习与自监督 ========== -->
+  <rect x="1195" y="104" width="365" height="468" rx="14" fill="#f7fefe" stroke="#99f6e4" stroke-width="1.5"/>
+  <text x="1213" y="140" font-size="16.5" font-weight="700" fill="#115e59">D · 表示学习与自监督</text>
+  <text x="1542" y="140" font-size="11.5" fill="#14b8a6" text-anchor="end">5 个</text>
+  <text x="1213" y="160" font-size="10.5" fill="#475569">用数据自身构造监督信号，学表示</text>
+
+  <rect x="1213" y="176" width="329" height="42" rx="8" fill="#f0fdfa" stroke="#5eead4"/>
+  <text x="1225" y="194" font-size="13" font-weight="700" fill="#115e59">19 自编码器 / VAE</text>
+  <text x="1225" y="210" font-size="9.8" fill="#475569">重构学习表示，去噪 / 异常检测</text>
+
+  <rect x="1213" y="224" width="329" height="42" rx="8" fill="#f0fdfa" stroke="#5eead4"/>
+  <text x="1225" y="242" font-size="13" font-weight="700" fill="#115e59">20 矩阵分解 / word2vec</text>
+  <text x="1225" y="258" font-size="9.8" fill="#475569">隐语义与词嵌入，推荐 / NLP 基础</text>
+
+  <rect x="1213" y="272" width="329" height="42" rx="8" fill="#f0fdfa" stroke="#5eead4"/>
+  <text x="1225" y="290" font-size="13" font-weight="700" fill="#115e59">21 对比学习</text>
+  <text x="1225" y="306" font-size="9.8" fill="#475569">SimCLR / CLIP，正负样本拉近拉远</text>
+
+  <rect x="1213" y="320" width="329" height="42" rx="8" fill="#f0fdfa" stroke="#5eead4"/>
+  <text x="1225" y="338" font-size="13" font-weight="700" fill="#115e59">22 掩码建模</text>
+  <text x="1225" y="354" font-size="9.8" fill="#475569">BERT / MAE，预测被遮住的部分</text>
+
+  <rect x="1213" y="368" width="329" height="42" rx="8" fill="#f0fdfa" stroke="#5eead4"/>
+  <text x="1225" y="386" font-size="13" font-weight="700" fill="#115e59">23 度量学习</text>
+  <text x="1225" y="402" font-size="9.8" fill="#475569">Triplet / 孪生网络，学相似度空间</text>
+
+  <text x="1213" y="498" font-size="9.5" fill="#64748b">自监督 = 用数据自身构造标签，再迁移到下游</text>
+
+  <!-- ========== E 深度学习 ========== -->
+  <rect x="40" y="592" width="365" height="468" rx="14" fill="#fffdf5" stroke="#fde68a" stroke-width="1.5"/>
+  <text x="58" y="628" font-size="16.5" font-weight="700" fill="#92400e">E · 深度学习骨干</text>
+  <text x="387" y="628" font-size="11.5" fill="#d97706" text-anchor="end">6 个</text>
+  <text x="58" y="648" font-size="10.5" fill="#475569">用多层网络自动学表示，吃数据与算力</text>
+
+  <rect x="58" y="664" width="329" height="42" rx="8" fill="#fffbeb" stroke="#fcd34d"/>
+  <text x="70" y="682" font-size="13" font-weight="700" fill="#92400e">24 MLP 多层感知机</text>
+  <text x="70" y="698" font-size="9.8" fill="#475569">全连接 + 非线性，万能逼近基线</text>
+
+  <rect x="58" y="712" width="329" height="42" rx="8" fill="#fffbeb" stroke="#fcd34d"/>
+  <text x="70" y="730" font-size="13" font-weight="700" fill="#92400e">25 CNN 卷积网络</text>
+  <text x="70" y="746" font-size="9.8" fill="#475569">局部感受野 + 权值共享，ResNet / ConvNeXt</text>
+
+  <rect x="58" y="760" width="329" height="42" rx="8" fill="#fffbeb" stroke="#fcd34d"/>
+  <text x="70" y="778" font-size="13" font-weight="700" fill="#92400e">26 RNN / LSTM / GRU</text>
+  <text x="70" y="794" font-size="9.8" fill="#475569">循环状态与门控，序列建模</text>
+
+  <rect x="58" y="808" width="329" height="42" rx="8" fill="#fffbeb" stroke="#fcd34d"/>
+  <text x="70" y="826" font-size="13" font-weight="700" fill="#92400e">27 Transformer</text>
+  <text x="70" y="842" font-size="9.8" fill="#475569">自注意力，ViT / GPT 的共同基座</text>
+
+  <rect x="58" y="856" width="329" height="42" rx="8" fill="#fffbeb" stroke="#fcd34d"/>
+  <text x="70" y="874" font-size="13" font-weight="700" fill="#92400e">28 GNN 图神经网络</text>
+  <text x="70" y="890" font-size="9.8" fill="#475569">GCN / GAT，关系与图结构数据</text>
+
+  <rect x="58" y="904" width="329" height="42" rx="8" fill="#fffbeb" stroke="#fcd34d"/>
+  <text x="70" y="922" font-size="13" font-weight="700" fill="#92400e">29 Mamba / 状态空间</text>
+  <text x="70" y="938" font-size="9.8" fill="#475569">长序列线性复杂度，挑战注意力</text>
+
+  <text x="58" y="986" font-size="9.5" fill="#64748b">干线：CNN → Transformer → 图 / 状态空间</text>
+
+  <!-- ========== F 生成模型 ========== -->
+  <rect x="425" y="592" width="365" height="468" rx="14" fill="#fff8f9" stroke="#fecdd3" stroke-width="1.5"/>
+  <text x="443" y="628" font-size="16.5" font-weight="700" fill="#9f1239">F · 生成模型</text>
+  <text x="772" y="628" font-size="11.5" fill="#e11d48" text-anchor="end">5 个</text>
+  <text x="443" y="648" font-size="10.5" fill="#475569">学数据分布，采样生成新样本</text>
+
+  <rect x="443" y="664" width="329" height="42" rx="8" fill="#fff1f2" stroke="#fda4af"/>
+  <text x="455" y="682" font-size="13" font-weight="700" fill="#9f1239">30 GAN</text>
+  <text x="455" y="698" font-size="9.8" fill="#475569">生成器 / 判别器对抗，StyleGAN</text>
+
+  <rect x="443" y="712" width="329" height="42" rx="8" fill="#fff1f2" stroke="#fda4af"/>
+  <text x="455" y="730" font-size="13" font-weight="700" fill="#9f1239">31 扩散模型</text>
+  <text x="455" y="746" font-size="9.8" fill="#475569">DDPM / DiT，加噪-去噪，图像 SOTA</text>
+
+  <rect x="443" y="760" width="329" height="42" rx="8" fill="#fff1f2" stroke="#fda4af"/>
+  <text x="455" y="778" font-size="13" font-weight="700" fill="#9f1239">32 流匹配</text>
+  <text x="455" y="794" font-size="9.8" fill="#475569">Rectified Flow，SD3 / Flux 的生成路线</text>
+
+  <rect x="443" y="808" width="329" height="42" rx="8" fill="#fff1f2" stroke="#fda4af"/>
+  <text x="455" y="826" font-size="13" font-weight="700" fill="#9f1239">33 自回归生成</text>
+  <text x="455" y="842" font-size="9.8" fill="#475569">逐 token 预测，GPT 式生成</text>
+
+  <rect x="443" y="856" width="329" height="42" rx="8" fill="#fff1f2" stroke="#fda4af"/>
+  <text x="455" y="874" font-size="13" font-weight="700" fill="#9f1239">34 3D 表示</text>
+  <text x="455" y="890" font-size="9.8" fill="#475569">NeRF / 3D Gaussian Splatting</text>
+
+  <text x="443" y="986" font-size="9.5" fill="#64748b">2020 后主线：扩散 → 流匹配 → 统一多模态生成</text>
+
+  <!-- ========== G 强化学习与对齐 ========== -->
+  <rect x="810" y="592" width="365" height="468" rx="14" fill="#fbf8ff" stroke="#ddd6fe" stroke-width="1.5"/>
+  <text x="828" y="628" font-size="16.5" font-weight="700" fill="#5b21b6">G · 强化学习与对齐</text>
+  <text x="1157" y="628" font-size="11.5" fill="#8b5cf6" text-anchor="end">6 个</text>
+  <text x="828" y="648" font-size="10.5" fill="#475569">没有标准答案，靠奖励 / 偏好学习策略</text>
+
+  <rect x="828" y="664" width="329" height="42" rx="8" fill="#faf5ff" stroke="#c4b5fd"/>
+  <text x="840" y="682" font-size="13" font-weight="700" fill="#5b21b6">35 Q-Learning</text>
+  <text x="840" y="698" font-size="9.8" fill="#475569">表格型 TD，SARSA 为同族</text>
+
+  <rect x="828" y="712" width="329" height="42" rx="8" fill="#faf5ff" stroke="#c4b5fd"/>
+  <text x="840" y="730" font-size="13" font-weight="700" fill="#5b21b6">36 DQN</text>
+  <text x="840" y="746" font-size="9.8" fill="#475569">Q 网络 + 经验回放 + 目标网络</text>
+
+  <rect x="828" y="760" width="329" height="42" rx="8" fill="#faf5ff" stroke="#c4b5fd"/>
+  <text x="840" y="778" font-size="13" font-weight="700" fill="#5b21b6">37 策略梯度 / Actor-Critic</text>
+  <text x="840" y="794" font-size="9.8" fill="#475569">直接优化策略，价值函数降方差</text>
+
+  <rect x="828" y="808" width="329" height="42" rx="8" fill="#faf5ff" stroke="#c4b5fd"/>
+  <text x="840" y="826" font-size="13" font-weight="700" fill="#5b21b6">38 PPO</text>
+  <text x="840" y="842" font-size="9.8" fill="#475569">裁剪更新，RLHF 时代的主力算法</text>
+
+  <rect x="828" y="856" width="329" height="42" rx="8" fill="#faf5ff" stroke="#c4b5fd"/>
+  <text x="840" y="874" font-size="13" font-weight="700" fill="#5b21b6">39 SAC / TD3</text>
+  <text x="840" y="890" font-size="9.8" fill="#475569">连续控制，最大熵 / 双 Critic</text>
+
+  <rect x="828" y="904" width="329" height="42" rx="8" fill="#faf5ff" stroke="#c4b5fd"/>
+  <text x="840" y="922" font-size="13" font-weight="700" fill="#5b21b6">40 RLHF / DPO</text>
+  <text x="840" y="938" font-size="9.8" fill="#475569">人类偏好对齐，DPO 省掉奖励模型</text>
+
+  <text x="828" y="986" font-size="9.5" fill="#64748b">大模型训练三阶段：预训练 → SFT → 偏好对齐</text>
+
+  <!-- ========== H 概率、因果与优化 ========== -->
+  <rect x="1195" y="592" width="365" height="468" rx="14" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="1213" y="628" font-size="16.5" font-weight="700" fill="#334155">H · 概率、因果与优化</text>
+  <text x="1542" y="628" font-size="11.5" fill="#64748b" text-anchor="end">8 个</text>
+  <text x="1213" y="648" font-size="10.5" fill="#475569">不确定性、结构与「为什么」的建模</text>
+
+  <rect x="1213" y="664" width="329" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="1225" y="682" font-size="13" font-weight="700" fill="#334155">41 HMM</text>
+  <text x="1225" y="698" font-size="9.8" fill="#475569">隐状态序列，前向-后向 / Viterbi</text>
+
+  <rect x="1213" y="712" width="329" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="1225" y="730" font-size="13" font-weight="700" fill="#334155">42 CRF</text>
+  <text x="1225" y="746" font-size="9.8" fill="#475569">条件随机场，序列标注与结构化预测</text>
+
+  <rect x="1213" y="760" width="329" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="1225" y="778" font-size="13" font-weight="700" fill="#334155">43 贝叶斯网络</text>
+  <text x="1225" y="794" font-size="9.8" fill="#475569">图模型 + 变分推断，不确定性推理</text>
+
+  <rect x="1213" y="808" width="329" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="1225" y="826" font-size="13" font-weight="700" fill="#334155">44 高斯过程</text>
+  <text x="1225" y="842" font-size="9.8" fill="#475569">核函数上的贝叶斯回归 + 置信区间</text>
+
+  <rect x="1213" y="856" width="329" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="1225" y="874" font-size="13" font-weight="700" fill="#334155">45 贝叶斯优化</text>
+  <text x="1225" y="890" font-size="9.8" fill="#475569">代理模型 + 采集函数，超参搜索</text>
+
+  <rect x="1213" y="904" width="329" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="1225" y="922" font-size="13" font-weight="700" fill="#334155">46 因果推断</text>
+  <text x="1225" y="938" font-size="9.8" fill="#475569">SCM / DoWhy，反事实与效应估计</text>
+
+  <rect x="1213" y="952" width="329" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="1225" y="970" font-size="13" font-weight="700" fill="#334155">47 元学习 / 小样本</text>
+  <text x="1225" y="986" font-size="9.8" fill="#475569">MAML / ProtoNet，学会学习</text>
+
+  <rect x="1213" y="1000" width="329" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="1225" y="1018" font-size="13" font-weight="700" fill="#334155">48 联邦学习</text>
+  <text x="1225" y="1034" font-size="9.8" fill="#475569">FedAvg，数据不出域的协同训练</text>
+</svg>
