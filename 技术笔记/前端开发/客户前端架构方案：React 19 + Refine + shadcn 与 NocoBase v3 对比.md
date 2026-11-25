@@ -38,22 +38,35 @@ type: 技术报告
 
 ## 2. 目标架构
 
-```text
-┌──────────────────── 客户前端（独立部署，静态产物）────────────────────┐
-│ React 19 + TypeScript + Vite                                         │
-│  ├─ Refine            数据/认证/路由/CRUD 逻辑（headless）            │
-│  ├─ shadcn/ui         组件源码（Radix + Tailwind，归项目所有）        │
-│  ├─ TanStack Query    服务端状态（Refine 内部已使用）                 │
-│  └─ 设计 token        品牌色、字体、圆角、暗色模式                     │
-└───────────────────────────────┬──────────────────────────────────────┘
-                                │ HTTPS（OIDC token / 会话）
-┌───────────────────────────────┴──────────────────────────────────────┐
-│ Ontology（身份、权限、领域 API、审计）                                │
-└───────────────────────────────┬──────────────────────────────────────┘
-                                │ 内部网络
-┌───────────────────────────────┴──────────────────────────────────────┐
-│ 内部运营后台（独立工程，可选 NocoBase / AntD Pro）                    │
-└──────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+  CDN["CDN / Nginx<br/>静态托管 · 独立域名"]
+
+  subgraph FE["客户前端（独立部署 · 纯静态产物）"]
+    R["React 19 + TypeScript"]
+    V["Vite 构建"]
+    RF["Refine<br/>数据 / 认证 / 路由"]
+    UI["shadcn/ui<br/>Radix + Tailwind"]
+    TQ["TanStack Query<br/>服务端状态"]
+    R --> V
+    RF --> TQ
+    RF --> UI
+  end
+
+  subgraph ONT["Ontology（唯一领域数据源）"]
+    AUTH["身份 / 登录<br/>OIDC"]
+    API["权限 / 领域 API<br/>REST · GraphQL"]
+    AUTH --- API
+  end
+
+  subgraph ADMIN["内部运营后台（独立工程）"]
+    NB["NocoBase / AntD Pro"]
+  end
+
+  CDN --> R
+  V -->|"HTTPS + Token"| AUTH
+  V -->|"HTTPS + Token"| API
+  NB -->|"内部网络"| API
 ```
 
 关键点：
@@ -189,6 +202,14 @@ AI 协作的硬约定（写进仓库 `AGENTS.md`）：
 - 每块有 JSON schema + React 组件；
 - 运营后台产出 JSON，客户前端用 Renderer 渲染；
 - 未知区块显式渲染为占位提示，不静默失败。
+
+```mermaid
+flowchart LR
+  OP["运营后台<br/>拖拽 / 配置"] --> JSON["页面 JSON 配置<br/>（存库 · 可 diff）"]
+  JSON --> RENDER["Renderer<br/>按区块注册表分发"]
+  RENDER --> KNOWN["已知区块<br/>Banner / 表格 / 表单 / 图表"]
+  RENDER --> UNKNOWN["未知区块<br/>占位提示 · 不崩页"]
+```
 
 ## 6. 为什么不用 NocoBase v3
 
