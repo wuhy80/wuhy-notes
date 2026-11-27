@@ -3,15 +3,16 @@ tags:
   - 数据库
   - MySQL
   - InfluxDB
+  - IoTDB
   - 存储引擎
 created: 2026-10-15
-updated: 2026-10-15
+updated: 2026-11-27
 status: 入口
 ---
 
 # 数据库技术笔记
 
-关系型数据库（MySQL）、时序数据库（InfluxDB）、底层存储索引原理（B树）与中间件架构资料总览。
+关系型数据库（MySQL）、时序数据库（InfluxDB、IoTDB）、底层存储索引原理（B树）与中间件架构资料总览。
 
 ## 专题目录
 
@@ -46,6 +47,10 @@ status: 入口
 - [[技术笔记/数据库/Influx/如何设置保留策略|InfluxDB 保留策略]] —— Retention Policy 与冷热数据自动淘汰
 - [[技术笔记/数据库/Influx/如何实现Influx的备份恢复|InfluxDB 备份与恢复]] —— 元数据与时序 shard 备份恢复实战
 - [[技术笔记/数据库/Influx/Windows Influx|Windows 下 InfluxDB 部署]] —— 本机服务安装与配置说明
+
+### 时序数据库：IoTDB
+
+- [[技术笔记/数据库/IoTDB/IoTDB 集群架构与访问方案|IoTDB 集群架构与访问方案]] —— ConfigNode/DataNode 分工、Region 分区与副本、读写路径、3C3D 部署、客户端访问与云负载均衡边界
 
 ### 其他数据库与协议驱动
 
