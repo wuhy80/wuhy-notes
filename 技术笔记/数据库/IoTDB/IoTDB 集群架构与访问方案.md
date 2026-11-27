@@ -36,39 +36,9 @@ type: 技术笔记
 - 客户端**只能通过 DataNode 读写**，ConfigNode 不直接服务客户端；
 - 生产建议 **3 ConfigNode + 3 DataNode**（3C3D），副本数 3。
 
-```mermaid
-flowchart TB
-  subgraph Client["客户端"]
-    APP["MES / Flink / BI / 采集 Agent"]
-  end
+![[IoTDB 集群架构.svg]]
 
-  subgraph Access["访问入口（可选）"]
-    LB["云 NLB / CLB<br/>TCP 6667 · 健康检查 · 会话保持"]
-  end
-
-  subgraph Cluster["IoTDB 集群（VPC 内网）"]
-    subgraph CN["ConfigNode ×3 · Raft 控制面"]
-      C1["ConfigNode1"]
-      C2["ConfigNode2"]
-      C3["ConfigNode3"]
-    end
-    subgraph DN["DataNode ×3 · 数据面 · 副本 3"]
-      D1["DataNode1"]
-      D2["DataNode2"]
-      D3["DataNode3"]
-    end
-  end
-
-  APP -->|"方式 A：多地址直连"| D1
-  APP -->|"方式 A：多地址直连"| D2
-  APP -->|"方式 B：单一入口"| LB
-  LB --> D1
-  LB --> D2
-  LB --> D3
-  D1 -. "内网直连 · Region 复制" .- D2
-  D2 -. "内网直连 · Region 复制" .- D3
-  D1 --- CN
-```
+*图 1：IoTDB 集群架构（Fireworks Tech Graph 生成的矢量 SVG）——客户端只连 DataNode；ConfigNode 独立控制面，Raft 高可用；副本同步与心跳走内网直连。*
 
 ## 3. 数据分区模型
 
