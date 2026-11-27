@@ -304,4 +304,4 @@ async fn main() -> Result<()> {
 - [[Rust编程/并发/Send 与 Sync|Send 与 Sync]]
 - [[Rust编程/基础/智能指针|智能指针]]
 - [[Rust编程/生态/常用 crate 选型|常用 crate 选型]]
-- [[Rust编程/README|Rust 编程]]
+- [[Rust编程/Rust编程|Rust 编程]]

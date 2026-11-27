@@ -253,4 +253,4 @@ pub extern "C" fn set_callback(cb: Option<Callback>) { /* ... */ }
 - [[Rust编程/性能/unsafe 的正确用法|unsafe 的正确用法]]
 - [[Rust编程/FFI/调用 Windows API（windows-rs）|调用 Windows API（windows-rs）]]
 - [[Rust编程/工程/Cargo 工作区与依赖管理|Cargo 工作区与依赖管理]]
-- [[Rust编程/README|Rust 编程]]
+- [[Rust编程/Rust编程|Rust 编程]]

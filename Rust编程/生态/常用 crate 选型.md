@@ -261,4 +261,4 @@ anyhow = "1"
 - [[Rust编程/基础/错误处理|错误处理]]
 - [[Rust编程/并发/async 与 Tokio 入门|async 与 Tokio 入门]]
 - [[Rust编程/GUI/Rust 在 Windows 上的 GUI 方案选型|Rust 在 Windows 上的 GUI 方案选型]]
-- [[Rust编程/README|Rust 编程]]
+- [[Rust编程/Rust编程|Rust 编程]]

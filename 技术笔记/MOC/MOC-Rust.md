@@ -11,7 +11,7 @@ type: MOC
 # MOC-Rust
 
 > [!abstract] 概述
-> Rust 相关笔记 44 篇：`Rust编程/` 23 篇自成体系（基础、并发、工程、生态、FFI、性能、GUI），`大模型/10-新闻/` 14 篇提及（Rust 写的 AI 基建工具与项目），另有 `Golang编程/` 的语言对照、`技术笔记/软件架构/` 等散点。目录入口 [[Rust编程/README|Rust 编程 README]] 已有完整导航，本 MOC 补跨目录视角。
+> Rust 相关笔记 44 篇：`Rust编程/` 23 篇自成体系（基础、并发、工程、生态、FFI、性能、GUI），`大模型/10-新闻/` 14 篇提及（Rust 写的 AI 基建工具与项目），另有 `Golang编程/` 的语言对照、`技术笔记/软件架构/` 等散点。目录入口 [[Rust编程/Rust编程|Rust 编程]] 已有完整导航，本 MOC 补跨目录视角。
 
 ## 笔记索引
 
@@ -48,11 +48,11 @@ type: MOC
 > [!note] 口径说明
 > 以下文件有 Rust 相关内容，但没有出链进入 `Rust编程/` 体系。仅建议，不代改。
 
-- Golang编程/README.md —— 语言对照小节未链 [[Rust 和 Go 的区别与使用建议]]（该笔记在 Golang 目录下，Rust 侧也应收录）
-- Rust编程/README.md —— 未链 [[Rust 和 Go 的区别与使用建议]]
+- Golang编程/Golang编程.md —— 语言对照小节未链 [[Rust 和 Go 的区别与使用建议]]（该笔记在 Golang 目录下，Rust 侧也应收录）
+- Rust编程/Rust编程.md —— 未链 [[Rust 和 Go 的区别与使用建议]]
 - 技术笔记/软件架构 相关笔记 —— 架构讨论未链 [[常用 crate 选型]]
 - 大模型/12-AI水印与内容溯源/AI 水印与内容溯源：方案、实现与厂商实践.md —— 未链 Rust 目录
-- 网址收藏/编程语言.md —— Rust 资源收藏未链 [[Rust编程/README|Rust 编程 README]]
+- 网址收藏/编程语言.md —— Rust 资源收藏未链 [[Rust编程/Rust编程|Rust 编程]]
 - Rust编程/性能/ 的 unsafe 笔记 —— 可与 [[借用检查器常见错误清单]] 互链
 
 ## 相关实体

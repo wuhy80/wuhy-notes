@@ -91,4 +91,4 @@ serde / clap / reqwest / sqlx（按需）
 ## 相关
 
 - [[Golang编程/Rust 和 Go 的区别与使用建议|Rust 和 Go 的区别与使用建议]] —— 语言取舍
-- [[Golang编程/README|Golang 编程]] —— 对照参考
+- [[Golang编程/Golang编程|Golang 编程]] —— 对照参考

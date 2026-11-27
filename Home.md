@@ -13,7 +13,7 @@ updated: 2026-10-15
 > 本库是**可公开**的技术与学习知识库，只保留技术笔记、大模型研究、Ontology 与学习资料。
 > 个人任务、日记、投资、客户项目资料已迁至私密库 `E:\Obsidian\wuhy80_private`，本页不再放会指向空目录的查询。
 >
-> [[技术笔记/技术笔记|技术笔记]] · [[大模型/00-大模型学习导航|大模型]] · [[Ontology/README|Ontology]] · [[AI开发Demo/AI开发Demo|AI 开发 Demo]] · [[大模型/10-新闻/日报/00-日报索引|AI 早报]] · [[读书笔记/读书列表|读书]] · [[网址收藏/网址收藏|网址收藏]] · [[Home-分析面板|分析面板]]
+> [[技术笔记/技术笔记|技术笔记]] · [[大模型/00-大模型学习导航|大模型]] · [[Ontology/Ontology|Ontology]] · [[AI开发Demo/AI开发Demo|AI 开发 Demo]] · [[大模型/10-新闻/日报/00-日报索引|AI 早报]] · [[读书笔记/读书列表|读书]] · [[网址收藏/网址收藏|网址收藏]] · [[Home-分析面板|分析面板]]
 
 ## 快速入口
 
@@ -21,9 +21,9 @@ updated: 2026-10-15
 > - [[技术笔记/技术笔记|技术笔记总入口]]：全部专题的索引
 > - [[技术笔记/算法/算法学习导航|算法]]：基础算法、数据结构、动态规划与题解索引
 > - [[技术笔记/Kubernetes/Kubernetes|Kubernetes]]：集群部署、网络、存储、安全与源码分析
-> - [[技术笔记/Linux/README|Linux]]：系统管理、网络、日志、性能与安全
+> - [[技术笔记/Linux/Linux|Linux]]：系统管理、网络、日志、性能与安全
 > - [[技术笔记/数据库/数据库技术笔记|数据库技术笔记]]：MySQL、InfluxDB、B树存储、备份与高可用
-> - [[技术笔记/Vue/README|Vue]] ｜ [[技术笔记/前端开发/前端通信技术概览|前端开发]]
+> - [[技术笔记/Vue/Vue|Vue]] ｜ [[技术笔记/前端开发/前端通信技术概览|前端开发]]
 > - [[技术笔记/版本管理/GIT使用|版本管理]]：Git 与 SVN
 
 > [!info] 大模型与 Ontology
@@ -31,10 +31,10 @@ updated: 2026-10-15
 > - [[大模型/09-Agent/00-Agent导航|Agent 导航]]：LangGraph、CrewAI、Dify、Manus、OpenHands 等
 > - [[大模型/10-新闻/日报/00-日报索引|AI 早报]] ｜ [[大模型/10-新闻/周报/00-周报索引|大模型周报]]（[[大模型/10-新闻/00-新闻索引|新闻总览]]）
 > - [[大模型/08-个体重构/00-个体重构导航|个体重构]]：AI 时代的工作流与认知框架
-> - [[Ontology/README|Ontology 总览]]：[[Ontology/00-总览/Palantir Ontology 资料索引|资料索引]] · [[Ontology/90-阅读路线/Palantir Ontology 阅读路线|阅读路线]]
+> - [[Ontology/Ontology|Ontology 总览]]：[[Ontology/00-总览/Palantir Ontology 资料索引|资料索引]] · [[Ontology/90-阅读路线/Palantir Ontology 阅读路线|阅读路线]]
 
 > [!note] 编程语言与专项学习
-> - [[Golang编程/README|Golang]] ｜ [[Rust编程/README|Rust]]
+> - [[Golang编程/Golang编程|Golang]] ｜ [[Rust编程/Rust编程|Rust]]
 > - [[英语学习/文章荟萃/00 Index|英语学习：文章荟萃]]
 
 > [!abstract] 阅读与收藏

@@ -227,4 +227,4 @@ let sum: i64 = (1..=1_000_000).into_par_iter().map(|x| x * x).sum();
 - [[Rust编程/基础/智能指针|智能指针]]
 - [[Rust编程/并发/async 与 Tokio 入门|async 与 Tokio 入门]]
 - [[Rust编程/基础/所有权与借用|所有权与借用]]
-- [[Rust编程/README|Rust 编程]]
+- [[Rust编程/Rust编程|Rust 编程]]

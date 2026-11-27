@@ -365,4 +365,4 @@ fn run(cli: &Cli) -> Result<()> {
 - [[Rust编程/基础/错误处理|错误处理]]
 - [[Rust编程/工程/测试与基准测试|测试与基准测试]]
 - [[Rust编程/生态/常用 crate 选型|常用 crate 选型]]
-- [[Rust编程/README|Rust 编程]]
+- [[Rust编程/Rust编程|Rust 编程]]

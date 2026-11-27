@@ -285,4 +285,4 @@ cargo build --release --target x86_64-pc-windows-gnu
 - [[Rust编程/生态/常用 crate 选型|常用 crate 选型]]
 - [[Rust编程/在线资料/学习路径与资料|学习路径与资料]]
 - [[Rust编程/基础/错误处理|错误处理]]
-- [[Rust编程/README|Rust 编程]]
+- [[Rust编程/Rust编程|Rust 编程]]

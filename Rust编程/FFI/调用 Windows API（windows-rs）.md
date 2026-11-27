@@ -310,4 +310,4 @@ UI 层    ：Tauri（Web 前端） / egui / Slint
 - [[Rust编程/FFI/与 C 互操作|与 C 互操作]]
 - [[Rust编程/性能/unsafe 的正确用法|unsafe 的正确用法]]
 - [[Rust编程/生态/常用 crate 选型|常用 crate 选型]]
-- [[Rust编程/README|Rust 编程]]
+- [[Rust编程/Rust编程|Rust 编程]]

@@ -265,4 +265,4 @@ RUSTFLAGS="-Zsanitizer=thread"  cargo +nightly test
 - [[Rust编程/FFI/与 C 互操作|与 C 互操作]]
 - [[Rust编程/FFI/调用 Windows API（windows-rs）|调用 Windows API（windows-rs）]]
 - [[Rust编程/并发/Send 与 Sync|Send 与 Sync]]
-- [[Rust编程/README|Rust 编程]]
+- [[Rust编程/Rust编程|Rust 编程]]

@@ -17,7 +17,7 @@ type: MOC
 
 ### 门户
 
-- `README` 为重名文件名（全库 7 份），Linux 目录入口需用全路径 `[[技术笔记/Linux/README|Linux 目录说明]]`
+- `README` 为重名文件名（全库 7 份），Linux 目录入口需用全路径 `[[技术笔记/Linux/Linux|Linux 目录说明]]`
 
 ### 基础与 Shell（`技术笔记/Linux/` 根）
 
@@ -58,7 +58,7 @@ type: MOC
 - 技术笔记/数据库/Mysql/Mysql高可用.md —— 部署在 Linux 上的服务排障可链 `Ubuntu/日志处理` 子目录
 - Golang编程/网络/如何获取Windows上或者Linux上某个端口被占用的进程信息.md —— 可链 [[CURL使用技巧]] 同目录的网络排查体系
 - 技术笔记/物联网/EMQX 相关笔记 —— EMQX 部署运维未链 Linux 目录
-- 网址收藏/操作系统.md —— 收藏页未链 [[技术笔记/Linux/README|Linux 目录说明]]
+- 网址收藏/操作系统.md —— 收藏页未链 [[技术笔记/Linux/Linux|Linux 目录说明]]
 
 ## 相关实体
 

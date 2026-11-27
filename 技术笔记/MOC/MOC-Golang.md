@@ -11,13 +11,13 @@ type: MOC
 # MOC-Golang
 
 > [!abstract] 概述
-> Go/Golang 相关笔记 30 篇：`Golang编程/` 25 篇自成体系（网络编程、Gin/GORM、序列化、大模型开发），另有 `技术笔记/数据库/`、`技术笔记/Kubernetes/` 等 10 处散点提及（K8s 生态、数据库中间件的 Go 实现）。目录入口 [[Golang编程/README|Golang 编程 README]] 已有完整分类导航，本 MOC 补跨目录视角与语言对照。
+> Go/Golang 相关笔记 30 篇：`Golang编程/` 25 篇自成体系（网络编程、Gin/GORM、序列化、大模型开发），另有 `技术笔记/数据库/`、`技术笔记/Kubernetes/` 等 10 处散点提及（K8s 生态、数据库中间件的 Go 实现）。目录入口 [[Golang编程/Golang编程|Golang 编程]] 已有完整分类导航，本 MOC 补跨目录视角与语言对照。
 
 ## 笔记索引
 
 ### 门户与语言选型
 
-- [[Golang编程/README|Golang 编程 README]] —— 目录中心索引（README 为重名文件名，用全路径）
+- [[Golang编程/Golang编程|Golang 编程]] —— 目录中心索引（README 为重名文件名，用全路径）
 - [[Rust 和 Go 的区别与使用建议]] —— 内存模型、并发、错误处理与工程成本对比
 
 ### 基础与环境（`Golang编程/安装配置/`、`基本信息/`）
@@ -59,7 +59,7 @@ type: MOC
 - 技术笔记/Kubernetes/源码分析 子目录 —— 未链 [[如何进行引用]]（Go 工程规范）
 - 技术笔记/Linux/安全相关 相关笔记 —— 提及 Go 工具链未链 Golang 目录
 - Rust编程/并发/ 的 async 笔记 —— 可与 [[Rust 和 Go 的区别与使用建议]] 双向对照
-- 网址收藏/编程语言.md —— Go 资源收藏未链 [[Golang编程/README|Golang 编程 README]]
+- 网址收藏/编程语言.md —— Go 资源收藏未链 [[Golang编程/Golang编程|Golang 编程]]
 
 ## 相关实体
 

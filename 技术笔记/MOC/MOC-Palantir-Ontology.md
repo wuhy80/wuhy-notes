@@ -11,7 +11,7 @@ type: MOC
 # MOC-Palantir-Ontology
 
 > [!abstract] 概述
-> Palantir Ontology 是本库自成体系的企业知识工程专题：`Ontology/` 目录 17 篇覆盖核心概念、资源模型、动作函数、安全治理、应用开发、实时流处理与能力全景，目录入口 [[Palantir Ontology 资料索引]] 与 README 已有完整导航；另有 `大模型/` 侧 5 篇新闻/报告提及，以及与 MCP、Agent 的方法论交叉（多用户 Agent 分析平台）。本 MOC 主要做入口整合与跨目录桥接。
+> Palantir Ontology 是本库自成体系的企业知识工程专题：`Ontology/` 目录 17 篇覆盖核心概念、资源模型、动作函数、安全治理、应用开发、实时流处理与能力全景，目录入口 [[Palantir Ontology 资料索引]] 与 [[Ontology/Ontology|Ontology 总览]] 已有完整导航；另有 `大模型/` 侧 5 篇新闻/报告提及，以及与 MCP、Agent 的方法论交叉（多用户 Agent 分析平台）。本 MOC 主要做入口整合与跨目录桥接。
 
 ## 笔记索引
 

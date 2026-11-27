@@ -241,4 +241,4 @@ let body = client.get(url).send()?.text()?;
 - [[Rust编程/生态/serde 序列化|serde 序列化]]
 - [[Rust编程/生态/常用 crate 选型|常用 crate 选型]]
 - [[Rust编程/基础/错误处理|错误处理]]
-- [[Rust编程/README|Rust 编程]]
+- [[Rust编程/Rust编程|Rust 编程]]
