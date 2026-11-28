@@ -121,6 +121,7 @@ export async function buildReader({ content, out }) {
     const demoMap = {
       '刀装工具3D装配全景沙盘.html': 'knife-assembly.html',
       'demo-twin.html': 'cnc-twin.html',
+      'space-elevator.html': 'space-elevator.html',
     };
     for (const [srcName, dstName] of Object.entries(demoMap)) {
       const full = path.join(demoAssets, srcName);
