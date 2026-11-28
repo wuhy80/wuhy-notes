@@ -824,6 +824,41 @@
     baseGroup.add(warm);
 
     // 地基光晕
+    // 散热板
+    for (let i=0;i<4;i++){
+      const a = i/4*TAU + 0.2;
+      const rad = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.09), new THREE.MeshStandardMaterial({
+        color: 0x1a2634, metalness: .6, roughness: .5, side: THREE.DoubleSide,
+      }));
+      rad.position.set(Math.cos(a)*D*1.35, 0.02, Math.sin(a)*D*1.35);
+      rad.rotation.y = -a;
+      rad.rotation.x = 0.2;
+      stationGroup.add(rad);
+    }
+    // 天线
+    for (let i=0;i<6;i++){
+      const a = i/6*TAU;
+      const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.0015, 0.0015, 0.10, 4), matDark);
+      ant.position.set(Math.cos(a)*D*0.8, 0.07, Math.sin(a)*D*0.8);
+      stationGroup.add(ant);
+    }
+    // 密集碎片
+    {
+      const N = 220;
+      const im = new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1), matHull, N);
+      const m4 = new THREE.Matrix4();
+      for (let i=0;i<N;i++){
+        const a = Math.random()*TAU;
+        const r = D + (Math.random()-0.5)*0.06;
+        const sz = 0.003 + Math.random()*0.010;
+        m4.makeRotationY(-a);
+        m4.setPosition(Math.cos(a)*r, (Math.random()-0.5)*0.06, Math.sin(a)*r);
+        m4.scale(new THREE.Vector3(sz, sz*0.7, sz*0.7));
+        im.setMatrixAt(i, m4);
+      }
+      stationGroup.add(im);
+    }
+
     const halo = new THREE.Sprite(new THREE.SpriteMaterial({
       map: glowTex, color: 0xff8a3c, transparent: true, opacity: .45,
       blending: THREE.AdditiveBlending, depthWrite: false,
@@ -1071,6 +1106,68 @@
     workLight.position.y = -0.08;
     carGroup.add(workLight);
 
+    // ---- 太阳能板与薄片结构 ----
+    (function panels(){
+      const tex = (() => {
+        const c = document.createElement('canvas'); c.width = c.height = 256;
+        const g = c.getContext('2d');
+        g.fillStyle = '#0a1420'; g.fillRect(0,0,256,256);
+        for (let y=0;y<8;y++) for (let x=0;x<8;x++){
+          g.fillStyle = (x+y)%2 ? 'rgba(38,68,104,.9)' : 'rgba(26,50,80,.9)';
+          g.fillRect(x*32+2, y*32+2, 28, 28);
+          g.strokeStyle = 'rgba(130,175,220,.35)'; g.lineWidth = 1;
+          g.strokeRect(x*32+2, y*32+2, 28, 28);
+        }
+        return new THREE.CanvasTexture(c);
+      })();
+      const matPanel = new THREE.MeshStandardMaterial({ map: tex, metalness: .35, roughness: .58, side: THREE.DoubleSide, color: 0x6f8194 });
+
+      const wing = (side) => {
+        const g = new THREE.Group();
+        // 支撑臂
+        const arm = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.010, 0.010), matDarkC);
+        arm.position.x = side * 0.07;
+        g.add(arm);
+        // 帆板
+        const p = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.13), matPanel);
+        p.position.set(side * 0.31, 0, 0);
+        p.rotation.y = Math.PI/2;
+        p.rotation.z = side * 0.06;
+        p.castShadow = true;
+        g.add(p);
+        // 边框
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.14, 0.35), matDarkC);
+        frame.position.set(side*0.31, 0, 0);
+        g.add(frame);
+        // 加强筋
+        for (let k=-1;k<=1;k+=2){
+          const rib = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.006, 0.34), matDarkC);
+          rib.position.set(side*0.31, k*0.045, 0);
+          g.add(rib);
+        }
+        g.position.set(side * 0.30, 0.02, 0.0);
+        g.rotation.z = side * 0.35;
+        return g;
+      };
+      carGroup.add(wing(1));
+      carGroup.add(wing(-1));
+
+      // 侧面走道栏杆（薄片）
+      [-1, 1].forEach(sd => {
+        const walk = new THREE.Mesh(new THREE.BoxGeometry(0.010, 0.004, 0.30), matHullC);
+        walk.position.set(sd*0.30, -0.055, 0.02);
+        carGroup.add(walk);
+        for (let k=0;k<6;k++){
+          const post = new THREE.Mesh(new THREE.BoxGeometry(0.002, 0.035, 0.002), matHullC);
+          post.position.set(sd*0.30, -0.035, -0.11 + k*0.045);
+          carGroup.add(post);
+        }
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.002, 0.002, 0.30), matHullC);
+        rail.position.set(sd*0.30, -0.017, 0.02);
+        carGroup.add(rail);
+      });
+    })();
+
     tetherGroup.add(carGroup);
   })();
 
@@ -1174,6 +1271,41 @@
       stationModulesArr.push(m);
     }
 
+    // 散热板
+    for (let i=0;i<4;i++){
+      const a = i/4*TAU + 0.2;
+      const rad = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.09), new THREE.MeshStandardMaterial({
+        color: 0x1a2634, metalness: .6, roughness: .5, side: THREE.DoubleSide,
+      }));
+      rad.position.set(Math.cos(a)*D*1.35, 0.02, Math.sin(a)*D*1.35);
+      rad.rotation.y = -a;
+      rad.rotation.x = 0.2;
+      stationGroup.add(rad);
+    }
+    // 天线
+    for (let i=0;i<6;i++){
+      const a = i/6*TAU;
+      const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.0015, 0.0015, 0.10, 4), matDark);
+      ant.position.set(Math.cos(a)*D*0.8, 0.07, Math.sin(a)*D*0.8);
+      stationGroup.add(ant);
+    }
+    // 密集碎片
+    {
+      const N = 220;
+      const im = new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1), matHull, N);
+      const m4 = new THREE.Matrix4();
+      for (let i=0;i<N;i++){
+        const a = Math.random()*TAU;
+        const r = D + (Math.random()-0.5)*0.06;
+        const sz = 0.003 + Math.random()*0.010;
+        m4.makeRotationY(-a);
+        m4.setPosition(Math.cos(a)*r, (Math.random()-0.5)*0.06, Math.sin(a)*r);
+        m4.scale(new THREE.Vector3(sz, sz*0.7, sz*0.7));
+        im.setMatrixAt(i, m4);
+      }
+      stationGroup.add(im);
+    }
+
     const halo = new THREE.Sprite(new THREE.SpriteMaterial({
       map: glowTex, color: 0x9fd8ff, transparent: true, opacity: .35,
       blending: THREE.AdditiveBlending, depthWrite: false,
@@ -1196,6 +1328,25 @@
     const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.006, 8, 8), matRed);
     beacon.position.y = 0.04;
     counterGroup.add(beacon);
+
+    // 配重桁架与设备
+    for (let i=0;i<10;i++){
+      const x = (Math.random()-0.5)*0.20, z = (Math.random()-0.5)*0.10;
+      const b = new THREE.Mesh(new THREE.BoxGeometry(0.01+Math.random()*0.02, 0.008, 0.008+Math.random()*0.02), matDark);
+      b.position.set(x, (Math.random()-0.5)*0.05, z);
+      counterGroup.add(b);
+    }
+    const N2 = 120;
+    const im2 = new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1), matLight, N2);
+    const m42 = new THREE.Matrix4();
+    for (let i=0;i<N2;i++){
+      const sz = 0.002 + Math.random()*0.006;
+      m42.makeRotationY(Math.random()*Math.PI);
+      m42.setPosition((Math.random()-0.5)*0.18, (Math.random()-0.5)*0.06, (Math.random()-0.5)*0.10);
+      m42.scale(new THREE.Vector3(sz, sz, sz));
+      im2.setMatrixAt(i, m42);
+    }
+    counterGroup.add(im2);
   })();
 
   /* ---------------- 轨道环 ---------------- */
@@ -1211,6 +1362,7 @@
     const rtScene = new THREE.WebGLRenderTarget(1,1, { type: THREE.HalfFloatType, encoding: THREE.sRGBEncoding });
     rtScene.depthTexture = new THREE.DepthTexture(1,1);
     rtScene.depthTexture.type = THREE.UnsignedShortType;
+    const rtCloud = new THREE.WebGLRenderTarget(1,1, { type: THREE.HalfFloatType });
     const rtBright = new THREE.WebGLRenderTarget(1,1, { type: THREE.HalfFloatType });
     const rtBlurA = new THREE.WebGLRenderTarget(1,1, { type: THREE.HalfFloatType });
     const rtBlurB = new THREE.WebGLRenderTarget(1,1, { type: THREE.HalfFloatType });
@@ -1252,11 +1404,62 @@
         }`,
     });
 
+    const cloudMat = new THREE.ShaderMaterial({
+      uniforms: {
+        tScene: { value: null }, tDepth: { value: null },
+        camPos: { value: new THREE.Vector3() },
+        invProj: { value: new THREE.Matrix4() },
+        invView: { value: new THREE.Matrix4() },
+        time: { value: 0 }, density: { value: 0.20 },
+      },
+      vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position,1.0); }`,
+      fragmentShader: `
+        uniform sampler2D tScene; uniform sampler2D tDepth;
+        uniform vec3 camPos; uniform mat4 invProj; uniform mat4 invView;
+        uniform float time; uniform float density;
+        varying vec2 vUv;
+        float hash(vec3 p){ return fract(sin(dot(p, vec3(127.1,311.7,74.7)))*43758.5453); }
+        float noise(vec3 p){
+          vec3 i = floor(p), f = fract(p);
+          f = f*f*(3.0-2.0*f);
+          float n = mix(mix(mix(hash(i), hash(i+vec3(1,0,0)), f.x), mix(hash(i+vec3(0,1,0)), hash(i+vec3(1,1,0)), f.x), f.y),
+                        mix(mix(hash(i+vec3(0,0,1)), hash(i+vec3(1,0,1)), f.x), mix(hash(i+vec3(0,1,1)), hash(i+vec3(1,1,1)), f.x), f.y), f.z);
+          return n;
+        }
+        float fbm(vec3 p){ return 0.55*noise(p) + 0.28*noise(p*2.1) + 0.17*noise(p*4.3); }
+        void main(){
+          vec3 col = texture2D(tScene, vUv).rgb;
+          float d = texture2D(tDepth, vUv).x;
+          vec4 clip = vec4(vUv*2.0-1.0, d*2.0-1.0, 1.0);
+          vec4 view = invProj * clip; view /= view.w;
+          vec4 world = invView * view;
+          vec3 rd = normalize(world.xyz - camPos);
+          float sceneDist = length(world.xyz - camPos);
+          float acc = 0.0;
+          float t = 0.15;
+          for (int i=0;i<12;i++){
+            vec3 p = camPos + rd * t;
+            float h = p.y;               // 世界高度（地球半径 1 附近）
+            float band = smoothstep(1.00, 1.06, h) * (1.0 - smoothstep(1.35, 1.75, h));
+            if (band > 0.001){
+              float den = fbm(p*4.0 + vec3(time*0.02, 0.0, time*0.01)) * band * density;
+              acc += den * 0.045;
+            }
+            t += 0.16 + t*0.12;
+            if (t > sceneDist) break;
+          }
+          acc = clamp(acc, 0.0, 0.30);
+          col = mix(col, vec3(0.78, 0.85, 0.94), acc);
+          gl_FragColor = vec4(col, 1.0);
+        }`,
+      depthTest: false, depthWrite: false,
+    });
+
     const finalMat = new THREE.ShaderMaterial({
       uniforms: {
         tScene: { value: null }, tBloom: { value: null }, tDepth: { value: null },
         bloomStrength: { value: 0.38 }, time: { value: 0 },
-        vignette: { value: 0.85 }, focus: { value: 3.0 }, aperture: { value: 0.35 },
+        vignette: { value: 0.85 }, focus: { value: 3.0 }, aperture: { value: 0.22 },
         near: { value: 0.1 }, far: { value: 200.0 }, res: { value: new THREE.Vector2(1,1) },
       },
       vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position,1.0); }`,
@@ -1304,6 +1507,7 @@
 
     function setSize(w,h){
       rtScene.setSize(w,h);
+      rtCloud.setSize(w,h);
       if (rtScene.depthTexture) {
         rtScene.depthTexture.image.width = w;
         rtScene.depthTexture.image.height = h;
@@ -1314,13 +1518,24 @@
       blurMat.uniforms.res.value.set(bw,bh);
     }
 
-    function render(sceneRef, camRef, time){
+    function render(sceneRef, camRef, time, camPos){
       renderer.setRenderTarget(rtScene);
       renderer.clear();
       renderer.render(sceneRef, camRef);
 
+      // 体积云合成
+      quad.material = cloudMat;
+      cloudMat.uniforms.tScene.value = rtScene.texture;
+      cloudMat.uniforms.tDepth.value = rtScene.depthTexture;
+      cloudMat.uniforms.camPos.value.copy(camPos);
+      cloudMat.uniforms.invProj.value.copy(camRef.projectionMatrixInverse);
+      cloudMat.uniforms.invView.value.copy(camRef.matrixWorld);
+      cloudMat.uniforms.time.value = time;
+      renderer.setRenderTarget(rtCloud);
+      renderer.render(quadScene, quadCam);
+
       quad.material = brightMat;
-      brightMat.uniforms.tDiffuse.value = rtScene.texture;
+      brightMat.uniforms.tDiffuse.value = rtCloud.texture;
       renderer.setRenderTarget(rtBright);
       renderer.render(quadScene, quadCam);
 
@@ -1336,7 +1551,7 @@
       renderer.render(quadScene, quadCam);
 
       quad.material = finalMat;
-      finalMat.uniforms.tScene.value = rtScene.texture;
+      finalMat.uniforms.tScene.value = rtCloud.texture;
       finalMat.uniforms.tBloom.value = rtBlurB.texture;
       finalMat.uniforms.tDepth.value = rtScene.depthTexture;
       finalMat.uniforms.res.value.set(rtScene.width, rtScene.height);
@@ -1352,12 +1567,20 @@
   /* ---------------- 相机 ---------------- */
   function updateCamera(){
     const ce = Math.cos(camState.el), se = Math.sin(camState.el);
+    // 手持微抖
+    const hx = Math.sin(time*0.7)*0.0035 + Math.sin(time*1.9)*0.0018;
+    const hy = Math.cos(time*0.9)*0.0028 + Math.sin(time*2.3)*0.0014;
     camera.position.set(
       camState.target.x + camState.dist * Math.sin(camState.az) * ce,
       camState.target.y + camState.dist * se,
       camState.target.z + camState.dist * Math.cos(camState.az) * ce
     );
-    camera.lookAt(camState.target);
+    camera.position.x += hx;
+    camera.position.y += hy;
+    const look = camState.target.clone();
+    look.x += Math.sin(time*0.5)*0.002;
+    look.y += Math.cos(time*0.6)*0.0016;
+    camera.lookAt(look);
     earthUniforms.camPos.value.copy(camera.position);
   }
 
@@ -1454,7 +1677,7 @@
     camTarget.el = targetEl;
     const phaseH = [0.16, 0.26, 0.62, carH, GEO_H, 1.05][pi];
     camTarget.target.copy(UP.clone().multiplyScalar(R + phaseH));
-    const kCam = paused ? 1 : Math.min(1, dt*0.6);
+    const kCam = paused ? 1 : Math.min(1, dt*0.55);
     camState.dist += (camTarget.dist - camState.dist) * kCam;
     camState.el += (camTarget.el - camState.el) * kCam;
     camState.target.lerp(camTarget.target, kCam);
@@ -1470,7 +1693,7 @@
     });
 
     if (post.setFocus) post.setFocus(camera.position.distanceTo(camState.target));
-    post.render(scene, camera, time);
+    post.render(scene, camera, time, camera.position);
     updateHUD(timeline);
 
     if (now - startAt > 2400) $('titlecard').classList.add('hide');
