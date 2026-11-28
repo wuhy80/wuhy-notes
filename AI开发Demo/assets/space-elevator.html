@@ -3,194 +3,226 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>轨道之环 · 太空电梯 3D 建模与组装动画</title>
+<title>轨道之环 · 太空电梯</title>
 <style>
   :root{
-    --bg:#02040a; --panel:rgba(4,12,22,.72); --line:rgba(0,229,255,.28);
-    --cyan:#00e5ff; --cyan-dim:rgba(0,229,255,.55); --magenta:#ff2bd6;
-    --amber:#ffb347; --text:#dff6ff; --muted:#7fa8bd; --mono:"JetBrains Mono","Cascadia Mono",Consolas,monospace;
+    --ink:#e8eef4;
+    --dim:#8fa3b8;
+    --steel:rgba(150,178,205,.35);
+    --amber:#ff9d4d;
+    --amber-hot:#ffc487;
+    --ice:#9fd8ff;
+    --red:#ff5a3c;
+    --mono:"JetBrains Mono","Cascadia Mono",Consolas,monospace;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;color:var(--text);
-    font-family:"PingFang SC","Microsoft YaHei",var(--mono);}
-  #stage{position:fixed;inset:0;display:block;width:100%;height:100%;cursor:grab}
+  html,body{margin:0;height:100%;background:#03060b;overflow:hidden;color:var(--ink);
+    font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif}
+
+  #stage{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:grab}
   #stage.drag{cursor:grabbing}
 
+  /* ---------- 电影幅面 ---------- */
+  .bar{position:fixed;left:0;right:0;height:0;background:#000;z-index:30;pointer-events:none;transition:height .6s ease}
+  .bar.top{top:0}.bar.bot{bottom:0}
+
+  /* ---------- 片头 ---------- */
+  .titlecard{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    z-index:20;pointer-events:none;transition:opacity 1.6s ease}
+  .titlecard.hide{opacity:0}
+  .titlecard h1{margin:0;font-size:clamp(34px,6.4vw,86px);font-weight:300;letter-spacing:.42em;
+    text-indent:.42em;color:#f4f8fb;text-shadow:0 0 40px rgba(160,210,255,.35)}
+  .titlecard .en{margin-top:18px;font-family:var(--mono);font-size:clamp(9px,1vw,12px);
+    letter-spacing:.55em;text-indent:.55em;color:rgba(159,216,255,.55)}
+  .titlecard .rule{width:min(420px,52vw);height:1px;margin:26px 0 0;
+    background:linear-gradient(90deg,transparent,rgba(159,216,255,.5),transparent)}
+
+  /* ---------- 字幕 ---------- */
+  .sub{position:fixed;left:50%;bottom:8.5%;transform:translateX(-50%);z-index:25;pointer-events:none;
+    text-align:center;max-width:min(1000px,86vw)}
+  .sub .zh{font-size:clamp(13px,1.35vw,17px);letter-spacing:.12em;color:#eef4f9;
+    text-shadow:0 2px 12px rgba(0,0,0,.9),0 0 2px rgba(0,0,0,1)}
+  .sub .en{margin-top:6px;font-family:var(--mono);font-size:10px;letter-spacing:.24em;color:rgba(159,216,255,.55)}
+
   /* ---------- HUD ---------- */
-  .hud{position:fixed;inset:0;pointer-events:none;z-index:10;
-    background:
-      radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(0,0,0,.55) 100%),
-      repeating-linear-gradient(0deg, rgba(0,229,255,.035) 0 1px, transparent 1px 3px);
-    mix-blend-mode:screen;}
-  .hud::after{content:"";position:absolute;inset:0;
-    background:linear-gradient(180deg, rgba(0,229,255,.05), transparent 30%, transparent 70%, rgba(255,43,214,.05));
-    animation:flicker 7s infinite;}
-  @keyframes flicker{0%,96%,100%{opacity:1}97%{opacity:.72}98%{opacity:.9}99%{opacity:.65}}
+  .hud{position:fixed;inset:0;z-index:15;pointer-events:none}
+  .corner{position:fixed;width:34px;height:34px;border:1px solid rgba(159,216,255,.22);z-index:16}
+  .c-tl{top:26px;left:26px;border-right:0;border-bottom:0}
+  .c-tr{top:26px;right:26px;border-left:0;border-bottom:0}
+  .c-bl{bottom:26px;left:26px;border-right:0;border-top:0}
+  .c-br{bottom:26px;right:26px;border-left:0;border-top:0}
 
-  .corner{position:fixed;width:46px;height:46px;border:1px solid var(--cyan-dim);opacity:.85;z-index:11;pointer-events:none}
-  .c-tl{top:18px;left:18px;border-right:0;border-bottom:0}
-  .c-tr{top:18px;right:18px;border-left:0;border-bottom:0}
-  .c-bl{bottom:18px;left:18px;border-right:0;border-top:0}
-  .c-br{bottom:18px;right:18px;border-left:0;border-top:0}
+  .left{position:fixed;left:30px;top:96px;width:min(258px,26vw);z-index:17}
+  .panel{background:linear-gradient(180deg,rgba(8,16,26,.62),rgba(5,10,17,.45));
+    border:1px solid rgba(159,216,255,.14);
+    border-left:2px solid rgba(255,157,77,.55);
+    padding:11px 13px;backdrop-filter:blur(4px)}
+  .panel + .panel{margin-top:10px}
+  .panel h2{margin:0 0 8px;font-family:var(--mono);font-size:9px;letter-spacing:.28em;
+    color:rgba(159,216,255,.65);text-transform:uppercase;display:flex;justify-content:space-between}
+  .panel h2 span{color:rgba(143,163,184,.6);letter-spacing:.1em}
 
-  .topbar{position:fixed;top:26px;left:0;right:0;display:flex;justify-content:center;z-index:12;pointer-events:none}
-  .title{text-align:center;letter-spacing:.32em;text-transform:uppercase}
-  .title h1{margin:0;font-size:clamp(15px,2.1vw,24px);font-weight:600;color:#eaffff;
-    text-shadow:0 0 12px rgba(0,229,255,.85),0 0 38px rgba(0,229,255,.35)}
-  .title p{margin:8px 0 0;font-family:var(--mono);font-size:10px;letter-spacing:.42em;color:var(--cyan-dim)}
+  .phases{list-style:none;margin:0;padding:0;font-size:11.5px}
+  .phases li{display:flex;gap:8px;align-items:center;padding:5px 2px;color:rgba(143,163,184,.75);
+    border-left:2px solid transparent;transition:.4s;letter-spacing:.03em}
+  .phases li b{font-family:var(--mono);font-size:9px;color:rgba(143,163,184,.45)}
+  .phases li.done{color:rgba(200,218,232,.8)}
+  .phases li.active{color:#fff;border-left-color:var(--amber);
+    background:linear-gradient(90deg,rgba(255,157,77,.10),transparent)}
+  .phases li.active b{color:var(--amber)}
+  .phases li .dot{width:5px;height:5px;border-radius:50%;background:rgba(159,216,255,.2);flex:0 0 auto}
+  .phases li.done .dot{background:rgba(159,216,255,.6)}
+  .phases li.active .dot{background:var(--amber-hot);box-shadow:0 0 10px var(--amber)}
+  .stateline{margin-top:8px;font-size:11px;line-height:1.6;color:rgba(200,218,232,.75);
+    border-top:1px dashed rgba(159,216,255,.12);padding-top:8px;min-height:34px}
 
-  .left{position:fixed;left:26px;top:104px;width:min(300px,30vw);z-index:12;pointer-events:none}
-  .panel{background:var(--panel);border:1px solid var(--line);padding:14px 16px;position:relative;
-    box-shadow:0 0 26px rgba(0,229,255,.08), inset 0 0 30px rgba(0,229,255,.04);
-    backdrop-filter:blur(3px)}
-  .panel+ .panel{margin-top:14px}
-  .panel h2{margin:0 0 10px;font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--cyan-dim);
-    text-transform:uppercase;display:flex;justify-content:space-between}
-  .panel h2 span{color:var(--muted);letter-spacing:.1em}
-
-  .phases{list-style:none;margin:0;padding:0;font-size:12px}
-  .phases li{display:flex;gap:9px;align-items:center;padding:6px 2px;color:var(--muted);
-    border-left:2px solid transparent;transition:.35s;letter-spacing:.04em}
-  .phases li b{font-family:var(--mono);font-size:10px;color:#4d6d80}
-  .phases li.done{color:#8fd8e6}
-  .phases li.active{color:#fff;border-left-color:var(--cyan);background:linear-gradient(90deg,rgba(0,229,255,.12),transparent)}
-  .phases li.active b{color:var(--cyan)}
-  .phases li .dot{width:6px;height:6px;border-radius:50%;background:#274050;flex:0 0 auto}
-  .phases li.done .dot{background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
-  .phases li.active .dot{background:#fff;box-shadow:0 0 12px var(--cyan)}
-
-  .telemetry{position:fixed;right:26px;top:104px;width:min(280px,28vw);z-index:12;pointer-events:none}
-  .kv{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;padding:5px 0;
-    border-bottom:1px dashed rgba(0,229,255,.12);color:var(--muted)}
+  .telemetry{position:fixed;right:30px;top:96px;width:min(238px,24vw);z-index:17}
+  .kv{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;padding:4px 0;
+    border-bottom:1px dashed rgba(159,216,255,.09);color:rgba(143,163,184,.8)}
   .kv:last-child{border-bottom:0}
-  .kv b{color:#eaffff;font-weight:500;letter-spacing:.06em}
-  .kv b.hot{color:var(--amber);text-shadow:0 0 8px rgba(255,179,71,.6)}
-  .bar{height:5px;background:rgba(0,229,255,.12);margin-top:9px;overflow:hidden}
-  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),#9ff8ff);
-    box-shadow:0 0 12px var(--cyan);transition:width .2s linear}
+  .kv b{color:#e6eef6;font-weight:500;letter-spacing:.04em}
+  .kv b.hot{color:var(--amber)}
+  .bar{position:relative;height:3px;background:rgba(159,216,255,.10);margin-top:8px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--amber),var(--amber-hot));
+    box-shadow:0 0 10px rgba(255,157,77,.7);transition:width .2s linear}
 
-  .bottombar{position:fixed;left:26px;right:26px;bottom:26px;display:flex;align-items:center;gap:16px;z-index:12}
-  .scrub{flex:1;height:26px;position:relative;pointer-events:auto;cursor:pointer}
-  .scrub .track{position:absolute;left:0;right:0;top:11px;height:2px;background:rgba(0,229,255,.16)}
-  .scrub .fill{position:absolute;left:0;top:11px;height:2px;background:var(--cyan);box-shadow:0 0 10px var(--cyan);width:0}
+  .bottombar{position:fixed;left:30px;right:30px;bottom:34px;display:flex;align-items:center;gap:14px;z-index:18}
+  .scrub{flex:1;height:22px;position:relative;pointer-events:auto;cursor:pointer}
+  .scrub .track{position:absolute;left:0;right:0;top:10px;height:1px;background:rgba(159,216,255,.16)}
+  .scrub .fill{position:absolute;left:0;top:10px;height:1px;background:var(--amber);box-shadow:0 0 10px var(--amber);width:0}
   .scrub .ticks{position:absolute;inset:0;display:flex}
-  .scrub .ticks i{flex:1;border-left:1px solid rgba(0,229,255,.18);margin-top:8px;height:8px}
-  .ctl{pointer-events:auto;display:flex;gap:8px}
-  button{appearance:none;background:rgba(0,229,255,.06);color:var(--text);border:1px solid var(--line);
-    font-family:var(--mono);font-size:11px;letter-spacing:.12em;padding:7px 12px;cursor:pointer;
-    transition:.2s;text-transform:uppercase}
-  button:hover{background:rgba(0,229,255,.16);border-color:var(--cyan);box-shadow:0 0 16px rgba(0,229,255,.25)}
-  .clock{font-family:var(--mono);font-size:11px;color:var(--cyan-dim);letter-spacing:.14em;min-width:118px;text-align:right}
-  .status{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.16em}
-  .led{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 10px var(--amber);animation:pulse 1.4s infinite}
-  .led.ok{background:#3dffa8;box-shadow:0 0 10px #3dffa8}
-  @keyframes pulse{50%{opacity:.35}}
-  .hint{position:fixed;left:50%;top:96px;transform:translateX(-50%);font-family:var(--mono);font-size:10px;
-    letter-spacing:.18em;color:rgba(127,168,189,.7);z-index:12;pointer-events:none}
-  @media (max-width:900px){
-    .left,.telemetry{display:none}
-    .bottombar{bottom:16px;left:14px;right:14px}
+  .scrub .ticks i{flex:1;border-left:1px solid rgba(159,216,255,.14);margin-top:7px;height:7px}
+  button{appearance:none;background:rgba(159,216,255,.04);color:#dbe6ef;border:1px solid rgba(159,216,255,.22);
+    font-family:var(--mono);font-size:10px;letter-spacing:.14em;padding:6px 11px;cursor:pointer;transition:.2s}
+  button:hover{background:rgba(255,157,77,.12);border-color:var(--amber);color:#fff}
+  .clock{font-family:var(--mono);font-size:10.5px;color:rgba(159,216,255,.6);letter-spacing:.14em;
+    min-width:104px;text-align:right}
+  .hint{position:fixed;left:50%;top:78px;transform:translateX(-50%);font-family:var(--mono);font-size:9px;
+    letter-spacing:.16em;color:rgba(143,163,184,.45);z-index:17;pointer-events:none}
+  .hint.hide{opacity:0;transition:opacity 1s}
+
+  @media (max-width:920px){
+    .left,.telemetry,.hint{display:none}
+    .bottombar{left:14px;right:14px;bottom:20px}
+    .sub{bottom:12%}
   }
 </style>
 </head>
 <body>
 <canvas id="stage"></canvas>
-<div class="hud"></div>
-<div class="corner c-tl"></div><div class="corner c-tr"></div>
-<div class="corner c-bl"></div><div class="corner c-br"></div>
 
-<div class="topbar">
-  <div class="title">
-    <h1>轨道之环 · 太空电梯</h1>
-    <p>ORBITAL RING // SPACE ELEVATOR · ASSEMBLY SEQUENCE</p>
-  </div>
+<div class="bar top" id="barTop"></div>
+<div class="bar bot" id="barBot"></div>
+
+<div class="titlecard" id="titlecard">
+  <h1>轨道之环</h1>
+  <div class="en">THE ORBITAL RING · A SPACE ELEVATOR</div>
+  <div class="rule"></div>
 </div>
 
-<div class="left">
-  <div class="panel">
-    <h2>装配序列 <span id="phaseCode">SEQ 00</span></h2>
-    <ul class="phases" id="phaseList">
-      <li data-p="0"><span class="dot"></span><b>01</b> 地基锚点与载荷发射</li>
-      <li data-p="1"><span class="dot"></span><b>02</b> 配重入轨 · 初始缆索</li>
-      <li data-p="2"><span class="dot"></span><b>03</b> 主缆延伸 · 分段锁扣</li>
-      <li data-p="3"><span class="dot"></span><b>04</b> 攀爬舱装配与试运行</li>
-      <li data-p="4"><span class="dot"></span><b>05</b> 同步轨道站合拢</li>
-      <li data-p="5"><span class="dot"></span><b>06</b> 能量注入 · 系统上线</li>
-    </ul>
-  </div>
-  <div class="panel">
-    <h2>系统状态 <span id="sysState">STANDBY</span></h2>
-    <div class="status"><span class="led" id="led"></span><span id="sysText">等待指令</span></div>
-    <div class="bar"><i id="progress"></i></div>
-  </div>
-</div>
+<div class="hud">
+  <div class="corner c-tl"></div><div class="corner c-tr"></div>
+  <div class="corner c-bl"></div><div class="corner c-br"></div>
 
-<div class="telemetry">
-  <div class="panel">
-    <h2>遥测 <span>TELEMETRY</span></h2>
-    <div class="kv"><span>当前高度</span><b id="alt">0 km</b></div>
-    <div class="kv"><span>缆索张力</span><b id="tension">0.00 GN</b></div>
-    <div class="kv"><span>已装配分段</span><b id="segs" class="hot">0 / 64</b></div>
-    <div class="kv"><span>攀爬舱</span><b id="climbers">0 / 4</b></div>
-    <div class="kv"><span>轨道站模块</span><b id="modules">0 / 12</b></div>
-    <div class="kv"><span>能量流</span><b id="energy">0%</b></div>
+  <div class="left">
+    <div class="panel">
+      <h2>装配序列 <span id="phaseCode">SEQ 00</span></h2>
+      <ul class="phases" id="phaseList">
+        <li data-p="0"><span class="dot"></span><b>01</b> 赤道锚点 · 载荷发射</li>
+        <li data-p="1"><span class="dot"></span><b>02</b> 配重入轨 · 初始缆索</li>
+        <li data-p="2"><span class="dot"></span><b>03</b> 主缆延伸 · 分段锁扣</li>
+        <li data-p="3"><span class="dot"></span><b>04</b> 攀爬舱装配 · 试运行</li>
+        <li data-p="4"><span class="dot"></span><b>05</b> 同步轨道站合拢</li>
+        <li data-p="5"><span class="dot"></span><b>06</b> 能量注入 · 系统上线</li>
+      </ul>
+      <div class="stateline" id="stateline">等待指令</div>
+    </div>
   </div>
-</div>
 
-<div class="bottombar">
-  <button id="btnPlay">暂停</button>
-  <div class="scrub" id="scrub">
-    <div class="track"></div><div class="fill" id="scrubFill"></div>
-    <div class="ticks"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="telemetry">
+    <div class="panel">
+      <h2>遥测 <span>TELEMETRY</span></h2>
+      <div class="kv"><span>当前高度</span><b id="alt">0 km</b></div>
+      <div class="kv"><span>缆索张力</span><b id="tension">0.00 GN</b></div>
+      <div class="kv"><span>已装配分段</span><b id="segs" class="hot">0 / 64</b></div>
+      <div class="kv"><span>攀爬舱</span><b id="climbers">0 / 4</b></div>
+      <div class="kv"><span>轨道站模块</span><b id="modules">0 / 12</b></div>
+      <div class="kv"><span>能量流</span><b id="energy">0%</b></div>
+      <div class="bar"><i id="progress"></i></div>
+    </div>
   </div>
-  <div class="ctl"><button id="btnReplay">重播</button><button id="btnView">视角</button></div>
-  <div class="clock" id="clock">T+ 00:00</div>
+
+  <div class="bottombar">
+    <button id="btnPlay">暂停</button>
+    <div class="scrub" id="scrub">
+      <div class="track"></div><div class="fill" id="scrubFill"></div>
+      <div class="ticks"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="ctl"><button id="btnReplay">重播</button><button id="btnView">视角</button></div>
+    <div class="clock" id="clock">T+ 00:00</div>
+  </div>
+
+  <div class="hint" id="hint">拖拽旋转 · 滚轮缩放 · 空格暂停 · R 重播 · 1–6 跳转</div>
+
+  <div class="sub">
+    <div class="zh" id="subZh">赤道锚点：巨型基座与配重载荷准备就绪</div>
+    <div class="en" id="subEn">EQUATORIAL ANCHOR — LAUNCH SEQUENCE</div>
+  </div>
 </div>
-<div class="hint">拖拽旋转 · 滚轮缩放 · 空格暂停 · R 重播 · 1–6 跳转阶段</div>
 
 <script>
 (() => {
   "use strict";
-  window.addEventListener('error', (e) => {
-    const d = document.createElement('div');
-    d.style.cssText = 'position:fixed;left:20px;bottom:80px;max-width:80vw;color:#ff5f6d;font:12px monospace;z-index:999;background:#200;padding:6px';
-    d.textContent = 'ERR: ' + (e.message || e.error) + ' @' + (e.filename || '') + ':' + (e.lineno || '');
-    document.body.appendChild(d);
-    document.title = 'ERR ' + e.message;
-  });
+  window.addEventListener('error', e => { document.title = 'ERR ' + e.message; });
+
   const canvas = document.getElementById('stage');
   const ctx = canvas.getContext('2d');
   const $ = id => document.getElementById(id);
 
-  // ---------- config ----------
-  const R = 1;                       // Earth radius (scene unit)
-  const TETHER_LEN = 4.8;            // compressed visual length
-  const GEO_Y = R + 2.6;             // geostationary station
-  const TOP_Y = R + TETHER_LEN;      // counterweight
+  /* ================= 基础数学 ================= */
+  const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+  const norm = v => { const l = Math.hypot(v[0],v[1],v[2]) || 1; return [v[0]/l, v[1]/l, v[2]/l]; };
+  const sub = (a,b) => [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
+  const add = (a,b) => [a[0]+b[0], a[1]+b[1], a[2]+b[2]];
+  const mul = (a,s) => [a[0]*s, a[1]*s, a[2]*s];
+  const dot = (a,b) => a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+  const cross = (a,b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+  const lerp = (a,b,t) => a + (b-a)*t;
+  const ease = t => t<.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2;
+  const smooth = t => t*t*(3-2*t);
+  const hexA = (hex,a) => { const n=parseInt(hex.slice(1),16);
+    return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; };
+
+  /* ================= 场景常量 ================= */
+  const R = 1;                 // 地球半径
+  const TETHER = 4.8;          // 视觉压缩后的缆索长度
+  const GEO_Y = R + 2.6;
+  const TOP_Y = R + TETHER;
   const SEGMENTS = 64;
-  const SUN = norm([-0.62, 0.38, 0.68]);
+  const SUN = norm([-0.66, 0.30, 0.68]);
+  // 赤道锚点方向：与相机视线近似垂直，落在球体左缘
+  const UP = norm([0.30, 0.80, 0.50]);
+  const E1 = norm(cross(UP, [0,1,0]));
+  const E2 = cross(UP, E1);
+  const anchorPos = h => add(mul(UP, R + h), [0,0,0]);
+  const ringPos = (h, ang, d) => add(mul(UP, R + h), add(mul(E1, Math.cos(ang)*d), mul(E2, Math.sin(ang)*d)));
+  const AMBER = '#ff9d4d';
+  const ICE = '#9fd8ff';
 
   const params = new URLSearchParams(location.search);
   let paused = params.has('pause');
   let timeline = params.has('t') ? clamp(parseFloat(params.get('t')), 0, 1) : 0;
   let autoPlay = !params.has('t');
 
-  // ---------- math ----------
-  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
-  function norm(v){ const l = Math.hypot(v[0],v[1],v[2]) || 1; return [v[0]/l, v[1]/l, v[2]/l]; }
-  function sub(a,b){ return [a[0]-b[0], a[1]-b[1], a[2]-b[2]]; }
-  function add(a,b){ return [a[0]+b[0], a[1]+b[1], a[2]+b[2]]; }
-  function mul(a,s){ return [a[0]*s, a[1]*s, a[2]*s]; }
-  function dot(a,b){ return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; }
-  function cross(a,b){ return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]; }
-  function lerp(a,b,t){ return a+(b-a)*t; }
-  function ease(t){ return t<.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2; }
-  function smooth(t){ return t*t*(3-2*t); }
-
-  // ---------- camera ----------
-  const cam = { az: 0.35, el: 0.05, dist: 8.1, target: [0, 3.0, 0] };
-  let dragging = false, lastX = 0, lastY = 0, userAz = cam.az, autoSpin = true;
+  /* ================= 相机 ================= */
+  const cam = { az: 0.42, el: 0.02, dist: 5.6, target: [0, 2.35, 0] };
+  function followTarget(){
+    const h = 1.15 + 1.75 * tetherBuilt(timeline);
+    cam.target = add(mul(UP, R + h), [0,0,0]);
+  }
+  let dragging = false, lastX = 0, lastY = 0, autoSpin = true;
   const view = {};
+  let shake = 0;
 
   function updateCamera(){
     const ce = Math.cos(cam.el), se = Math.sin(cam.el);
@@ -204,7 +236,8 @@
     const up = cross(right, fwd);
     view.pos = pos; view.fwd = fwd; view.right = right; view.up = up;
     view.focal = Math.min(canvas.width, canvas.height) * 0.92;
-    view.cx = canvas.width / 2; view.cy = canvas.height / 2;
+    view.cx = canvas.width / 2;
+    view.cy = canvas.height / 2 + Math.sin(shake*9)*shake*7;
   }
   function project(p){
     const v = sub(p, view.pos);
@@ -212,505 +245,997 @@
     if (z <= 0.12) return null;
     const x = dot(v, view.right), y = dot(v, view.up);
     const f = view.focal / z;
-    return { x: view.cx + x*f, y: view.cy - y*f, z, f };
+    return { x: view.cx + x*f + Math.sin(shake*13)*shake*5, y: view.cy - y*f, z, f };
   }
 
-  // ---------- resize ----------
-  let W = 0, H = 0, DPR = 1;
+  /* ================= 尺寸 ================= */
+  let W=0,H=0,DPR=1;
   function resize(){
     DPR = Math.min(window.devicePixelRatio || 1, 2);
     W = canvas.clientWidth; H = canvas.clientHeight;
-    canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
+    canvas.width = Math.round(W*DPR); canvas.height = Math.round(H*DPR);
     ctx.setTransform(DPR,0,0,DPR,0,0);
+    layoutBars();
     updateCamera();
   }
   window.addEventListener('resize', resize);
 
-  // ---------- static decorations ----------
-  const stars = Array.from({length: 420}, () => ({
-    az: Math.random()*Math.PI*2, el: (Math.random()-0.5)*Math.PI*0.96,
-    d: 40 + Math.random()*40, s: Math.random()*1.4 + .3, ph: Math.random()*Math.PI*2
-  }));
-  const cityLights = Array.from({length: 190}, () => {
-    const u = Math.random()*2-1, th = Math.random()*Math.PI*2;
-    const r = Math.sqrt(1-u*u);
-    return { n: [r*Math.cos(th), u, r*Math.sin(th)], ph: Math.random()*Math.PI*2 };
-  });
+  // 2.39:1 电影幅面：窗口越高，黑边越厚
+  function layoutBars(){
+    const target = W / 2.39;
+    const bar = Math.min(Math.max(0, (H - target) / 2), H * 0.10);
+    $('barTop').style.height = bar + 'px';
+    $('barBot').style.height = bar + 'px';
+  }
 
-  // ---------- timeline phases ----------
+  /* ================= 时间轴 ================= */
   const PHASES = [
-    { from: 0.00, to: 0.14, name: '地基锚点与载荷发射', code: 'SEQ 01', state: 'LAUNCH', text: '运载器从赤道锚点起飞，向同步轨道投送配重与始发缆索' },
-    { from: 0.14, to: 0.30, name: '配重入轨 · 初始缆索', code: 'SEQ 02', state: 'SEED',   text: '配重到达高位轨道，始发缆索自上而下展开' },
-    { from: 0.30, to: 0.55, name: '主缆延伸 · 分段锁扣', code: 'SEQ 03', state: 'SPIN',   text: '主缆逐段延伸，锁扣环依次闭合，张力逐步建立' },
-    { from: 0.55, to: 0.74, name: '攀爬舱装配与试运行', code: 'SEQ 04', state: 'CLIMB',  text: '四个攀爬舱挂载缆索，开始低速往返试运行' },
-    { from: 0.74, to: 0.90, name: '同步轨道站合拢', code: 'SEQ 05', state: 'DOCK',     text: '轨道站模块沿环向依次对接，形成完整的同步轨道枢纽' },
-    { from: 0.90, to: 1.00, name: '能量注入 · 系统上线', code: 'SEQ 06', state: 'ONLINE', text: '能量脉冲贯穿全索，系统自检通过，太空电梯正式上线' }
+    { from:0.00, to:0.14, name:'赤道锚点 · 载荷发射', code:'SEQ 01', state:'LAUNCH',
+      zh:'赤道锚点，巨型基座与配重载荷准备就绪', en:'EQUATORIAL ANCHOR — LAUNCH SEQUENCE' },
+    { from:0.14, to:0.30, name:'配重入轨 · 初始缆索', code:'SEQ 02', state:'SEED',
+      zh:'配重抵达高位轨道，初始缆索自上而下展开', en:'COUNTERWEIGHT IN ORBIT — SEED TETHER DEPLOYED' },
+    { from:0.30, to:0.55, name:'主缆延伸 · 分段锁扣', code:'SEQ 03', state:'SPIN',
+      zh:'主缆逐段延伸，锁扣环依次闭合，张力建立', en:'MAIN TETHER EXTENSION — SEGMENT LOCKS ENGAGED' },
+    { from:0.55, to:0.74, name:'攀爬舱装配 · 试运行', code:'SEQ 04', state:'CLIMB',
+      zh:'攀爬舱挂载缆索，开始低速往返试运行', en:'CLIMBER ASSEMBLY — LOW-SPEED TRIAL RUN' },
+    { from:0.74, to:0.90, name:'同步轨道站合拢', code:'SEQ 05', state:'DOCK',
+      zh:'轨道站模块沿环向依次对接', en:'GEOSTATIONARY STATION — MODULE DOCKING' },
+    { from:0.90, to:1.00, name:'能量注入 · 系统上线', code:'SEQ 06', state:'ONLINE',
+      zh:'能量脉冲贯穿全索，系统自检通过', en:'POWER INJECTION — SYSTEM ONLINE' }
   ];
-  function phaseIndex(t){
-    for (let i = PHASES.length-1; i >= 0; i--) if (t >= PHASES[i].from) return i;
-    return 0;
-  }
-  function phaseProgress(t, i){
-    const p = PHASES[i];
-    return clamp((t - p.from) / (p.to - p.from), 0, 1);
-  }
+  const phaseIndex = t => { for (let i=PHASES.length-1;i>=0;i--) if (t>=PHASES[i].from) return i; return 0; };
+  const phaseProgress = (t,i) => clamp((t-PHASES[i].from)/(PHASES[i].to-PHASES[i].from),0,1);
 
-  // ---------- derived state ----------
-  function tetherBuilt(t){            // 0..1 how much tether is built
+  function tetherBuilt(t){
     if (t < PHASES[1].from) return 0;
     if (t < PHASES[1].to) return 0.18 * ease(phaseProgress(t,1));
     if (t < PHASES[2].to) return 0.18 + 0.82 * smooth(phaseProgress(t,2));
     return 1;
   }
-  function builtSegments(t){ return Math.round(tetherBuilt(t) * SEGMENTS); }
-  function stationModules(t){
-    if (t < PHASES[4].from) return 0;
-    return Math.floor(phaseProgress(t,4) * 12 + 0.001);
-  }
-  function climberCount(t){
-    if (t < PHASES[3].from) return 0;
-    return Math.min(4, Math.ceil(phaseProgress(t,3) * 4));
-  }
-  function energyLevel(t){
-    if (t < PHASES[5].from) return 0;
-    return Math.floor(phaseProgress(t,5) * 100);
-  }
-  function altitudeKm(t){
-    const maxKm = 36000;
-    return Math.round(tetherBuilt(t) * maxKm);
-  }
+  const builtSegments = t => Math.round(tetherBuilt(t)*SEGMENTS);
+  const stationModules = t => t < PHASES[4].from ? 0 : Math.floor(phaseProgress(t,4)*12 + 0.001);
+  const climberCount = t => t < PHASES[3].from ? 0 : Math.min(4, Math.ceil(phaseProgress(t,3)*4));
+  const energyLevel = t => t < PHASES[5].from ? 0 : Math.floor(phaseProgress(t,5)*100);
+  const altitudeKm = t => Math.round(tetherBuilt(t)*36000);
 
-  // ---------- drawing helpers ----------
-  function glowLine(a, b, color, width, alpha){
+  /* ================= 静态元素 ================= */
+  const rnd = (a,b) => a + Math.random()*(b-a);
+  const rand = rnd;
+
+  // 星空：按方向存，投影时用远距离
+  const stars = Array.from({length: 620}, () => {
+    const u = rnd(-1,1), th = rnd(0,Math.PI*2), r = Math.sqrt(1-u*u);
+    return { dir:[r*Math.cos(th), u, r*Math.sin(th)], d: rnd(55,80), s: rnd(.4,1.5), tw: rnd(0,Math.PI*2) };
+  });
+
+  // 城市灯光：球面方向 + 强度
+  const cities = Array.from({length: 260}, () => {
+    const u = rnd(-.95,.95), th = rnd(0,Math.PI*2), r = Math.sqrt(1-u*u);
+    return { n:[r*Math.cos(th), u, r*Math.sin(th)], k: Math.random()**2, ph: rnd(0,6.28) };
+  });
+
+  // 大陆：用球面多边形近似（经纬度点列）
+  function blob(cLat, cLon, rr, n){
+    const pts=[];
+    for (let i=0;i<=n;i++){
+      const a = i/n*Math.PI*2;
+      const rad = rr * (0.55 + 0.45*Math.sin(a*3 + cLat*7 + cLon*3));
+      const lat = cLat + Math.sin(a)*rad, lon = cLon + Math.cos(a)*rad*1.5;
+      pts.push([lat, lon]);
+    }
+    return pts;
+  }
+  const CONTINENTS = [
+    blob(20, 15, 16, 30), blob(8, 60, 12, 24), blob(-12, 35, 13, 24),
+    blob(48, 90, 18, 28), blob(38, -100, 15, 26), blob(-18, -60, 11, 22),
+    blob(-28, 135, 9, 20), blob(62, -40, 9, 18), blob(25, 105, 10, 20),
+    blob(-38, -70, 7, 16),
+  ];
+  const latLonToVec = (lat, lon) => {
+    const la = lat*Math.PI/180, lo = lon*Math.PI/180;
+    return [Math.cos(la)*Math.cos(lo), Math.sin(la), Math.cos(la)*Math.sin(lo)];
+  };
+
+  // 尘埃/雪：屏幕空间粒子（视差）
+  const dust = Array.from({length: 140}, () => ({
+    x: Math.random(), y: Math.random(), z: rnd(.2,1),
+    vx: rnd(-.004,.004), vy: rnd(.002,.01), s: rnd(.5,1.6), ph: rnd(0,6.28)
+  }));
+
+  // 发射烟雾（基座）
+  const plumes = [];
+  const trailParts = [];
+
+  /* ================= 绘制辅助 ================= */
+  function glowLine(a,b,color,width,alpha){
     const A = project(a), B = project(b);
     if (!A || !B) return;
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
-    ctx.strokeStyle = color; ctx.lineCap = 'round';
-    ctx.globalAlpha = alpha * 0.22; ctx.lineWidth = width * 4;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = alpha*0.16; ctx.lineWidth = width*5;
     ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.stroke();
     ctx.globalAlpha = alpha; ctx.lineWidth = width;
     ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.stroke();
     ctx.restore();
   }
-  function glowDot(p, r, color, alpha){
+
+  function glowDot(p, size, color, alpha){
     const P = project(p); if (!P) return;
-    const rr = Math.max(1, r * P.f);
+    const rr = Math.max(1, size*P.f);
     ctx.save(); ctx.globalCompositeOperation = 'lighter';
-    const g = ctx.createRadialGradient(P.x,P.y,0,P.x,P.y,rr*4);
-    g.addColorStop(0, color); g.addColorStop(.28, color); g.addColorStop(1, 'transparent');
+    const g = ctx.createRadialGradient(P.x,P.y,0,P.x,P.y,rr*5);
+    g.addColorStop(0, hexA(color,.95));
+    g.addColorStop(.3, hexA(color,.35));
+    g.addColorStop(1, hexA(color,0));
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(P.x,P.y,rr*4,0,Math.PI*2); ctx.fill();
-    ctx.globalAlpha = Math.min(1, alpha*1.6); ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(P.x,P.y,Math.max(0.8, rr*.5),0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(P.x,P.y,rr*5,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha = Math.min(1, alpha*1.5);
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(P.x,P.y,Math.max(.7,rr*.45),0,Math.PI*2); ctx.fill();
     ctx.restore();
   }
-  function label(p, text, color, alpha, size=10){
+
+  function hudLabel(p, text, color, alpha, size=9){
     const P = project(p); if (!P) return;
     ctx.save();
     ctx.font = `${size}px "Cascadia Mono",Consolas,monospace`;
     ctx.fillStyle = color; ctx.globalAlpha = alpha;
-    ctx.fillText(text, P.x + 10, P.y - 8);
+    ctx.textAlign = 'left';
+    ctx.fillText(text, P.x+9, P.y-7);
     ctx.restore();
   }
 
-  // ---------- Earth ----------
+  /* ================= 太空背景 ================= */
+  function drawSpace(time){
+    // 底色：深蓝黑，带一点冷调渐变
+    const bg = ctx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,'#02050a');
+    bg.addColorStop(.55,'#03070f');
+    bg.addColorStop(1,'#010308');
+    ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+
+
+    // 星星
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (const s of stars){
+      const P = project(mul(s.dir, s.d)); if (!P) continue;
+      const tw = .55 + .45*Math.sin(time*1.6 + s.tw);
+      ctx.globalAlpha = .35*tw;
+      ctx.fillStyle = s.s > 1.1 ? '#dceeff' : '#bcd4e8';
+      ctx.beginPath(); ctx.arc(P.x, P.y, s.s, 0, Math.PI*2); ctx.fill();
+      if (s.s > 1.25){
+        ctx.globalAlpha = .12*tw;
+        ctx.beginPath(); ctx.arc(P.x, P.y, s.s*5, 0, Math.PI*2); ctx.fill();
+      }
+    }
+    ctx.restore();
+
+    // 太阳：暖色核心 + 横向拉丝（变形宽银幕）
+    const SP = project(mul(SUN, 70));
+    if (SP){
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createRadialGradient(SP.x,SP.y,0,SP.x,SP.y,Math.min(W,H)*0.55);
+      g.addColorStop(0,'rgba(255,246,228,.95)');
+      g.addColorStop(.06,'rgba(255,226,180,.65)');
+      g.addColorStop(.22,'rgba(255,170,90,.12)');
+      g.addColorStop(1,'rgba(255,150,80,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(SP.x,SP.y,Math.min(W,H)*0.55,0,Math.PI*2); ctx.fill();
+
+      // 横向光晕
+      const st = ctx.createLinearGradient(SP.x-W*0.4, SP.y, SP.x+W*0.4, SP.y);
+      st.addColorStop(0,'rgba(120,180,255,0)');
+      st.addColorStop(.5,'rgba(180,215,255,.10)');
+      st.addColorStop(1,'rgba(120,180,255,0)');
+      ctx.fillStyle = st;
+      ctx.fillRect(SP.x-W*0.4, SP.y-1.2, W*0.8, 2.4);
+      ctx.restore();
+    }
+  }
+
+  /* ================= 地球 ================= */
   function drawEarth(time, t){
     const C = project([0,0,0]); if (!C) return;
     const edge = project([R,0,0]);
-    const radius = edge ? Math.hypot(edge.x - C.x, edge.y - C.y) : 200;
+    const rad = edge ? Math.hypot(edge.x-C.x, edge.y-C.y) : Math.min(W,H)*0.3;
+    const sunSide = norm([dot(SUN, view.right), -dot(SUN, view.up), 0]);
 
     ctx.save();
-    // atmosphere outer glow
-    let g = ctx.createRadialGradient(C.x,C.y,radius*.92,C.x,C.y,radius*1.55);
-    g.addColorStop(0,'rgba(0,229,255,.34)');
-    g.addColorStop(.45,'rgba(0,150,255,.12)');
-    g.addColorStop(1,'transparent');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(C.x,C.y,radius*1.55,0,Math.PI*2); ctx.fill();
 
-    // base sphere
-    g = ctx.createRadialGradient(C.x-radius*.35,C.y-radius*.42,radius*.1,C.x,C.y,radius*1.05);
-    g.addColorStop(0,'#0d3a5c'); g.addColorStop(.55,'#071d33'); g.addColorStop(1,'#020913');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(C.x,C.y,radius,0,Math.PI*2); ctx.fill();
+    // 大气外辉光（冷蓝，越靠边缘越亮）
+    let g = ctx.createRadialGradient(C.x,C.y,rad*.97,C.x,C.y,rad*1.5);
+    g.addColorStop(0,'rgba(120,190,255,.34)');
+    g.addColorStop(.4,'rgba(60,120,200,.10)');
+    g.addColorStop(1,'rgba(30,70,130,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(C.x,C.y,rad*1.5,0,Math.PI*2); ctx.fill();
 
-    // rotating wireframe grid (hologram)
+    // 海洋基底
+    g = ctx.createRadialGradient(
+      C.x + sunSide[0]*rad*.35, C.y + sunSide[1]*rad*.35, rad*.05,
+      C.x, C.y, rad*1.05);
+    g.addColorStop(0,'#1b3550');
+    g.addColorStop(.35,'#0e2136');
+    g.addColorStop(.75,'#071626');
+    g.addColorStop(1,'#030a12');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(C.x,C.y,rad,0,Math.PI*2); ctx.fill();
+
+    // 球体裁剪
     ctx.save();
-    ctx.beginPath(); ctx.arc(C.x,C.y,radius,0,Math.PI*2); ctx.clip();
-    ctx.globalCompositeOperation = 'lighter';
-    const rot = time * 0.05;
-    for (let lat = -75; lat <= 75; lat += 15){
-      const phi = lat * Math.PI/180, ringR = Math.cos(phi), y = Math.sin(phi);
-      ctx.beginPath(); let started = false;
-      for (let lon = 0; lon <= 360; lon += 6){
-        const th = lon * Math.PI/180 + rot;
-        const p = project([ringR*Math.cos(th)*R, y*R, ringR*Math.sin(th)*R]);
-        if (!p) { started = false; continue; }
-        if (!started){ ctx.moveTo(p.x,p.y); started = true; } else ctx.lineTo(p.x,p.y);
-      }
-      ctx.strokeStyle = 'rgba(0,229,255,.17)'; ctx.lineWidth = 1; ctx.stroke();
-    }
-    for (let lon = 0; lon < 180; lon += 15){
-      const th = lon * Math.PI/180 + rot;
-      ctx.beginPath(); let started = false;
-      for (let lat = -90; lat <= 90; lat += 6){
-        const phi = lat * Math.PI/180;
-        const p = project([Math.cos(phi)*Math.cos(th)*R, Math.sin(phi)*R, Math.cos(phi)*Math.sin(th)*R]);
-        if (!p) { started = false; continue; }
-        if (!started){ ctx.moveTo(p.x,p.y); started = true; } else ctx.lineTo(p.x,p.y);
-      }
-      ctx.strokeStyle = 'rgba(0,229,255,.12)'; ctx.lineWidth = 1; ctx.stroke();
-    }
-    ctx.restore();
+    ctx.beginPath(); ctx.arc(C.x,C.y,rad,0,Math.PI*2); ctx.clip();
 
-    // night-side city lights
-    ctx.save(); ctx.beginPath(); ctx.arc(C.x,C.y,radius,0,Math.PI*2); ctx.clip();
-    ctx.globalCompositeOperation = 'lighter';
-    cityLights.forEach((c,i) => {
-      const p = project([c.n[0]*R, c.n[1]*R, c.n[2]*R]);
-      if (!p) return;
-      const night = clamp(-dot(c.n, SUN), 0, 1);
-      if (night < 0.25) return;
-      const tw = .55 + .45*Math.sin(time*3 + c.ph);
-      ctx.globalAlpha = 0.28 * night * tw;
-      ctx.fillStyle = i % 7 === 0 ? '#ffd9a0' : '#9ff8ff';
-      ctx.beginPath(); ctx.arc(p.x,p.y, 1.1 + Math.random()*0.2, 0, Math.PI*2); ctx.fill();
+    const rot = time*0.006;
+
+    // 大陆：低饱和的暗陆地
+    CONTINENTS.forEach((poly, ci) => {
+      ctx.beginPath();
+      let started = false;
+      for (const [la,lo] of poly){
+        const v = latLonToVec(la, lo + rot*57.3);
+        if (dot(v, norm(sub(view.pos,[0,0,0]))) < -0.08) { started = false; continue; }
+        const P = project(mul(v, R*0.997));
+        if (!P){ started=false; continue; }
+        if (!started){ ctx.moveTo(P.x,P.y); started=true; } else ctx.lineTo(P.x,P.y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = ci % 3 === 0 ? 'rgba(40,48,40,.30)' : 'rgba(34,42,36,.24)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(90,100,90,.06)';
+      ctx.lineWidth = .7;
+      ctx.stroke();
     });
-    ctx.restore();
 
-    // terminator shadow overlay
-    ctx.save(); ctx.beginPath(); ctx.arc(C.x,C.y,radius,0,Math.PI*2); ctx.clip();
-    const sunScreen = norm([dot(SUN, view.right), -dot(SUN, view.up), 0]);
-    const sx = C.x + sunScreen[0]*radius*1.4, sy = C.y + sunScreen[1]*radius*1.4;
-    const sg = ctx.createLinearGradient(C.x - sunScreen[0]*radius, C.y - sunScreen[1]*radius, sx, sy);
-    sg.addColorStop(0,'rgba(0,0,0,0)'); sg.addColorStop(.45,'rgba(0,2,8,.15)'); sg.addColorStop(1,'rgba(0,2,8,.82)');
-    ctx.fillStyle = sg; ctx.fillRect(C.x-radius,C.y-radius,radius*2,radius*2);
-    ctx.restore();
-
-    // rim
+    // 海面高光（日侧）
     ctx.save();
-    ctx.strokeStyle = 'rgba(120,240,255,.55)'; ctx.lineWidth = 1.4;
-    ctx.shadowColor = 'rgba(0,229,255,.9)'; ctx.shadowBlur = 22;
-    ctx.beginPath(); ctx.arc(C.x,C.y,radius,0,Math.PI*2); ctx.stroke();
+    ctx.globalCompositeOperation = 'lighter';
+    const hx = C.x + sunSide[0]*rad*.42, hy = C.y + sunSide[1]*rad*.42;
+    const hg = ctx.createRadialGradient(hx,hy,0,hx,hy,rad*.62);
+    hg.addColorStop(0,'rgba(120,190,240,.10)');
+    hg.addColorStop(1,'rgba(120,190,240,0)');
+    ctx.fillStyle = hg;
+    ctx.beginPath(); ctx.arc(hx,hy,rad*.62,0,Math.PI*2); ctx.fill();
     ctx.restore();
 
-    // equator ring accent
-    ctx.save(); ctx.globalCompositeOperation = 'lighter';
-    ctx.strokeStyle = 'rgba(255,43,214,.35)'; ctx.lineWidth = 1;
-    ctx.beginPath(); let st = false;
-    for (let lon = 0; lon <= 360; lon += 4){
-      const th = lon*Math.PI/180 + time*0.05;
-      const p = project([Math.cos(th)*R*1.005, 0, Math.sin(th)*R*1.005]);
-      if (!p){ st = false; continue; }
-      if (!st){ ctx.moveTo(p.x,p.y); st = true; } else ctx.lineTo(p.x,p.y);
-    }
-    ctx.stroke(); ctx.restore();
-    ctx.restore();
-  }
-
-  // ---------- tether ----------
-  function drawTether(time, t, built){
-    const visible = clamp(built, 0, 1);
-    const topY = R + TETHER_LEN * visible;
-    const N = SEGMENTS;
-    const builtCount = Math.round(visible * N);
-
-    // main glowing strand (two-layer)
-    glowLine([0,R,0],[0,topY,0], 'rgba(0,229,255,.9)', 3.0, .85);
-    glowLine([0,R,0],[0,topY,0], 'rgba(120,255,255,.55)', 1.2, .95);
-    glowLine([0,R,0],[0,topY,0], 'rgba(255,255,255,.55)', 0.45, .95);
-
-    // segment locks
+    // 云：柔和团块（不用纬度条纹）
     ctx.save();
-    for (let i = 0; i < N; i++){
-      if (i >= builtCount) break;
-      const y0 = R + (TETHER_LEN/N) * i;
-      const y1 = y0 + TETHER_LEN/N;
-      const fresh = clamp((builtCount - i) / 3, 0, 1);
-      const P = project([0, (y0+y1)/2, 0]);
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i=0;i<14;i++){
+      const la = -55 + (i*37)%110;
+      const lo = (i*71)%360 + rot*57.3*1.6;
+      const v = latLonToVec(la, lo);
+      const P = project(mul(v, R*1.004));
       if (!P) continue;
-      const rr = Math.max(1.1, 2.6 * P.f * 0.006);
-      ctx.globalAlpha = 0.35 + 0.45*fresh;
-      ctx.fillStyle = 'rgba(160,255,255,.9)';
+      const rr = rad*(.16 + ((i*3)%5)*.03);
+      const cg = ctx.createRadialGradient(P.x,P.y,0,P.x,P.y,rr);
+      cg.addColorStop(0,'rgba(222,236,246,.075)');
+      cg.addColorStop(.55,'rgba(210,228,242,.035)');
+      cg.addColorStop(1,'rgba(210,228,242,0)');
+      ctx.fillStyle = cg;
       ctx.beginPath(); ctx.arc(P.x,P.y,rr,0,Math.PI*2); ctx.fill();
-      if (fresh > 0.65){
-        ctx.globalAlpha = (fresh - 0.65) * 1.2;
-        ctx.strokeStyle = 'rgba(0,229,255,.9)'; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.arc(P.x,P.y,rr*3.4,0,Math.PI*2); ctx.stroke();
-      }
     }
     ctx.restore();
 
-    // energy pulses (only when online / climbing)
-    const energy = energyLevel(t);
-    if (energy > 0 || t > PHASES[3].from){
-      const intensity = t > PHASES[5].from ? 0.35 + energy/160 : 0.22;
-      for (let k = 0; k < 7; k++){
-        const u = ((time*0.16 + k/7) % 1);
-        const y = R + TETHER_LEN * Math.min(visible, 1) * u;
-        if (y > topY) continue;
-        glowDot([0,y,0], 0.014, k % 2 ? 'rgba(255,43,214,.9)' : 'rgba(120,255,255,.95)', intensity);
-      }
+    // 夜面城市灯
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (const c of cities){
+      const night = clamp(-dot(c.n, SUN), 0, 1);
+      if (night < .22) continue;
+      const P = project(mul(c.n, R*1.001));
+      if (!P) continue;
+      const tw = .7 + .3*Math.sin(time*2.4 + c.ph);
+      ctx.globalAlpha = .5*night*tw*(.3 + c.k);
+      ctx.fillStyle = c.k > .75 ? '#ffd9a0' : '#ffb676';
+      ctx.beginPath(); ctx.arc(P.x,P.y, .7 + c.k*1.5, 0, Math.PI*2); ctx.fill();
     }
+    ctx.restore();
 
-    // anchor station
-    const A = project([0,R,0]);
-    if (A){
-      const w = Math.max(14, 60 * A.f * 0.008), h = w * 0.36;
-      ctx.save();
-      ctx.translate(A.x, A.y);
-      ctx.fillStyle = 'rgba(4,16,26,.9)'; ctx.strokeStyle = 'rgba(0,229,255,.85)'; ctx.lineWidth = 1.2;
-      ctx.shadowColor = 'rgba(0,229,255,.8)'; ctx.shadowBlur = 16;
-      ctx.beginPath(); ctx.moveTo(-w/2, 0); ctx.lineTo(-w/2, -h); ctx.lineTo(w/2, -h); ctx.lineTo(w/2, 0); ctx.closePath();
-      ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0, h*0.9); ctx.stroke();
-      ctx.fillStyle = 'rgba(0,229,255,.9)';
-      ctx.fillRect(-w/2-3, -h*0.55, 3, h*0.55);
-      ctx.fillRect(w/2, -h*0.55, 3, h*0.55);
-      ctx.restore();
-      label([0,R,0], '赤道锚点 ANCHOR', 'rgba(0,229,255,.85)', .85);
-    }
+    // 晨昏线
+    ctx.save();
+    const sx = C.x + sunSide[0]*rad*1.35, sy = C.y + sunSide[1]*rad*1.35;
+    const term = ctx.createLinearGradient(C.x - sunSide[0]*rad, C.y - sunSide[1]*rad, sx, sy);
+    term.addColorStop(0,'rgba(255,180,120,0.06)');
+    term.addColorStop(.4,'rgba(0,0,0,0)');
+    term.addColorStop(.75,'rgba(2,4,9,.62)');
+    term.addColorStop(1,'rgba(1,2,5,.95)');
+    ctx.fillStyle = term;
+    ctx.fillRect(C.x-rad, C.y-rad, rad*2, rad*2);
 
-    // counterweight
-    if (visible > 0.92){
-      const C = project([0,TOP_Y,0]);
-      if (C){
-        const s = Math.max(6, 90 * C.f * 0.006);
-        ctx.save(); ctx.translate(C.x,C.y); ctx.rotate(time*0.25);
-        ctx.strokeStyle = 'rgba(255,179,71,.95)'; ctx.fillStyle = 'rgba(30,18,4,.85)';
-        ctx.lineWidth = 1.3; ctx.shadowColor = 'rgba(255,179,71,.9)'; ctx.shadowBlur = 18;
-        ctx.beginPath();
-        for (let i=0;i<6;i++){ const a = i*Math.PI/3; const px = Math.cos(a)*s, py = Math.sin(a)*s*0.8;
-          i? ctx.lineTo(px,py) : ctx.moveTo(px,py); }
-        ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
-        label([0,TOP_Y,0], '配重 COUNTERWEIGHT', 'rgba(255,179,71,.9)', .9);
-      }
-    }
-    return topY;
+    // 极冠
+    const capN = ctx.createRadialGradient(C.x, C.y-rad*.94, 0, C.x, C.y-rad*.94, rad*.34);
+    capN.addColorStop(0,'rgba(226,240,248,.42)');
+    capN.addColorStop(1,'rgba(226,240,248,0)');
+    ctx.fillStyle = capN;
+    ctx.beginPath(); ctx.arc(C.x, C.y-rad*.94, rad*.34, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+
+    // 大气边缘
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.strokeStyle = 'rgba(150,210,255,.6)';
+    ctx.lineWidth = 1.1;
+    ctx.shadowColor = 'rgba(120,190,255,.95)';
+    ctx.shadowBlur = 30;
+    ctx.beginPath(); ctx.arc(C.x,C.y,rad,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+
+    ctx.restore(); // clip
+    ctx.restore(); // earth
   }
 
-  // ---------- GEO station ----------
-  function drawStation(time, t, topY){
+  
+  /* ================= 轨道环 ================= */
+  function drawOrbitRing(time){
+    const rad = 2.05, incl = 0.42;
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    for (let pass=0; pass<2; pass++){
+      ctx.strokeStyle = pass === 0 ? "rgba(150,200,255,.10)" : "rgba(255,190,120,.05)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      let st = false;
+      for (let a=0;a<=360;a+=3){
+        const th = a*Math.PI/180 + time*0.01 + pass*0.05;
+        const v = [Math.cos(th)*rad, Math.sin(th)*rad*Math.sin(incl), Math.sin(th)*rad*Math.cos(incl)];
+        const P = project(v);
+        if (!P){ st=false; continue; }
+        if (!st){ ctx.moveTo(P.x,P.y); st=true; } else ctx.lineTo(P.x,P.y);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+/* ================= 赤道基座 ================= */
+  function drawBase(time, t){
+    const A = project(anchorPos(0)); if (!A) return;
+    const upP = project(anchorPos(0.5));
+    if (!upP) return;
+    const upAng = Math.atan2(upP.y - A.y, upP.x - A.x) + Math.PI/2; // 局部“上”对齐缆索方向
+    const s = Math.max(12, 108 * A.f * 0.008);
+    const p0 = phaseProgress(t,0);
+    const lit = clamp(p0*2 + .18, .18, 1);
+
+    // 沿缆索向上的体积光
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const beamLen = 3.2;
+    const BP = project(anchorPos(beamLen));
+    if (BP){
+      [1, .62, .34].forEach((k, i) => {
+        const w = s*1.7*k;
+        const bg2 = ctx.createLinearGradient(A.x, A.y, BP.x, BP.y);
+        bg2.addColorStop(0,`rgba(255,150,70,${(.07 + i*.01)*lit})`);
+        bg2.addColorStop(.4,`rgba(255,130,60,${(.03 + i*.005)*lit})`);
+        bg2.addColorStop(1,'rgba(255,120,50,0)');
+        ctx.fillStyle = bg2;
+        ctx.beginPath();
+        ctx.moveTo(A.x - w, A.y);
+        ctx.lineTo(A.x + w, A.y);
+        ctx.lineTo(BP.x + w*.30, BP.y);
+        ctx.lineTo(BP.x - w*.30, BP.y);
+        ctx.closePath(); ctx.fill();
+      });
+    }
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(A.x, A.y + s*0.06);
+    ctx.rotate(upAng);
+
+    // 地基泛光
+    const g = ctx.createRadialGradient(0,0,0,0,0,s*3.8);
+    g.addColorStop(0,`rgba(255,150,70,${.26*lit})`);
+    g.addColorStop(.45,`rgba(255,120,50,${.08*lit})`);
+    g.addColorStop(1,'rgba(255,120,50,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(0,0,s*3.8,0,Math.PI*2); ctx.fill();
+
+    // 平台
+    ctx.fillStyle = 'rgba(10,16,24,.97)';
+    ctx.strokeStyle = 'rgba(190,212,232,.65)';
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(-s*1.6, 0);
+    ctx.lineTo(-s*1.0, -s*0.34);
+    ctx.lineTo(s*1.0, -s*0.34);
+    ctx.lineTo(s*1.6, 0);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // 台面桁架
+    ctx.save();
+    ctx.strokeStyle = 'rgba(160,188,212,.22)';
+    ctx.lineWidth = .8;
+    for (let i=-6;i<=6;i++){
+      const t0 = i/7;
+      ctx.beginPath();
+      ctx.moveTo(t0*s*1.45, 0);
+      ctx.lineTo(t0*s*0.95, -s*0.34);
+      ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.moveTo(-s*1.45, -s*0.16); ctx.lineTo(s*1.45, -s*0.16);
+    ctx.strokeStyle = 'rgba(160,188,212,.16)';
+    ctx.stroke();
+    ctx.restore();
+
+    // 窗灯
+    ctx.save();
+    for (let i=-8;i<=8;i++){
+      const on = Math.sin(i*2.7 + time*.7) > -.2;
+      ctx.globalAlpha = on ? .55 : .12;
+      ctx.fillStyle = on ? '#ffc487' : '#5b6b7a';
+      ctx.fillRect(i*s*0.16 - .6, -s*0.21, 1.2, 1.4);
+    }
+    ctx.restore();
+
+    // 警示斜纹
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(-s*1.55, -s*0.05, s*0.5, s*0.05);
+    ctx.clip();
+    ctx.strokeStyle = 'rgba(255,157,77,.5)';
+    ctx.lineWidth = s*0.02;
+    for (let i=-2;i<10;i++){
+      ctx.beginPath();
+      ctx.moveTo(-s*1.55 + i*s*0.12, -s*0.05);
+      ctx.lineTo(-s*1.55 + i*s*0.12 + s*0.06, 0);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // 冷却塔
+    [-1.18, 1.18].forEach((x,i) => {
+      const th = s*(0.9 - i*0.06);
+      ctx.fillStyle = 'rgba(14,20,28,.97)';
+      ctx.strokeStyle = 'rgba(170,195,215,.3)';
+      ctx.beginPath();
+      ctx.moveTo(x*s - s*0.14, 0);
+      ctx.lineTo(x*s - s*0.10, -th*0.55);
+      ctx.lineTo(x*s + s*0.10, -th*0.55);
+      ctx.lineTo(x*s + s*0.14, 0);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      const tg = ctx.createRadialGradient(x*s, -th*0.55, 0, x*s, -th*0.55, s*0.48);
+      tg.addColorStop(0,`rgba(255,160,80,${.24*lit})`);
+      tg.addColorStop(1,'rgba(255,120,40,0)');
+      ctx.fillStyle = tg;
+      ctx.beginPath(); ctx.arc(x*s, -th*0.55, s*0.48, 0, Math.PI*2); ctx.fill();
+    });
+
+    // 中央升降井
+    ctx.fillStyle = 'rgba(8,13,20,.99)';
+    ctx.strokeStyle = 'rgba(200,220,235,.6)';
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(-s*0.2, 0);
+    ctx.lineTo(-s*0.15, -s*0.62);
+    ctx.lineTo(s*0.15, -s*0.62);
+    ctx.lineTo(s*0.2, 0);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // 警示灯
+    const blink = .5 + .5*Math.sin(time*4.2);
+    [[-s*1.55,0],[s*1.55,0],[-s*0.18,-s*0.64],[s*0.18,-s*0.64]].forEach(([x,y],i) => {
+      ctx.globalAlpha = .3 + .7*blink*(i%2?1:.7);
+      ctx.fillStyle = i%2 ? '#ff5a3c' : '#ffb347';
+      ctx.beginPath(); ctx.arc(x,y,1.5,0,Math.PI*2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    // 蒸汽粒子
+    if (Math.random() < 0.6*lit){
+      plumes.push({ x: rand(-1.2,1.2)*s, y: 0, vx: rand(-.2,.2), vy: -rand(.2,.55),
+        life: rand(1.6,3.2), age: 0, r: rand(1.6,3.6), ang: upAng });
+    }
+    ctx.save();
+    plumes.forEach(p => {
+      p.age += 1/60;
+      const ca = Math.cos(p.ang - Math.PI/2), sa = Math.sin(p.ang - Math.PI/2);
+      p.x += p.vx; p.y += p.vy; p.vy *= .996; p.r += .07;
+      if (p.age > p.life) return;
+      const k = 1 - p.age/p.life;
+      // 把局部蒸汽坐标旋到屏幕
+      const lx = p.x*ca - p.y*sa, ly = p.x*sa + p.y*ca;
+      ctx.globalAlpha = .10*k;
+      ctx.fillStyle = '#c8d6e2';
+      ctx.beginPath(); ctx.arc(A.x + lx, A.y + ly, p.r, 0, Math.PI*2); ctx.fill();
+    });
+    ctx.restore();
+    for (let i=plumes.length-1;i>=0;i--) if (plumes[i].age > plumes[i].life) plumes.splice(i,1);
+
+    hudLabel(anchorPos(0), '赤道锚点 · ANCHOR', 'rgba(255,157,77,.85)', .9);
+  }
+
+  /* ================= 缆索 ================= */
+  function tetherPoint(u, sway){
+    const w = Math.sin(sway + u*3.4) * 0.016 * u * u;
+    return add(mul(UP, R + TETHER*u), mul(E1, w));
+  }
+
+  function drawTether(time, t){
+    const built = tetherBuilt(t);
+    if (built <= 0.001) return R;
+    const N = SEGMENTS;
+    const builtCount = Math.round(built*N);
+    const sway = time*0.28;
+
+    // 主缆：三层（外层辉光、中层钢白、内芯高光）
+    const top = tetherPoint(built, sway);
+    const drawStrand = (w, col, a) => {
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      ctx.strokeStyle = hexA(col, a); ctx.lineWidth = w; ctx.lineCap = 'round';
+      ctx.beginPath();
+      for (let i=0;i<=64;i++){ const P = project(tetherPoint(built*i/64, sway));
+        if (!P) continue; i?ctx.lineTo(P.x,P.y):ctx.moveTo(P.x,P.y); }
+      ctx.stroke(); ctx.restore();
+    };
+    drawStrand(9, ICE, .10);
+    drawStrand(3.2, ICE, .45);
+    drawStrand(1.1, '#cfe3f2', .8);
+    drawStrand(.4, '#ffffff', .9);
+    drawStrand(7, '#6fb6ff', .05);
+
+    // 双股：略微左右偏移，形成结构感
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.strokeStyle = 'rgba(190,220,240,.16)';
+    ctx.lineWidth = .8;
+    ctx.beginPath();
+    for (let i=0;i<=48;i++){
+      const u = built*i/48;
+      const p = tetherPoint(u, sway);
+      const P = project(add(p, mul(E1, -0.02)));
+      if (!P) continue;
+      i ? ctx.lineTo(P.x,P.y) : ctx.moveTo(P.x,P.y);
+    }
+    ctx.stroke();
+    ctx.beginPath();
+    for (let i=0;i<=48;i++){
+      const u = built*i/48;
+      const p = tetherPoint(u, sway);
+      const P = project(add(p, mul(E1, 0.02)));
+      if (!P) continue;
+      i ? ctx.lineTo(P.x,P.y) : ctx.moveTo(P.x,P.y);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // 分段锁扣
+    for (let i=0;i<builtCount;i++){
+      const u = (i+0.5)/N;
+      const p = tetherPoint(u, sway);
+      const P = project(p); if (!P) continue;
+      const fresh = clamp((builtCount - i)/4, 0, 1);
+      const rr = Math.max(.8, 1.5 * P.f * 0.006);
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = .12 + .28*fresh;
+      ctx.fillStyle = 'rgba(200,225,240,.85)';
+      ctx.beginPath(); ctx.arc(P.x,P.y,rr,0,Math.PI*2); ctx.fill();
+      // 每 8 段一个结构环
+      if (i % 8 === 0){
+        ctx.globalAlpha = .45;
+        ctx.strokeStyle = 'rgba(255,157,77,.55)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(P.x,P.y,rr*2.6,0,Math.PI*2); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // 能量脉冲（上线后）
+    const energy = energyLevel(t);
+    if (energy > 0){
+      for (let k=0;k<6;k++){
+        const u = ((time*0.14 + k/6) % 1) * built;
+        const p = tetherPoint(u, sway);
+        glowDot(p, .012, k%2 ? '#ffb066' : '#ffffff', .55);
+      }
+    }
+
+    // 配重
+    if (built > .92){
+      const C = project(tetherPoint(built, sway));
+      if (C){
+        const s = Math.max(5, 78*C.f*0.006);
+        ctx.save(); ctx.translate(C.x,C.y); ctx.rotate(time*0.18);
+        ctx.fillStyle = 'rgba(12,18,26,.95)';
+        ctx.strokeStyle = 'rgba(255,170,90,.85)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        for (let i=0;i<6;i++){ const a=i*Math.PI/3; const px=Math.cos(a)*s, py=Math.sin(a)*s*.8;
+          i?ctx.lineTo(px,py):ctx.moveTo(px,py); }
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#ff5a3c';
+        ctx.beginPath(); ctx.arc(0,0,s*.18,0,Math.PI*2); ctx.fill();
+        ctx.restore();
+        hudLabel(tetherPoint(1, sway), '配重 · COUNTERWEIGHT', 'rgba(255,179,71,.85)', .9);
+      }
+    }
+    return TOP_Y * built;
+  }
+
+  /* ================= 攀爬舱 ================= */
+  function drawClimbers(time, t){
+    const n = climberCount(t);
+    if (n === 0) return;
+    const built = tetherBuilt(t);
+    const FR = [0.10, 0.26, 0.46, 0.72];
+    for (let i=0;i<4;i++){
+      if (i >= n) continue;
+      // 上下往返
+      const cycle = (time*0.05 + i*0.23) % 1;
+      const up = cycle < .5;
+      const u = up ? cycle*2 : (1-cycle)*2;
+      const uu = clamp(u*0.85 + FR[i]*0.15, 0.02, built*0.98);
+      const p = tetherPoint(uu, time*0.28);
+      const P = project(p); if (!P) continue;
+      const s = Math.max(3.4, 46*P.f*0.0035);
+
+      // 尾迹
+      ctx.save(); ctx.globalCompositeOperation='lighter';
+      const dir = up ? 1 : -1;
+      const tail = tetherPoint(clamp(uu - dir*0.08, 0, built), time*0.28);
+      const T = project(tail);
+      if (T){
+        const g = ctx.createLinearGradient(P.x,P.y,T.x,T.y);
+        g.addColorStop(0,'rgba(120,200,255,.35)');
+        g.addColorStop(1,'rgba(120,200,255,0)');
+        ctx.strokeStyle = g; ctx.lineWidth = s*0.5;
+        ctx.beginPath(); ctx.moveTo(P.x,P.y); ctx.lineTo(T.x,T.y); ctx.stroke();
+      }
+      ctx.restore();
+
+      ctx.save(); ctx.translate(P.x,P.y);
+      // 舱体
+      ctx.fillStyle = 'rgba(16,24,34,.97)';
+      ctx.strokeStyle = 'rgba(210,228,240,.8)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(-s*.8, -s*.55, s*1.6, s*1.1, s*.18);
+      ctx.fill(); ctx.stroke();
+      // 舷窗
+      ctx.fillStyle = 'rgba(255,196,130,.9)';
+      for (let w=0;w<3;w++){
+        ctx.beginPath();
+        ctx.arc(-s*.4 + w*s*.4, 0, s*.11, 0, Math.PI*2);
+        ctx.fill();
+      }
+      // 推进器
+      const eg = ctx.createRadialGradient(0, s*.9, 0, 0, s*.9, s*1.8);
+      eg.addColorStop(0,'rgba(255,150,80,.8)');
+      eg.addColorStop(.5,'rgba(120,190,255,.25)');
+      eg.addColorStop(1,'rgba(120,190,255,0)');
+      ctx.fillStyle = eg;
+      ctx.beginPath(); ctx.arc(0, s*.9, s*1.8, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+    hudLabel(tetherPoint(0.12, time*0.28), '攀爬舱 · CLIMBER', 'rgba(255,170,110,.85)', .85);
+  }
+
+  /* ================= 轨道站 ================= */
+  function drawStation(time, t){
     if (t < PHASES[4].from - 0.02) return;
-    const y = GEO_Y;
-    if (y > topY + 0.001) return;
     const mods = stationModules(t);
-    const D = 0.75;
-    // ring
-    ctx.save(); ctx.globalCompositeOperation = 'lighter';
-    ctx.strokeStyle = 'rgba(120,255,255,.8)'; ctx.lineWidth = 1.6;
-    ctx.shadowColor = 'rgba(0,229,255,.8)'; ctx.shadowBlur = 14;
-    ctx.beginPath(); let st = false;
-    for (let a = 0; a <= 360; a += 4){
-      const th = a*Math.PI/180 + time*0.08;
-      const p = project([Math.cos(th)*D, y, Math.sin(th)*D]);
-      if (!p){ st = false; continue; }
-      if (!st){ ctx.moveTo(p.x,p.y); st = true; } else ctx.lineTo(p.x,p.y);
+    const h = GEO_Y - R;
+    const D = 0.72;
+
+    // 环
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    ctx.strokeStyle = 'rgba(200,228,245,.55)';
+    ctx.lineWidth = 1.2;
+    ctx.shadowColor = 'rgba(120,200,255,.7)';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    let st = false;
+    for (let a=0;a<=360;a+=4){
+      const th = a*Math.PI/180 + time*0.07;
+      const P = project(ringPos(h, th, D));
+      if (!P){ st=false; continue; }
+      if (!st){ ctx.moveTo(P.x,P.y); st=true; } else ctx.lineTo(P.x,P.y);
     }
     ctx.stroke(); ctx.restore();
 
-    for (let i = 0; i < 12; i++){
+    // 桁架
+    ctx.save();
+    ctx.strokeStyle = 'rgba(180,205,225,.25)';
+    ctx.lineWidth = .8;
+    for (let i=0;i<8;i++){
+      const th = i/8*Math.PI*2;
+      const a = project(ringPos(h, th, D));
+      const b = project(anchorPos(h));
+      if (a && b){ ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
+    }
+    ctx.restore();
+
+    // 模块
+    for (let i=0;i<12;i++){
       const on = i < mods;
-      const th = (i/12)*Math.PI*2 + time*0.08;
-      const p = [Math.cos(th)*D, y, Math.sin(th)*D];
-      const P = project(p); if (!P) continue;
+      const th = (i/12)*Math.PI*2 + time*0.07;
+      const P = project(ringPos(h, th, D)); if (!P) continue;
       if (!on){
-        ctx.save(); ctx.globalAlpha = .22; ctx.strokeStyle = 'rgba(0,229,255,.5)'; ctx.setLineDash([2,4]);
-        ctx.beginPath(); ctx.arc(P.x,P.y,3.5,0,Math.PI*2); ctx.stroke(); ctx.restore();
+        ctx.save(); ctx.globalAlpha=.18; ctx.strokeStyle='rgba(159,216,255,.4)';
+        ctx.setLineDash([2,4]);
+        ctx.beginPath(); ctx.arc(P.x,P.y,2.6,0,Math.PI*2); ctx.stroke(); ctx.restore();
         continue;
       }
-      const just = clamp((mods - i) * 0.8, 0, 1);
-      const s = Math.max(2.6, 46 * P.f * 0.0035);
+      const just = clamp((mods-i)*0.8,0,1);
+      const s = Math.max(2.2, 42*P.f*0.0032);
       ctx.save(); ctx.translate(P.x,P.y); ctx.rotate(th);
-      ctx.fillStyle = 'rgba(8,26,40,.95)'; ctx.strokeStyle = 'rgba(120,255,255,.95)'; ctx.lineWidth = 1;
-      ctx.shadowColor = 'rgba(0,229,255,.8)'; ctx.shadowBlur = 10 * just;
-      ctx.fillRect(-s,-s*0.45,s*2,s*0.9); ctx.strokeRect(-s,-s*0.45,s*2,s*0.9);
-      if (i % 3 === 0){
-        ctx.strokeStyle = 'rgba(255,179,71,.8)';
-        ctx.beginPath(); ctx.moveTo(s,0); ctx.lineTo(s*2.6,0); ctx.stroke();
+      ctx.fillStyle = 'rgba(12,20,30,.97)';
+      ctx.strokeStyle = 'rgba(220,235,245,.85)';
+      ctx.lineWidth = .9;
+      ctx.shadowColor = 'rgba(255,170,90,.6)';
+      ctx.shadowBlur = 8*just;
+      ctx.fillRect(-s, -s*.4, s*2, s*.8);
+      ctx.strokeRect(-s, -s*.4, s*2, s*.8);
+      // 对接闪光
+      if (just > .85){
+        ctx.globalCompositeOperation='lighter';
+        ctx.fillStyle = `rgba(255,220,170,${(just-.85)*2})`;
+        ctx.beginPath(); ctx.arc(0,0,s*.6,0,Math.PI*2); ctx.fill();
       }
       ctx.restore();
     }
-    if (mods > 0) label([0, y + 0.18, 0], '同步轨道站 GEO STATION', 'rgba(120,255,255,.9)', .9);
+    if (mods>0) hudLabel(anchorPos(h+0.16), '同步轨道站 · GEO STATION', 'rgba(200,228,245,.85)', .9);
   }
 
-  // ---------- climbers ----------
-  function drawClimbers(time, t, topY){
-    const n = climberCount(t);
-    for (let i = 0; i < 4; i++){
-      const active = i < n;
-      const FR = [0.12, 0.26, 0.44, 0.70];
-      const y = R + (topY - R) * FR[i] + Math.sin(time*0.8 + i)*0.07;
-      const P = project([0, y, 0]); if (!P) continue;
-      if (!active){
-        ctx.save(); ctx.globalAlpha = .18; ctx.strokeStyle = 'rgba(0,229,255,.6)'; ctx.setLineDash([2,4]);
-        ctx.beginPath(); ctx.arc(P.x,P.y,4,0,Math.PI*2); ctx.stroke(); ctx.restore();
-        continue;
-      }
-      const s = Math.max(3, 40 * P.f * 0.0035);
-      ctx.save(); ctx.translate(P.x,P.y);
-      ctx.fillStyle = 'rgba(10,30,44,.95)'; ctx.strokeStyle = 'rgba(120,255,255,.95)'; ctx.lineWidth = 1.1;
-      ctx.shadowColor = 'rgba(0,229,255,.85)'; ctx.shadowBlur = 12;
-      ctx.beginPath(); ctx.roundRect(-s, -s*0.6, s*2, s*1.2, 2); ctx.fill(); ctx.stroke();
-      const eng = ctx.createRadialGradient(0, s*1.1, 0, 0, s*1.1, s*2.2);
-      eng.addColorStop(0,'rgba(255,43,214,.85)'); eng.addColorStop(1,'transparent');
-      ctx.fillStyle = eng; ctx.beginPath(); ctx.arc(0, s*1.1, s*2.2, 0, Math.PI*2); ctx.fill();
-      ctx.restore();
-    }
-    if (n > 0) label([0, R + (topY-R)*0.12, 0], '攀爬舱 CLIMBER', 'rgba(255,140,235,.9)', .8);
-  }
-
-  // ---------- rockets (phase 0) ----------
+  /* ================= 发射（第一阶段） ================= */
   function drawRockets(time, t){
-    const p0 = phaseProgress(t, 0);
+    const p0 = phaseProgress(t,0);
     if (p0 <= 0 || t >= PHASES[0].to) return;
-    for (let i = 0; i < 3; i++){
-      const u = clamp(p0 * 1.25 - i*0.12, 0, 1);
+    for (let i=0;i<3;i++){
+      const u = clamp(p0*1.25 - i*0.12, 0, 1);
       if (u <= 0) continue;
-      const y = R + u * 2.6;
-      const x = Math.sin(time*1.6 + i*2)*0.25 * (1-u*0.3);
-      const P = project([x, y, 0.18*i]); if (!P) continue;
-      const s = Math.max(2, 34 * P.f * 0.003);
-      ctx.save(); ctx.translate(P.x,P.y);
-      ctx.fillStyle = 'rgba(255,255,255,.95)';
-      ctx.beginPath(); ctx.moveTo(0,-s*1.6); ctx.lineTo(s*.7,s); ctx.lineTo(-s*.7,s); ctx.closePath(); ctx.fill();
-      const g = ctx.createRadialGradient(0,s*1.1,0,0,s*1.1,s*3);
-      g.addColorStop(0,'rgba(255,179,71,.9)'); g.addColorStop(1,'transparent');
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0,s*1.1,s*3,0,Math.PI*2); ctx.fill();
+      const hgt = u*2.4;
+      const drift = Math.sin(time*1.3 + i*2)*0.18*(1-u*0.3);
+      const P = project(add(anchorPos(hgt), add(mul(E1, drift), mul(E2, 0.12*i)))); if (!P) continue;
+      const s = Math.max(2, 30*P.f*0.003);
+
+      // 尾焰
+      ctx.save(); ctx.globalCompositeOperation='lighter';
+      const g = ctx.createLinearGradient(P.x, P.y, P.x, P.y + s*7);
+      g.addColorStop(0,'rgba(255,240,210,.95)');
+      g.addColorStop(.25,'rgba(255,160,80,.65)');
+      g.addColorStop(1,'rgba(255,90,40,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(P.x-s*.3, P.y); ctx.lineTo(P.x+s*.3, P.y);
+      ctx.lineTo(P.x+s*.12, P.y+s*7); ctx.lineTo(P.x-s*.12, P.y+s*7);
+      ctx.closePath(); ctx.fill();
       ctx.restore();
-      // trail
-      ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = 'rgba(255,179,71,.35)';
-      ctx.lineWidth = 1; const T = project([x, Math.max(R, y-1.6), 0.18*i]);
-      if (T){ ctx.beginPath(); ctx.moveTo(P.x,P.y); ctx.lineTo(T.x,T.y); ctx.stroke(); }
+
+      // 箭体
+      ctx.save(); ctx.translate(P.x,P.y);
+      ctx.fillStyle = '#e8eef4';
+      ctx.beginPath();
+      ctx.moveTo(0,-s*1.7); ctx.lineTo(s*.55,s*.4); ctx.lineTo(-s*.55,s*.4);
+      ctx.closePath(); ctx.fill();
       ctx.restore();
     }
   }
 
-  // ---------- background ----------
-  function drawSpace(time){
-    ctx.fillStyle = '#02040a'; ctx.fillRect(0,0,W,H);
-    // milky way band
-    const g = ctx.createLinearGradient(0, H*0.1, W, H*0.9);
-    g.addColorStop(0,'rgba(30,20,70,.35)'); g.addColorStop(.5,'rgba(10,40,70,.20)'); g.addColorStop(1,'rgba(60,10,60,.25)');
-    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
-    // stars projected on a far sphere
-    ctx.save(); ctx.globalCompositeOperation = 'lighter';
-    stars.forEach(s => {
-      const p = [Math.cos(s.el)*Math.sin(s.az)*s.d, Math.sin(s.el)*s.d, Math.cos(s.el)*Math.cos(s.az)*s.d];
-      const P = project(p); if (!P) return;
-      const tw = .55 + .45*Math.sin(time*2 + s.ph);
-      ctx.globalAlpha = .5*tw; ctx.fillStyle = '#cfefff';
-      ctx.beginPath(); ctx.arc(P.x,P.y,s.s,0,Math.PI*2); ctx.fill();
+  /* ================= 前景尘埃 / 大气 ================= */
+  function drawForeground(time){
+    // 地平线暖雾：地球上方一层薄光
+    const C = project([0,0,0]);
+    if (C){
+      const edge = project([R,0,0]);
+      const rad = edge ? Math.hypot(edge.x-C.x, edge.y-C.y) : 200;
+      const g = ctx.createRadialGradient(C.x, C.y, rad*.9, C.x, C.y, rad*1.9);
+      g.addColorStop(0,'rgba(255,170,110,.06)');
+      g.addColorStop(.5,'rgba(120,170,230,.04)');
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(C.x,C.y,rad*1.9,0,Math.PI*2); ctx.fill();
+    }
+
+    // 视差尘埃
+    ctx.save();
+    dust.forEach(d => {
+      d.x += d.vx*0.016; d.y += d.vy*0.016;
+      if (d.x < 0) d.x += 1; if (d.x > 1) d.x -= 1;
+      if (d.y > 1) { d.y = 0; d.x = Math.random(); }
+      const x = d.x*W, y = d.y*H;
+      ctx.globalAlpha = .05 + .10*d.z;
+      ctx.fillStyle = '#cfe0ee';
+      ctx.beginPath(); ctx.arc(x, y, d.s*d.z, 0, Math.PI*2); ctx.fill();
     });
     ctx.restore();
-    // sun glow
-    const SP = project(mul(SUN, 60));
-    if (SP){
-      const g2 = ctx.createRadialGradient(SP.x,SP.y,0,SP.x,SP.y,Math.min(W,H)*0.5);
-      g2.addColorStop(0,'rgba(255,240,200,.9)'); g2.addColorStop(.08,'rgba(255,210,140,.5)');
-      g2.addColorStop(.4,'rgba(255,160,80,.08)'); g2.addColorStop(1,'transparent');
-      ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.fillStyle = g2;
-      ctx.beginPath(); ctx.arc(SP.x,SP.y,Math.min(W,H)*0.5,0,Math.PI*2); ctx.fill(); ctx.restore();
-    }
   }
 
-  // ---------- HUD updates ----------
+  /* ================= 后期：颗粒 / 暗角 / 黑边由 DOM 负责 ================= */
+  let grainCanvas = null;
+  function buildGrain(){
+    const n = 256;
+    const c = document.createElement('canvas');
+    c.width = c.height = n;
+    const g = c.getContext('2d');
+    const img = g.createImageData(n,n);
+    for (let i=0;i<img.data.length;i+=4){
+      const v = 110 + Math.random()*145;
+      img.data[i]=img.data[i+1]=img.data[i+2]=v;
+      img.data[i+3]=255;
+    }
+    g.putImageData(img,0,0);
+    grainCanvas = c;
+  }
+
+  function drawPost(time){
+    // 颗粒
+    if (grainCanvas){
+      const ox = Math.floor(Math.random()*256), oy = Math.floor(Math.random()*256);
+      ctx.save();
+      ctx.globalAlpha = .045;
+      ctx.globalCompositeOperation = 'overlay';
+      const pat = ctx.createPattern(grainCanvas,'repeat');
+      ctx.fillStyle = pat;
+      ctx.translate(-ox,-oy);
+      ctx.fillRect(0,0,W+256,H+256);
+      ctx.restore();
+    }
+
+    // 暗角
+    const vg = ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.78);
+    vg.addColorStop(0,'rgba(0,0,0,0)');
+    vg.addColorStop(1,'rgba(0,0,0,.55)');
+    ctx.fillStyle = vg;
+    ctx.fillRect(0,0,W,H);
+
+    // 冷调压色
+    ctx.save();
+    ctx.globalCompositeOperation = 'color';
+    ctx.globalAlpha = .10;
+    ctx.fillStyle = '#6f93b8';
+    ctx.fillRect(0,0,W,H);
+    ctx.restore();
+  }
+
+  /* ================= HUD ================= */
   let lastPhase = -1;
   function updateHUD(t){
     const pi = phaseIndex(t);
     const ph = PHASES[pi];
-    const pp = phaseProgress(t, pi);
+    const pp = phaseProgress(t,pi);
+
     $('phaseCode').textContent = ph.code;
-    $('sysState').textContent = ph.state;
-    $('sysText').textContent = ph.text;
-    const led = $('led');
-    if (pi >= 5) led.classList.add('ok'); else led.classList.remove('ok');
+    $('stateline').textContent = ph.zh;
+    $('subZh').textContent = ph.zh;
+    $('subEn').textContent = ph.en;
+
     document.querySelectorAll('#phaseList li').forEach(li => {
       const i = +li.dataset.p;
       li.classList.toggle('done', i < pi || (i === pi && pp > .98));
       li.classList.toggle('active', i === pi);
     });
+
     $('alt').textContent = altitudeKm(t).toLocaleString('en-US') + ' km';
-    const tension = (tetherBuilt(t) * 42.6).toFixed(2);
-    $('tension').textContent = tension + ' GN';
+    $('tension').textContent = (tetherBuilt(t)*42.6).toFixed(2) + ' GN';
     $('segs').textContent = builtSegments(t) + ' / 64';
     $('climbers').textContent = climberCount(t) + ' / 4';
     $('modules').textContent = stationModules(t) + ' / 12';
     $('energy').textContent = energyLevel(t) + '%';
     $('progress').style.width = (t*100).toFixed(1) + '%';
     $('scrubFill').style.width = (t*100).toFixed(1) + '%';
-    const secs = Math.round(t * 96);
+
+    const secs = Math.round(t*96);
     $('clock').textContent = 'T+ ' + String(Math.floor(secs/60)).padStart(2,'0') + ':' + String(secs%60).padStart(2,'0');
-    lastPhase = pi;
+
+    // 上线瞬间的镜头震动
+    if (lastPhase !== pi){
+      if (pi === 5) shake = .55;
+      lastPhase = pi;
+    }
   }
 
-  // ---------- render ----------
+  /* ================= 主循环 ================= */
   let time = 0, last = performance.now();
-  function frame(now){
-    const dt = Math.min(0.05, (now - last) / 1000); last = now;
-    time += dt;
-    if (!paused && autoPlay){
-      timeline = clamp(timeline + dt / 78, 0, 1);   // full sequence 78s
-      if (timeline >= 1) { timeline = 1; autoPlay = false; $('btnPlay').textContent = '重播'; }
-    }
-    if (autoSpin && !dragging) cam.az += dt * 0.045;
+  const startAt = performance.now();
 
+  function frame(now){
+    const dt = Math.min(.05, (now-last)/1000); last = now;
+    time += dt;
+    shake *= Math.pow(.08, dt);
+
+    if (!paused && autoPlay){
+      timeline = clamp(timeline + dt/78, 0, 1);
+      if (timeline >= 1){ timeline = 1; autoPlay = false; $('btnPlay').textContent = '重播'; }
+    }
+    if (autoSpin && !dragging) cam.az += dt*0.035;
+
+    // 电影化镜头：随阶段缓慢推近 + 抬升
+    const pi = phaseIndex(timeline);
+    const targetDist = [5.9, 5.7, 5.6, 5.5, 5.5, 5.4][pi];
+    const targetEl = [0.02, 0.03, 0.05, 0.06, 0.05, 0.09][pi];
+    if (!dragging){
+      cam.dist = lerp(cam.dist, targetDist, dt*0.6);
+      cam.el = lerp(cam.el, targetEl, dt*0.6);
+    }
+
+    followTarget();
     updateCamera();
+
     drawSpace(time);
+    drawOrbitRing(time);
     drawEarth(time, timeline);
-    const topY = drawTether(time, timeline, tetherBuilt(timeline));
+    drawBase(time, timeline);
+    drawTether(time, timeline);
     drawRockets(time, timeline);
-    drawStation(time, timeline, topY);
-    drawClimbers(time, timeline, topY);
+    drawStation(time, timeline);
+    drawClimbers(time, timeline);
+    drawForeground(time);
+    drawPost(time);
     updateHUD(timeline);
+
+    // 片头淡出
+    if (now - startAt > 2600) $('titlecard').classList.add('hide');
+    if (now - startAt > 5200) $('hint').classList.add('hide');
+
     requestAnimationFrame(frame);
   }
 
-  // ---------- interactions ----------
+  /* ================= 交互 ================= */
   canvas.addEventListener('pointerdown', e => {
-    dragging = true; lastX = e.clientX; lastY = e.clientY; canvas.classList.add('drag'); autoSpin = false;
+    dragging = true; lastX = e.clientX; lastY = e.clientY;
+    canvas.classList.add('drag'); autoSpin = false;
   });
   window.addEventListener('pointerup', () => { dragging = false; canvas.classList.remove('drag'); });
   window.addEventListener('pointermove', e => {
     if (!dragging) return;
-    cam.az -= (e.clientX - lastX) * 0.005;
-    cam.el = clamp(cam.el + (e.clientY - lastY) * 0.004, -0.55, 0.9);
+    cam.az -= (e.clientX-lastX)*0.005;
+    cam.el = clamp(cam.el + (e.clientY-lastY)*0.004, -0.5, 0.9);
     lastX = e.clientX; lastY = e.clientY;
   });
   canvas.addEventListener('wheel', e => {
     e.preventDefault();
-    cam.dist = clamp(cam.dist + e.deltaY * 0.012, 6, 34);
-  }, { passive: false });
+    cam.dist = clamp(cam.dist + e.deltaY*0.012, 5.5, 30);
+  }, { passive:false });
 
   $('btnPlay').addEventListener('click', () => {
-    if (timeline >= 1){ timeline = 0; autoPlay = true; paused = false; $('btnPlay').textContent = '暂停'; return; }
-    paused = !paused; $('btnPlay').textContent = paused ? '继续' : '暂停';
+    if (timeline >= 1){ timeline = 0; autoPlay = true; paused = false;
+      $('btnPlay').textContent = '暂停'; return; }
+    paused = !paused;
+    $('btnPlay').textContent = paused ? '继续' : '暂停';
   });
   $('btnReplay').addEventListener('click', () => {
-    timeline = 0; autoPlay = true; paused = false; $('btnPlay').textContent = '暂停';
+    timeline = 0; autoPlay = true; paused = false;
+    $('btnPlay').textContent = '暂停';
   });
   $('btnView').addEventListener('click', () => {
-    cam.az = 0.35; cam.el = 0.05; cam.dist = 8.1; autoSpin = true;
+    cam.az = 0.42; cam.el = 0.06; cam.dist = 8.6; autoSpin = true;
   });
   $('scrub').addEventListener('pointerdown', e => {
     const r = e.currentTarget.getBoundingClientRect();
-    timeline = clamp((e.clientX - r.left) / r.width, 0, 1);
-    autoPlay = false; paused = true; $('btnPlay').textContent = '继续';
+    timeline = clamp((e.clientX-r.left)/r.width, 0, 1);
+    autoPlay = false; paused = true;
+    $('btnPlay').textContent = '继续';
   });
   window.addEventListener('keydown', e => {
     if (e.code === 'Space'){ e.preventDefault(); $('btnPlay').click(); }
     if (e.key === 'r' || e.key === 'R') $('btnReplay').click();
     if (e.key >= '1' && e.key <= '6'){
-      const i = +e.key - 1;
-      timeline = PHASES[i].from + 0.001; autoPlay = false; paused = true; $('btnPlay').textContent = '继续';
+      const i = +e.key-1;
+      timeline = PHASES[i].from + 0.001;
+      autoPlay = false; paused = true;
+      $('btnPlay').textContent = '继续';
     }
   });
 
-  // ---------- boot ----------
+  /* ================= 启动 ================= */
   resize();
+  buildGrain();
   if (params.has('t')){
     timeline = clamp(parseFloat(params.get('t')), 0, 1);
     paused = true; autoPlay = false;
     $('btnPlay').textContent = '重播';
+    $('titlecard').classList.add('hide');
+    $('hint').classList.add('hide');
   }
   requestAnimationFrame(frame);
 })();
