@@ -1,0 +1,176 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 840" font-family="'Segoe UI','Microsoft YaHei','PingFang SC',sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#90a4ae"/>
+    </marker>
+    <marker id="arrOrange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef6c00"/>
+    </marker>
+  </defs>
+
+  <rect width="1300" height="840" fill="#fafbfc"/>
+
+  <!-- 标题 -->
+  <text x="650" y="44" text-anchor="middle" font-size="22" font-weight="bold" fill="#263238">LLM 推理加速技术地图</text>
+  <text x="650" y="70" text-anchor="middle" font-size="13" fill="#78909c">四条路线攻击四个瓶颈 —— 算得少 · 搬得少 · 一次出多个 · 并行调度</text>
+
+  <!-- 推理流水线 -->
+  <g>
+    <rect x="185" y="124" width="120" height="56" rx="8" fill="#ffffff" stroke="#b0bec5"/>
+    <text x="245" y="149" text-anchor="middle" font-size="14" font-weight="bold" fill="#37474f">输入</text>
+    <text x="245" y="168" text-anchor="middle" font-size="10.5" fill="#90a4ae">prompt tokens</text>
+
+    <line x1="305" y1="152" x2="339" y2="152" stroke="#90a4ae" stroke-width="1.6" marker-end="url(#arr)"/>
+
+    <rect x="345" y="124" width="200" height="56" rx="8" fill="#e3f2fd" stroke="#1976d2"/>
+    <text x="445" y="149" text-anchor="middle" font-size="14" font-weight="bold" fill="#0d47a1">Prefill</text>
+    <text x="445" y="168" text-anchor="middle" font-size="10.5" fill="#1565c0">一次并行处理全部输入</text>
+
+    <line x1="545" y1="152" x2="579" y2="152" stroke="#90a4ae" stroke-width="1.6" marker-end="url(#arr)"/>
+
+    <rect x="585" y="124" width="140" height="56" rx="8" fill="#f3e5f5" stroke="#8e24aa"/>
+    <text x="655" y="149" text-anchor="middle" font-size="14" font-weight="bold" fill="#4a148c">KV Cache</text>
+    <text x="655" y="168" text-anchor="middle" font-size="10.5" fill="#6a1b9a">注意力的记忆</text>
+
+    <line x1="725" y1="152" x2="759" y2="152" stroke="#90a4ae" stroke-width="1.6" marker-end="url(#arr)"/>
+
+    <rect x="765" y="124" width="200" height="56" rx="8" fill="#fff3e0" stroke="#ef6c00" stroke-width="2"/>
+    <text x="865" y="149" text-anchor="middle" font-size="14" font-weight="bold" fill="#e65100">Decode × N</text>
+    <text x="865" y="168" text-anchor="middle" font-size="10.5" fill="#ef6c00">逐 token 串行生成</text>
+
+    <path d="M 950 121 C 950 84 780 84 780 121" fill="none" stroke="#ef6c00" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#arrOrange)"/>
+    <text x="865" y="94" text-anchor="middle" font-size="11" fill="#ef6c00">自回归循环</text>
+
+    <line x1="965" y1="152" x2="999" y2="152" stroke="#90a4ae" stroke-width="1.6" marker-end="url(#arr)"/>
+
+    <rect x="1005" y="124" width="110" height="56" rx="8" fill="#ffffff" stroke="#b0bec5"/>
+    <text x="1060" y="149" text-anchor="middle" font-size="14" font-weight="bold" fill="#37474f">输出</text>
+    <text x="1060" y="168" text-anchor="middle" font-size="10.5" fill="#90a4ae">逐个吐出</text>
+
+    <text x="445" y="208" text-anchor="middle" font-size="12" font-weight="bold" fill="#d84315">瓶颈:GPU 算力</text>
+    <text x="865" y="208" text-anchor="middle" font-size="12" font-weight="bold" fill="#d84315">瓶颈:内存带宽</text>
+  </g>
+
+  <!-- 四条路线 -->
+  <!-- 列1 算得少 -->
+  <g>
+    <rect x="38" y="290" width="295" height="322" rx="8" fill="#f4faf4"/>
+    <rect x="38" y="240" width="295" height="42" rx="8" fill="#2e7d32"/>
+    <text x="185.5" y="267" text-anchor="middle" font-size="15" font-weight="bold" fill="#ffffff">① 算得少 — 模型结构</text>
+
+    <rect x="48" y="300" width="275" height="54" rx="6" fill="#ffffff"/>
+    <rect x="48" y="300" width="4" height="54" rx="2" fill="#2e7d32"/>
+    <text x="64" y="321" font-size="13.5" font-weight="bold" fill="#263238">MoE 稀疏激活</text>
+    <text x="64" y="341" font-size="11.5" fill="#546e7a">总参 125B,每 token 仅激活 6B</text>
+
+    <rect x="48" y="362" width="275" height="54" rx="6" fill="#ffffff"/>
+    <rect x="48" y="362" width="4" height="54" rx="2" fill="#2e7d32"/>
+    <text x="64" y="383" font-size="13.5" font-weight="bold" fill="#263238">GQA / MQA</text>
+    <text x="64" y="403" font-size="11.5" fill="#546e7a">共享 KV 头,cache 缩小数倍</text>
+
+    <rect x="48" y="424" width="275" height="54" rx="6" fill="#ffffff"/>
+    <rect x="48" y="424" width="4" height="54" rx="2" fill="#2e7d32"/>
+    <text x="64" y="445" font-size="13.5" font-weight="bold" fill="#263238">MLA 潜在注意力</text>
+    <text x="64" y="465" font-size="11.5" fill="#546e7a">DeepSeek 采用,KV 压缩 90%+</text>
+
+    <rect x="48" y="486" width="275" height="54" rx="6" fill="#ffffff"/>
+    <rect x="48" y="486" width="4" height="54" rx="2" fill="#2e7d32"/>
+    <text x="64" y="507" font-size="13.5" font-weight="bold" fill="#263238">稀疏 / 线性注意力</text>
+    <text x="64" y="527" font-size="11.5" fill="#546e7a">Mamba 类,长上下文模型标配</text>
+  </g>
+
+  <!-- 列2 搬得少 -->
+  <g>
+    <rect x="348" y="290" width="295" height="322" rx="8" fill="#eef5fc"/>
+    <rect x="348" y="240" width="295" height="42" rx="8" fill="#1565c0"/>
+    <text x="495.5" y="267" text-anchor="middle" font-size="15" font-weight="bold" fill="#ffffff">② 搬得少 — 量化与显存</text>
+
+    <rect x="358" y="300" width="275" height="54" rx="6" fill="#ffffff"/>
+    <rect x="358" y="300" width="4" height="54" rx="2" fill="#1565c0"/>
+    <text x="374" y="321" font-size="13.5" font-weight="bold" fill="#263238">权重量化</text>
+    <text x="374" y="341" font-size="11.5" fill="#546e7a">GGUF Q4 / AWQ / FP8,4bit 是甜点</text>
+
+    <rect x="358" y="362" width="275" height="54" rx="6" fill="#ffffff"/>
+    <rect x="358" y="362" width="4" height="54" rx="2" fill="#1565c0"/>
+    <text x="374" y="383" font-size="13.5" font-weight="bold" fill="#263238">KV Cache 量化</text>
+    <text x="374" y="403" font-size="11.5" fill="#546e7a">长上下文时 cache 比权重还大,收益最大</text>
+
+    <rect x="358" y="424" width="275" height="54" rx="6" fill="#ffffff"/>
+    <rect x="358" y="424" width="4" height="54" rx="2" fill="#1565c0"/>
+    <text x="374" y="445" font-size="13.5" font-weight="bold" fill="#263238">PagedAttention</text>
+    <text x="374" y="465" font-size="11.5" fill="#546e7a">vLLM 起家本领,像分页一样管显存</text>
+
+    <rect x="358" y="486" width="275" height="54" rx="6" fill="#ffffff"/>
+    <rect x="358" y="486" width="4" height="54" rx="2" fill="#1565c0"/>
+    <text x="374" y="507" font-size="13.5" font-weight="bold" fill="#263238">Prefix Caching</text>
+    <text x="374" y="527" font-size="11.5" fill="#546e7a">相同前缀只算一次,反复复用</text>
+
+    <rect x="358" y="548" width="275" height="54" rx="6" fill="#ffffff"/>
+    <rect x="358" y="548" width="4" height="54" rx="2" fill="#1565c0"/>
+    <text x="374" y="569" font-size="13.5" font-weight="bold" fill="#263238">专家 Offload</text>
+    <text x="374" y="589" font-size="11.5" fill="#546e7a">专家放内存,显存只放热点(llama.cpp)</text>
+  </g>
+
+  <!-- 列3 一次出多个 -->
+  <g>
+    <rect x="658" y="290" width="295" height="322" rx="8" fill="#f8f3fb"/>
+    <rect x="658" y="240" width="295" height="42" rx="8" fill="#6a1b9a"/>
+    <text x="805.5" y="267" text-anchor="middle" font-size="15" font-weight="bold" fill="#ffffff">③ 一次出多个 — 投机解码</text>
+
+    <rect x="668" y="300" width="275" height="54" rx="6" fill="#ffffff"/>
+    <rect x="668" y="300" width="4" height="54" rx="2" fill="#6a1b9a"/>
+    <text x="684" y="321" font-size="13.5" font-weight="bold" fill="#263238">MTP 多 token 预测</text>
+    <text x="684" y="341" font-size="11.5" fill="#546e7a">模型自带模块,Qwen / DeepSeek / GLM</text>
+
+    <rect x="668" y="362" width="275" height="54" rx="6" fill="#ffffff"/>
+    <rect x="668" y="362" width="4" height="54" rx="2" fill="#6a1b9a"/>
+    <text x="684" y="383" font-size="13.5" font-weight="bold" fill="#263238">EAGLE-3</text>
+    <text x="684" y="403" font-size="11.5" fill="#546e7a">云端生产标准,3~4 倍加速</text>
+
+    <rect x="668" y="424" width="275" height="54" rx="6" fill="#ffffff"/>
+    <rect x="668" y="424" width="4" height="54" rx="2" fill="#6a1b9a"/>
+    <text x="684" y="445" font-size="13.5" font-weight="bold" fill="#263238">n-gram 查找</text>
+    <text x="684" y="465" font-size="11.5" fill="#546e7a">零成本,代码编辑场景最高 6 倍</text>
+
+    <rect x="668" y="486" width="275" height="54" rx="6" fill="#ffffff"/>
+    <rect x="668" y="486" width="4" height="54" rx="2" fill="#6a1b9a"/>
+    <text x="684" y="507" font-size="13.5" font-weight="bold" fill="#263238">Medusa / Draft Model</text>
+    <text x="684" y="527" font-size="11.5" fill="#546e7a">早期方案,已被 MTP / EAGLE 取代</text>
+  </g>
+
+  <!-- 列4 并行调度 -->
+  <g>
+    <rect x="968" y="290" width="295" height="322" rx="8" fill="#fff5ee"/>
+    <rect x="968" y="240" width="295" height="42" rx="8" fill="#d84315"/>
+    <text x="1115.5" y="267" text-anchor="middle" font-size="15" font-weight="bold" fill="#ffffff">④ 并行调度 — 服务端吞吐</text>
+
+    <rect x="978" y="300" width="275" height="54" rx="6" fill="#ffffff"/>
+    <rect x="978" y="300" width="4" height="54" rx="2" fill="#d84315"/>
+    <text x="994" y="321" font-size="13.5" font-weight="bold" fill="#263238">Continuous Batching</text>
+    <text x="994" y="341" font-size="11.5" fill="#546e7a">新请求随到随批,不再整批等待</text>
+
+    <rect x="978" y="362" width="275" height="54" rx="6" fill="#ffffff"/>
+    <rect x="978" y="362" width="4" height="54" rx="2" fill="#d84315"/>
+    <text x="994" y="383" font-size="13.5" font-weight="bold" fill="#263238">PD 分离</text>
+    <text x="994" y="403" font-size="11.5" fill="#546e7a">Prefill 与 Decode 拆开各自优化</text>
+
+    <rect x="978" y="424" width="275" height="54" rx="6" fill="#ffffff"/>
+    <rect x="978" y="424" width="4" height="54" rx="2" fill="#d84315"/>
+    <text x="994" y="445" font-size="13.5" font-weight="bold" fill="#263238">TP / PP / EP</text>
+    <text x="994" y="465" font-size="11.5" fill="#546e7a">多卡切分:张量 / 流水线 / 专家并行</text>
+
+    <rect x="978" y="486" width="275" height="54" rx="6" fill="#ffffff"/>
+    <rect x="978" y="486" width="4" height="54" rx="2" fill="#d84315"/>
+    <text x="994" y="507" font-size="13.5" font-weight="bold" fill="#263238">Chunked Prefill</text>
+    <text x="994" y="527" font-size="11.5" fill="#546e7a">长输入切块处理,减小排队延迟</text>
+  </g>
+
+  <!-- 底部:系统内核与框架 -->
+  <g>
+    <rect x="38" y="645" width="1225" height="150" rx="10" fill="#eceff1"/>
+    <text x="650" y="678" text-anchor="middle" font-size="15" font-weight="bold" fill="#37474f">系统内核与推理框架(所有路线的地基)</text>
+    <text x="650" y="710" text-anchor="middle" font-size="12.5" fill="#455a64">FlashAttention(注意力 IO 优化)· CUDA Graph(消除启动开销)· MLX(Apple 统一内存生态)</text>
+    <text x="650" y="740" text-anchor="middle" font-size="12.5" fill="#455a64">服务端框架:vLLM · SGLang · TensorRT-LLM&#160;&#160;&#160;|&#160;&#160;&#160;本地框架:llama.cpp · Ollama · LM Studio</text>
+    <text x="650" y="772" text-anchor="middle" font-size="11.5" fill="#78909c">注:投机解码消耗 GPU 空闲算力,高并发场景收益趋近于零;Decode 阶段的终极瓶颈是内存带宽</text>
+  </g>
+</svg>

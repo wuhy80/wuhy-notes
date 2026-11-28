@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="560" viewBox="0 0 1080 560">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#2563eb"/>
+    </marker>
+    <style>
+      .title { font: 700 28px sans-serif; fill: #111827; }
+      .label { font: 18px sans-serif; fill: #1f2937; }
+      .small { font: 15px sans-serif; fill: #4b5563; }
+      .card { fill: #ffffff; stroke: #cbd5e1; stroke-width: 2; rx: 12; }
+      .blue { fill: #eff6ff; stroke: #2563eb; stroke-width: 2; rx: 8; }
+      .green { fill: #ecfdf5; stroke: #16a34a; stroke-width: 2; rx: 8; }
+      .orange { fill: #fff7ed; stroke: #ea580c; stroke-width: 2; rx: 8; }
+      .line { stroke: #2563eb; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .cell { fill: #f8fafc; stroke: #94a3b8; stroke-width: 1.5; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1080" height="560" fill="#ffffff"/>
+  <text x="40" y="48" class="title">向量和矩阵的实际用途</text>
+  <text x="40" y="78" class="small">向量表示对象的一组特征，矩阵表示一批对象、关系或变换。</text>
+
+  <rect x="55" y="125" width="250" height="290" class="card"/>
+  <text x="180" y="160" class="label" text-anchor="middle">向量：一个对象</text>
+  <rect x="118" y="190" width="125" height="165" class="blue"/>
+  <text x="180" y="222" class="small" text-anchor="middle">温度</text>
+  <text x="180" y="258" class="small" text-anchor="middle">电流</text>
+  <text x="180" y="294" class="small" text-anchor="middle">转速</text>
+  <text x="180" y="330" class="small" text-anchor="middle">振动</text>
+  <text x="180" y="455" class="small" text-anchor="middle">设备状态 = 一组数字特征</text>
+
+  <path d="M325 270 H390" class="line"/>
+
+  <rect x="410" y="125" width="260" height="290" class="card"/>
+  <text x="540" y="160" class="label" text-anchor="middle">矩阵：一批对象</text>
+  <g transform="translate(465,190)">
+    <rect x="0" y="0" width="45" height="35" class="cell"/>
+    <rect x="45" y="0" width="45" height="35" class="cell"/>
+    <rect x="90" y="0" width="45" height="35" class="cell"/>
+    <rect x="0" y="35" width="45" height="35" class="cell"/>
+    <rect x="45" y="35" width="45" height="35" class="cell"/>
+    <rect x="90" y="35" width="45" height="35" class="cell"/>
+    <rect x="0" y="70" width="45" height="35" class="cell"/>
+    <rect x="45" y="70" width="45" height="35" class="cell"/>
+    <rect x="90" y="70" width="45" height="35" class="cell"/>
+    <rect x="0" y="105" width="45" height="35" class="cell"/>
+    <rect x="45" y="105" width="45" height="35" class="cell"/>
+    <rect x="90" y="105" width="45" height="35" class="cell"/>
+  </g>
+  <text x="540" y="455" class="small" text-anchor="middle">数据集 = 很多向量排成表</text>
+
+  <path d="M690 270 H755" class="line"/>
+
+  <rect x="775" y="125" width="250" height="290" class="card"/>
+  <text x="900" y="160" class="label" text-anchor="middle">计算与变换</text>
+  <rect x="835" y="195" width="130" height="55" class="green"/>
+  <text x="900" y="229" class="small" text-anchor="middle">预测 / 分类</text>
+  <rect x="835" y="270" width="130" height="55" class="orange"/>
+  <text x="900" y="304" class="small" text-anchor="middle">相似度 / 搜索</text>
+  <rect x="835" y="345" width="130" height="55" class="blue"/>
+  <text x="900" y="379" class="small" text-anchor="middle">旋转 / 投影</text>
+  <text x="900" y="455" class="small" text-anchor="middle">矩阵乘法让批量计算变简单</text>
+</svg>

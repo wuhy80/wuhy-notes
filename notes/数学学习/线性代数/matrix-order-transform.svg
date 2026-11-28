@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="480" viewBox="0 0 960 480">
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#dc2626"/>
+    </marker>
+    <style>
+      .title { font: 700 28px sans-serif; fill: #111827; }
+      .label { font: 18px sans-serif; fill: #1f2937; }
+      .small { font: 15px sans-serif; fill: #4b5563; }
+      .box { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 2; rx: 10; }
+      .blue { fill: #eff6ff; stroke: #2563eb; stroke-width: 2; rx: 10; }
+      .red { fill: #fef2f2; stroke: #dc2626; stroke-width: 2; rx: 10; }
+      .axis { stroke: #94a3b8; stroke-width: 2; }
+      .grid { stroke: #e5e7eb; stroke-width: 1; }
+      .path-blue { stroke: #2563eb; stroke-width: 4; fill: none; marker-end: url(#arrow-blue); }
+      .path-red { stroke: #dc2626; stroke-width: 4; fill: none; marker-end: url(#arrow-red); }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="480" fill="#ffffff"/>
+  <text x="40" y="48" class="title">矩阵乘法表示“按顺序执行变换”</text>
+  <text x="40" y="78" class="small">同样两个变换 A 和 B，顺序不同，结果通常不同。</text>
+
+  <rect x="48" y="120" width="390" height="240" class="box"/>
+  <text x="78" y="155" class="label">ABx = A(Bx)</text>
+  <text x="78" y="184" class="small">先执行 B，再执行 A</text>
+  <circle cx="115" cy="260" r="18" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="109" y="267" class="label">x</text>
+  <rect x="190" y="232" width="70" height="56" class="blue"/>
+  <text x="216" y="266" class="label">B</text>
+  <rect x="320" y="232" width="70" height="56" class="blue"/>
+  <text x="346" y="266" class="label">A</text>
+  <path d="M135 260 H184" class="path-blue"/>
+  <path d="M260 260 H314" class="path-blue"/>
+  <circle cx="412" cy="260" r="18" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="398" y="267" class="small">ABx</text>
+  <path d="M390 260 H392" class="path-blue"/>
+
+  <rect x="522" y="120" width="390" height="240" class="box"/>
+  <text x="552" y="155" class="label">BAx = B(Ax)</text>
+  <text x="552" y="184" class="small">先执行 A，再执行 B</text>
+  <circle cx="589" cy="260" r="18" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+  <text x="583" y="267" class="label">x</text>
+  <rect x="664" y="232" width="70" height="56" class="red"/>
+  <text x="690" y="266" class="label">A</text>
+  <rect x="794" y="232" width="70" height="56" class="red"/>
+  <text x="820" y="266" class="label">B</text>
+  <path d="M609 260 H658" class="path-red"/>
+  <path d="M734 260 H788" class="path-red"/>
+  <circle cx="886" cy="260" r="18" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+  <text x="872" y="267" class="small">BAx</text>
+  <path d="M864 260 H866" class="path-red"/>
+
+  <text x="242" y="405" class="label" text-anchor="middle">结果 1</text>
+  <text x="716" y="405" class="label" text-anchor="middle">结果 2</text>
+  <text x="360" y="445" class="label">一般情况下：</text>
+  <text x="505" y="445" class="label" fill="#dc2626">AB ≠ BA</text>
+</svg>

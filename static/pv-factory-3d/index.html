@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>光伏组件无人自动化制造车间 · 3D 产线可视化</title>
+<link rel="stylesheet" href="./style.css?v=2" />
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js" } }
+</script>
+</head>
+<body>
+<div id="app"></div>
+
+<div id="hud">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">◈</div>
+      <div class="brand-txt">
+        <h1>光伏组件无人自动化制造车间</h1>
+        <p>PV MODULE UNMANNED ASSEMBLY LINE · 产线 A · MES 实时数据</p>
+      </div>
+    </div>
+    <div class="clock">
+      <b id="clock">--:--:--</b>
+      <em id="shift">白班 08:00 — 20:00</em>
+    </div>
+  </header>
+
+  <section class="kpis" id="kpis">
+    <div class="kpi"><span>今日产量</span><b id="k-prod">0</b><i>块</i><u id="k-prod-t">▲ 2.1%</u></div>
+    <div class="kpi"><span>一次良率</span><b id="k-yield">0</b><i>%</i><u id="k-yield-t">▲ 0.3%</u></div>
+    <div class="kpi"><span>OEE</span><b id="k-oee">0</b><i>%</i><u id="k-oee-t">▼ 0.4%</u></div>
+    <div class="kpi"><span>稼动率</span><b id="k-run">0</b><i>%</i><u id="k-run-t">▲ 0.1%</u></div>
+    <div class="kpi"><span>在制 WIP</span><b id="k-wip">0</b><i>块</i><u id="k-wip-t">—</u></div>
+  </section>
+
+  <aside class="panel stations">
+    <h2>工位状态<span class="badge" id="run-count">8 / 8 运行</span></h2>
+    <ul id="station-list"></ul>
+  </aside>
+
+  <aside class="panel events">
+    <h2>事件 · 报警</h2>
+    <ul id="event-list"></ul>
+  </aside>
+
+  <div class="toolbar">
+    <button data-act="cruise" class="on">自动巡航</button>
+    <button data-act="top">俯视产线</button>
+    <button data-act="reset">重置视角</button>
+  </div>
+
+  <div id="tip" class="tip"></div>
+
+  <div id="detail" class="detail">
+    <button id="detail-close" aria-label="关闭">×</button>
+    <h3 id="d-name">—</h3>
+    <p id="d-code" class="mono">—</p>
+    <dl id="d-body"></dl>
+  </div>
+
+  <div class="legend">
+    <span><i class="dot run"></i>运行</span>
+    <span><i class="dot idle"></i>待机</span>
+    <span><i class="dot warn"></i>报警</span>
+    <span><i class="dot stop"></i>停机</span>
+  </div>
+</div>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,692 @@
+/**
+ * bilingual-reader.js —— 外刊精读页的阅读器（纯前端，零依赖）
+ *
+ * 背景：笔记里用「原文 | 译文」两列表格维护，Obsidian/git 里好改；但站点上
+ * 表格读起来割裂（一行英文一行中文并排、宽度被切半、词注折叠在 callout 里）。
+ * 这里在浏览器里把表格重排成「一段英文 + 一段中文」，并补上阅读工具：
+ *   · 对照 / 原文 / 译文 三档切换（localStorage 记忆）
+ *   · 字号调节（记忆）
+ *   · 行内词卡：文中的生词加虚线下划线，点击/回车弹出音标、释义、朗读、标记已掌握（YouGlish）
+ *   （2026-11-04 移除右侧「本篇生词」栏：内容与文末总词汇表卡片、行内词卡完全重复）
+ *   · 段落朗读（Web Speech API，无需后端）
+ *   · 文末总词汇表 → 卡片网格
+ *
+ * 数据来源全部来自页面本身：词汇取自「词汇注释」callout 与「总词汇表」表格，
+ * 不额外维护 JSON；JS 不跑时表格仍是可读的。
+ *
+ * Quartz 开了 SPA（enableSPA），切页不会重新执行 <script>，所以这里监听
+ * Quartz 的 nav 事件重新初始化；每轮初始化用 AbortController 摘掉上一轮的
+ * 事件监听，避免叠加。
+ *
+ * 由 scripts/reader/app.mjs 按需加载；样式见 scripts/site-custom.scss
+ * 的「13/13 双语精读阅读器」段。
+ */
+(function () {
+  'use strict';
+  var PREF = 'gzb-bil-prefs';
+  var KNOWN = 'gzb-bil-known';
+  var OUT = 'gzb-bil-out';
+  var DEFAULTS = { mode: 'pair', scale: 1, vocab: true, rate: 0.95, nlf: false };
+  var RATES = [0.95, 0.7, 0.55];       // 常速 / 慢速 / 更慢（跟读用）
+  var RATE_LABEL = ['常速', '慢速', '更慢'];
+
+  function read(key, fallback) {
+    try { var v = JSON.parse(localStorage.getItem(key)); return v == null ? fallback : v; } catch (e) { return fallback; }
+  }
+  function write(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* 隐私模式忽略 */ } }
+  function esc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  function stripTags(html) {
+    var d = document.createElement('div');
+    d.innerHTML = html;
+    return (d.textContent || '').replace(/\s+/g, ' ').trim();
+  }
+
+  var prefs = read(PREF, DEFAULTS);
+  var known = {};
+  read(KNOWN, []).forEach(function (w) { known[w] = 1; });
+
+  var ac = null;      // 本轮初始化的事件控制器
+  var pop = null;     // 词卡弹层（每轮重建）
+  var active = null;  // 当前打开弹层的词
+
+  // ── 词汇收集 ────────────────────────────────────────────────────────────
+  // ── 未闭合行内标签兜底 ──────────────────────────────────────────────
+  // 行内格式标签（u/em/strong 等）里不该出现块级子元素。笔记里若混入未闭合的
+  // 行内标签（例如 callout 里写字面量 <u>），经本脚本的重构后可能被放大成
+  // 包住整个内容区的巨型标签：text-decoration 不是继承属性但会沿盒树向下
+  // 「绘制」，于是整页每行都带下划线。这里把「含块级子元素的行内标签」
+  // 原地拆开（保留子节点），词级小标签不受影响。幂等，可多次调用。
+  function sanitizeInlineWrappers(root) {
+    var INLINE = 'u,em,strong,b,i,s,mark,small,sub,sup';
+    var BLOCK = 'div,p,table,thead,tbody,tr,td,th,ul,ol,li,h1,h2,h3,h4,h5,h6,section,article,blockquote,pre,figure,hr,dl,dt,dd';
+    [].slice.call(root.querySelectorAll(INLINE)).forEach(function (el) {
+      if (!el.querySelector(BLOCK)) return;
+      var parent = el.parentNode;
+      if (!parent) return;
+      while (el.firstChild) parent.insertBefore(el.firstChild, el);
+      parent.removeChild(el);
+    });
+  }
+
+  function collectVocab(root) {
+    var vocab = {};
+    var order = 0;
+    function add(word, ipa, def) {
+      word = (word || '').trim();
+      if (!word) return;
+      var k = word.toLowerCase();
+      var cur = vocab[k] || { word: word, ipa: '', def: '', order: order++ };
+      if (ipa && (!cur.ipa || cur.ipa === '—')) cur.ipa = ipa;
+      if (def && def.length > cur.def.length) cur.def = def;
+      vocab[k] = cur;
+    }
+
+    [].slice.call(root.querySelectorAll('blockquote.callout')).forEach(function (c) {
+      var title = c.querySelector('.callout-title-inner');
+      if (!title || title.textContent.indexOf('词汇注释') < 0) return;
+      c.classList.add('bil-vocab-src');
+      [].slice.call(c.querySelectorAll('li')).forEach(function (li) {
+        var strong = li.querySelector('strong');
+        if (!strong) return;
+        var word = strong.textContent.trim();
+        var rest = li.textContent.replace(strong.textContent, '');
+        var ipa = (rest.match(/\/[^\/]+\//) || [''])[0];
+        var def = rest.split('——').slice(1).join('——').replace(ipa, '').replace(/\s+/g, ' ').trim();
+        add(word, ipa, def);
+      });
+    });
+
+    var glossary = null;
+    [].slice.call(root.querySelectorAll('table')).forEach(function (t) {
+      var th = [].slice.call(t.querySelectorAll('thead th')).map(function (x) { return x.textContent.trim(); });
+      if (th.join('|') === '词汇|音标|释义|文中语境') glossary = t;
+    });
+    if (glossary) {
+      rowsOf(glossary).forEach(function (r) {
+        var ipa = stripTags(r[1] || '');
+        add(stripTags(r[0]), ipa === '—' ? '' : ipa, stripTags(r[2] || ''));
+      });
+    }
+    return { vocab: vocab, order: order, glossary: glossary };
+  }
+
+  function rowsOf(table) {
+    return [].slice.call(table.querySelectorAll('tbody tr')).map(function (tr) {
+      return [].slice.call(tr.children).map(function (td) { return td.innerHTML.trim(); });
+    }).filter(function (r) { return r.length; });
+  }
+
+  // ── 表格 → 段落对 ──────────────────────────────────────────────────────
+  function transformPairs(tables) {
+    tables.forEach(function (table) {
+      var host = table.closest('.table-container') || table;
+      var box = document.createElement('div');
+      box.className = 'bil';
+      rowsOf(table).forEach(function (cells) {
+        if (cells.length < 2) return;
+        var pair = document.createElement('div');
+        pair.className = 'bil-pair';
+        var en = document.createElement('p');
+        en.className = 'bil-en';
+        en.innerHTML = cells[0];
+        var zh = document.createElement('p');
+        zh.className = 'bil-zh';
+        zh.innerHTML = cells[1];
+        var play = document.createElement('button');
+        play.type = 'button';
+        play.className = 'bil-play';
+        play.setAttribute('aria-label', '朗读本段');
+        play.title = '朗读本段';
+        play.textContent = '▶';
+        var shadow = document.createElement('button');
+        shadow.type = 'button';
+        shadow.className = 'bil-shadow';
+        shadow.title = '影子跟读：播放原声并录下你的跟读（录音只存在本机）';
+        shadow.textContent = '🎤';
+        pair.appendChild(en);
+        pair.appendChild(zh);
+        pair.appendChild(play);
+        pair.appendChild(shadow);
+        box.appendChild(pair);
+      });
+      host.replaceWith(box);
+    });
+  }
+
+  // ── 总词汇表 → 卡片 ────────────────────────────────────────────────────
+  function transformGlossary(glossary) {
+    if (!glossary) return;
+    var host = glossary.closest('.table-container') || glossary;
+    var grid = document.createElement('div');
+    grid.className = 'bil-cards';
+    rowsOf(glossary).forEach(function (r) {
+      if (r.length < 3) return;
+      var card = document.createElement('div');
+      card.className = 'bil-card';
+      card.innerHTML = '<div class="bil-card-h"><b>' + stripTags(r[0]) + '</b><span>' + stripTags(r[1] || '') + '</span></div>'
+        + '<div class="bil-card-d">' + r[2] + '</div>'
+        + (r[3] ? '<div class="bil-card-c">' + r[3] + '</div>' : '');
+      grid.appendChild(card);
+    });
+    host.replaceWith(grid);
+  }
+
+  // ── 行内标注 ────────────────────────────────────────────────────────────
+  function annotateAll(root, vocab) {
+    var words = Object.keys(vocab).map(function (k) { return vocab[k]; })
+      .filter(function (v) { return v.word.length >= 3; })
+      .sort(function (a, b) { return a.order - b.order; });
+    var hit = {};
+
+    function annotate(paragraph, entry) {
+      var re = new RegExp('\\b' + esc(entry.word) + '\\b', 'i');
+      var walker = document.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT, null);
+      var node;
+      while ((node = walker.nextNode())) {
+        if (!node.nodeValue || !/\S/.test(node.nodeValue)) continue;
+        var m = re.exec(node.nodeValue);
+        if (!m) continue;
+        var before = node.nodeValue.slice(0, m.index);
+        var word = m[0];
+        var after = node.nodeValue.slice(m.index + word.length);
+        var span = document.createElement('span');
+        span.className = 'bil-w';
+        span.tabIndex = 0;
+        span.setAttribute('role', 'button');
+        span.dataset.w = entry.word.toLowerCase();
+        span.textContent = word;
+        var frag = document.createDocumentFragment();
+        if (before) frag.appendChild(document.createTextNode(before));
+        frag.appendChild(span);
+        if (after) frag.appendChild(document.createTextNode(after));
+        node.parentNode.replaceChild(frag, node);
+        return true;
+      }
+      return false;
+    }
+
+    words.forEach(function (entry) {
+      var max = 2;
+      [].slice.call(root.querySelectorAll('.bil-en')).forEach(function (p) {
+        if ((hit[entry.word.toLowerCase()] || 0) >= max) return;
+        if (annotate(p, entry)) hit[entry.word.toLowerCase()] = (hit[entry.word.toLowerCase()] || 0) + 1;
+      });
+    });
+    return words;
+  }
+
+  // ── 弹层 ────────────────────────────────────────────────────────────────
+  function closePop() {
+    if (pop) pop.hidden = true;
+    if (active) active.classList.remove('is-open');
+    active = null;
+  }
+
+  function openPop(el, vocab) {
+    var key = el.dataset.w;
+    var v = vocab[key];
+    if (!v || !pop) return;
+    active = el;
+    pop.innerHTML = '<div class="bil-pop-h"><b>' + v.word + '</b><span>' + (v.ipa || '') + '</span></div>'
+      + '<div class="bil-pop-d">' + (v.def || '（暂无释义）') + '</div>'
+      + '<div class="bil-pop-a">'
+      + '<button type="button" data-say>朗读</button>'
+      + (v.auto ? '' : '<button type="button" data-know aria-pressed="' + (known[key] ? 'true' : 'false') + '">'
+        + (known[key] ? '已掌握' : '标为已掌握') + '</button>')
+      + '<a class="bil-pop-yg" href="https://youglish.com/pronounce/' + encodeURIComponent(v.word) + '/english" target="_blank" rel="noopener" title="在 YouGlish 听母语者的真实用法">YouGlish ↗</a></div>';
+    pop.hidden = false;
+    var r = el.getBoundingClientRect();
+    var w = Math.min(320, window.innerWidth - 24);
+    var left = Math.min(Math.max(12, r.left - 8), window.innerWidth - w - 12);
+    pop.style.width = w + 'px';
+    pop.style.left = left + 'px';
+    // 一律挂在词下方；贴到视口底部时向上收，而不是翻到上方压住工具栏
+    var h = pop.offsetHeight || 150;
+    var top = r.bottom + 10;
+    if (top + h > window.innerHeight - 8) top = Math.max(8, window.innerHeight - h - 8);
+    pop.style.top = top + 'px';
+    el.classList.add('is-open');
+  }
+
+  // ── 朗读 ────────────────────────────────────────────────────────────────
+  var speaking = null;
+  function speak(text) {
+    if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') return;
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US';
+    u.rate = prefs.rate != null ? prefs.rate : 0.95;
+    u.onend = u.onerror = function () {
+      if (speaking) { speaking.classList.remove('is-speaking'); speaking = null; }
+    };
+    window.speechSynthesis.speak(u);
+  }
+  function speakPair(pair) {
+    if (!pair) return;
+    var text = (pair.querySelector('.bil-en') || {}).textContent || '';
+    if (!text) return;
+    if (playAllState) stopPlayAll(); // 手动单段朗读打断连播
+    if (speaking === pair) {
+      window.speechSynthesis.cancel();
+      pair.classList.remove('is-speaking');
+      speaking = null;
+      return;
+    }
+    if (speaking) speaking.classList.remove('is-speaking');
+    speaking = pair;
+    pair.classList.add('is-speaking');
+    speak(text);
+  }
+
+  // ── 连播：按篇顺序朗读原文，自动滚动跟随，随时可停 ──────────────────────
+  var playAllState = null;
+  function stopPlayAll() {
+    playAllState = null;
+    window.speechSynthesis.cancel();
+    [].slice.call(document.querySelectorAll('.bil-pair.is-speaking')).forEach(function (p) {
+      p.classList.remove('is-speaking');
+    });
+    var b = document.querySelector('.bil-toolbar [data-playall]');
+    if (b) b.textContent = '▶ 连播';
+  }
+  function playAll() {
+    if (typeof SpeechSynthesisUtterance === 'undefined') return; // 无 TTS 环境（旧 webview）不进入
+    var pairs = [].slice.call(root.querySelectorAll('.bil-pair'));
+    if (!pairs.length) return;
+    playAllState = { pairs: pairs, i: 0 };
+    var b = bar.querySelector('[data-playall]');
+    if (b) b.textContent = '■ 停止';
+    stepPlayAll();
+  }
+  function stepPlayAll() {
+    if (!playAllState) return;
+    if (playAllState.i >= playAllState.pairs.length) return stopPlayAll();
+    var pair = playAllState.pairs[playAllState.i++];
+    pair.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    var text = (pair.querySelector('.bil-en') || {}).textContent || '';
+    [].slice.call(document.querySelectorAll('.bil-pair.is-speaking')).forEach(function (p) {
+      p.classList.remove('is-speaking');
+    });
+    if (!text) { if (playAllState) setTimeout(stepPlayAll, 120); return; }
+    pair.classList.add('is-speaking');
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US';
+    u.rate = prefs.rate != null ? prefs.rate : 0.95;
+    u.onend = u.onerror = function () {
+      pair.classList.remove('is-speaking');
+      if (playAllState) setTimeout(stepPlayAll, 350);
+    };
+    window.speechSynthesis.speak(u);
+  }
+  // ── 影子跟读：先播原声并录音，再回放对比（录音只存内存，不上传）──────────
+  function handleShadow(pair, btn) {
+    var st = pair._shadow;
+    if (st && st.recording) { st.rec.stop(); return; } // onstop 里收尾
+    if (st && st.blob) delete pair._shadow;            // 重录：丢弃旧录音
+    if (!navigator.mediaDevices || !window.MediaRecorder) {
+      btn.title = '此环境不支持录音';
+      btn.classList.add('is-broken');
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      var rec = new MediaRecorder(stream);
+      var chunks = [];
+      rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+      rec.onstop = function () {
+        stream.getTracks().forEach(function (t) { t.stop(); });
+        var blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
+        pair._shadow = { blob: blob, url: URL.createObjectURL(blob), recording: false };
+        btn.textContent = '🎤';
+        btn.classList.remove('is-rec');
+        var ctl = document.createElement('span');
+        ctl.className = 'bil-shadow-ctl';
+        ctl.innerHTML = '<button type="button" class="bil-shadow-mine" title="播放你的跟读">▶ 我的</button>' +
+          '<button type="button" class="bil-shadow-del" title="删除录音">✕</button>';
+        pair.appendChild(ctl);
+      };
+      pair._shadow = { rec: rec, recording: true };
+      rec.start();
+      btn.textContent = '■ 录制中';
+      btn.classList.add('is-rec');
+      speakPair(pair); // 先播原声，跟着说出来（录音会一并收进去）
+    }).catch(function (e) {
+      btn.title = '无法访问麦克风：' + (e && e.message ? e.message : e);
+      btn.classList.add('is-broken');
+    });
+  }
+  function playMine(mine) {
+    var pair = mine.closest('.bil-pair');
+    var st = pair && pair._shadow;
+    if (!st || !st.url) return;
+    if (pair._audio && !pair._audio.paused) { pair._audio.pause(); return; }
+    var audio = new Audio(st.url);
+    pair._audio = audio;
+    audio.play();
+  }
+  function delShadow(del) {
+    var pair = del.closest('.bil-pair');
+    if (!pair || !pair._shadow) return;
+    if (pair._audio) pair._audio.pause();
+    if (pair._shadow.url) URL.revokeObjectURL(pair._shadow.url);
+    delete pair._shadow;
+    var ctl = pair.querySelector('.bil-shadow-ctl');
+    if (ctl) ctl.remove();
+  }
+
+  // ── 难词提示：把不在高频词表（top 10000）里的词轻量标注出来 ─────────────
+  // 数据来自 /static/vocab.json 的 top 字段（构建期随生词本一起生成）。
+  // 只标注纯小写、长度 ≥4、不在高频表且尚无词卡的词；专名（含大写）一律跳过。
+  function annotateLowFreq(root, freqSet, vocab) {
+    [].slice.call(root.querySelectorAll('.bil-en')).forEach(function (p) {
+      var walker = document.createTreeWalker(p, NodeFilter.SHOW_TEXT, {
+        acceptNode: function (n) {
+          if (!n.nodeValue || n.nodeValue.length < 4) return NodeFilter.FILTER_REJECT;
+          var pe = n.parentElement;
+          if (pe && pe.closest('.bil-w, .bil-nlf')) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        },
+      });
+      var nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach(function (node) {
+        var text = node.nodeValue;
+        var frag = document.createDocumentFragment();
+        var pos = 0, changed = false;
+        var re = /[A-Za-z][A-Za-z'’-]{3,}/g, m;
+        while ((m = re.exec(text))) {
+          var tok = m[0];
+          if (tok !== tok.toLowerCase()) continue;       // 专名跳过
+          if (/['’]/.test(tok)) continue;                // 缩写（isn't/didn't）跳过
+          var k = tok.toLowerCase();
+          if (freqSet.has(k) || vocab[k]) continue;      // 高频词/已有词卡跳过
+          if (m.index > pos) frag.appendChild(document.createTextNode(text.slice(pos, m.index)));
+          var span = document.createElement('span');
+          span.className = 'bil-nlf bil-w';
+          span.dataset.w = k;
+          span.textContent = tok;
+          if (!vocab[k]) vocab[k] = { word: tok, ipa: '', def: '低频词：不在高频词表前 10000 内，建议查词典确认。', auto: true };
+          frag.appendChild(span);
+          pos = m.index + tok.length;
+          changed = true;
+        }
+        if (changed) {
+          if (pos < text.length) frag.appendChild(document.createTextNode(text.slice(pos)));
+          node.parentNode.replaceChild(frag, node);
+        }
+      });
+    });
+  }
+
+  // ── 每轮初始化 ──────────────────────────────────────────────────────────
+  function init() {
+    var doc = document.documentElement;   // 主题脚本会重写 body.className，状态一律挂 <html>
+    doc.classList.remove('bil-pending');
+
+    var article = document.querySelector('article');
+    if (!article) return;
+    var root = article.querySelector('.markdown-preview-view') || article;
+    sanitizeInlineWrappers(root); // 重构前先拆一次：笔记侧混入的未闭合行内标签不能留到后面
+
+    var pairTables = [].slice.call(root.querySelectorAll('table')).filter(function (t) {
+      var th = [].slice.call(t.querySelectorAll('thead th')).map(function (x) { return x.textContent.trim(); });
+      return th.length === 2 && th[0] === '原文' && th[1] === '译文';
+    });
+
+    if (!pairTables.length) {
+      // 同一页被重复初始化（首次加载后 Quartz 还会再发一次 nav）：保持现状，别把类名和生词栏清掉
+      if (root.querySelector('.bil')) return;
+      if (playAllState) stopPlayAll(); // 切到非精读页时停掉连播与朗读
+      doc.classList.remove('bil-page', 'bil-mode-pair', 'bil-mode-en', 'bil-mode-zh', 'bil-vocab-off');
+      return;
+    }
+
+    // 只有真的要重排时才换监听器；同一页的重复 init 在上面就 return 了，
+    // 否则会把上一轮挂好的 click/keydown 监听 abort 掉，词卡点了没反应。
+    if (ac) ac.abort();
+    ac = new AbortController();
+    var signal = ac.signal;
+
+    // SPA 切页后上一轮的弹层可能还在，先清掉
+    if (playAllState) stopPlayAll();
+    [].slice.call(document.querySelectorAll('.bil-pop')).forEach(function (n) { n.remove(); });
+    doc.classList.add('bil-page');
+
+    var collected = collectVocab(root);
+    var vocab = collected.vocab;
+
+    transformPairs(pairTables);
+    transformGlossary(collected.glossary);
+
+    var words = annotateAll(root, vocab);
+    sanitizeInlineWrappers(root); // 重构后再兜一次底
+
+    // 工具栏
+    var first = root.querySelector('.bil');
+    var bar = document.createElement('div');
+    bar.className = 'bil-toolbar';
+    bar.innerHTML =
+      '<div class="bil-seg" role="group" aria-label="显示模式">' +
+      '<button type="button" data-mode="pair">对照</button>' +
+      '<button type="button" data-mode="en">原文</button>' +
+      '<button type="button" data-mode="zh">译文</button></div>' +
+      '<div class="bil-tools">' +
+      '<button type="button" data-playall aria-pressed="false">▶ 连播</button>' +
+      '<button type="button" data-rate>语速 常速</button>' +
+      '<span class="bil-size-label">字号</span>' +
+      '<button type="button" data-scale="-1" aria-label="缩小字号">A−</button>' +
+      '<button type="button" data-scale="1" aria-label="放大字号">A＋</button>' +
+      '<button type="button" class="bil-vocab-btn" aria-pressed="true">词汇提示 开</button>' +
+      '<button type="button" class="bil-nlf-btn" aria-pressed="false">难词提示 关</button>' +
+      '</div>';
+    if (first) first.parentNode.insertBefore(bar, first);
+
+    // 输出练习：检测「输出练习」callout，注入写作批改组件
+    // （批改走站点 Worker 的 /api/write-grade（Workers AI）；接口不可用时降级为复制提示词）
+    [].slice.call(root.querySelectorAll('blockquote.callout')).forEach(function (c) {
+      var title = c.querySelector('.callout-title-inner');
+      if (!title || title.textContent.indexOf('输出练习') < 0) return;
+      var body = c.querySelector('.callout-content');
+      if (!body || body.querySelector('.bil-out')) return;
+      var words = Object.keys(vocab).map(function (k) { return vocab[k]; })
+        .sort(function (a, b) { return a.order - b.order; }).slice(0, 6)
+        .map(function (v) { return v.word; });
+      var outKey = OUT + ':' + location.pathname;
+      var box = document.createElement('div');
+      box.className = 'bil-out';
+      var saved = '';
+      try { saved = localStorage.getItem(outKey) || ''; } catch (e) {}
+      box.innerHTML =
+        '<textarea class="bil-out-ta" rows="4" placeholder="用本篇生词写一段 3–5 句的英文摘要……"></textarea>' +
+        '<div class="bil-out-a">' +
+        '<button type="button" class="bil-out-go">AI 批改</button>' +
+        '<button type="button" class="bil-out-copy">复制批改提示词</button>' +
+        '<span class="bil-out-msg"></span></div>' +
+        '<div class="bil-out-fb" hidden></div>';
+      body.appendChild(box);
+      var ta = box.querySelector('.bil-out-ta');
+      var msg = box.querySelector('.bil-out-msg');
+      var fb = box.querySelector('.bil-out-fb');
+      ta.value = saved;
+      ta.addEventListener('input', function () {
+        try { localStorage.setItem(outKey, ta.value); } catch (e) {}
+      });
+      function buildPrompt() {
+        return '请批改下面这段中国英语学习者写的英文摘要。要求：\n' +
+          '1) 一句话总评；2) 逐条列出语法/搭配/用词问题，并给出母语者改写；\n' +
+          '3) 检查目标词汇用得对不对：' + (words.join('、') || '本篇生词') + '；\n' +
+          '4) 用中文讲解，最后一句鼓励。\n\n学习者段落：\n' + ta.value;
+      }
+      box.querySelector('.bil-out-copy').addEventListener('click', function () {
+        var done = function () {
+          msg.textContent = '已复制，粘贴给任意 AI 即可';
+          setTimeout(function () { msg.textContent = ''; }, 2500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(buildPrompt()).then(done, done);
+        else { ta.select(); document.execCommand('copy'); done(); }
+      });
+      box.querySelector('.bil-out-go').addEventListener('click', function () {
+        var text = ta.value.trim();
+        if (!text) { msg.textContent = '先写一段再提交'; return; }
+        msg.textContent = '批改中……';
+        fb.hidden = true;
+        fetch('/api/write-grade', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: text, words: words }),
+        })
+          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+          .then(function (r) {
+            if (!r.ok || !r.j.feedback) {
+              msg.textContent = (r.j && r.j.error ? r.j.error : '批改失败') + '，可用「复制批改提示词」';
+              return;
+            }
+            msg.textContent = '';
+            fb.textContent = r.j.feedback;
+            fb.hidden = false;
+          })
+          .catch(function () { msg.textContent = '网络错误，可用「复制批改提示词」'; });
+      });
+    });
+
+    // 弹层（挂进 quartz-root 才能继承主题变量）
+    pop = document.createElement('div');
+    pop.className = 'bil-pop';
+    pop.hidden = true;
+    (document.getElementById('quartz-root') || document.body).appendChild(pop);
+
+    // 事件
+    root.addEventListener('click', function (e) {
+      var w = e.target.closest && e.target.closest('.bil-w');
+      if (w) {
+        e.preventDefault();
+        (active === w) ? closePop() : openPop(w, vocab);
+        return;
+      }
+      var play = e.target.closest && e.target.closest('.bil-play');
+      if (play) { speakPair(play.closest('.bil-pair')); return; }
+      var sh = e.target.closest && e.target.closest('.bil-shadow');
+      if (sh) { handleShadow(sh.closest('.bil-pair'), sh); return; }
+      var mine = e.target.closest && e.target.closest('.bil-shadow-mine');
+      if (mine) { playMine(mine); return; }
+      var del = e.target.closest && e.target.closest('.bil-shadow-del');
+      if (del) { delShadow(del); return; }
+      if (!e.target.closest('.bil-pop')) closePop();
+    }, { signal: signal });
+
+    root.addEventListener('keydown', function (e) {
+      var w = e.target.closest && e.target.closest('.bil-w');
+      if (w && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openPop(w, vocab); }
+    }, { signal: signal });
+
+    pop.addEventListener('click', function (e) {
+      if (!active) return;
+      if (e.target.hasAttribute('data-say')) { speak(active.textContent); return; }
+      if (e.target.hasAttribute('data-know')) {
+        var k = active.dataset.w;
+        known[k] = !known[k];
+        write(KNOWN, Object.keys(known).filter(function (x) { return known[x]; }));
+        openPop(active, vocab); // 重新渲染弹层，刷新「已掌握」按钮状态
+      }
+    }, { signal: signal });
+
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePop(); }, { signal: signal });
+    document.addEventListener('scroll', closePop, { capture: true, signal: signal });
+
+    // 偏好
+    function applyMode(mode) {
+      if (['pair', 'en', 'zh'].indexOf(mode) < 0) mode = 'pair';
+      prefs.mode = mode;
+      doc.classList.remove('bil-mode-pair', 'bil-mode-en', 'bil-mode-zh');
+      doc.classList.add('bil-mode-' + mode);
+      [].slice.call(bar.querySelectorAll('[data-mode]')).forEach(function (b) {
+        b.setAttribute('aria-pressed', b.dataset.mode === mode ? 'true' : 'false');
+      });
+      write(PREF, prefs);
+    }
+    function applyScale(scale) {
+      prefs.scale = Math.min(1.35, Math.max(0.85, Math.round(scale * 100) / 100));
+      document.body.style.setProperty('--bil-scale', prefs.scale);
+      write(PREF, prefs);
+    }
+    function applyVocab(on) {
+      prefs.vocab = !!on;
+      doc.classList.toggle('bil-vocab-off', !prefs.vocab);
+      var btn = bar.querySelector('.bil-vocab-btn');
+      if (btn) {
+        btn.setAttribute('aria-pressed', prefs.vocab ? 'true' : 'false');
+        btn.textContent = '词汇提示 ' + (prefs.vocab ? '开' : '关');
+      }
+      write(PREF, prefs);
+    }
+    var freqPromise = null;
+    function ensureTop() {
+      if (!freqPromise) {
+        freqPromise = fetch('/static/vocab.json')
+          .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(function (d) {
+            var set = new Set(d.top || []);
+            // 词形还原兜底：把常见屈折变化并入集合（improves/paired 这类不再误标）
+            (d.top || []).forEach(function (w) {
+              if (w.length < 3) return;
+              set.add(w + 's'); set.add(w + 'es'); set.add(w + 'ed'); set.add(w + 'd'); set.add(w + 'ing');
+            });
+            return set;
+          })
+          .catch(function (e) {
+            console.warn('[bilingual-reader] 词频表加载失败，难词提示不可用:', e);
+            freqPromise = null;
+            return null;
+          });
+      }
+      return freqPromise;
+    }
+    function applyNlf(on) {
+      prefs.nlf = !!on;
+      doc.classList.toggle('bil-nlf-hide', !prefs.nlf);
+      var btn = bar.querySelector('.bil-nlf-btn');
+      if (btn) {
+        btn.setAttribute('aria-pressed', prefs.nlf ? 'true' : 'false');
+        btn.textContent = '难词提示 ' + (prefs.nlf ? '开' : '关');
+      }
+      write(PREF, prefs);
+      if (prefs.nlf) {
+        ensureTop().then(function (set) {
+          if (!set || !prefs.nlf) return;
+          annotateLowFreq(root, set, vocab);
+        });
+      }
+    }
+
+    bar.addEventListener('click', function (e) {
+      var m = e.target.closest('[data-mode]');
+      if (m) return applyMode(m.dataset.mode);
+      if (e.target.closest('[data-playall]')) return playAllState ? stopPlayAll() : playAll();
+      var rt = e.target.closest('[data-rate]');
+      if (rt) {
+        var idx = RATES.indexOf(prefs.rate != null ? prefs.rate : 0.95);
+        var next = RATES[(idx + 1 + RATES.length) % RATES.length];
+        prefs.rate = next;
+        write(PREF, prefs);
+        rt.textContent = '语速 ' + RATE_LABEL[RATES.indexOf(next)];
+        return;
+      }
+      var s = e.target.closest('[data-scale]');
+      if (s) return applyScale(prefs.scale + Number(s.dataset.scale) * 0.05);
+      if (e.target.closest('.bil-vocab-btn')) return applyVocab(!prefs.vocab);
+      if (e.target.closest('.bil-nlf-btn')) return applyNlf(!prefs.nlf);
+    }, { signal: signal });
+
+    applyMode(prefs.mode);
+    applyScale(prefs.scale);
+    applyVocab(prefs.vocab);
+    applyNlf(prefs.nlf);
+    var rateBtn = bar.querySelector('[data-rate]');
+    if (rateBtn) rateBtn.textContent = '语速 ' + (RATE_LABEL[RATES.indexOf(prefs.rate)] || '常速');
+
+  }
+
+  // 首次加载 + SPA 切页后都跑一遍
+  init();
+  document.addEventListener('nav', function () { setTimeout(init, 0); });
+})();
+

@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="640" viewBox="0 0 1080 640">
+  <defs>
+    <marker id="or-arrow" markerWidth="9" markerHeight="9" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L0,5 L8,2.5 z" fill="#ea580c"/>
+    </marker>
+    <marker id="gy-arrow" markerWidth="9" markerHeight="9" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L0,5 L8,2.5 z" fill="#6b7280"/>
+    </marker>
+    <style>
+      .title { font: 700 26px "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; fill: #111827; }
+      .sub   { font: 15px "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; fill: #6b7280; }
+      .lbl   { font: 14px "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; fill: #374151; }
+      .small { font: 12px "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; fill: #6b7280; }
+      .h     { font: 700 16px "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; fill: #111827; }
+      .mono  { font: 13px "JetBrains Mono","Consolas",monospace; fill: #1f2937; }
+      .box   { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.4; }
+      .boxe  { fill: #fff7ed; stroke: #fdba74; stroke-width: 1.6; }
+      .flow  { stroke: #6b7280; stroke-width: 1.6; fill: none; marker-end: url(#gy-arrow); }
+    </style>
+  </defs>
+
+  <rect width="1080" height="640" fill="#ffffff"/>
+  <text x="40" y="44" class="title">模 p 加法为什么能写成「圆上的旋转」</text>
+  <text x="40" y="72" class="sub">模型最终学到的不是 p×p 的查表，而是一组固定频率的正余弦特征 + 三角恒等式。</text>
+
+  <!-- 左：圆周 -->
+  <g stroke="#94a3b8" stroke-width="2">
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(0 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(15 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(30 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(45 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(60 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(75 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(90 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(105 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(120 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(135 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(150 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(165 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(180 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(195 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(210 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(225 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(240 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(255 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(270 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(285 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(300 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(315 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(330 250 370)"/>
+    <line x1="250" y1="224" x2="250" y2="238" transform="rotate(345 250 370)"/>
+  </g>
+  <circle cx="250" cy="370" r="140" fill="none" stroke="#cbd5e1" stroke-width="1.4"/>
+
+  <g stroke="#cbd5e1" stroke-width="1.2" stroke-dasharray="4 4">
+    <line x1="250" y1="370" x2="376.9" y2="310.8"/>
+    <line x1="250" y1="370" x2="225.7" y2="232.1"/>
+    <line x1="250" y1="370" x2="169.7" y2="255.3"/>
+  </g>
+
+  <path d="M376.9,310.8 A140,140 0 0 0 169.7,255.3" fill="none" stroke="#ea580c" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#or-arrow)"/>
+  <text x="306" y="214" class="lbl" fill="#c2410c">旋转 b/113 圈</text>
+
+  <circle cx="250" cy="370" r="4" fill="#6b7280"/>
+  <text x="250" y="392" class="small" text-anchor="middle">0</text>
+
+  <circle cx="376.9" cy="310.8" r="6" fill="#2563eb"/>
+  <circle cx="225.7" cy="232.1" r="6" fill="#0d9488"/>
+  <circle cx="169.7" cy="255.3" r="6" fill="#ea580c"/>
+
+  <text x="390" y="304" class="lbl" font-weight="700" fill="#1e40af">x</text>
+  <text x="214" y="224" class="lbl" text-anchor="end" font-weight="700" fill="#0f766e">y</text>
+  <text x="156" y="252" class="lbl" text-anchor="end" font-weight="700" fill="#c2410c">x+y</text>
+
+  <text x="250" y="500" class="small" text-anchor="middle">圆周被 113 等分（图中只画了 24 个刻度）</text>
+  <text x="250" y="530" class="lbl" text-anchor="middle" font-weight="700">x + y ≡ (x + y) mod 113</text>
+  <text x="250" y="556" class="small" text-anchor="middle">每个点是一个数，加法就是沿圆周转动</text>
+
+  <!-- 右：前向计算 -->
+  <text x="470" y="118" class="h">等价的「算法」写法</text>
+  <text x="470" y="146" class="mono">cos(ω(x+y)) = cos(ωx)·cos(ωy) − sin(ωx)·sin(ωy)</text>
+
+  <rect x="480" y="190" width="76" height="46" rx="8" class="box"/>
+  <text x="518" y="219" class="lbl" text-anchor="middle">x</text>
+  <rect x="480" y="262" width="76" height="46" rx="8" class="box"/>
+  <text x="518" y="291" class="lbl" text-anchor="middle">y</text>
+
+  <rect x="600" y="190" width="280" height="46" rx="8" class="box"/>
+  <text x="740" y="219" class="lbl" text-anchor="middle">cos(ωx), sin(ωx)</text>
+  <rect x="600" y="262" width="280" height="46" rx="8" class="box"/>
+  <text x="740" y="291" class="lbl" text-anchor="middle">cos(ωy), sin(ωy)</text>
+
+  <path d="M556,213 H594" class="flow"/>
+  <path d="M556,285 H594" class="flow"/>
+
+  <path d="M740,236 V352" class="flow"/>
+  <path d="M740,308 V352" class="flow"/>
+
+  <rect x="600" y="352" width="280" height="64" rx="8" class="boxe"/>
+  <text x="740" y="378" class="lbl" text-anchor="middle" fill="#9a3412">两两相乘再相加</text>
+  <text x="740" y="400" class="mono" text-anchor="middle" fill="#9a3412">= cos(ω(x+y))</text>
+
+  <path d="M740,416 V442" class="flow"/>
+  <rect x="600" y="446" width="280" height="54" rx="8" class="box"/>
+  <text x="740" y="479" class="lbl" text-anchor="middle">每个频率 k 得到一个 logit</text>
+
+  <path d="M740,500 V528" class="flow"/>
+  <rect x="600" y="532" width="280" height="54" rx="8" class="box"/>
+  <text x="740" y="565" class="lbl" text-anchor="middle">softmax → 预测 (x+y) mod p</text>
+
+  <text x="740" y="614" class="small" text-anchor="middle">整条通路对 k = 1…K 组频率并行；参数量 O(p·K)，而不是 O(p²)</text>
+</svg>

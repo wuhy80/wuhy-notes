@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="600" viewBox="0 0 1080 600">
+  <defs>
+    <style>
+      .title { font: 700 26px "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; fill: #111827; }
+      .sub   { font: 15px "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; fill: #6b7280; }
+      .ax    { font: 12px "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; fill: #6b7280; }
+      .lbl   { font: 13px "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; fill: #374151; }
+      .small { font: 12px "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; fill: #6b7280; }
+      .h     { font: 700 15px "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; fill: #111827; }
+      .axis  { stroke: #9ca3af; stroke-width: 1.3; }
+      .grid  { stroke: #eef0f3; stroke-width: 1; }
+    </style>
+  </defs>
+
+  <rect width="1080" height="600" fill="#ffffff"/>
+  <text x="40" y="44" class="title">旋钮：正则化与数据量决定跃迁何时发生</text>
+  <text x="40" y="72" class="sub">定性示意，曲线形状不代表实测数值；方向性结论来自原论文与后续复现。</text>
+
+  <!-- 面板 A -->
+  <text x="60" y="145" class="h">A. weight decay 越大，跃迁越早</text>
+  <g class="grid">
+    <line x1="90" y1="235" x2="330" y2="235"/>
+    <line x1="90" y1="307" x2="330" y2="307"/>
+    <line x1="90" y1="378" x2="330" y2="378"/>
+  </g>
+  <line x1="90" y1="185" x2="90" y2="450" class="axis"/>
+  <line x1="90" y1="450" x2="330" y2="450" class="axis"/>
+  <rect x="90" y="185" width="11" height="265" fill="#fee2e2" opacity="0.8"/>
+  <text x="90" y="176" class="small">纵轴：泛化步数（对数刻度）</text>
+  <g class="ax" text-anchor="end">
+    <text x="82" y="239">10⁶</text>
+    <text x="82" y="311">10⁵</text>
+    <text x="82" y="382">10⁴</text>
+    <text x="82" y="454">10³</text>
+  </g>
+  <g class="ax" text-anchor="middle">
+    <text x="90" y="470">0</text>
+    <text x="210" y="470">0.5</text>
+    <text x="330" y="470">1.0</text>
+  </g>
+  <text x="210" y="490" class="ax" text-anchor="middle">weight decay</text>
+
+  <polyline fill="none" stroke="#2563eb" stroke-width="3" stroke-linejoin="round"
+    points="102,192.4 114,242.6 138,292.7 162,328.5 210,371.4 258,392.9 330,414.3"/>
+
+  <!-- 面板 B -->
+  <text x="400" y="145" class="h">B. 训练数据比例越大，跃迁越早</text>
+  <g class="grid">
+    <line x1="430" y1="235" x2="670" y2="235"/>
+    <line x1="430" y1="307" x2="670" y2="307"/>
+    <line x1="430" y1="378" x2="670" y2="378"/>
+  </g>
+  <line x1="430" y1="185" x2="430" y2="450" class="axis"/>
+  <line x1="430" y1="450" x2="670" y2="450" class="axis"/>
+  <text x="430" y="176" class="small">纵轴：泛化步数（对数刻度）</text>
+  <g class="ax" text-anchor="end">
+    <text x="422" y="239">10⁶</text>
+    <text x="422" y="311">10⁵</text>
+    <text x="422" y="382">10⁴</text>
+    <text x="422" y="454">10³</text>
+  </g>
+  <g class="ax" text-anchor="middle">
+    <text x="430" y="470">10%</text>
+    <text x="483" y="470">30%</text>
+    <text x="670" y="470">100%</text>
+  </g>
+  <text x="550" y="490" class="ax" text-anchor="middle">训练数据比例</text>
+
+  <polyline fill="none" stroke="#0d9488" stroke-width="3" stroke-linejoin="round"
+    points="430,242.6 456.7,285.5 483.3,321.2 536.7,364.1 603.3,392.9 670,414.3"/>
+
+  <text x="60" y="520" class="small">A　红带（wd≈0）：记忆解不受罚，可能永远不泛化；wd 调到 0.5–1.0，跃迁可提前到 10³–10⁴ 步。</text>
+  <text x="60" y="542" class="small">B　数据越多，模型越难先掉进记忆解；接近全覆盖时，「跃迁」退化成普通收敛。</text>
+
+  <!-- 面板 C -->
+  <rect x="740" y="145" width="300" height="330" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4"/>
+  <text x="758" y="178" class="h">C. 其它影响时机的因素</text>
+  <g class="lbl">
+    <text x="758" y="212">· 模型宽度 / 层数</text>
+    <text x="758" y="244">· 初始化权重尺度</text>
+    <text x="758" y="276">· 优化器（Adam 的周期「弹射」）</text>
+    <text x="758" y="308">· 学习率与调度</text>
+    <text x="758" y="340">· batch size</text>
+    <text x="758" y="372">· 任务本身的结构性</text>
+  </g>
+  <text x="758" y="412" class="small">方向不总一致：容量大 → 记忆更容易 → 可能更晚；</text>
+  <text x="758" y="434" class="small">初始化范数大 → 要走的「路程」短 → 可能更早。</text>
+
+  <text x="40" y="566" class="lbl">所有旋钮改的都是同一件事：记忆解与泛化解的相对效率，在训练中被慢慢改变。</text>
+</svg>

@@ -1,0 +1,202 @@
+---
+tags:
+  - 大模型/教程
+  - AI大模型原理教程
+created: 2026-10-18
+source: https://www.xuanyuancode.com/ai-llm/lessons/nlp-01-ngram
+course: AI大模型原理免费教程
+volume: 卷三 · 自然语言处理
+lesson: 14
+---
+
+# 14 语言的概率游戏：N-gram
+
+> [!abstract] 本课导读
+> 不懂语法、不懂语义，光靠「数数」能不能接出下一个词？
+
+本文来自「轩辕的编程宇宙」免费教程 [《AI 大模型原理》](https://www.xuanyuancode.com/ai-llm/lessons/nlp-01-ngram)，全文 30 课从向量讲到 Transformer。原站图文编排更精美，含交互实验，建议结合阅读。
+
+## 手机怎么猜下一个字
+
+你用手机打字，输入「今天天气」，键盘弹出三个候选词：**「真好」「不错」「怎么样」**。 它是怎么猜出来的？
+
+手机没有读懂「天气」这个概念，没有联网查天气预报，也没有问过你今天心情好不好。 它做的事情极其简单：**翻历史记录，数数**。
+
+想象手机偷偷读过几千万条中文消息。每次看到「今天天气」这四个字后面跟着什么，就记一笔：
+
+<img class="site-svg" src="大模型/07-教程与课程/ai大模型原理教程-轩辕/卷三-自然语言处理/l14-fig1.svg" alt="L14-fig1.svg">
+
+*<span class="fig-no">图 14-1</span>「今天天气」后面出现频率最高的词。手机只需按频率排序，就能给出三个候选。*
+
+下次你输入「今天天气」，手机就把出现最多的几个词推给你。**这就是手机输入法的基本原理——纯粹的数数，和「理解语言」毫无关系。**
+
+> [!question] 想一想
+> 手机是不是真的「懂」你在说什么？如果你前面刚写了「最近身体不太好」， 它还会推荐「今天天气真好」吗？
+>
+> > [!tip]- 我想好了，看答案
+> > 不是的。手机只看「今天天气」整体之后是什么，完全不管更早的内容。 就算你前面写了「最近身体不好，」，手机也照样推荐「真好」。 它只会背固定搭配，没有上下文意识。 这个问题后面会越来越明显。
+
+## 让方法更通用：看最近 N 个词
+
+上面的方法每次都看整段「今天天气」这个固定短语—— 如果用户输入的是「今天的天气」，历史记录就完全对不上号了，方法失效。
+
+更实用的做法：不管前面说了多少，**只看最近的几个词**，用它们来预测下一个词。 看最近 1 个词，叫「一元模型」；看最近 2 个词，叫「二元模型」； 看最近 N 个词，就叫 **N-gram**（N 元语言模型）。
+
+<img class="site-svg" src="大模型/07-教程与课程/ai大模型原理教程-轩辕/卷三-自然语言处理/l14-fig2.svg" alt="L14-fig2.svg">
+
+*<span class="fig-no">图 14-2</span>N-gram 只看最近 N 个词（蓝色部分），忽略更早的内容。N=2 时，无论前面说了什么，都只用「只」和「猫」来预测下一个词。*
+
+实际上，大部分手机输入法和早期语音助手都在用 N=2 或 N=3 的版本。 这个方法简单、快速，而且训练方式也很简单： 爬下大量文本，把每一段连续的 N 个词都数一遍，统计频率，存成一张巨大的表格就完成了。**不需要理解语言，不需要语法规则，只需要数数。**
+
+这张表长什么样、又怎么「查」？以二元模型（N=2）为例：想预测「天气」后面接什么，就翻到 **前文 =「天气」** 这一块， 数一数语料里它后面各个词分别出现过多少次，再除以「天气」的总出现次数，就得到每个候选词的概率：
+
+<figure class="fig" style="margin:1.2em 0">
+  <div class="fig-frame" style="background:#FFFDF8;border:1px solid #DCD2BF;border-radius:8px;padding:14px;font-family:'Noto Sans SC, sans-serif'">
+    <div style="text-align:center;font-size:13px;color:#1E2B38;margin-bottom:8px">前文 = <strong style="color:#C0481E">「天气」</strong>（语料中共现 10,000 次）时，下一个词的频率表</div>
+    <div style="overflow-x:auto">
+      <table style="margin:0 auto;border-collapse:collapse;font-size:12.5px;color:#1E2B38">
+        <thead><tr style="color:#5C6B79;border-bottom:1.5px solid #DCD2BF"><th style="padding:4px 18px;font-weight:600">下一词</th><th style="padding:4px 18px;font-weight:600">共现次数</th><th style="padding:4px 18px;font-weight:600">概率</th></tr></thead>
+        <tbody id="demo-143-tbody"></tbody>
+      </table>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin:12px 0 6px;font-size:13px;color:#5C6B79">
+      <button id="demo-143-pick" type="button" style="padding:7px 16px;border-radius:8px;border:1.5px solid #C0481E;background:#C0481E;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px">按这张表抽一个词</button>
+      <button id="demo-143-pick100" type="button" style="padding:7px 16px;border-radius:8px;border:1.5px solid #3E6B8F;background:#FFFDF8;color:#3E6B8F;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px">连抽 100 次</button>
+      <button id="demo-143-reset" type="button" style="padding:7px 16px;border-radius:8px;border:1.5px solid #DCD2BF;background:#FFFDF8;color:#5C6B79;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px">↺ 重置</button>
+      <span id="demo-143-last" style="font-weight:700;color:#C0481E"></span>
+    </div>
+    <div id="demo-143-stats" style="display:flex;flex-direction:column;gap:4px;max-width:420px;margin:6px auto 0"></div>
+    <div id="demo-143-note" style="text-align:center;font-size:12px;color:#93A0AC;margin-top:8px"></div>
+  </div>
+  <figcaption style="margin:6px 4px 0;font-size:.85em;color:#5C6B79;line-height:1.6">
+    <span style="color:#C0481E;font-weight:600;margin-right:6px">图 14-3</span>N-gram 的「查表」长这样（二元模型，前文 =「天气」）：预测时就找到当前前文那一行区块，<strong>按概率挑下一个词</strong>——点上面的按钮试试，抽多了每词被抽中的比例就会越来越贴近表里的概率。注意「香蕉」只共现 3 次、概率几乎为零——语料里没怎么数到的组合，N-gram 就只能给个近乎 0 的概率。整本表里，<strong>每一个可能的前文都对应这样一行区块</strong>。<a href="https://www.xuanyuancode.com/ai-llm/lessons/nlp-01-ngram" style="margin-left:6px">原站交互版</a>
+  </figcaption>
+</figure>
+<script>
+(function () {
+  var rows = [
+    { w: '真好', n: 2300 }, { w: '不错', n: 2100 }, { w: '预报', n: 1800 },
+    { w: '怎么样', n: 1500 }, { w: '好热', n: 1000 }, { w: '香蕉', n: 3 },
+    { w: '其余数千词合计', n: 1297 }
+  ];
+  var counts = rows.map(function () { return 0; });
+  var total = 0;
+  var tbody = document.getElementById('demo-143-tbody');
+  var statsEl = document.getElementById('demo-143-stats');
+  var lastEl = document.getElementById('demo-143-last');
+  var noteEl = document.getElementById('demo-143-note');
+  function drawTable() {
+    tbody.innerHTML = rows.map(function (r, i) {
+      var hot = r.w === '香蕉';
+      return '<tr style="border-bottom:1px solid #EFE6CC;' + (hot ? 'color:#C0481E' : '') + '"><td style="padding:3px 18px">' + r.w + '</td>' +
+        '<td style="padding:3px 18px;font-family:\'JetBrains Mono, monospace\',monospace;text-align:right">' + r.n.toLocaleString() + '</td>' +
+        '<td style="padding:3px 18px;font-family:\'JetBrains Mono, monospace\',monospace;text-align:right">' + (r.n / 100).toFixed(2) + '%</td></tr>';
+    }).join('');
+  }
+  function drawStats() {
+    var max = 1;
+    counts.forEach(function (c) { if (c > max) max = c; });
+    statsEl.innerHTML = rows.map(function (r, i) {
+      return '<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#5C6B79">' +
+        '<span style="width:96px;text-align:right;flex-shrink:0">' + r.w + '</span>' +
+        '<div style="flex:1;height:12px;border-radius:6px;background:#EFE6CC;overflow:hidden">' +
+        '<div style="width:' + (counts[i] / max * 100).toFixed(1) + '%;height:100%;background:' + (r.w === '香蕉' ? '#C0481E' : '#C9A227') + '"></div></div>' +
+        '<span style="width:34px;font-family:\'JetBrains Mono, monospace\',monospace;text-align:right">' + counts[i] + '</span></div>';
+    }).join('');
+    noteEl.textContent = total > 0 ? '共抽了 ' + total + ' 次——次数越多，每词的比例越贴近表里的概率（大数定律）' : '';
+  }
+  function pick() {
+    var r = Math.random() * 10000, acc = 0;
+    for (var i = 0; i < rows.length; i++) {
+      acc += rows[i].n;
+      if (r < acc) return i;
+    }
+    return rows.length - 1;
+  }
+  function draw(n) {
+    var last = -1;
+    for (var i = 0; i < n; i++) { last = pick(); counts[last] += 1; total += 1; }
+    lastEl.textContent = '这次抽中：「' + (rows[last].w === '其余数千词合计' ? '其余词之一' : rows[last].w) + '」';
+    drawStats();
+  }
+  document.getElementById('demo-143-pick').addEventListener('click', function () { draw(1); });
+  document.getElementById('demo-143-pick100').addEventListener('click', function () { draw(100); });
+  document.getElementById('demo-143-reset').addEventListener('click', function () {
+    counts = rows.map(function () { return 0; });
+    total = 0;
+    lastEl.textContent = '';
+    drawStats();
+  });
+  drawTable();
+  drawStats();
+})();
+</script>
+
+换个角度看，这张频率表其实就是**条件概率**：给定前面 N 个词，下一个词出现的可能性有多大。 第 6 课说过，一个语言模型的本质，就是给「下一个词」分配一张概率分布表—— 「今天天气」之后，「真好」占 23%、「不错」占 21%、「香蕉」占 0.001%…… N-gram 就是这个想法**最朴素的实现**：直接拿历史频率当概率，能数则数，数不到就抓瞎。 后面几课要做的事，都是在换更聪明的方式去估计这同一张概率表。
+
+## 局限：记性只有两三个词
+
+试着用 N=2 的模型来补完这句话：
+
+<div class="formula" style="font-family:var(--serif);font-size:18px;line-height:2">「那只从小在胡同里长大、非常怕生人的小猫，今天第一次__」</div>
+
+真正要填的词，应该和「小猫」「怕生人」「第一次」都有关—— 也许是「出门」「见生人」「叫出声来」。 但 N=2 的模型只看最后两个词：**「第一次」__**。 「第一次」后面最常见的搭配是什么？大概是「听说」「尝试」「见到」…… 完全不知道前面在说一只猫的事。
+
+> [!important] 加大 N 也救不了
+> 你可能想说：N 调大一点不就好了？把 N 从 2 改成 5，看最近 5 个词。 问题是：训练数据里，见过「怕生人的小猫，今天第一次」这整个组合的概率几乎为零。 N 越大，每个具体组合出现的次数越少，大量组合根本从未出现过。
+> 打个比方：你统计了 100 亿条对话，但「非常怕生人的小猫今天第一次出门」这整句话， 一次也没出现过。N-gram 对「没见过的组合」完全束手无策，只能乱猜或者返回「不知道」。 N 越大，「没见过的组合」就越多——两难困境。
+
+> [!question] 想一想
+> N-gram 还有一个更根本的毛病。即使见过「猫」后面接「出门」，也没法推断「小猫」后面能接「出门」。为什么？
+>
+> > [!tip]- 我想好了，看答案
+> > 本质问题是：N-gram 把每个词当成互不相关的独立符号。 「猫」「小猫」「猫咪」对它来说是完全不同的三个东西，没有任何共同点。 就算见过「猫今天第一次出门」一百次，也无法推断「小猫今天第一次出门」。 而人类知道这三个词意思相近，可以互相类推。 如果词有「意思」，而不只是「符号」，这个问题就能解决……
+
+## N-gram 能做什么，不能做什么
+
+尽管有这些局限，N-gram 在几十年间一直是语言技术的支柱：
+
+- 手机输入法的候选词推荐
+- 早期语音识别（把声音转成文字时，用 N-gram 过滤掉“听起来像但文法奇怪”的结果）
+- 垃圾邮件过滤（某些词组合在一起高度可疑）
+- 机器翻译的初级版本
+
+它之所以有用，是因为**语言里大量的短距离搭配是非常固定的**。 「天气」后面接「预报」的概率，远高于接「香蕉」的概率。 这些规律靠数数就能捕捉到，不需要任何深层理解。
+
+但它做不到的事情同样明显：长句子、跨句子的理解、词义的灵活性—— 这些都需要一个能「理解词的含义」而不只是「认识词的形状」的工具。 下一课解决「词」本身的问题。
+
+## 总结
+
+> [!important] 本课核心 · TAKEAWAY
+> N-gram 是语言预测的「数数法」： 看最近 N 个词，查历史统计，找最常见的下一个词。 不需要理解语言，只需要一张巨大的频率表。 但它的记性只有 N 个词——超出这个范围的上下文，完全看不到。
+
+- **N-gram 的思路**：看最近 N 个词 → 查频率表 → 预测下一个词。
+- **训练方式**：爬大量文本，统计每段连续词组出现的频率，存成表格。
+- **局限①**：只有 N 个词的记性，无法处理长距离依赖。
+- **局限②**：把词当成符号，「猫」和「小猫」是两个毫不相关的符号。
+
+> [!example] 学习小测验
+> **Q1. N-gram 语言模型预测下一个词时，用的是什么思路？**
+> - A. 理解整句话的语法和语义
+> - B. 基于「数数」：统计前 N−1 个词后面各个词出现的频率来估计概率 ✅
+> - C. 随机猜一个词
+> - D. 查字典里的释义
+>
+> > [!tip]- 第 1 题讲解
+> > N-gram 不懂语法语义，只做统计：用马尔可夫假设「只看前 N−1 个词」，从大量语料里数出「这几个词后面最常跟哪个词」。简单有效，但只能看到很短的上下文。
+>
+> **Q2. N-gram 模型最致命的问题之一是「稀疏性」，它指的是什么？**
+> - A. 模型文件太大装不下
+> - B. 很多合理的词组合在训练语料里从没出现过，于是概率被估成 0 ✅
+> - C. 训练速度太慢
+> - D. 词向量维度太低
+>
+> > [!tip]- 第 2 题讲解
+> > 随着 N 增大，可能的词组合数量爆炸，绝大多数在语料里出现次数为 0，导致概率为 0、模型无法泛化。这就是「维度灾难/稀疏灾难」，也是后来神经网络语言模型要解决的核心痛点。
+
+## 相关笔记
+
+- 所属卷：[[卷三-自然语言处理/卷三导读|卷三 · 自然语言处理]]
+- 上一课：[[卷二-神经网络/13-反向传播|13 反向传播]]
+- 下一课：[[卷三-自然语言处理/15-词向量|15 词向量]]
+- 课程总览：[[00-总索引]]

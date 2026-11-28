@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="620" viewBox="0 0 1080 620">
+  <defs>
+    <style>
+      .title { font: 700 26px "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; fill: #111827; }
+      .sub   { font: 15px "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; fill: #6b7280; }
+      .ax    { font: 13px "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; fill: #6b7280; }
+      .lbl   { font: 14px "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; fill: #374151; }
+      .small { font: 12px "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; fill: #6b7280; }
+      .h     { font: 700 17px "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; fill: #111827; }
+      .grid  { stroke: #eef0f3; stroke-width: 1; }
+      .axis  { stroke: #9ca3af; stroke-width: 1.4; }
+    </style>
+  </defs>
+
+  <rect width="1080" height="620" fill="#ffffff"/>
+  <text x="40" y="44" class="title">两个解在竞争：记忆解先到，泛化解后到但更省参数</text>
+  <text x="40" y="72" class="sub">蓝线 = 记忆解，橙线 = 泛化解；灰色粗线是实际训练损失——它约等于两者中较低的那条。</text>
+
+  <!-- 网格 -->
+  <g class="grid">
+    <line x1="90" y1="120" x2="680" y2="120"/>
+    <line x1="90" y1="192" x2="680" y2="192"/>
+    <line x1="90" y1="264" x2="680" y2="264"/>
+    <line x1="90" y1="336" x2="680" y2="336"/>
+    <line x1="90" y1="408" x2="680" y2="408"/>
+    <line x1="286.7" y1="110" x2="286.7" y2="480"/>
+    <line x1="483.3" y1="110" x2="483.3" y2="480"/>
+  </g>
+
+  <line x1="90" y1="110" x2="90" y2="480" class="axis"/>
+  <line x1="90" y1="480" x2="680" y2="480" class="axis"/>
+
+  <g class="ax" text-anchor="end">
+    <text x="78" y="125">5</text>
+    <text x="78" y="197">4</text>
+    <text x="78" y="269">3</text>
+    <text x="78" y="341">2</text>
+    <text x="78" y="413">1</text>
+    <text x="78" y="485">0</text>
+  </g>
+  <g class="ax" text-anchor="middle">
+    <text x="90" y="500">10²</text>
+    <text x="286.7" y="500">10³</text>
+    <text x="483.3" y="500">10⁴</text>
+    <text x="680" y="500">10⁵</text>
+  </g>
+  <text x="385" y="524" class="ax" text-anchor="middle">训练步数（对数刻度）</text>
+  <text x="50" y="300" class="ax" text-anchor="middle" transform="rotate(-90 50 300)">损失</text>
+
+  <!-- 实际损失 = 下包络 -->
+  <polyline fill="none" stroke="#94a3b8" stroke-width="11" stroke-opacity="0.22" stroke-linejoin="round"
+    points="90,127.2 129.3,156 168.7,220.8 208,292.8 247.3,357.6 286.7,408 326,440.4 365.3,459.8 404.7,468.5 444,470.6 483.3,467 522.7,457 562,440.4 575,446 581.7,440.4 601.3,451.2 621,465.6 640.7,469.9 660.3,474.2 680,476.4"/>
+
+  <!-- 记忆解 -->
+  <polyline fill="none" stroke="#2563eb" stroke-width="3" stroke-linejoin="round"
+    points="90,127.2 129.3,156 168.7,220.8 208,292.8 247.3,357.6 286.7,408 326,440.4 365.3,459.8 404.7,468.5 444,470.6 483.3,467 522.7,457 562,440.4 581.7,428.2 601.3,418.8 640.7,393.6 680,368.4"/>
+
+  <!-- 泛化解 -->
+  <polyline fill="none" stroke="#ea580c" stroke-width="3" stroke-linejoin="round"
+    points="90,123.6 188.3,127.2 286.7,133 345.7,141.6 404.7,166.8 444,199.2 483.3,256.8 522.7,343.2 552.2,408 581.7,440.4 601.3,451.2 621,465.6 640.7,469.9 660.3,474.2 680,476.4"/>
+
+  <!-- 直接标注 -->
+  <text x="200" y="168" class="lbl" fill="#ea580c" font-weight="700">泛化解（算法）</text>
+  <text x="250" y="300" class="lbl" fill="#2563eb" font-weight="700">记忆解（查表）</text>
+
+  <!-- 切换点 -->
+  <line x1="575" y1="110" x2="575" y2="480" stroke="#6b7280" stroke-width="1.2" stroke-dasharray="5 5"/>
+  <circle cx="575" cy="445" r="5" fill="#ffffff" stroke="#6b7280" stroke-width="2.5"/>
+  <text x="590" y="232" class="lbl" font-weight="700">切换点</text>
+  <text x="590" y="256" class="lbl">泛化解的总损失</text>
+  <text x="590" y="280" class="lbl">低于记忆解</text>
+
+  <text x="676" y="340" class="small" text-anchor="end">记忆解被压到回升 ↗</text>
+
+  <!-- 右栏：参数效率 -->
+  <text x="740" y="150" class="h">参数效率：谁更省</text>
+  <text x="740" y="174" class="small">同一张映射表的两种写法</text>
+
+  <text x="740" y="208" class="lbl">记忆解</text>
+  <rect x="740" y="214" width="250" height="30" rx="6" fill="#dbeafe"/>
+  <text x="865" y="234" class="lbl" text-anchor="middle" fill="#1e40af">大权重查表</text>
+
+  <text x="740" y="268" class="lbl">泛化解</text>
+  <rect x="740" y="274" width="250" height="30" rx="6" fill="#f1f5f9"/>
+  <rect x="740" y="274" width="92" height="30" rx="6" fill="#ccfbf1" stroke="#5eead4" stroke-width="1.5"/>
+  <text x="852" y="294" class="lbl" fill="#0f766e">小权重算法</text>
+
+  <text x="740" y="346" class="small">同一张映射表，结构化写法</text>
+  <text x="740" y="366" class="small">需要的权重范数小得多。</text>
+
+  <rect x="740" y="396" width="292" height="96" rx="10" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5"/>
+  <text x="754" y="424" class="lbl" fill="#9a3412">weight decay 每一步都在压低范数，</text>
+  <text x="754" y="448" class="lbl" fill="#9a3412">先撑不住的是记忆解。</text>
+  <text x="754" y="474" class="lbl" fill="#9a3412" font-weight="700">→ 正则化越强，跃迁越早</text>
+
+  <text x="740" y="524" class="small">范数为示意，非实测值</text>
+  <text x="1020" y="600" class="small" text-anchor="end">示意曲线，综合 Power et al. 2022 与 Nanda et al. 2023</text>
+</svg>

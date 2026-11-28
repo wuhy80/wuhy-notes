@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="360" viewBox="0 0 960 360" role="img" aria-label="归并排序分解与合并动画">
+  <defs>
+    <style>
+      .bg { fill: #f7f4ea; }
+      .title { font: 700 24px 'Segoe UI', 'Microsoft YaHei', sans-serif; fill: #213547; }
+      .label { font: 600 16px 'Segoe UI', 'Microsoft YaHei', sans-serif; fill: #355070; }
+      .small { font: 500 14px 'Segoe UI', 'Microsoft YaHei', sans-serif; fill: #5c677d; }
+      .box { fill: #fffdf7; stroke: #355070; stroke-width: 2; rx: 12; ry: 12; }
+      .num { font: 700 20px 'Consolas', 'JetBrains Mono', monospace; fill: #1d3557; dominant-baseline: middle; text-anchor: middle; }
+      .accentA { fill: #ffd6a5; }
+      .accentB { fill: #caffbf; }
+      .accentC { fill: #bde0fe; }
+      .accentD { fill: #f1c0e8; }
+      .arrow { stroke: #6c757d; stroke-width: 2.5; fill: none; marker-end: url(#m); }
+      .frame { opacity: 0; }
+    </style>
+    <marker id="m" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#6c757d"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="960" height="360"/>
+  <text class="title" x="32" y="40">归并排序：先拆到最小，再一路有序合并回来</text>
+
+  <g class="frame">
+    <set attributeName="opacity" to="1" begin="0s" dur="2.2s" fill="freeze"/>
+    <set attributeName="opacity" to="0" begin="2.2s" fill="freeze"/>
+    <text class="label" x="32" y="82">Step 1: 原数组</text>
+    <text class="small" x="32" y="108">先看整体，不急着比较所有元素，而是准备把问题拆小。</text>
+    <g transform="translate(160,160)">
+      <g transform="translate(0,0)"><rect class="box accentA" width="80" height="56"/><text class="num" x="40" y="28">38</text></g>
+      <g transform="translate(88,0)"><rect class="box accentB" width="80" height="56"/><text class="num" x="40" y="28">27</text></g>
+      <g transform="translate(176,0)"><rect class="box accentC" width="80" height="56"/><text class="num" x="40" y="28">43</text></g>
+      <g transform="translate(264,0)"><rect class="box accentD" width="80" height="56"/><text class="num" x="40" y="28">3</text></g>
+      <g transform="translate(352,0)"><rect class="box accentA" width="80" height="56"/><text class="num" x="40" y="28">9</text></g>
+      <g transform="translate(440,0)"><rect class="box accentB" width="80" height="56"/><text class="num" x="40" y="28">82</text></g>
+      <g transform="translate(528,0)"><rect class="box accentC" width="80" height="56"/><text class="num" x="40" y="28">10</text></g>
+    </g>
+  </g>
+
+  <g class="frame">
+    <set attributeName="opacity" to="1" begin="2.2s" dur="2.2s" fill="freeze"/>
+    <set attributeName="opacity" to="0" begin="4.4s" fill="freeze"/>
+    <text class="label" x="32" y="82">Step 2: 拆成左右两半</text>
+    <text class="small" x="32" y="108">核心不是马上排序，而是把原问题拆成两个同类子问题。</text>
+    <path class="arrow" d="M480 120 L300 160"/>
+    <path class="arrow" d="M480 120 L660 160"/>
+    <g transform="translate(116,160)">
+      <g transform="translate(0,0)"><rect class="box accentA" width="88" height="56"/><text class="num" x="44" y="28">38</text></g>
+      <g transform="translate(96,0)"><rect class="box accentB" width="88" height="56"/><text class="num" x="44" y="28">27</text></g>
+      <g transform="translate(192,0)"><rect class="box accentC" width="88" height="56"/><text class="num" x="44" y="28">43</text></g>
+      <g transform="translate(288,0)"><rect class="box accentD" width="88" height="56"/><text class="num" x="44" y="28">3</text></g>
+    </g>
+    <g transform="translate(500,160)">
+      <g transform="translate(0,0)"><rect class="box accentA" width="88" height="56"/><text class="num" x="44" y="28">9</text></g>
+      <g transform="translate(96,0)"><rect class="box accentB" width="88" height="56"/><text class="num" x="44" y="28">82</text></g>
+      <g transform="translate(192,0)"><rect class="box accentC" width="88" height="56"/><text class="num" x="44" y="28">10</text></g>
+    </g>
+  </g>
+
+  <g class="frame">
+    <set attributeName="opacity" to="1" begin="4.4s" dur="2.4s" fill="freeze"/>
+    <set attributeName="opacity" to="0" begin="6.8s" fill="freeze"/>
+    <text class="label" x="32" y="82">Step 3: 拆到单元素并开始合并</text>
+    <text class="small" x="32" y="108">单个元素天然有序，真正的排序发生在合并阶段。</text>
+    <g transform="translate(112,150)">
+      <g transform="translate(0,0)"><rect class="box accentA" width="74" height="54"/><text class="num" x="37" y="27">38</text></g>
+      <g transform="translate(86,0)"><rect class="box accentB" width="74" height="54"/><text class="num" x="37" y="27">27</text></g>
+      <path class="arrow" d="M37 64 L74 112"/>
+      <path class="arrow" d="M123 64 L110 112"/>
+      <g transform="translate(40,116)"><rect class="box accentB" width="74" height="54"/><text class="num" x="37" y="27">27</text></g>
+      <g transform="translate(126,116)"><rect class="box accentA" width="74" height="54"/><text class="num" x="37" y="27">38</text></g>
+    </g>
+    <g transform="translate(382,150)">
+      <g transform="translate(0,0)"><rect class="box accentC" width="74" height="54"/><text class="num" x="37" y="27">43</text></g>
+      <g transform="translate(86,0)"><rect class="box accentD" width="74" height="54"/><text class="num" x="37" y="27">3</text></g>
+      <path class="arrow" d="M37 64 L74 112"/>
+      <path class="arrow" d="M123 64 L110 112"/>
+      <g transform="translate(40,116)"><rect class="box accentD" width="74" height="54"/><text class="num" x="37" y="27">3</text></g>
+      <g transform="translate(126,116)"><rect class="box accentC" width="74" height="54"/><text class="num" x="37" y="27">43</text></g>
+    </g>
+    <g transform="translate(684,150)">
+      <g transform="translate(0,0)"><rect class="box accentA" width="74" height="54"/><text class="num" x="37" y="27">9</text></g>
+      <g transform="translate(86,0)"><rect class="box accentC" width="74" height="54"/><text class="num" x="37" y="27">10</text></g>
+      <g transform="translate(172,0)"><rect class="box accentB" width="74" height="54"/><text class="num" x="37" y="27">82</text></g>
+    </g>
+  </g>
+
+  <g class="frame">
+    <set attributeName="opacity" to="1" begin="6.8s" dur="2.6s" fill="freeze"/>
+    <set attributeName="opacity" to="0" begin="9.4s" fill="freeze"/>
+    <text class="label" x="32" y="82">Step 4: 一路合并成最终有序数组</text>
+    <text class="small" x="32" y="108">每次只比较两个有序子数组的头部，较小者先进入答案。</text>
+    <g transform="translate(188,150)">
+      <g transform="translate(0,0)"><rect class="box accentD" width="78" height="54"/><text class="num" x="39" y="27">3</text></g>
+      <g transform="translate(86,0)"><rect class="box accentB" width="78" height="54"/><text class="num" x="39" y="27">27</text></g>
+      <g transform="translate(172,0)"><rect class="box accentA" width="78" height="54"/><text class="num" x="39" y="27">38</text></g>
+      <g transform="translate(258,0)"><rect class="box accentC" width="78" height="54"/><text class="num" x="39" y="27">43</text></g>
+    </g>
+    <g transform="translate(360,234)">
+      <g transform="translate(0,0)"><rect class="box accentA" width="78" height="54"/><text class="num" x="39" y="27">9</text></g>
+      <g transform="translate(86,0)"><rect class="box accentC" width="78" height="54"/><text class="num" x="39" y="27">10</text></g>
+      <g transform="translate(172,0)"><rect class="box accentB" width="78" height="54"/><text class="num" x="39" y="27">82</text></g>
+    </g>
+    <path class="arrow" d="M484 206 L484 228"/>
+    <path class="arrow" d="M484 288 L484 314"/>
+    <g transform="translate(80,298)">
+      <g transform="translate(0,0)"><rect class="box accentD" width="78" height="54"/><text class="num" x="39" y="27">3</text></g>
+      <g transform="translate(86,0)"><rect class="box accentA" width="78" height="54"/><text class="num" x="39" y="27">9</text></g>
+      <g transform="translate(172,0)"><rect class="box accentC" width="78" height="54"/><text class="num" x="39" y="27">10</text></g>
+      <g transform="translate(258,0)"><rect class="box accentB" width="78" height="54"/><text class="num" x="39" y="27">27</text></g>
+      <g transform="translate(344,0)"><rect class="box accentA" width="78" height="54"/><text class="num" x="39" y="27">38</text></g>
+      <g transform="translate(430,0)"><rect class="box accentC" width="78" height="54"/><text class="num" x="39" y="27">43</text></g>
+      <g transform="translate(516,0)"><rect class="box accentB" width="78" height="54"/><text class="num" x="39" y="27">82</text></g>
+    </g>
+  </g>
+
+  <g class="frame">
+    <set attributeName="opacity" to="1" begin="9.4s" dur="2.6s" fill="freeze"/>
+    <set attributeName="opacity" to="0" begin="12s" fill="freeze"/>
+    <text class="label" x="32" y="82">Step 5: 关键不变量</text>
+    <text class="small" x="32" y="108">任意时刻，临时数组中的内容始终保持有序；剩余元素也分别待在两个有序子数组里。</text>
+    <g transform="translate(164,156)">
+      <rect class="box" x="0" y="0" width="632" height="92"/>
+      <g transform="translate(22,18)">
+        <rect class="box accentD" width="72" height="52"/><text class="num" x="36" y="26">3</text>
+        <rect class="box accentA" x="82" y="0" width="72" height="52"/><text class="num" x="118" y="26">9</text>
+        <rect class="box accentC" x="164" y="0" width="72" height="52"/><text class="num" x="200" y="26">10</text>
+        <rect class="box accentB" x="246" y="0" width="72" height="52"/><text class="num" x="282" y="26">27</text>
+        <rect class="box accentA" x="340" y="0" width="72" height="52" fill-opacity="0.55"/><text class="num" x="376" y="26">38</text>
+        <rect class="box accentC" x="422" y="0" width="72" height="52" fill-opacity="0.55"/><text class="num" x="458" y="26">43</text>
+        <rect class="box accentB" x="504" y="0" width="72" height="52" fill-opacity="0.55"/><text class="num" x="540" y="26">82</text>
+      </g>
+      <text class="small" x="28" y="82">左边实心部分：已经归并进结果，且保持有序。右边半透明部分：还未取出，但各自所在子数组仍有序。</text>
+    </g>
+  </g>
+</svg>

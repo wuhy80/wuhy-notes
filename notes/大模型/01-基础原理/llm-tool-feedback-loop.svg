@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="540" viewBox="0 0 1080 540">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#2563eb"/>
+    </marker>
+    <style>
+      .title { font: 700 28px sans-serif; fill: #111827; }
+      .label { font: 18px sans-serif; fill: #1f2937; }
+      .small { font: 15px sans-serif; fill: #4b5563; }
+      .card { fill: #ffffff; stroke: #cbd5e1; stroke-width: 2; rx: 12; }
+      .blue { fill: #eff6ff; stroke: #2563eb; stroke-width: 2; rx: 10; }
+      .green { fill: #ecfdf5; stroke: #16a34a; stroke-width: 2; rx: 10; }
+      .red { fill: #fef2f2; stroke: #dc2626; stroke-width: 2; rx: 10; }
+      .line { stroke: #2563eb; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .back { stroke: #16a34a; stroke-width: 3; fill: none; marker-end: url(#arrow); stroke-dasharray: 8 8; }
+    </style>
+  </defs>
+  <rect width="1080" height="540" fill="#ffffff"/>
+  <text x="40" y="48" class="title">工具和反馈让代码能力更可靠</text>
+  <text x="40" y="78" class="small">模型生成代码后，通过编译、测试、运行结果获得外部反馈，再迭代修正。</text>
+
+  <rect x="65" y="190" width="170" height="95" class="blue"/>
+  <text x="150" y="226" class="label" text-anchor="middle">需求</text>
+  <text x="150" y="252" class="small" text-anchor="middle">自然语言描述</text>
+
+  <path d="M250 238 H330" class="line"/>
+
+  <rect x="350" y="170" width="180" height="135" class="card"/>
+  <text x="440" y="210" class="label" text-anchor="middle">LLM</text>
+  <text x="440" y="238" class="small" text-anchor="middle">生成方案</text>
+  <text x="440" y="263" class="small" text-anchor="middle">生成代码</text>
+
+  <path d="M550 238 H630" class="line"/>
+
+  <rect x="650" y="170" width="180" height="135" class="green"/>
+  <text x="740" y="210" class="label" text-anchor="middle">工具</text>
+  <text x="740" y="238" class="small" text-anchor="middle">编译 / 测试</text>
+  <text x="740" y="263" class="small" text-anchor="middle">运行 / 静态检查</text>
+
+  <path d="M850 238 H930" class="line"/>
+
+  <rect x="945" y="190" width="95" height="95" class="blue"/>
+  <text x="992" y="226" class="label" text-anchor="middle">结果</text>
+  <text x="992" y="252" class="small" text-anchor="middle">可用代码</text>
+
+  <path d="M740 330 C720 430, 430 430, 440 320" class="back"/>
+  <rect x="505" y="390" width="230" height="62" class="red"/>
+  <text x="620" y="417" class="label" text-anchor="middle">错误反馈</text>
+  <text x="620" y="442" class="small" text-anchor="middle">报错、失败用例、日志</text>
+</svg>
